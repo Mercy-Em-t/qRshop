@@ -13,7 +13,7 @@ export function queueOrder(shopName, shopPhone, table, items, total) {
     table,
     items,
     total,
-    queued_at: new Date().toISOString(),
+    queuedAt: new Date().toISOString(),
   };
   try {
     localStorage.setItem(QUEUE_KEY, JSON.stringify(entry));

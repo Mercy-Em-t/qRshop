@@ -4,14 +4,20 @@
  * @param {string}  [message]   Optional text shown below the spinner.
  * @param {boolean} [fullPage]  When true (default), centres the spinner on a
  *                               full-screen background. Set to false for inline use.
- * @param {number}  [size]      Spinner diameter in Tailwind units (default 12 → 3rem).
+ * @param {"sm"|"md"|"lg"} [size]  Spinner size preset (default "md").
  */
+const SIZE_CLASSES = {
+  sm: "h-5 w-5",
+  md: "h-12 w-12",
+  lg: "h-16 w-16",
+};
+
 export default function LoadingSpinner({
   message = "Loading...",
   fullPage = true,
-  size = 12,
+  size = "md",
 }) {
-  const sizeClass = `h-${size} w-${size}`;
+  const sizeClass = SIZE_CLASSES[size] || SIZE_CLASSES.md;
 
   const spinner = (
     <div className={fullPage ? "text-center" : "flex justify-center items-center"}>
