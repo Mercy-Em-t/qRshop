@@ -12,12 +12,13 @@ import {
   queueOrder,
   registerOnlineSync,
 } from "../utils/order-queue";
+import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
 
 export default function Order() {
   const session = getQrSession();
   const navigate = useNavigate();
-  const { shop } = useShop(session?.shop_id);
+  const { shop, loading: shopLoading } = useShop(session?.shop_id);
   const { items, total, clearCart } = useCart();
   const [sending, setSending] = useState(false);
   const [queued, setQueued] = useState(false);
@@ -53,6 +54,10 @@ export default function Order() {
         </div>
       </div>
     );
+  }
+
+  if (shopLoading) {
+    return <LoadingSpinner message="Preparing order..." />;
   }
 
   if (items.length === 0) {

@@ -1,10 +1,24 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../hooks/use-cart";
 import CartComponent from "../components/Cart";
+import OfflineAlert from "../components/OfflineAlert";
 
 export default function CartPage() {
   const navigate = useNavigate();
   const { items, addItem, removeItem, total } = useCart();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -20,6 +34,10 @@ export default function CartPage() {
           <div className="w-24"></div>
         </div>
       </header>
+
+      {!isOnline && (
+        <OfflineAlert message="You are offline — your order can still be queued for WhatsApp" />
+      )}
 
       <main className="max-w-lg mx-auto px-4 py-6">
         <CartComponent
