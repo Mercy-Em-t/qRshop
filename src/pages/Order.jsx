@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getQrSession } from "../utils/qr-session";
 import { useShop } from "../hooks/use-shop";
@@ -8,6 +8,11 @@ import {
   buildWhatsAppMessage,
   buildWhatsAppLink,
 } from "../utils/whatsapp-builder";
+import {
+  queueOrder,
+  registerOnlineSync,
+} from "../utils/order-queue";
+import OfflineAlert from "../components/OfflineAlert";
 
 export default function Order() {
   const session = getQrSession();
@@ -15,6 +20,19 @@ export default function Order() {
   const { shop } = useShop(session?.shop_id);
   const { items, total, clearCart } = useCart();
   const [sending, setSending] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  // Track online/offline status
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
 
   if (items.length === 0) {
     return (
@@ -42,7 +60,15 @@ export default function Order() {
   const handleSendOrder = async () => {
     setSending(true);
     try {
-      // Register order in database before generating WhatsApp link
+      if (!isOnline) {
+        // Offline — queue order for later and register background sync
+        queueOrder(shopName, shopPhone, session?.table, items, total);
+        registerOnlineSync();
+        clearCart();
+        return;
+      }
+
+      // Online — register order in database then open WhatsApp link
       await createOrder(
         session?.shop_id,
         session?.table,
@@ -80,6 +106,10 @@ export default function Order() {
         </div>
       </header>
 
+      {!isOnline && (
+        <OfflineAlert message="You are offline — your order will be sent when connection is restored" />
+      )}
+
       <main className="max-w-lg mx-auto px-4 py-6">
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-1">
@@ -113,7 +143,7 @@ export default function Order() {
           </div>
         </div>
 
-        {whatsappLink ? (
+        {whatsappLink || !isOnline ? (
           <button
             onClick={handleSendOrder}
             disabled={sending}
@@ -124,6 +154,8 @@ export default function Order() {
                 <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
                 Sending...
               </>
+            ) : !isOnline ? (
+              "📥 Queue Order for WhatsApp"
             ) : (
               "📱 Send Order via WhatsApp"
             )}

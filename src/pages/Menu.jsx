@@ -1,59 +1,25 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getQrSession } from "../utils/qr-session";
-import { getMenuItemsByCategory, getUpsellItems } from "../services/menu-service";
+import { getUpsellItems } from "../services/menu-service";
 import { trackUpsell } from "../services/analytics-service";
-import { getCachedMenu, cacheMenu } from "../utils/menu-cache";
 import { useShop } from "../hooks/use-shop";
 import { useCart } from "../hooks/use-cart";
+import { useOfflineMenu } from "../hooks/use-offline-menu";
 import MenuItem from "../components/MenuItem";
 import UpsellModal from "../components/UpsellModal";
+import LoadingSpinner from "../components/LoadingSpinner";
+import OfflineAlert from "../components/OfflineAlert";
 
 export default function Menu() {
   const session = getQrSession();
   const navigate = useNavigate();
   const { shop, loading: shopLoading } = useShop(session?.shop_id);
   const { addItem, itemCount } = useCart();
-  const [categories, setCategories] = useState({});
-  const [menuLoading, setMenuLoading] = useState(true);
+  const { categories, loading: menuLoading, isOffline } = useOfflineMenu();
   const [upsellItems, setUpsellItems] = useState([]);
   const [lastAddedItemId, setLastAddedItemId] = useState(null);
   const [showUpsell, setShowUpsell] = useState(false);
-  const [isOffline, setIsOffline] = useState(false);
-
-  useEffect(() => {
-    if (!session) return;
-
-    async function fetchMenu() {
-      setMenuLoading(true);
-      try {
-        const data = await getMenuItemsByCategory(session.shop_id);
-        if (data && Object.keys(data).length > 0) {
-          setCategories(data);
-          cacheMenu(session.shop_id, data);
-          setIsOffline(false);
-        } else {
-          // Try cached data
-          const cached = getCachedMenu(session.shop_id);
-          if (cached) {
-            setCategories(cached);
-            setIsOffline(true);
-          }
-        }
-      } catch {
-        // Network error — try cache
-        const cached = getCachedMenu(session.shop_id);
-        if (cached) {
-          setCategories(cached);
-          setIsOffline(true);
-        }
-      } finally {
-        setMenuLoading(false);
-      }
-    }
-
-    fetchMenu();
-  }, [session]);
 
   const handleAddItem = async (item) => {
     addItem(item);
@@ -101,14 +67,7 @@ export default function Menu() {
   const isLoading = shopLoading || menuLoading;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading menu...</p>
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Loading menu..." />;
   }
 
   const categoryNames = Object.keys(categories);
@@ -138,11 +97,7 @@ export default function Menu() {
       </header>
 
       {isOffline && (
-        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2">
-          <p className="text-sm text-yellow-700 text-center">
-            📡 Showing cached menu — you appear to be offline
-          </p>
-        </div>
+        <OfflineAlert message="Showing cached menu — you appear to be offline" />
       )}
 
       <main className="max-w-lg mx-auto px-4 py-6">
