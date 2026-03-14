@@ -75,11 +75,9 @@ export function registerOnlineSync() {
   listenerRegistered = true;
 
   window.addEventListener("online", function handleOnline() {
-    const sent = sendQueuedOrder();
-    if (sent) {
-      // Allow re-registration for future queued orders
-      listenerRegistered = false;
-      window.removeEventListener("online", handleOnline);
-    }
+    sendQueuedOrder();
+    // Always clean up: remove listener and reset flag after first online event
+    listenerRegistered = false;
+    window.removeEventListener("online", handleOnline);
   });
 }

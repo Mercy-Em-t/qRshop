@@ -20,6 +20,7 @@ export default function Order() {
   const { shop } = useShop(session?.shop_id);
   const { items, total, clearCart } = useCart();
   const [sending, setSending] = useState(false);
+  const [queued, setQueued] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   // Track online/offline status
@@ -33,6 +34,26 @@ export default function Order() {
       window.removeEventListener("offline", goOffline);
     };
   }, []);
+
+  if (queued) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
+          <p className="text-2xl mb-2">📥</p>
+          <p className="text-gray-800 font-semibold mb-2">Order Queued!</p>
+          <p className="text-gray-500 text-sm mb-4">
+            Your order has been saved and will be sent via WhatsApp automatically when your connection is restored.
+          </p>
+          <button
+            onClick={() => navigate("/menu")}
+            className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors cursor-pointer"
+          >
+            Back to Menu
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
@@ -65,6 +86,7 @@ export default function Order() {
         queueOrder(shopName, shopPhone, session?.table, items, total);
         registerOnlineSync();
         clearCart();
+        setQueued(true);
         return;
       }
 
@@ -143,6 +165,7 @@ export default function Order() {
           </div>
         </div>
 
+        {/* Show send button when online with a valid phone, or when offline to allow queuing */}
         {whatsappLink || !isOnline ? (
           <button
             onClick={handleSendOrder}
