@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getQrSession } from "../utils/qr-session";
 import { useShop } from "../hooks/use-shop";
 import { useCart } from "../hooks/use-cart";
+import { createOrder } from "../services/order-service";
 import {
   buildWhatsAppMessage,
   buildWhatsAppLink,
@@ -12,6 +14,7 @@ export default function Order() {
   const navigate = useNavigate();
   const { shop } = useShop(session?.shop_id);
   const { items, total, clearCart } = useCart();
+  const [sending, setSending] = useState(false);
 
   if (items.length === 0) {
     return (
@@ -36,10 +39,29 @@ export default function Order() {
     ? buildWhatsAppLink(shopPhone, message)
     : null;
 
-  const handleSendOrder = () => {
-    if (whatsappLink) {
-      window.open(whatsappLink, "_blank", "noopener,noreferrer");
-      clearCart();
+  const handleSendOrder = async () => {
+    setSending(true);
+    try {
+      // Register order in database before generating WhatsApp link
+      await createOrder(
+        session?.shop_id,
+        session?.table,
+        items,
+        total
+      );
+
+      if (whatsappLink) {
+        window.open(whatsappLink, "_blank", "noopener,noreferrer");
+        clearCart();
+      }
+    } catch {
+      // Still allow sending even if DB tracking fails
+      if (whatsappLink) {
+        window.open(whatsappLink, "_blank", "noopener,noreferrer");
+        clearCart();
+      }
+    } finally {
+      setSending(false);
     }
   };
 
@@ -94,9 +116,17 @@ export default function Order() {
         {whatsappLink ? (
           <button
             onClick={handleSendOrder}
-            className="w-full mt-6 bg-green-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            disabled={sending}
+            className="w-full mt-6 bg-green-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
           >
-            📱 Send Order via WhatsApp
+            {sending ? (
+              <>
+                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
+                Sending...
+              </>
+            ) : (
+              "📱 Send Order via WhatsApp"
+            )}
           </button>
         ) : (
           <p className="mt-6 text-center text-red-500 text-sm">

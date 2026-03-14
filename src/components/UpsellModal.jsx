@@ -3,7 +3,7 @@ export default function UpsellModal({ upsellItems, onAccept, onDecline }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl">
+      <div className="bg-white rounded-xl p-6 max-w-sm w-full shadow-xl animate-in">
         <h3 className="text-lg font-semibold text-gray-800 mb-2">
           Would you also like?
         </h3>

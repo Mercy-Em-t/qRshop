@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MenuManager from "./pages/MenuManager";
 import QrGenerator from "./pages/QrGenerator";
+import Plans from "./pages/Plans";
 import Admin from "./pages/Admin";
 import AdminShops from "./pages/AdminShops";
 import AdminPlans from "./pages/AdminPlans";
@@ -53,6 +54,7 @@ export default function App() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/menu-manager" element={<MenuManager />} />
       <Route path="/qr-generator" element={<QrGenerator />} />
+      <Route path="/plans" element={<Plans />} />
 
       {/* Admin */}
       <Route path="/admin" element={<Admin />} />

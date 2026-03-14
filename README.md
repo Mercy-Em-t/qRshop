@@ -51,18 +51,30 @@ src/
 ## Routes
 
 ### Customer
-- `/enter?shop=SHOP_ID&table=TABLE_NUMBER` — QR entry point
-- `/menu` — Browse menu (requires QR session)
-- `/cart` — View and manage cart (requires QR session)
-- `/order` — Order confirmation and WhatsApp send (requires QR session)
+- `/enter?shop=SHOP_ID&table=TABLE_NUMBER` — QR entry point (server-side validation)
+- `/menu` — Browse menu (requires QR session, offline caching)
+- `/cart` — View and manage cart (persisted across reloads)
+- `/order` — Order confirmation and WhatsApp send (DB-tracked)
 
 ### Shop Owner
 - `/login` — Shop owner login
-- `/dashboard` — Shop management dashboard
+- `/dashboard` — Shop management dashboard with analytics
 - `/menu-manager` — Menu CRUD
 - `/qr-generator` — QR code generator for tables
+- `/plans` — Subscription plan management
 
 ### Admin
 - `/admin` — Admin panel
 - `/admin/shops` — Shop management
 - `/admin/plans` — Plan configuration
+
+## V2 Features
+
+- **Server-side QR validation** with device tracking and session expiry
+- **Optional geolocation check** to verify customer is at the venue
+- **Analytics dashboard** with orders per day, popular items, and upsell conversion rates
+- **Offline menu caching** using localStorage for resilience
+- **Cart persistence** across page reloads and network drops
+- **Subscription plans** with free and paid tiers
+- **Payment integration** scaffold for M-Pesa and card payments
+- **Order tracking** — all orders registered in DB before WhatsApp generation

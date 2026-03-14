@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getQrSession } from "../utils/qr-session";
 import { getMenuItemsByCategory, getUpsellItems } from "../services/menu-service";
+import { trackUpsell } from "../services/analytics-service";
+import { getCachedMenu, cacheMenu } from "../utils/menu-cache";
 import { useShop } from "../hooks/use-shop";
 import { useCart } from "../hooks/use-cart";
 import MenuItem from "../components/MenuItem";
@@ -15,15 +17,39 @@ export default function Menu() {
   const [categories, setCategories] = useState({});
   const [menuLoading, setMenuLoading] = useState(true);
   const [upsellItems, setUpsellItems] = useState([]);
+  const [lastAddedItemId, setLastAddedItemId] = useState(null);
   const [showUpsell, setShowUpsell] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
     if (!session) return;
 
     async function fetchMenu() {
-      const data = await getMenuItemsByCategory(session.shop_id);
-      setCategories(data);
-      setMenuLoading(false);
+      setMenuLoading(true);
+      try {
+        const data = await getMenuItemsByCategory(session.shop_id);
+        if (data && Object.keys(data).length > 0) {
+          setCategories(data);
+          cacheMenu(session.shop_id, data);
+          setIsOffline(false);
+        } else {
+          // Try cached data
+          const cached = getCachedMenu(session.shop_id);
+          if (cached) {
+            setCategories(cached);
+            setIsOffline(true);
+          }
+        }
+      } catch {
+        // Network error — try cache
+        const cached = getCachedMenu(session.shop_id);
+        if (cached) {
+          setCategories(cached);
+          setIsOffline(true);
+        }
+      } finally {
+        setMenuLoading(false);
+      }
     }
 
     fetchMenu();
@@ -31,6 +57,7 @@ export default function Menu() {
 
   const handleAddItem = async (item) => {
     addItem(item);
+    setLastAddedItemId(item.id);
 
     try {
       const upsells = await getUpsellItems(item.id);
@@ -50,13 +77,25 @@ export default function Menu() {
 
   const handleUpsellAccept = (item) => {
     addItem(item);
+    // Track upsell conversion
+    if (lastAddedItemId) {
+      trackUpsell(lastAddedItemId, item.id, true);
+    }
     setShowUpsell(false);
     setUpsellItems([]);
+    setLastAddedItemId(null);
   };
 
   const handleUpsellDecline = () => {
+    // Track upsell decline
+    if (lastAddedItemId && upsellItems.length > 0) {
+      for (const uItem of upsellItems) {
+        trackUpsell(lastAddedItemId, uItem.id, false);
+      }
+    }
     setShowUpsell(false);
     setUpsellItems([]);
+    setLastAddedItemId(null);
   };
 
   const isLoading = shopLoading || menuLoading;
@@ -97,6 +136,14 @@ export default function Menu() {
           </button>
         </div>
       </header>
+
+      {isOffline && (
+        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2">
+          <p className="text-sm text-yellow-700 text-center">
+            📡 Showing cached menu — you appear to be offline
+          </p>
+        </div>
+      )}
 
       <main className="max-w-lg mx-auto px-4 py-6">
         {categoryNames.length === 0 ? (
