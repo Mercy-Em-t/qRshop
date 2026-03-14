@@ -15,7 +15,14 @@ export function getQrSession() {
   const raw = sessionStorage.getItem(SESSION_KEY)
   if (!raw) return null
 
-  const session = JSON.parse(raw)
+  let session
+  try {
+    session = JSON.parse(raw)
+  } catch {
+    clearQrSession()
+    return null
+  }
+
   const createdAt = new Date(session.created_at).getTime()
   const now = Date.now()
 
