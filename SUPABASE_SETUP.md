@@ -142,3 +142,23 @@ Now that you have your project created and your API keys copied (from Step 2):
 1. Go back to Vercel.
 2. In the Environment Variables section of your new deployment, paste the `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 3. Click "Deploy".
+
+## 5. V3 Schema (Full Telemetry)
+
+The V3 schema adds server-side device tracking, visit logging, and enriched events. To apply it:
+
+1. Open the **SQL Editor** in Supabase.
+2. Copy the contents of [`supabase/schema.sql`](./supabase/schema.sql) into a new query.
+3. Click **Run**.
+
+This creates the following additional tables:
+- **deployments** — Where QR codes are physically installed
+- **devices** — Device fingerprints (type, OS, browser)
+- **sessions** — Browsing sessions tied to devices
+- **visits** — Full-context QR scan visit records
+- **users** — End-user accounts (phone-based)
+- **events** (enriched) — Telemetry events with user_id, visit_id, and metadata
+
+It also adds a `scan_count` trigger on the `qrs` table that auto-increments on each `qr_scanned` event.
+
+See [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) for the full table reference.

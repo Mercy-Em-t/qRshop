@@ -20,8 +20,16 @@ export async function logEvent(
     shop_id: shopId,
     session_id: sessionId,
     device_id: deviceId,
-    // Note: user_id would be extracted securely here if the user authenticates later
-    device_info: { userAgent: deviceInfo, ...extraMetadata },
+    user_id: extraMetadata.user_id || null,
+    visit_id: extraMetadata.visit_id || null,
+    metadata: {
+      userAgent: deviceInfo,
+      ...Object.fromEntries(
+        Object.entries(extraMetadata).filter(
+          ([key]) => key !== "user_id" && key !== "visit_id"
+        )
+      ),
+    },
   };
 
   // We intentionally fire-and-forget telemetry generally, but await here inside the service so clients can handle drops if they want.
