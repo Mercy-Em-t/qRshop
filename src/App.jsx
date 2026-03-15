@@ -11,6 +11,8 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MenuManager from "./pages/MenuManager";
 import QrGenerator from "./pages/QrGenerator";
+import QrDashboard from "./pages/QrDashboard";
+import ScanGateway from "./pages/ScanGateway";
 import Plans from "./pages/Plans";
 import Admin from "./pages/Admin";
 import AdminShops from "./pages/AdminShops";
@@ -23,6 +25,9 @@ export default function App() {
       <Route path="/" element={<Home />} />
       <Route path="/enter" element={<Enter />} />
       <Route path="/invalid-access" element={<InvalidAccess />} />
+      
+      {/* Platform Level QR Scanning Node */}
+      <Route path="/q/:qrId" element={<ScanGateway />} />
 
       {/* Customer (QR session required) */}
       <Route
@@ -56,6 +61,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/menu-manager" element={<MenuManager />} />
+      <Route path="/dashboard/qrs" element={<QrDashboard />} />
       <Route path="/qr-generator" element={<QrGenerator />} />
       <Route path="/plans" element={<Plans />} />
 
