@@ -29,15 +29,16 @@ export default function ScanGateway() {
           return;
         }
 
-        // 2. Log Telemetry Event (Fire and Forget)
-        logEvent("qr_scanned", qrId, node.shop_id, navigator.userAgent).catch(
-          (err) => console.error("Telemetry failed:", err)
-        );
+        // 2. Log Visit Record
+        const visit = await logVisit(qrId, node.shop_id).catch((err) => {
+          console.error("Visit logging failed:", err);
+          return null;
+        });
 
-        // 3. Log Visit Record (Fire and Forget)
-        logVisit(qrId, node.shop_id).catch(
-          (err) => console.error("Visit logging failed:", err)
-        );
+        // 3. Log Telemetry Event (Fire and Forget)
+        logEvent("qr_scanned", qrId, node.shop_id, navigator.userAgent, {
+          visit_id: visit?.visit_id || null,
+        }).catch((err) => console.error("Telemetry failed:", err));
 
         // 4. Resolve Behavior based on Standardized Actions
         switch (node.action) {

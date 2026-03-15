@@ -24,7 +24,11 @@ export async function logEvent(
     visit_id: extraMetadata.visit_id || null,
     metadata: {
       userAgent: deviceInfo,
-      ...extraMetadata,
+      ...Object.fromEntries(
+        Object.entries(extraMetadata).filter(
+          ([key]) => key !== "user_id" && key !== "visit_id"
+        )
+      ),
     },
   };
 

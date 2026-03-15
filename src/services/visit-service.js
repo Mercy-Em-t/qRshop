@@ -19,7 +19,6 @@ export async function logVisit(qrId, shopId, deploymentId = null) {
     deployment_id: deploymentId,
     session_id: sessionId,
     device_id: deviceId,
-    visit_start: new Date().toISOString(),
   };
 
   const { data, error } = await supabase
