@@ -10,8 +10,8 @@ export default function QrGenerator() {
   const [createdQr, setCreatedQr] = useState(null);
   const navigate = useNavigate();
 
-  // Mock shop ID for now
-  const shopId = "test-shop-id-123";
+  // Utilizing the persistent demo shop ID for the MVP
+  const shopId = "11111111-1111-1111-1111-111111111111";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
