@@ -145,3 +145,90 @@ If shops or admin need authentication.
 * Prices stored as decimal for **currency precision**.
 * Upsell relationships can support **multiple suggestions per item**.
 * This schema is compatible with **Supabase/PostgreSQL** but can be adapted to Firebase collections if needed.
+
+---
+
+## 6. V2 Tables
+
+### 6.1 QR_Sessions
+
+Manages server-side QR code session validation with device tracking.
+
+| Field      | Type      | Description                                  |
+| ---------- | --------- | -------------------------------------------- |
+| id         | UUID      | Primary key                                  |
+| shop_id    | UUID      | Foreign key → Shops(id)                      |
+| table_id   | String    | Table identifier                             |
+| device_id  | String    | Device identifier for session deduplication  |
+| created_at | Timestamp | Auto timestamp                               |
+| expires_at | Timestamp | Session expiration (default: 30 minutes)     |
+| status     | String    | `active`, `expired`                          |
+
+---
+
+### 6.2 Analytics_Orders
+
+Tracks all order attempts for analytics and reporting.
+
+| Field       | Type      | Description                     |
+| ----------- | --------- | ------------------------------- |
+| id          | UUID      | Primary key                     |
+| shop_id     | UUID      | Foreign key → Shops(id)         |
+| table_id    | String    | Table identifier                |
+| items       | JSONB     | Ordered items with quantities   |
+| total_price | Decimal   | Total order value               |
+| timestamp   | Timestamp | Auto timestamp (default: now()) |
+
+---
+
+### 6.3 Analytics_Upsells
+
+Tracks upsell suggestion performance (accepted/declined).
+
+| Field     | Type      | Description                                         |
+| --------- | --------- | --------------------------------------------------- |
+| id        | UUID      | Primary key                                         |
+| item_id   | UUID      | Foreign key → Menu_Items(id) (original item)        |
+| upsell_id | UUID      | Foreign key → Menu_Items(id) (suggested item)       |
+| accepted  | Boolean   | Whether the upsell was accepted                     |
+| timestamp | Timestamp | Auto timestamp                                      |
+
+---
+
+### 6.4 Subscriptions
+
+Manages shop subscription plans and feature access.
+
+| Field      | Type      | Description                         |
+| ---------- | --------- | ----------------------------------- |
+| id         | UUID      | Primary key                         |
+| shop_id    | UUID      | Foreign key → Shops(id)             |
+| plan_type  | String    | `free`, `paid`                      |
+| start_date | Timestamp | Plan start date                     |
+| end_date   | Timestamp | Plan end date                       |
+| status     | String    | `active`, `expired`, `cancelled`    |
+
+---
+
+### 6.5 Payments (Optional)
+
+Tracks payment transactions for online ordering.
+
+| Field      | Type      | Description                         |
+| ---------- | --------- | ----------------------------------- |
+| id         | UUID      | Primary key                         |
+| order_id   | UUID      | Foreign key → Orders(id)            |
+| amount     | Decimal   | Payment amount                      |
+| method     | String    | `mpesa`, `card`                     |
+| status     | String    | `pending`, `completed`, `failed`    |
+| created_at | Timestamp | Auto timestamp                      |
+
+---
+
+## 7. V2 Indexing Recommendations
+
+* Index `shop_id` + `status` on `qr_sessions` for fast active session lookup.
+* Index `shop_id` + `timestamp` on `analytics_orders` for date-range queries.
+* Index `item_id` on `analytics_upsells` for conversion rate calculations.
+* Index `shop_id` + `status` on `subscriptions` for plan lookup.
+* Add indexes to existing `orders`, `menu_items`, `qr_sessions` for scale.
