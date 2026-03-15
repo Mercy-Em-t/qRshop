@@ -78,7 +78,7 @@ export default function Order() {
   }
 
   const shopName = shop?.name || "Shop";
-  const shopPhone = shop?.phone || "";
+  const shopPhone = shop?.phone || import.meta.env.VITE_SHOP_PHONE || "";
   const message = buildWhatsAppMessage(shopName, session?.table, items, total, activeCoupon, discountAmount);
   const whatsappLink = shopPhone
     ? buildWhatsAppLink(shopPhone, message)
