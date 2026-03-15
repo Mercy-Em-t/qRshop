@@ -20,10 +20,18 @@ export default function Order() {
   const session = getQrSession();
   const navigate = useNavigate();
   const { shop, loading: shopLoading } = useShop(session?.shop_id);
-  const { items, total, subtotal, discountAmount, activeCoupon, clearCart } = useCart();
+  const { items, total, subtotal, discountAmount, activeCoupon, applyCoupon, clearCart } = useCart();
   const [sending, setSending] = useState(false);
   const [queued, setQueued] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [savedCoupon, setSavedCoupon] = useState(null);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("qr_saved_coupon");
+      if (stored) setSavedCoupon(JSON.parse(stored));
+    } catch {}
+  }, []);
 
   // Track online/offline status
   useEffect(() => {
@@ -203,6 +211,21 @@ export default function Order() {
 
           <div className="border-t border-gray-300 mt-4 pt-4 space-y-2">
             
+            {!activeCoupon && savedCoupon && (
+              <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4 flex justify-between items-center animate-fade-in">
+                <div>
+                  <p className="font-bold text-indigo-800">{savedCoupon.description}</p>
+                  <p className="text-xs text-indigo-600 mt-1">Tap to redeem your reward!</p>
+                </div>
+                <button 
+                  onClick={() => applyCoupon(savedCoupon)} 
+                  className="bg-indigo-600 px-4 py-2 rounded-lg text-white font-bold text-sm shadow-sm transition-colors hover:bg-indigo-700 cursor-pointer"
+                >
+                  Apply
+                </button>
+              </div>
+            )}
+
             {activeCoupon && (
               <>
                 <div className="flex justify-between text-gray-500">

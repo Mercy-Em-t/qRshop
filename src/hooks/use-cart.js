@@ -3,6 +3,7 @@ import { logEvent } from "../services/telemetry-service";
 import { getQrSession } from "../utils/qr-session";
 
 const CART_STORAGE_KEY = "qr_cart";
+const COUPON_STORAGE_KEY = "qr_active_coupon";
 
 function loadCartFromStorage() {
   try {
@@ -16,6 +17,14 @@ function loadCartFromStorage() {
   return [];
 }
 
+function loadCouponFromStorage() {
+  try {
+    const raw = localStorage.getItem(COUPON_STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return null;
+}
+
 function saveCartToStorage(items) {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
@@ -26,12 +35,23 @@ function saveCartToStorage(items) {
 
 export function useCart() {
   const [items, setItems] = useState(() => loadCartFromStorage());
-  const [activeCoupon, setActiveCoupon] = useState(null);
+  const [activeCoupon, setActiveCoupon] = useState(() => loadCouponFromStorage());
 
   // Persist cart to localStorage on change
   useEffect(() => {
     saveCartToStorage(items);
   }, [items]);
+
+  // Persist active coupon
+  useEffect(() => {
+    try {
+      if (activeCoupon) {
+        localStorage.setItem(COUPON_STORAGE_KEY, JSON.stringify(activeCoupon));
+      } else {
+        localStorage.removeItem(COUPON_STORAGE_KEY);
+      }
+    } catch {}
+  }, [activeCoupon]);
 
   const applyCoupon = useCallback((coupon) => {
     setActiveCoupon(coupon);

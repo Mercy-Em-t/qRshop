@@ -1,9 +1,21 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { getQrSession } from "../utils/qr-session";
 
 export default function Campaign() {
   const session = getQrSession();
+  const navigate = useNavigate();
+
+  const handleClaim = () => {
+    try {
+      localStorage.setItem("qr_saved_coupon", JSON.stringify({
+        code: "WELCOME20",
+        discountPercentage: 20,
+        description: "20% Off Your First Order!"
+      }));
+    } catch {}
+    navigate("/menu");
+  };
 
   useEffect(() => {
     // Analytics: In a real app we'd log the campaign impression here
@@ -41,12 +53,12 @@ export default function Campaign() {
           Unlock this exclusive discount by using our Smart Shopping platform today. Minimum spend applies.
         </p>
         
-        <Link 
-          to="/menu" 
-          className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all hover:-translate-y-1"
+        <button 
+          onClick={handleClaim}
+          className="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all cursor-pointer hover:-translate-y-1"
         >
           Claim Offer & View Menu
-        </Link>
+        </button>
         <button className="w-full mt-4 text-gray-400 font-medium hover:text-gray-600">
           No thanks
         </button>
