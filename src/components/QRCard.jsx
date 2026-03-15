@@ -1,9 +1,21 @@
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getQrMetrics } from '../services/telemetry-service';
 
 export default function QRCard({ qr, updateQR, deleteQR }) {
   const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
+  const [editingLoc, setEditingLoc] = useState(false);
+  const [editLocation, setEditLocation] = useState(qr.location);
+  const [metrics, setMetrics] = useState({ totalScans: 0 });
+
+  useEffect(() => {
+    async function loadMetrics() {
+      const data = await getQrMetrics(qr.id);
+      setMetrics(data);
+    }
+    loadMetrics();
+  }, [qr.id]);
 
   const handleToggleStatus = async (e) => {
     e.stopPropagation();
@@ -25,7 +37,30 @@ export default function QRCard({ qr, updateQR, deleteQR }) {
     <div className={`border border-gray-200 p-5 rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between ${isPending ? 'opacity-50 pointer-events-none' : ''}`}>
       <div>
         <div className="flex justify-between items-start mb-4">
-          <h2 className="font-bold text-lg text-gray-800 line-clamp-1">{qr.location}</h2>
+          {editingLoc ? (
+             <input 
+                 value={editLocation} 
+                 onChange={e => setEditLocation(e.target.value)} 
+                 onBlur={async () => {
+                     setEditingLoc(false);
+                     if (editLocation.trim() !== qr.location) {
+                         setIsPending(true);
+                         await updateQR(qr.id, { location: editLocation });
+                         setIsPending(false);
+                     }
+                 }}
+                 autoFocus
+                 className="w-full border-b-2 border-blue-400 font-bold text-lg text-gray-800 outline-none bg-blue-50 px-1"
+             />
+          ) : (
+             <h2 
+                 onClick={(e) => { e.stopPropagation(); setEditingLoc(true); }}
+                 title="Click to rename location"
+                 className="font-bold text-lg text-gray-800 line-clamp-1 cursor-pointer hover:text-blue-600 border-b border-transparent hover:border-blue-200 transition-colors"
+             >
+                 {qr.location}
+             </h2>
+          )}
           <button 
             onClick={handleToggleStatus}
             title="Click to toggle status"
@@ -35,10 +70,14 @@ export default function QRCard({ qr, updateQR, deleteQR }) {
           </button>
         </div>
         <div className="text-sm text-gray-600 mb-6 space-y-3">
-          <p className="flex justify-between items-center bg-gray-50 border border-gray-100 px-3 py-2 rounded-lg">
+          <div className="flex justify-between items-center bg-gray-50 border border-gray-100 px-3 py-2 rounded-lg">
             <span className="text-gray-500 font-medium">Node ID</span> 
             <span className="font-mono font-bold text-gray-700">{qr.id}</span>
-          </p>
+          </div>
+          <div className="flex justify-between items-center bg-gray-50 border border-gray-100 px-3 py-2 rounded-lg">
+            <span className="text-gray-500 font-medium">Total Scans</span> 
+            <span className="font-bold text-gray-700">{metrics.totalScans} hits</span>
+          </div>
           <div className="flex justify-between items-center bg-blue-50/50 border border-blue-100 px-3 py-2 rounded-lg">
             <span className="text-blue-800 font-medium">Instruction</span> 
             <div className="relative">

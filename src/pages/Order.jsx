@@ -15,6 +15,7 @@ import {
 } from "../utils/order-queue";
 import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
+import PaymentModal from "../components/PaymentModal";
 
 export default function Order() {
   const session = getQrSession();
@@ -25,6 +26,7 @@ export default function Order() {
   const [queued, setQueued] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [savedCoupon, setSavedCoupon] = useState(null);
+  const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
     try {
@@ -109,6 +111,13 @@ export default function Order() {
         items,
         total
       );
+  };
+
+  const processPaymentSuccess = async ({ method, phone }) => {
+      // Store phone for tracking simulation
+      if (phone) localStorage.setItem("customer_phone", phone);
+      setShowPayment(false);
+      handleDirectCheckout();
   };
 
   const handleDirectCheckout = async () => {
@@ -253,7 +262,7 @@ export default function Order() {
         {shopPhone || !isOnline ? (
           <div className="mt-8 space-y-3">
             <button
-              onClick={handleDirectCheckout}
+              onClick={() => setShowPayment(true)}
               disabled={sending}
               className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
@@ -278,6 +287,14 @@ export default function Order() {
           </p>
         )}
       </main>
+
+      {showPayment && (
+        <PaymentModal 
+           amount={total} 
+           onComplete={processPaymentSuccess}
+           onCancel={() => setShowPayment(false)}
+        />
+      )}
     </div>
   );
 }
