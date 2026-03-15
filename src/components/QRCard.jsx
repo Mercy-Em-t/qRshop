@@ -34,15 +34,33 @@ export default function QRCard({ qr, updateQR, deleteQR }) {
             {qr.status}
           </button>
         </div>
-        <div className="text-sm text-gray-600 mb-6 space-y-1">
-          <p className="flex justify-between">
-            <span className="text-gray-400">Node ID:</span> 
-            <span className="font-mono bg-gray-50 px-1 rounded">{qr.id}</span>
+        <div className="text-sm text-gray-600 mb-6 space-y-3">
+          <p className="flex justify-between items-center bg-gray-50 border border-gray-100 px-3 py-2 rounded-lg">
+            <span className="text-gray-500 font-medium">Node ID</span> 
+            <span className="font-mono font-bold text-gray-700">{qr.id}</span>
           </p>
-          <p className="flex justify-between">
-            <span className="text-gray-400">Action:</span> 
-            <span className="font-medium text-blue-600">{qr.action}</span>
-          </p>
+          <div className="flex justify-between items-center bg-blue-50/50 border border-blue-100 px-3 py-2 rounded-lg">
+            <span className="text-blue-800 font-medium">Instruction</span> 
+            <div className="relative">
+               <select 
+                 value={qr.action}
+                 onChange={async (e) => {
+                    setIsPending(true);
+                    await updateQR(qr.id, { action: e.target.value });
+                    setIsPending(false);
+                 }}
+                 disabled={isPending}
+                 className="appearance-none bg-white border border-blue-200 text-blue-700 font-bold py-1 pl-3 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm cursor-pointer disabled:opacity-50 transition-all hover:bg-blue-50"
+               >
+                 <option value="open_menu">Open Menu</option>
+                 <option value="open_order">Fast Order Mode</option>
+                 <option value="open_campaign">Marketing Campaign</option>
+               </select>
+               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-blue-500">
+                 <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+               </div>
+            </div>
+          </div>
         </div>
       </div>
       <div className="flex gap-2 mt-auto">

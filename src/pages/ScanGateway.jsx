@@ -54,8 +54,13 @@ export default function ScanGateway() {
             break;
             
           case 'open_campaign':
+             // Programmatic change executed from Code Manager Dashboard
+             createQrSession(node.shop_id, node.location);
+             navigate("/campaign", { replace: true });
+             break;
+             
           case 'open_loyalty':
-             setError(`The '${node.action}' experience is currently under construction.`);
+             setError(`The Loyalty experience is currently under construction.`);
              break;
              
           default:
