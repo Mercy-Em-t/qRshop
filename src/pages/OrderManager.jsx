@@ -8,6 +8,7 @@ const SHOP_ID = "11111111-1111-1111-1111-111111111111";
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchOrders();
@@ -86,6 +87,25 @@ export default function OrderManager() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {/* Search / Pull Order Bar */}
+        <div className="mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
+           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+           </svg>
+           <input 
+             type="text"
+             placeholder="Paste WhatsApp Order ID to pull receipt..."
+             value={searchQuery}
+             onChange={(e) => setSearchQuery(e.target.value)}
+             className="w-full bg-transparent border-none outline-none text-gray-800 placeholder-gray-400 font-medium"
+           />
+           {searchQuery && (
+              <button onClick={() => setSearchQuery("")} className="text-gray-400 hover:text-gray-600 font-bold bg-gray-100 px-2 py-1 rounded-md text-sm transition">
+                 Clear
+              </button>
+           )}
+        </div>
+
         {loading ? (
           <p className="text-center text-gray-500 py-12">Listening for incoming orders...</p>
         ) : orders.length === 0 ? (
@@ -95,7 +115,9 @@ export default function OrderManager() {
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {orders.map((order) => {
+            {orders
+              .filter(o => o.id.toLowerCase().includes(searchQuery.toLowerCase()) || o.status.includes(searchQuery.toLowerCase()))
+              .map((order) => {
               const shortId = order.id.split("-")[0].toUpperCase();
               
               return (
