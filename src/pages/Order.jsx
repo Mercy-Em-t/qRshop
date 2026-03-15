@@ -261,6 +261,7 @@ export default function Order() {
         {/* Split Checkouts: Pure Web vs WhatsApp Hybrid */}
         {shopPhone || !isOnline ? (
           <div className="mt-8 space-y-3">
+            {/* TEMPORARILY DISABLED FOR LIVE M-PESA API PENDING 
             <button
               onClick={() => setShowPayment(true)}
               disabled={sending}
@@ -272,13 +273,14 @@ export default function Order() {
                 "💳 Secure Direct Checkout"
               )}
             </button>
+            */}
 
             <button
               onClick={handleWhatsAppCheckout}
               disabled={sending}
-              className="w-full bg-white text-green-700 border-2 border-green-200 py-3 rounded-xl font-semibold hover:bg-green-50 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
             >
-              {!isOnline ? "📥 Queue via WhatsApp" : "💬 Send via WhatsApp (Optional)"}
+              {!isOnline ? "📥 Queue via WhatsApp" : "💬 Place Order via WhatsApp"}
             </button>
           </div>
         ) : (
