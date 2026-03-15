@@ -7,6 +7,7 @@ export async function getMenuItems(shopId) {
     .from("menu_items")
     .select("*")
     .eq("shop_id", shopId)
+    .neq("is_active", false)
     .order("category", { ascending: true });
 
   if (error) {

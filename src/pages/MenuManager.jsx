@@ -191,11 +191,15 @@ export default function MenuManager() {
     e.target.value = null; // Reset input wrapper
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this specific menu item?")) return;
-    
-    await supabase.from("menu_items").delete().eq("id", id);
-    setItems((items) => items.filter((item) => item.id !== id));
+  const handleToggleActive = async (id, currentStatus) => {
+    // If currentStatus is null/undefined, it means it's active.
+    const newStatus = currentStatus === false ? true : false;
+    const { error } = await supabase.from("menu_items").update({ is_active: newStatus }).eq("id", id);
+    if (!error) {
+       setItems((items) => items.map(item => item.id === id ? { ...item, is_active: newStatus } : item));
+    } else {
+       alert("Error updating status: " + error.message);
+    }
   };
 
   return (
@@ -341,21 +345,25 @@ export default function MenuManager() {
           ) : (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden">
               {items.map((item) => (
-                <div key={item.id} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
+                <div key={item.id} className={`p-4 flex items-center justify-between transition-colors ${item.is_active === false ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}`}>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-semibold text-gray-800">{item.name}</h3>
-                      <span className="bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full font-medium">
+                      <h3 className={`font-semibold ${item.is_active === false ? 'text-gray-500 line-through' : 'text-gray-800'}`}>{item.name}</h3>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.is_active === false ? 'bg-gray-200 text-gray-500' : 'bg-green-100 text-green-800'}`}>
                         {item.category}
                       </span>
+                      {item.is_active === false && (
+                         <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">Inactive</span>
+                      )}
                     </div>
                     {item.description && <p className="text-sm text-gray-500 mt-1">{item.description}</p>}
-                    <p className="text-sm font-medium text-gray-700 mt-1">KSh {item.price}</p>
+                    <p className={`text-sm font-medium mt-1 ${item.is_active === false ? 'text-gray-400' : 'text-gray-700'}`}>KSh {item.price}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => startEdit(item)}
-                      className="text-indigo-500 hover:text-indigo-700 p-2 rounded-lg hover:bg-indigo-50 transition-colors"
+                      disabled={item.is_active === false}
+                      className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-gray-300 cursor-not-allowed' : 'text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'}`}
                       title="Edit Item"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -363,13 +371,19 @@ export default function MenuManager() {
                       </svg>
                     </button>
                     <button
-                      onClick={() => handleDelete(item.id)}
-                      className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                      title="Delete Item"
+                      onClick={() => handleToggleActive(item.id, item.is_active)}
+                      className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-green-500 hover:text-green-700 hover:bg-green-50' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'}`}
+                      title={item.is_active === false ? "Reactivate Item" : "Deactivate Item"}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
+                      {item.is_active === false ? (
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                         </svg>
+                      ) : (
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                           <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+                         </svg>
+                      )}
                     </button>
                   </div>
                 </div>
