@@ -116,9 +116,14 @@ export default function OrderManager() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {orders
-              .filter(o => o.id.toLowerCase().includes(searchQuery.toLowerCase()) || o.status.includes(searchQuery.toLowerCase()))
+              .filter(o => {
+                 const idStr = String(o?.id || "");
+                 const statStr = String(o?.status || "");
+                 const query = searchQuery.toLowerCase();
+                 return idStr.toLowerCase().includes(query) || statStr.toLowerCase().includes(query);
+              })
               .map((order) => {
-              const shortId = order.id.split("-")[0].toUpperCase();
+              const shortId = String(order?.id || "N/A").split("-")[0].toUpperCase();
               
               return (
                 <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
