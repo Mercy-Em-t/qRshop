@@ -124,6 +124,28 @@ export default function MenuManager() {
     URL.revokeObjectURL(url);
   };
 
+  const handleDownloadTemplate = () => {
+    // Generate a dummy CSV row as a template
+    const templateContent = [
+      "Name,Category,Price,Description",
+      "Signature Burger,Main,750,Double beef patty with special sauce",
+      "Loaded Fries,Sides,300,Crispy fries topped with cheese and bacon",
+      "Vanilla Shake,Drinks,400,Classic thick vanilla milkshake"
+    ].join("\n");
+    
+    const blob = new Blob([templateContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "QR_Shop_Import_Template.csv");
+    document.body.appendChild(link);
+    link.click();
+    
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleBulkUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -194,23 +216,37 @@ export default function MenuManager() {
           <div className="flex justify-between items-center mb-4">
              <h2 className="text-lg font-bold text-gray-800">{editingId ? "Edit Item" : "Add New Item"}</h2>
              {!editingId && (
-                <div className="flex gap-2">
+                <div className="flex gap-2 relative">
                   <button 
                     onClick={handleExportCSV}
                     className="bg-white text-gray-700 font-bold text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition shadow-sm whitespace-nowrap"
                   >
                      📥 Export CSV
                   </button>
-                  <div className="relative overflow-hidden inline-block group cursor-pointer">
-                    <button className="bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-lg hover:bg-indigo-100 transition whitespace-nowrap border border-indigo-100">
-                       📤 Import CSV
+                  <div className="relative group overflow-visible z-30">
+                    <button className="bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-lg hover:bg-indigo-100 transition whitespace-nowrap border border-indigo-100 flex items-center gap-1">
+                       📤 Import CSV ▼
                     </button>
-                    <input 
-                       type="file" 
-                       accept=".csv"
-                       onChange={handleBulkUpload}
-                       className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer cursor-copy"
-                    />
+                    {/* Dropdown Menu */}
+                    <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right">
+                       <button 
+                         onClick={handleDownloadTemplate} 
+                         className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium border-b border-gray-50 flex items-center gap-2"
+                       >
+                           📄 Download Template
+                       </button>
+                       <div className="relative hover:bg-gray-50 transition-colors">
+                          <button className="w-full text-left px-4 py-3 text-sm text-gray-700 font-medium flex items-center gap-2">
+                              ☁️ Upload Filled CSV
+                          </button>
+                          <input 
+                              type="file" 
+                              accept=".csv"
+                              onChange={handleBulkUpload}
+                              className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer"
+                          />
+                       </div>
+                    </div>
                   </div>
                 </div>
              )}
