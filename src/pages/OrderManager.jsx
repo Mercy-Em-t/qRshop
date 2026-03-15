@@ -63,6 +63,8 @@ export default function OrderManager() {
       case "paid":
       case "preparing":
         return <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Preparing</span>;
+      case "stk_pushed":
+        return <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-bold uppercase animate-pulse">Awaiting PIN Ping</span>;
       case "ready":
       case "completed":
         return <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Completed</span>;
@@ -164,10 +166,18 @@ export default function OrderManager() {
                     <div className="grid grid-cols-2 gap-2 mt-auto">
                       {(order.status === "pending_payment" || order.status === "pending") ? (
                         <button
-                          onClick={() => updateOrderStatus(order.id, "preparing")}
+                          onClick={() => updateOrderStatus(order.id, "stk_pushed")}
                           className="col-span-2 bg-indigo-600 text-white font-medium py-3 rounded-lg hover:bg-indigo-700 transition"
                         >
-                          💸 Trigger STK Push & Accept
+                          💸 Trigger STK Push
+                        </button>
+                      ) : order.status === "stk_pushed" ? (
+                        <button
+                          disabled
+                          className="col-span-2 bg-indigo-200 text-indigo-800 font-medium py-3 rounded-lg cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                          <span className="animate-spin h-4 w-4 border-2 border-indigo-800 border-t-transparent rounded-full"></span>
+                          Waiting for Customer PIN...
                         </button>
                       ) : order.status === "preparing" ? (
                         <button

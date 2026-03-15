@@ -9,6 +9,8 @@ export default function TrackOrder() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pin, setPin] = useState("");
+  const [processingPin, setProcessingPin] = useState(false);
 
   useEffect(() => {
     if (!supabase) {
@@ -53,6 +55,25 @@ export default function TrackOrder() {
     }
   };
 
+  const submitMockPin = async () => {
+    if (pin.length < 4) return;
+    setProcessingPin(true);
+    
+    // Simulate network delay
+    await new Promise(r => setTimeout(r, 1500));
+    
+    // Update DB
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "preparing" })
+      .eq("id", orderId);
+      
+    if (!error) {
+       setOrder(prev => ({...prev, status: "preparing"}));
+    }
+    setProcessingPin(false);
+  };
+
   if (loading) return <LoadingSpinner message="Locating your order..." />;
 
   if (error) {
@@ -89,6 +110,12 @@ export default function TrackOrder() {
       icon: "✅",
       title: "Ready for Pickup/Delivery!",
       description: "Your order is ready. Thank you for dining with us!"
+    },
+    stk_pushed: {
+      color: "bg-gray-900 text-white border-gray-900",
+      icon: "📱",
+      title: "Check Your Phone",
+      description: "M-PESA prompt sent. Please enter your PIN."
     }
   };
 
@@ -96,7 +123,52 @@ export default function TrackOrder() {
   const shortId = orderId.split("-")[0].toUpperCase();
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
+    <div className="min-h-screen bg-gray-50 pb-12 relative">
+      
+      {/* SIMULATED SAFARICOM M-PESA POPUP (STK PUSH) */}
+      {order.status === "stk_pushed" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-fade-in">
+          <div className="bg-white max-w-sm w-full rounded-2xl shadow-2xl overflow-hidden scale-in">
+            <div className="bg-[#4fb948] p-4 text-center">
+              <h3 className="font-bold text-white text-lg tracking-wide">M-PESA</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-800 text-center mb-6 text-lg">
+                Do you want to pay KSh {order.total_price} to QR-Shop?
+              </p>
+              
+              <div className="mb-6">
+                <label className="block text-sm text-gray-500 mb-2">Enter M-PESA PIN</label>
+                <input 
+                  type="password"
+                  maxLength="4"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                  className="w-full text-center text-2xl tracking-[0.5em] font-mono border-b-2 border-green-500 focus:outline-none focus:border-green-700 pb-2"
+                  placeholder="****"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  disabled={processingPin}
+                  className="flex-1 py-3 text-gray-500 font-semibold hover:bg-gray-100 rounded-lg transition"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={submitMockPin}
+                  disabled={pin.length < 4 || processingPin}
+                  className="flex-1 py-3 bg-[#4fb948] text-white font-bold rounded-lg hover:bg-[#3ea038] transition disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {processingPin ? "Verifying..." : "OK"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-md mx-auto px-4 py-4 text-center">
           <Link to="/menu" className="absolute left-4 text-green-600 font-medium">← Menu</Link>
