@@ -1,18 +1,16 @@
-export function buildWhatsAppMessage(shopName, table, items, total, activeCoupon, discountAmount) {
+export function buildWhatsAppMessage(shopName, table, items) {
   const itemLines = items
-    .map((item) => `${item.quantity} ${item.name}`)
+    .map((item) => `${item.quantity}x ${item.name}`)
     .join("\n");
 
-  const discountLine = activeCoupon ? `\nPromo: ${activeCoupon.code} (-KSh ${discountAmount})` : "";
-
-  const message = `New Order
+  return `New Order Ticket
 Shop: ${shopName}
 Table: ${table}
+------------
 Items:
-${itemLines}${discountLine}
-Total: KSh ${total}`;
-
-  return message;
+${itemLines}
+------------
+(Customer is awaiting STK Push for payment)`;
 }
 
 export function buildWhatsAppLink(phoneNumber, message) {
