@@ -17,14 +17,25 @@ export function useEvents(qrId) {
       return;
     }
 
-    const { data, error } = await supabase
-      .from('events')
-      .select('*')
-      .eq('qr_id', qrId)
-      .order('timestamp', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('qr_id', qrId)
+        .order('timestamp', { ascending: false });
 
-    if (!error) setEvents(data || []);
-    setLoading(false);
+      if (error) {
+         console.error("Supabase Telemetry Error:", error);
+         setEvents([]);
+      } else {
+         setEvents(data || []);
+      }
+    } catch (err) {
+      console.error("Hard Exception in Telemetry:", err);
+      setEvents([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   // Derive basic analytics over the event stream
