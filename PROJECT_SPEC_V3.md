@@ -145,7 +145,7 @@ import { useQRs } from '../../hooks/useQRs'
 import LoadingSpinner from '../../components/LoadingSpinner'
 
 export default function Dashboard() {
-  const shopId = 'test-shop-id-1234-5678-9abcdef01234'; // Mocked for now
+  const shopId = '11111111-1111-1111-1111-111111111111'; // Mocked for now
   const { qrs, loading } = useQRs(shopId);
 
   if (loading) return <LoadingSpinner message="Loading Nodes..." />

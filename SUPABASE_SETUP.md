@@ -133,7 +133,7 @@ create policy "Allow public insert on order_items" on public.order_items for ins
 
 -- Create a mock test shop so the frontend doesn't crash on load
 insert into public.shops (id, name, phone, plan) 
-values ('test-shop-id-1234-5678-9abcdef01234', 'QR Shop Demo', '+1234567890', 'free')
+values ('11111111-1111-1111-1111-111111111111', 'QR Shop Demo', '+1234567890', 'free')
 on conflict do nothing;
 ```
 

@@ -11,6 +11,12 @@ export function useQRs(shopId) {
 
   async function fetchQRs() {
     setLoading(true);
+    if (!supabase) {
+      setQrs([]);
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('qrs')
       .select('*')

@@ -11,6 +11,12 @@ export function useEvents(qrId) {
 
   async function fetchEvents() {
     setLoading(true);
+    if (!supabase) {
+      setEvents([]);
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('events')
       .select('*')

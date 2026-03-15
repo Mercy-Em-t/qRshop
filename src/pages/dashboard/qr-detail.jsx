@@ -18,7 +18,10 @@ export default function QRAnalytics() {
   const scans = events.filter(e => e.event_type === 'qr_scanned').length;
   const menuViews = events.filter(e => e.event_type === 'menu_opened').length;
   const ordersStarting = events.filter(e => e.event_type === 'order_started').length;
-  const url = `${window.location.origin}/q/${qrId}`;
+  
+  // Allow env override for QR destinations so you can generate real-world codes even while developing on localhost
+  const gatewayBase = import.meta.env.VITE_GATEWAY_URL || window.location.origin;
+  const url = `${gatewayBase}/q/${qrId}`;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">

@@ -101,7 +101,7 @@ export default function QrGenerator() {
                
                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 inline-block mb-6">
                  <QRCodeSVG 
-                    value={`${window.location.origin}/q/${createdQr.id}`} 
+                    value={`${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${createdQr.id}`} 
                     size={200}
                     level="H"
                     includeMargin={true}
@@ -109,7 +109,7 @@ export default function QrGenerator() {
                </div>
 
                <div className="bg-gray-50 rounded p-4 w-full text-left mb-6 font-mono text-sm break-all border border-gray-200">
-                  {`${window.location.origin}/q/${createdQr.id}`}
+                  {`${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${createdQr.id}`}
                </div>
 
                <button 

@@ -5,7 +5,7 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 
 export default function DashboardIndex() {
   // Hardcoded for V3 MVP. Auth wrapper handles this in prod.
-  const shopId = 'test-shop-id-1234-5678-9abcdef01234'; 
+  const shopId = '11111111-1111-1111-1111-111111111111'; 
   const { qrs, loading, addQR, updateQR, deleteQR } = useQRs(shopId);
 
   const [showModal, setShowModal] = useState(false);
@@ -21,17 +21,23 @@ export default function DashboardIndex() {
     // Generate a secure short ID for the gateway URL
     const shortId = Math.random().toString(36).substring(2, 8).toUpperCase();
     
-    await addQR({
+    const { error } = await addQR({
       id: shortId,
       shop_id: shopId,
       location: newLocation,
       action: newAction,
       status: 'active'
     });
+
+    if (error) {
+       console.error("Supabase Insert Error:", error);
+       alert(`Failed to create QR Node: ${error.message || JSON.stringify(error)}`);
+    } else {
+       setShowModal(false);
+       setNewLocation("");
+    }
     
     setIsCreating(false);
-    setShowModal(false);
-    setNewLocation("");
   };
 
   if (loading) {
