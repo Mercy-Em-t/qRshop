@@ -11,7 +11,8 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MenuManager from "./pages/MenuManager";
 import QrGenerator from "./pages/QrGenerator";
-import QrDashboard from "./pages/QrDashboard";
+import DashboardIndex from "./pages/dashboard/index";
+import QRAnalytics from "./pages/dashboard/qr-detail";
 import ScanGateway from "./pages/ScanGateway";
 import Plans from "./pages/Plans";
 import Admin from "./pages/Admin";
@@ -61,7 +62,8 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/menu-manager" element={<MenuManager />} />
-      <Route path="/dashboard/qrs" element={<QrDashboard />} />
+      <Route path="/dashboard/qrs" element={<DashboardIndex />} />
+      <Route path="/dashboard/qrs/:qrId" element={<QRAnalytics />} />
       <Route path="/qr-generator" element={<QrGenerator />} />
       <Route path="/plans" element={<Plans />} />
 
