@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQRs } from '../../hooks/useQRs';
 import QRList from '../../components/QRList';
 import LoadingSpinner from '../../components/LoadingSpinner';
+import OfflineAlert from '../../components/OfflineAlert';
 
 export default function DashboardIndex() {
   // Hardcoded for V3 MVP. Auth wrapper handles this in prod.
@@ -12,6 +13,18 @@ export default function DashboardIndex() {
   const [newLocation, setNewLocation] = useState("");
   const [newAction, setNewAction] = useState("open_menu");
   const [isCreating, setIsCreating] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const handleCreateNode = async (e) => {
     e.preventDefault();
@@ -64,6 +77,10 @@ export default function DashboardIndex() {
            </button>
         </div>
       </div>
+
+      {!isOnline && (
+        <OfflineAlert message="You are viewing remotely cached nodes. Please reconnect to deploy new QR instructions." />
+      )}
 
       <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200">
         <div className="mb-6 flex justify-between items-center">
