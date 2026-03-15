@@ -89,6 +89,7 @@ export default function App() {
       {/* Shop Dashboard */}
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<Dashboard />} />
+      <Route path="/dashboard/orders" element={<OrderManager />} />
       <Route path="/menu-manager" element={<MenuManager />} />
       <Route path="/dashboard/qrs" element={<QrDashboard />} />
       <Route path="/dashboard/qrs/:qrId" element={<QRAnalytics />} />
