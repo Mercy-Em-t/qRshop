@@ -14,7 +14,7 @@ export default function QrDashboard() {
   const [editAction, setEditAction] = useState("");
 
   // In a real app we'd get this from auth
-  const shopId = "test-shop-id-123";
+  const shopId = "11111111-1111-1111-1111-111111111111";
 
   const loadQrs = async () => {
     try {
