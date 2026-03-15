@@ -10,7 +10,7 @@ export default function Admin() {
     if (!user || user.role !== "system_admin") {
       navigate("/login");
     }
-  }, [user, navigate]);
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50">

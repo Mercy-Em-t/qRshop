@@ -18,7 +18,7 @@ export default function QrGenerator() {
     if (!user) {
        navigate('/login');
     }
-  }, [user, navigate]);
+  }, [navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

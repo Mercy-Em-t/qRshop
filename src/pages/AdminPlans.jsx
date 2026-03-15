@@ -36,7 +36,7 @@ export default function AdminPlans() {
     if (!user || user.role !== "system_admin") {
       navigate("/login");
     }
-  }, [user, navigate]);
+  }, [navigate]);
 
   const handleUpdateFeature = (planId, featureIdx, newText) => {
     const updated = plans.map(p => {

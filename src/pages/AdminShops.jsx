@@ -21,7 +21,7 @@ export default function AdminShops() {
       return;
     }
     fetchShops();
-  }, [user, navigate]);
+  }, [navigate]);
 
   const fetchShops = async () => {
     setLoading(true);
