@@ -54,12 +54,12 @@ export default function QrGenerator() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                   Node Location / Table ID
+                   Deploy Location (e.g. Table 12, Main Entrance)
                 </label>
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Table 12, Main Entrance"
+                  placeholder="e.g. Table 12"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
@@ -76,8 +76,9 @@ export default function QrGenerator() {
                   className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
                 >
                   <option value="open_menu">Open Digital Menu</option>
-                  <option value="promo_modal">Show Daily Promotion</option>
-                  <option value="direct_checkout">Quick Checkout</option>
+                  <option value="open_order">Open Direct to Cart</option>
+                  <option value="open_campaign">Show Promotional Campaign</option>
+                  <option value="open_loyalty">Open Loyalty Sign-up</option>
                 </select>
               </div>
 

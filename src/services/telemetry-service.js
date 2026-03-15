@@ -1,18 +1,27 @@
 import { supabase } from "./supabase-client";
+import { getOrCreateDeviceId, getOrCreateTrackingSession } from "../utils/qr-session";
 
 export async function logEvent(
   eventType,
   qrId,
   shopId,
-  deviceInfo = navigator.userAgent
+  deviceInfo = navigator.userAgent,
+  extraMetadata = {}
 ) {
   if (!supabase) return null;
+
+  // Pull the identity chain parameters automatically
+  const deviceId = getOrCreateDeviceId();
+  const sessionId = getOrCreateTrackingSession();
 
   const newEvent = {
     event_type: eventType,
     qr_id: qrId,
     shop_id: shopId,
-    device_info: { userAgent: deviceInfo },
+    session_id: sessionId,
+    device_id: deviceId,
+    // Note: user_id would be extracted securely here if the user authenticates later
+    device_info: { userAgent: deviceInfo, ...extraMetadata },
   };
 
   // We intentionally fire-and-forget telemetry generally, but await here inside the service so clients can handle drops if they want.

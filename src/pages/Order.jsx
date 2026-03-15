@@ -4,6 +4,7 @@ import { getQrSession } from "../utils/qr-session";
 import { useShop } from "../hooks/use-shop";
 import { useCart } from "../hooks/use-cart";
 import { createOrder } from "../services/order-service";
+import { logEvent } from "../services/telemetry-service";
 import {
   buildWhatsAppMessage,
   buildWhatsAppLink,
@@ -85,6 +86,14 @@ export default function Order() {
 
   const handleSendOrder = async () => {
     setSending(true);
+    
+    // Log the event explicitly before we change boundaries
+    logEvent("order_started", "N/A", session?.shop_id, navigator.userAgent, {
+        total_price: total,
+        item_count: items.length,
+        is_offline: !isOnline
+    });
+
     try {
       if (!isOnline) {
         // Offline — queue order for later and register background sync

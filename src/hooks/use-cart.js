@@ -1,4 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
+import { logEvent } from "../services/telemetry-service";
+import { getQrSession } from "../utils/qr-session";
 
 const CART_STORAGE_KEY = "qr_cart";
 
@@ -40,6 +42,15 @@ export function useCart() {
       }
       return [...prev, { ...menuItem, quantity: 1 }];
     });
+
+    const session = getQrSession();
+    if (session) {
+      logEvent("item_added_to_cart", "N/A", session.shop_id, navigator.userAgent, {
+        item_id: menuItem.id,
+        item_name: menuItem.name,
+        price: menuItem.price
+      });
+    }
   }, []);
 
   const removeItem = useCallback((itemId) => {
@@ -52,6 +63,13 @@ export function useCart() {
       }
       return prev.filter((i) => i.id !== itemId);
     });
+    
+    const session = getQrSession();
+    if (session) {
+      logEvent("item_removed_from_cart", "N/A", session.shop_id, navigator.userAgent, {
+        item_id: itemId
+      });
+    }
   }, []);
 
   const clearCart = useCallback(() => {

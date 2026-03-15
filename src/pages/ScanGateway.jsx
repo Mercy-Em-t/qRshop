@@ -33,17 +33,26 @@ export default function ScanGateway() {
           (err) => console.error("Telemetry failed:", err)
         );
 
-        // 3. Resolve Behavior 
-        if (node.action === "open_menu") {
-          // Fallback legacy table assignment based on location if needed,
-          // though usually location is more descriptive than a simple table number
-          const safeTableNumber = node.location || "Unknown";
-          
-          createQrSession(node.shop_id, safeTableNumber);
-          navigate("/menu", { replace: true });
-        } else {
-          // Future actions could be opening a specific product, a promotion, etc.
-          setError(`Action '${node.action}' is not yet supported by this client.`);
+        // 3. Resolve Behavior based on Standardized Actions
+        switch (node.action) {
+          case 'open_menu':
+            // Setup global session tied to this deployment zone
+            createQrSession(node.shop_id, node.location);
+            navigate("/menu", { replace: true });
+            break;
+            
+          case 'open_order':
+            createQrSession(node.shop_id, node.location);
+            navigate("/cart", { replace: true });
+            break;
+            
+          case 'open_campaign':
+          case 'open_loyalty':
+             setError(`The '${node.action}' experience is currently under construction.`);
+             break;
+             
+          default:
+             setError(`Action '${node.action}' is not supported by this platform version.`);
         }
       } catch (err) {
         console.error("Gateway error:", err);
