@@ -4,7 +4,7 @@ import { getQrNode } from "../services/qr-node-service";
 import { logEvent } from "../services/telemetry-service";
 import { logVisit } from "../services/visit-service";
 import { createQrSession } from "../utils/qr-session";
-import LoadingSpinner from "../components/LoadingSpinner";
+import BrandedSplash from "../components/BrandedSplash";
 
 export default function ScanGateway() {
   const { qrId } = useParams();
@@ -84,5 +84,5 @@ export default function ScanGateway() {
     );
   }
 
-  return <LoadingSpinner message="Resolving QR Gateway..." />;
+  return <BrandedSplash />;
 }
