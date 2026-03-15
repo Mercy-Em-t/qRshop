@@ -232,3 +232,113 @@ Tracks payment transactions for online ordering.
 * Index `item_id` on `analytics_upsells` for conversion rate calculations.
 * Index `shop_id` + `status` on `subscriptions` for plan lookup.
 * Add indexes to existing `orders`, `menu_items`, `qr_sessions` for scale.
+
+---
+
+## 8. V3 Tables (Full-Stack Telemetry Schema)
+
+The V3 schema introduces server-side device tracking, session management, visit logging, and enriched event telemetry. See [`supabase/schema.sql`](./supabase/schema.sql) for the full executable SQL.
+
+### 8.1 Deployments
+
+Tracks where QR codes are physically installed.
+
+| Field         | Type      | Description                                  |
+| ------------- | --------- | -------------------------------------------- |
+| deployment_id | UUID      | Primary key                                  |
+| qr_id         | UUID      | Foreign key → qrs(qr_id)                    |
+| location_name | Text      | Human-readable location name                 |
+| zone          | Text      | Zone or area within the location             |
+| environment   | Text      | Environment type (e.g., indoor, outdoor)     |
+| installed_at  | Timestamp | When the QR was deployed                     |
+
+---
+
+### 8.2 Devices
+
+Stores information about devices that scan QR codes.
+
+| Field       | Type      | Description                  |
+| ----------- | --------- | ---------------------------- |
+| device_id   | UUID      | Primary key                  |
+| device_type | Text      | Device type (mobile, tablet) |
+| os          | Text      | Operating system             |
+| browser     | Text      | Browser name                 |
+| created_at  | Timestamp | Auto timestamp               |
+
+---
+
+### 8.3 Sessions
+
+Tracks browsing sessions tied to devices.
+
+| Field      | Type      | Description                      |
+| ---------- | --------- | -------------------------------- |
+| session_id | UUID      | Primary key                      |
+| device_id  | UUID      | Foreign key → devices(device_id) |
+| started_at | Timestamp | Session start time               |
+| ended_at   | Timestamp | Session end time (nullable)      |
+
+---
+
+### 8.4 Visits
+
+Tracks individual QR scan visits with full context.
+
+| Field         | Type      | Description                            |
+| ------------- | --------- | -------------------------------------- |
+| visit_id      | UUID      | Primary key                            |
+| qr_id         | UUID      | Foreign key → qrs(qr_id)              |
+| deployment_id | UUID      | Foreign key → deployments(deployment_id) |
+| shop_id       | UUID      | Foreign key → shops(shop_id)           |
+| session_id    | UUID      | Foreign key → sessions(session_id)     |
+| device_id     | UUID      | Foreign key → devices(device_id)       |
+| visit_start   | Timestamp | When the visit started                 |
+| visit_end     | Timestamp | When the visit ended (nullable)        |
+
+---
+
+### 8.5 Users
+
+End-user accounts identified by phone number.
+
+| Field            | Type      | Description           |
+| ---------------- | --------- | --------------------- |
+| user_id          | UUID      | Primary key           |
+| phone            | Text      | Unique phone number   |
+| signup_timestamp | Timestamp | When the user signed up |
+
+---
+
+### 8.6 Events (V3)
+
+Enriched event telemetry with full relationship chain.
+
+| Field      | Type      | Description                            |
+| ---------- | --------- | -------------------------------------- |
+| event_id   | UUID      | Primary key                            |
+| event_type | Text      | Event type (e.g., qr_scanned)         |
+| qr_id      | UUID      | Foreign key → qrs(qr_id)              |
+| shop_id    | UUID      | Foreign key → shops(shop_id)           |
+| session_id | UUID      | Foreign key → sessions(session_id)     |
+| device_id  | UUID      | Foreign key → devices(device_id)       |
+| user_id    | UUID      | Foreign key → users(user_id)           |
+| visit_id   | UUID      | Foreign key → visits(visit_id)         |
+| metadata   | JSONB     | Arbitrary event metadata               |
+| timestamp  | Timestamp | When the event occurred                |
+
+---
+
+### 8.7 Trigger: increment_scan_count
+
+Automatically increments `scan_count` on the `qrs` table whenever a `qr_scanned` event is inserted into the `events` table.
+
+---
+
+## 9. V3 Indexing Recommendations
+
+* Index `qr_id` on `deployments` for deployment lookups by QR.
+* Index `device_id` on `sessions` for session-by-device queries.
+* Index `qr_id` + `visit_start` on `visits` for time-range visit analysis.
+* Index `event_type` + `timestamp` on `events` for event filtering and dashboards.
+* Index `shop_id` on `visits` for shop-level visit aggregations.

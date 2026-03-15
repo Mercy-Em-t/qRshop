@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getQrNode } from "../services/qr-node-service";
 import { logEvent } from "../services/telemetry-service";
+import { logVisit } from "../services/visit-service";
 import { createQrSession } from "../utils/qr-session";
 import LoadingSpinner from "../components/LoadingSpinner";
 
@@ -33,7 +34,12 @@ export default function ScanGateway() {
           (err) => console.error("Telemetry failed:", err)
         );
 
-        // 3. Resolve Behavior based on Standardized Actions
+        // 3. Log Visit Record (Fire and Forget)
+        logVisit(qrId, node.shop_id).catch(
+          (err) => console.error("Visit logging failed:", err)
+        );
+
+        // 4. Resolve Behavior based on Standardized Actions
         switch (node.action) {
           case 'open_menu':
             // Setup global session tied to this deployment zone
