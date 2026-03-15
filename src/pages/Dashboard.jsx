@@ -91,14 +91,15 @@ export default function Dashboard() {
           </Link>
 
           <Link
-            to="/qr-generator"
-            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
+            to="/dashboard/qrs"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-100 relative overflow-hidden"
           >
+            <div className="absolute top-0 right-0 bg-blue-500 w-16 h-16 rounded-bl-full opacity-10"></div>
             <h2 className="text-lg font-semibold text-gray-800 mb-2">
-              📱 QR Generator
+              📱 QR Manager
             </h2>
             <p className="text-gray-500 text-sm">
-              Generate QR codes for your tables.
+              Deploy, track, and edit your fleet of smart QR table nodes.
             </p>
           </Link>
 
