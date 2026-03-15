@@ -206,7 +206,7 @@ export default function Order() {
         </div>
 
         {/* Show send button when online with a valid phone, or when offline to allow queuing */}
-        {whatsappLink || !isOnline ? (
+        {shopPhone || !isOnline ? (
           <button
             onClick={handleSendOrder}
             disabled={sending}
