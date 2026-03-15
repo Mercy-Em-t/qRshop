@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import QrAccessGuard from "./components/QrAccessGuard";
+import OfflineMenuWrapper from "./components/OfflineMenuWrapper";
 import Home from "./pages/Home";
 import Enter from "./pages/Enter";
 import Menu from "./pages/Menu";
@@ -28,7 +29,9 @@ export default function App() {
         path="/menu"
         element={
           <QrAccessGuard>
-            <Menu />
+            <OfflineMenuWrapper>
+              <Menu />
+            </OfflineMenuWrapper>
           </QrAccessGuard>
         }
       />
