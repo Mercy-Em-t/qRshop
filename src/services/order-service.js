@@ -21,9 +21,8 @@ export async function createOrder(shopId, tableId, items, totalPrice) {
     .from("orders")
     .insert({
       shop_id: shopId,
-      table_id: tableId,
       total_price: totalPrice,
-      status: "pending",
+      status: "pending_payment",
     })
     .select()
     .single();

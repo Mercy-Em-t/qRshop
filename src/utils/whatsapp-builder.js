@@ -1,9 +1,12 @@
-export function buildWhatsAppMessage(shopName, table, items) {
+export function buildWhatsAppMessage(shopName, table, items, orderId) {
   const itemLines = items
     .map((item) => `${item.quantity}x ${item.name}`)
     .join("\n");
 
-  return `New Order Ticket
+  const shortId = orderId ? orderId.split("-")[0].toUpperCase() : "N/A";
+
+  return `*New Order Ticket*
+Receipt: #${shortId}
 Shop: ${shopName}
 Table: ${table}
 ------------

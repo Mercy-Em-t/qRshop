@@ -66,6 +66,19 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Link
+            to="/dashboard/orders"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-green-100 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              🛎 Live Orders
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Manage incoming customer orders and trigger STK Pushes.
+            </p>
+          </Link>
+
+          <Link
             to="/menu-manager"
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
           >

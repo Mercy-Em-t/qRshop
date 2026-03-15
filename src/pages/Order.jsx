@@ -79,10 +79,6 @@ export default function Order() {
 
   const shopName = shop?.name || "Shop";
   const shopPhone = import.meta.env.VITE_SHOP_PHONE || shop?.phone || "";
-  const message = buildWhatsAppMessage(shopName, session?.table, items, total, activeCoupon, discountAmount);
-  const whatsappLink = shopPhone
-    ? buildWhatsAppLink(shopPhone, message)
-    : null;
 
   const handleSendOrder = async () => {
     setSending(true);
@@ -104,22 +100,35 @@ export default function Order() {
         return;
       }
 
-      // Online — register order in database then open WhatsApp link
-      await createOrder(
-        session?.shop_id,
+      // Online — register order in database
+      const order = await createOrder(
+        session?.shop_id || "11111111-1111-1111-1111-111111111111", // Fallback to MVP demo
         session?.table,
         items,
         total
       );
 
-      if (whatsappLink) {
-        window.open(whatsappLink, "_blank", "noopener,noreferrer");
+      // Build the active Whatsapp Payload using live db ID
+      if (shopPhone && order) {
+        const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id);
+        const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
+        
+        // Launch Whatsapp DM
+        window.open(finalLink, "_blank", "noopener,noreferrer");
+        
+        // Destroy Local Cart
         clearCart();
+        
+        // Route to Live Tracking Page
+        navigate(`/track/${order.id}`);
       }
-    } catch {
-      // Still allow sending even if DB tracking fails
-      if (whatsappLink) {
-        window.open(whatsappLink, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("Order transmission failed:", err);
+      // Fallback
+      if (shopPhone) {
+        const fallbackMessage = buildWhatsAppMessage(shopName, session?.table, items, "OFFLINE");
+        const fallbackLink = buildWhatsAppLink(shopPhone, fallbackMessage);
+        window.open(fallbackLink, "_blank", "noopener,noreferrer");
         clearCart();
       }
     } finally {

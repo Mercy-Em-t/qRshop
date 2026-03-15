@@ -19,6 +19,8 @@ import Admin from "./pages/Admin";
 import AdminShops from "./pages/AdminShops";
 import AdminPlans from "./pages/AdminPlans";
 import Campaign from "./pages/Campaign";
+import TrackOrder from "./pages/TrackOrder";
+import OrderManager from "./pages/OrderManager";
 
 export default function App() {
   return (
@@ -63,6 +65,14 @@ export default function App() {
         element={
           <QrAccessGuard>
             <Campaign />
+          </QrAccessGuard>
+        }
+      />
+      <Route
+        path="/track/:orderId"
+        element={
+          <QrAccessGuard>
+            <TrackOrder />
           </QrAccessGuard>
         }
       />
