@@ -108,6 +108,12 @@ export default function Order() {
       try {
          const order = await generateDatabaseOrder();
          if (order && !queued) {
+            const history = JSON.parse(localStorage.getItem('customer_history') || '[]');
+            if (!history.includes(order.id)) {
+               history.push(order.id);
+               localStorage.setItem('customer_history', JSON.stringify(history));
+            }
+
             clearCart();
             navigate(`/track/${order.id}`);
          }
@@ -124,7 +130,12 @@ export default function Order() {
       const order = await generateDatabaseOrder();
 
       if (order && !queued) {
-         // Build the active Whatsapp Payload using live db ID
+         const history = JSON.parse(localStorage.getItem('customer_history') || '[]');
+         if (!history.includes(order.id)) {
+            history.push(order.id);
+            localStorage.setItem('customer_history', JSON.stringify(history));
+         }
+
          if (shopPhone) {
             const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id);
             const finalLink = buildWhatsAppLink(shopPhone, finalMessage);

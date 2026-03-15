@@ -9,6 +9,7 @@ export default function MenuManager() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   // Form State
   const [name, setName] = useState("");
@@ -39,24 +40,91 @@ export default function MenuManager() {
     e.preventDefault();
     setIsAdding(true);
 
-    const { error } = await supabase.from("menu_items").insert({
-      shop_id: SHOP_ID,
+    const payload = {
       name,
       description,
       price: parseFloat(price),
       category,
-    });
+    };
+
+    let error;
+
+    if (editingId) {
+       const res = await supabase.from("menu_items").update(payload).eq("id", editingId);
+       error = res.error;
+    } else {
+       payload.shop_id = SHOP_ID;
+       const res = await supabase.from("menu_items").insert(payload);
+       error = res.error;
+    }
 
     if (!error) {
-      setName("");
-      setDescription("");
-      setPrice("");
-      setCategory("Main");
+      handleCancelEdit();
       fetchItems();
     } else {
-      console.error("Failed to add item", error);
+      console.error("Failed to save item", error);
+      alert("Error saving item: " + error.message);
     }
     setIsAdding(false);
+  };
+
+  const startEdit = (item) => {
+     setEditingId(item.id);
+     setName(item.name);
+     setDescription(item.description || "");
+     setPrice(item.price);
+     setCategory(item.category);
+     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCancelEdit = () => {
+     setEditingId(null);
+     setName("");
+     setDescription("");
+     setPrice("");
+     setCategory("Main");
+  };
+
+  const handleBulkUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const csvData = event.target.result;
+      const rows = csvData.split("\n");
+      // Assuming headers: Name, Category, Price, Description
+      
+      const bulkItems = [];
+      for (let i = 1; i < rows.length; i++) {
+        // Simple distinct split allowing commas inside quotes is hard with simple split,
+        // Assuming simple structure without inner commas for MVP
+        const row = rows[i].split(",");
+        if (row.length >= 3 && row[0].trim() !== "") {
+           bulkItems.push({
+              shop_id: SHOP_ID,
+              name: row[0].trim(),
+              category: row[1]?.trim() || "Main",
+              price: parseFloat(row[2]) || 0,
+              description: row[3]?.trim() || ""
+           });
+        }
+      }
+
+      if (bulkItems.length > 0) {
+        setLoading(true);
+        const { error } = await supabase.from('menu_items').insert(bulkItems);
+        if (!error) {
+           alert(`Successfully imported ${bulkItems.length} items!`);
+           fetchItems();
+        } else {
+           alert("Bulk upload failed: " + error.message);
+        }
+        setLoading(false);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = null; // Reset input wrapper
   };
 
   const handleDelete = async (id) => {
@@ -82,9 +150,24 @@ export default function MenuManager() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        {/* ADD ITEM FORM */}
+        {/* ADD / EDIT ITEM FORM */}
         <section className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Add New Item</h2>
+          <div className="flex justify-between items-center mb-4">
+             <h2 className="text-lg font-bold text-gray-800">{editingId ? "Edit Item" : "Add New Item"}</h2>
+             {!editingId && (
+                <div className="relative overflow-hidden inline-block group cursor-pointer">
+                  <button className="bg-blue-50 text-blue-600 font-medium text-sm px-3 py-1.5 rounded-md hover:bg-blue-100 transition whitespace-nowrap">
+                     Upload CSV (.csv)
+                  </button>
+                  <input 
+                     type="file" 
+                     accept=".csv"
+                     onChange={handleBulkUpload}
+                     className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer cursor-copy"
+                  />
+                </div>
+             )}
+          </div>
           <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
@@ -133,16 +216,30 @@ export default function MenuManager() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-            <div className="flex items-end">
+            <div className="flex items-end gap-2">
+              {editingId && (
+                 <button
+                   type="button"
+                   onClick={handleCancelEdit}
+                   className="w-1/3 bg-gray-100 text-gray-700 font-medium rounded-lg px-4 py-2 hover:bg-gray-200 transition"
+                 >
+                   Cancel
+                 </button>
+              )}
               <button
                 type="submit"
                 disabled={isAdding}
-                className="w-full bg-green-600 text-white font-medium rounded-lg px-4 py-2 hover:bg-green-700 transition disabled:opacity-50"
+                className={`${editingId ? 'w-2/3' : 'w-full'} bg-green-600 text-white font-medium rounded-lg px-4 py-2 hover:bg-green-700 transition disabled:opacity-50`}
               >
-                {isAdding ? "Saving..." : "Add to Catalog"}
+                {isAdding ? "Saving..." : editingId ? "Update Item" : "Add to Catalog"}
               </button>
             </div>
           </form>
+          {!editingId && (
+             <p className="text-xs text-gray-400 mt-4 text-right">
+                *CSV format req: Name, Category, Price, Description
+             </p>
+          )}
         </section>
 
         {/* LIST ITEMS */}
@@ -169,15 +266,26 @@ export default function MenuManager() {
                     {item.description && <p className="text-sm text-gray-500 mt-1">{item.description}</p>}
                     <p className="text-sm font-medium text-gray-700 mt-1">KSh {item.price}</p>
                   </div>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                    title="Delete Item"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => startEdit(item)}
+                      className="text-indigo-500 hover:text-indigo-700 p-2 rounded-lg hover:bg-indigo-50 transition-colors"
+                      title="Edit Item"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                         <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                      title="Delete Item"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

@@ -83,17 +83,25 @@ export default function Menu() {
             </h1>
             <p className="text-sm text-gray-500">Table {session?.table}</p>
           </div>
-          <button
-            onClick={() => navigate("/cart")}
-            className="relative bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors cursor-pointer"
-          >
-            Cart
-            {itemCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                {itemCount}
-              </span>
-            )}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate("/history")}
+              className="text-gray-500 hover:text-gray-800 text-sm font-medium transition-colors"
+            >
+              My Orders
+            </button>
+            <button
+              onClick={() => navigate("/cart")}
+              className="relative bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors cursor-pointer shadow-sm"
+            >
+              Cart
+              {itemCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center shadow-sm border border-white">
+                  {itemCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
