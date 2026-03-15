@@ -26,11 +26,20 @@ function saveCartToStorage(items) {
 
 export function useCart() {
   const [items, setItems] = useState(() => loadCartFromStorage());
+  const [activeCoupon, setActiveCoupon] = useState(null);
 
   // Persist cart to localStorage on change
   useEffect(() => {
     saveCartToStorage(items);
   }, [items]);
+
+  const applyCoupon = useCallback((coupon) => {
+    setActiveCoupon(coupon);
+  }, []);
+
+  const removeCoupon = useCallback(() => {
+    setActiveCoupon(null);
+  }, []);
 
   const addItem = useCallback((menuItem) => {
     setItems((prev) => {
@@ -74,15 +83,36 @@ export function useCart() {
 
   const clearCart = useCallback(() => {
     setItems([]);
+    setActiveCoupon(null);
     localStorage.removeItem(CART_STORAGE_KEY);
   }, []);
 
-  const total = items.reduce(
+  // Calculate Base Cost
+  const subtotal = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
+  // Calculate Discount
+  const discountAmount = activeCoupon 
+    ? (subtotal * activeCoupon.discountPercentage) / 100 
+    : 0;
+
+  // Final Cost
+  const total = Math.max(0, subtotal - discountAmount);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  return { items, addItem, removeItem, clearCart, total, itemCount };
+  return { 
+    items, 
+    addItem, 
+    removeItem, 
+    clearCart, 
+    subtotal,
+    discountAmount,
+    total, 
+    itemCount,
+    activeCoupon,
+    applyCoupon,
+    removeCoupon
+  };
 }

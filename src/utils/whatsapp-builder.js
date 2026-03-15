@@ -1,13 +1,15 @@
-export function buildWhatsAppMessage(shopName, table, items, total) {
+export function buildWhatsAppMessage(shopName, table, items, total, activeCoupon, discountAmount) {
   const itemLines = items
     .map((item) => `${item.quantity} ${item.name}`)
     .join("\n");
+
+  const discountLine = activeCoupon ? `\nPromo: ${activeCoupon.code} (-KSh ${discountAmount})` : "";
 
   const message = `New Order
 Shop: ${shopName}
 Table: ${table}
 Items:
-${itemLines}
+${itemLines}${discountLine}
 Total: KSh ${total}`;
 
   return message;

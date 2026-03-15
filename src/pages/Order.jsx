@@ -20,7 +20,7 @@ export default function Order() {
   const session = getQrSession();
   const navigate = useNavigate();
   const { shop, loading: shopLoading } = useShop(session?.shop_id);
-  const { items, total, clearCart } = useCart();
+  const { items, total, subtotal, discountAmount, activeCoupon, clearCart } = useCart();
   const [sending, setSending] = useState(false);
   const [queued, setQueued] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -79,7 +79,7 @@ export default function Order() {
 
   const shopName = shop?.name || "Shop";
   const shopPhone = shop?.phone || "";
-  const message = buildWhatsAppMessage(shopName, session?.table, items, total);
+  const message = buildWhatsAppMessage(shopName, session?.table, items, total, activeCoupon, discountAmount);
   const whatsappLink = shopPhone
     ? buildWhatsAppLink(shopPhone, message)
     : null;
@@ -171,11 +171,28 @@ export default function Order() {
             ))}
           </div>
 
-          <div className="border-t border-gray-300 mt-4 pt-4 flex justify-between">
-            <span className="text-lg font-semibold text-gray-800">Total</span>
-            <span className="text-xl font-bold text-green-700">
-              KSh {total}
-            </span>
+          <div className="border-t border-gray-300 mt-4 pt-4 space-y-2">
+            
+            {activeCoupon && (
+              <>
+                <div className="flex justify-between text-gray-500">
+                  <span>Subtotal</span>
+                  <span>KSh {subtotal}</span>
+                </div>
+                <div className="flex justify-between text-green-600 font-medium">
+                  <span>Discount ({activeCoupon.discountPercentage}%)</span>
+                  <span>- KSh {discountAmount}</span>
+                </div>
+              </>
+            )}
+
+            <div className="flex justify-between pt-2 border-t border-gray-100">
+              <span className="text-lg font-semibold text-gray-800">Final Total</span>
+              <span className="text-xl font-bold text-green-700">
+                KSh {total}
+              </span>
+            </div>
+            
           </div>
         </div>
 

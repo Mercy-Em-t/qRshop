@@ -10,6 +10,7 @@ import MenuItem from "../components/MenuItem";
 import UpsellModal from "../components/UpsellModal";
 import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
+import CouponWidget from "../components/CouponWidget";
 
 export default function Menu() {
   const session = getQrSession();
@@ -128,6 +129,8 @@ export default function Menu() {
           onDecline={handleUpsellDecline}
         />
       )}
+
+      <CouponWidget />
     </div>
   );
 }
