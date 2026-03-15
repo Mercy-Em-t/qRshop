@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useEvents } from '../../hooks/useEvents';
 import { QRCodeSVG } from 'qrcode.react';
+import AnalyticsChart from '../../components/AnalyticsChart';
 
 export default function QRAnalytics() {
   const { qrId } = useParams();
@@ -70,6 +71,11 @@ export default function QRAnalytics() {
       </div>
       
       {/* Event Stream Log */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8">
+         <h3 className="font-bold text-lg mb-6 border-b border-gray-100 pb-4">Activity Timeline (24hr Aggregation)</h3>
+         <AnalyticsChart events={events} />
+      </div>
+
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
          <h3 className="font-bold text-lg mb-6 border-b border-gray-100 pb-4">Raw Telemetry Stream</h3>
          {events.length === 0 ? (

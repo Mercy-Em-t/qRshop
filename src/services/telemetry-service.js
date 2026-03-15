@@ -15,6 +15,7 @@ export async function logEvent(
   const sessionId = getOrCreateTrackingSession();
 
   const newEvent = {
+    id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7),
     event_type: eventType,
     qr_id: qrId,
     shop_id: shopId,
@@ -32,11 +33,27 @@ export async function logEvent(
     },
   };
 
+  const enqueueFallback = (evt) => {
+    try {
+      const saved = localStorage.getItem('offlineEvents');
+      const queue = saved ? JSON.parse(saved) : [];
+      queue.push(evt);
+      localStorage.setItem('offlineEvents', JSON.stringify(queue));
+    } catch {
+      // ignore
+    }
+  };
+
   // We intentionally fire-and-forget telemetry generally, but await here inside the service so clients can handle drops if they want.
+  if (!navigator.onLine) {
+    enqueueFallback(newEvent);
+    return null;
+  }
+
   const { data, error } = await supabase.from("events").insert([newEvent]);
 
   if (error) {
-    console.error("Error logging telemetry event:", error);
+    enqueueFallback(newEvent);
   }
 
   return data;

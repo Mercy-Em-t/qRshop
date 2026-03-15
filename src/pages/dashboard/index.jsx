@@ -6,11 +6,33 @@ import LoadingSpinner from '../../components/LoadingSpinner';
 export default function DashboardIndex() {
   // Hardcoded for V3 MVP. Auth wrapper handles this in prod.
   const shopId = 'test-shop-id-1234-5678-9abcdef01234'; 
-  const { qrs, loading } = useQRs(shopId);
+  const { qrs, loading, addQR, updateQR, deleteQR } = useQRs(shopId);
 
-  // We could mount the QrGenerator directly in here as a modal later, 
-  // but for now, we leave the action pointing to the current factory page.
-  // We'll just manage the node display and routing.
+  const [showModal, setShowModal] = useState(false);
+  const [newLocation, setNewLocation] = useState("");
+  const [newAction, setNewAction] = useState("open_menu");
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleCreateNode = async (e) => {
+    e.preventDefault();
+    if (!newLocation) return;
+    setIsCreating(true);
+    
+    // Generate a secure short ID for the gateway URL
+    const shortId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    
+    await addQR({
+      id: shortId,
+      shop_id: shopId,
+      location: newLocation,
+      action: newAction,
+      status: 'active'
+    });
+    
+    setIsCreating(false);
+    setShowModal(false);
+    setNewLocation("");
+  };
 
   if (loading) {
     return (
@@ -28,13 +50,12 @@ export default function DashboardIndex() {
            <p className="text-gray-500 text-lg">Manage your distributed physical nodes and behaviors.</p>
         </div>
         <div className="flex gap-4">
-           {/* Pointing this to our existing QrGenerator to keep flow simple for now */}
-           <a 
-             href="/qr-generator"
+           <button 
+             onClick={() => setShowModal(true)}
              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium shadow-sm transition-all hover:shadow"
            >
              + Deploy New Node
-           </a>
+           </button>
         </div>
       </div>
 
@@ -45,8 +66,57 @@ export default function DashboardIndex() {
              {qrs?.length || 0} Nodes
            </span>
         </div>
-        <QRList qrs={qrs} />
+        <QRList qrs={qrs} updateQR={updateQR} deleteQR={deleteQR} />
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full animate-fade-in">
+            <h2 className="font-bold text-2xl text-gray-800 mb-6">Create Node</h2>
+            <form onSubmit={handleCreateNode} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Physical Location</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Table 12, Main Entrance"
+                  value={newLocation}
+                  onChange={e => setNewLocation(e.target.value)}
+                  className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Standard Action</label>
+                <select
+                  value={newAction}
+                  onChange={e => setNewAction(e.target.value)}
+                  className="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                >
+                  <option value="open_menu">Open Menu</option>
+                  <option value="open_order">Fast Order Mode</option>
+                  <option value="open_campaign">Marketing Campaign</option>
+                </select>
+              </div>
+              <div className="pt-4 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 bg-gray-100 text-gray-700 font-medium py-3 rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreating}
+                  className="flex-1 bg-blue-600 text-white font-medium py-3 rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {isCreating ? "Spawning..." : "Save Node"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
