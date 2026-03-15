@@ -85,6 +85,45 @@ export default function MenuManager() {
      setCategory("Main");
   };
 
+  const handleExportCSV = () => {
+    if (items.length === 0) {
+      alert("No items to export. Add some items to your catalog first!");
+      return;
+    }
+    
+    // Define exact CSV headers matching the import structure
+    const headers = ["Name", "Category", "Price", "Description"];
+    const csvRows = [headers.join(",")];
+    
+    for (const item of items) {
+      // Escape internal double quotes by doubling them up, and wrap entire cell in double quotes for safety
+      const escapeCell = (str) => `"${String(str || "").replace(/"/g, '""')}"`;
+      
+      const row = [
+        escapeCell(item.name),
+        escapeCell(item.category),
+        item.price, // Prices are just numbers
+        escapeCell(item.description)
+      ];
+      csvRows.push(row.join(","));
+    }
+    
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    
+    // Create an invisible anchor tag to trigger the browser's native download dialog
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "QR_Shop_Menu_Catalog.csv");
+    document.body.appendChild(link);
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleBulkUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -155,16 +194,24 @@ export default function MenuManager() {
           <div className="flex justify-between items-center mb-4">
              <h2 className="text-lg font-bold text-gray-800">{editingId ? "Edit Item" : "Add New Item"}</h2>
              {!editingId && (
-                <div className="relative overflow-hidden inline-block group cursor-pointer">
-                  <button className="bg-blue-50 text-blue-600 font-medium text-sm px-3 py-1.5 rounded-md hover:bg-blue-100 transition whitespace-nowrap">
-                     Upload CSV (.csv)
+                <div className="flex gap-2">
+                  <button 
+                    onClick={handleExportCSV}
+                    className="bg-white text-gray-700 font-bold text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition shadow-sm whitespace-nowrap"
+                  >
+                     📥 Export CSV
                   </button>
-                  <input 
-                     type="file" 
-                     accept=".csv"
-                     onChange={handleBulkUpload}
-                     className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer cursor-copy"
-                  />
+                  <div className="relative overflow-hidden inline-block group cursor-pointer">
+                    <button className="bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-lg hover:bg-indigo-100 transition whitespace-nowrap border border-indigo-100">
+                       📤 Import CSV
+                    </button>
+                    <input 
+                       type="file" 
+                       accept=".csv"
+                       onChange={handleBulkUpload}
+                       className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer cursor-copy"
+                    />
+                  </div>
                 </div>
              )}
           </div>
