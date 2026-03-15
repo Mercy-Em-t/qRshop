@@ -80,51 +80,61 @@ export default function Order() {
   const shopName = shop?.name || "Shop";
   const shopPhone = import.meta.env.VITE_SHOP_PHONE || shop?.phone || "";
 
-  const handleSendOrder = async () => {
-    setSending(true);
-    
-    // Log the event explicitly before we change boundaries
-    logEvent("order_started", "N/A", session?.shop_id, navigator.userAgent, {
-        total_price: total,
-        item_count: items.length,
-        is_offline: !isOnline
-    });
+  const generateDatabaseOrder = async () => {
+     if (!isOnline) {
+       queueOrder(shopName, shopPhone, session?.table, items, total);
+       registerOnlineSync();
+       clearCart();
+       setQueued(true);
+       return null;
+     }
 
-    try {
-      if (!isOnline) {
-        // Offline — queue order for later and register background sync
-        queueOrder(shopName, shopPhone, session?.table, items, total);
-        registerOnlineSync();
-        clearCart();
-        setQueued(true);
-        return;
-      }
+     logEvent("order_started", "N/A", session?.shop_id, navigator.userAgent, {
+         total_price: total,
+         item_count: items.length,
+         is_offline: !isOnline
+     });
 
-      // Online — register order in database
-      const order = await createOrder(
-        session?.shop_id || "11111111-1111-1111-1111-111111111111", // Fallback to MVP demo
+     return await createOrder(
+        session?.shop_id || "11111111-1111-1111-1111-111111111111", // MVP fallback
         session?.table,
         items,
         total
       );
+  };
 
-      // Build the active Whatsapp Payload using live db ID
-      if (shopPhone && order) {
-        const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id);
-        const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
-        
-        // Launch Whatsapp DM
-        window.open(finalLink, "_blank", "noopener,noreferrer");
-        
-        // Destroy Local Cart
-        clearCart();
-        
-        // Route to Live Tracking Page
-        navigate(`/track/${order.id}`);
+  const handleDirectCheckout = async () => {
+      setSending(true);
+      try {
+         const order = await generateDatabaseOrder();
+         if (order && !queued) {
+            clearCart();
+            navigate(`/track/${order.id}`);
+         }
+      } catch (err) {
+         console.error("Direct Checkout Failed:", err);
+      } finally {
+         setSending(false);
+      }
+  };
+
+  const handleWhatsAppCheckout = async () => {
+    setSending(true);
+    try {
+      const order = await generateDatabaseOrder();
+
+      if (order && !queued) {
+         // Build the active Whatsapp Payload using live db ID
+         if (shopPhone) {
+            const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id);
+            const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
+            window.open(finalLink, "_blank", "noopener,noreferrer");
+         }
+         clearCart();
+         navigate(`/track/${order.id}`);
       }
     } catch (err) {
-      console.error("Order transmission failed:", err);
-      // Fallback
+      console.error("WhatsApp Checkout failed:", err);
       if (shopPhone) {
         const fallbackMessage = buildWhatsAppMessage(shopName, session?.table, items, "OFFLINE");
         const fallbackLink = buildWhatsAppLink(shopPhone, fallbackMessage);
@@ -205,24 +215,29 @@ export default function Order() {
           </div>
         </div>
 
-        {/* Show send button when online with a valid phone, or when offline to allow queuing */}
+        {/* Split Checkouts: Pure Web vs WhatsApp Hybrid */}
         {shopPhone || !isOnline ? (
-          <button
-            onClick={handleSendOrder}
-            disabled={sending}
-            className="w-full mt-6 bg-green-600 text-white py-4 rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            {sending ? (
-              <>
+          <div className="mt-8 space-y-3">
+            <button
+              onClick={handleDirectCheckout}
+              disabled={sending}
+              className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {sending ? (
                 <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-                Sending...
-              </>
-            ) : !isOnline ? (
-              "📥 Queue Order for WhatsApp"
-            ) : (
-              "📱 Send Order via WhatsApp"
-            )}
-          </button>
+              ) : (
+                "💳 Secure Direct Checkout"
+              )}
+            </button>
+
+            <button
+              onClick={handleWhatsAppCheckout}
+              disabled={sending}
+              className="w-full bg-white text-green-700 border-2 border-green-200 py-3 rounded-xl font-semibold hover:bg-green-50 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {!isOnline ? "📥 Queue via WhatsApp" : "💬 Send via WhatsApp (Optional)"}
+            </button>
+          </div>
         ) : (
           <p className="mt-6 text-center text-red-500 text-sm">
             Shop phone number not available. Please contact the shop directly.
