@@ -1,19 +1,31 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
-    // TODO: Implement Supabase authentication
-    setError("Authentication not yet configured. Please set up Supabase.");
-    setLoading(false);
+    // Mock Authentication for MVP / Presentation
+    setTimeout(() => {
+      if (email === "admin@qrshop.com" && password === "admin123") {
+        localStorage.setItem("mock_admin_auth", "true");
+        navigate("/admin");
+      } else if (email === "shop@qrshop.com" && password === "shop123") {
+        localStorage.setItem("mock_shop_auth", "true");
+        navigate("/dashboard");
+      } else {
+        setError("Invalid email or password.");
+        setLoading(false);
+      }
+    }, 800); // simulate network delay for premium feel
   };
 
   return (
