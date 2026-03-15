@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
-
-// Utilizing the persistent demo shop ID for the MVP
-const SHOP_ID = "11111111-1111-1111-1111-111111111111";
+import { getCurrentUser } from "../services/auth-service";
 
 export default function MenuManager() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const navigate = useNavigate();
+
+  const user = getCurrentUser();
+  const SHOP_ID = user?.shop_id;
 
   // Form State
   const [name, setName] = useState("");
@@ -18,6 +20,10 @@ export default function MenuManager() {
   const [category, setCategory] = useState("Main");
 
   useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     fetchItems();
   }, []);
 

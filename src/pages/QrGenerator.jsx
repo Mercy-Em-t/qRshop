@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { createQrNode } from "../services/qr-node-service";
+import { getCurrentUser } from "../services/auth-service";
 
 export default function QrGenerator() {
   const [location, setLocation] = useState("");
@@ -10,8 +11,14 @@ export default function QrGenerator() {
   const [createdQr, setCreatedQr] = useState(null);
   const navigate = useNavigate();
 
-  // Utilizing the persistent demo shop ID for the MVP
-  const shopId = "11111111-1111-1111-1111-111111111111";
+  const user = getCurrentUser();
+  const shopId = user?.shop_id;
+
+  useEffect(() => {
+    if (!user) {
+       navigate('/login');
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

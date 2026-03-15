@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { getCurrentUser } from "../services/auth-service";
 import { getOrdersPerDay, getPopularItems, getUpsellStats } from "../services/analytics-service";
 import { getSubscription } from "../services/subscription-service";
 import AnalyticsChart from "../components/AnalyticsChart";
@@ -11,11 +12,16 @@ export default function Dashboard() {
   const [upsellStats, setUpsellStats] = useState(null);
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // TODO: Get shopId from auth context after login
-  const shopId = null;
+  const user = getCurrentUser();
+  const shopId = user?.shop_id;
 
   useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
     async function fetchAnalytics() {
       if (!shopId) {
         setLoading(false);

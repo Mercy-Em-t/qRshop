@@ -143,22 +143,34 @@ Now that you have your project created and your API keys copied (from Step 2):
 2. In the Environment Variables section of your new deployment, paste the `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 3. Click "Deploy".
 
-## 5. V3 Schema (Full Telemetry)
+## 5. V6 Schema (Multi-Tenant Hub)
 
-The V3 schema adds server-side device tracking, visit logging, and enriched events. To apply it:
+To unlock the System Admin Shop Creator and securely sandbox all stores dynamically, you must initialize the `shop_users` identity chain.
 
-1. Open the **SQL Editor** in Supabase.
-2. Copy the contents of [`supabase/schema.sql`](./supabase/schema.sql) into a new query.
-3. Click **Run**.
+Run the following SQL snippet in the Supabase SQL Editor:
+```sql
+-- Create the central auth credentials mapper
+create table if not exists public.shop_users (
+    id uuid default uuid_generate_v4() primary key,
+    email text unique not null,
+    password text not null, -- Plaintext for MVP, migrate to Auth later
+    role text default 'shop_owner', -- 'system_admin' or 'shop_owner'
+    shop_id uuid references public.shops(id) on delete cascade
+);
 
-This creates the following additional tables:
-- **deployments** — Where QR codes are physically installed
-- **devices** — Device fingerprints (type, OS, browser)
-- **sessions** — Browsing sessions tied to devices
-- **visits** — Full-context QR scan visit records
-- **users** — End-user accounts (phone-based)
-- **events** (enriched) — Telemetry events with user_id, visit_id, and metadata
+-- Protect shop_users with RLS
+alter table public.shop_users enable row level security;
+create policy "Allow public query to shop_users for Auth Service MVP" on public.shop_users for select using (true);
+create policy "Allow inserts by system_admin" on public.shop_users for insert with check (true);
 
-It also adds a `scan_count` trigger on the `qrs` table that auto-increments on each `qr_scanned` event.
+-- Insert the God-Mode System Admin Login
+-- This gives you access to the hidden `/admin` onboarding portal!
+insert into public.shop_users (email, password, role) 
+values ('admin@qrshop.com', 'admin123', 'system_admin')
+on conflict do nothing;
 
-See [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md) for the full table reference.
+-- Ensure the Demo Shop has an owner mapped (matches mock login)
+insert into public.shop_users (email, password, role, shop_id)
+values ('shop@qrshop.com', 'shop123', 'shop_owner', '11111111-1111-1111-1111-111111111111')
+on conflict do nothing;
+```

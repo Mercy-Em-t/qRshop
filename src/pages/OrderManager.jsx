@@ -1,16 +1,23 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
-
-// Utilizing the persistent demo shop ID for the MVP
-const SHOP_ID = "11111111-1111-1111-1111-111111111111";
+import { getCurrentUser } from "../services/auth-service";
 
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const navigate = useNavigate();
+
+  const user = getCurrentUser();
+  const SHOP_ID = user?.shop_id;
 
   useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     fetchOrders();
 
     // Poll every 5 seconds for new live orders to simulate realtime
@@ -108,6 +115,23 @@ export default function OrderManager() {
            )}
         </div>
 
+        {/* Segmented Pipeline Tabs */}
+        <div className="flex bg-gray-200/50 p-1 rounded-xl mb-8 overflow-x-auto gap-1">
+          {["all", "pending", "preparing", "completed"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 min-w-[120px] py-2.5 px-4 rounded-lg font-semibold text-sm capitalize transition-all duration-200 ${
+                activeTab === tab 
+                  ? "bg-white text-gray-800 shadow-sm" 
+                  : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
+              }`}
+            >
+              {tab === "pending" ? "Awaiting Action" : tab}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <p className="text-center text-gray-500 py-12">Listening for incoming orders...</p>
         ) : orders.length === 0 ? (
@@ -118,6 +142,13 @@ export default function OrderManager() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {orders
+              .filter((o) => {
+                 if (activeTab === "all") return true;
+                 if (activeTab === "pending") return ["pending", "pending_payment", "stk_pushed"].includes(o.status);
+                 if (activeTab === "preparing") return ["paid", "preparing"].includes(o.status);
+                 if (activeTab === "completed") return ["ready", "completed"].includes(o.status);
+                 return true;
+              })
               .filter(o => {
                  const idStr = String(o?.id || "");
                  const statStr = String(o?.status || "");

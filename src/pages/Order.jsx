@@ -106,7 +106,7 @@ export default function Order() {
      });
 
      return await createOrder(
-        session?.shop_id || "11111111-1111-1111-1111-111111111111", // MVP fallback
+        session?.shop_id,
         session?.table,
         items,
         total

@@ -1,6 +1,17 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { getCurrentUser } from "../services/auth-service";
 
 export default function Admin() {
+  const navigate = useNavigate();
+  const user = getCurrentUser();
+
+  useEffect(() => {
+    if (!user || user.role !== "system_admin") {
+      navigate("/login");
+    }
+  }, [user, navigate]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">

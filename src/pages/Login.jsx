@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { authenticateUser } from "../services/auth-service";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -13,19 +14,19 @@ export default function Login() {
     setLoading(true);
     setError(null);
 
-    // Mock Authentication for MVP / Presentation
-    setTimeout(() => {
-      if (email === "admin@qrshop.com" && password === "admin123") {
-        localStorage.setItem("mock_admin_auth", "true");
-        navigate("/admin");
-      } else if (email === "shop@qrshop.com" && password === "shop123") {
-        localStorage.setItem("mock_shop_auth", "true");
-        navigate("/dashboard");
-      } else {
-        setError("Invalid email or password.");
-        setLoading(false);
-      }
-    }, 800); // simulate network delay for premium feel
+    const { user, error: authError } = await authenticateUser(email, password);
+    setLoading(false);
+
+    if (authError) {
+      setError(authError);
+      return;
+    }
+
+    if (user.role === 'system_admin') {
+      navigate("/admin");
+    } else {
+      navigate("/dashboard");
+    }
   };
 
   return (

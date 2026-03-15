@@ -1,16 +1,23 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useQRs } from "../hooks/useQRs";
 import QRList from "../components/QRList";
 import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
+import { getCurrentUser } from "../services/auth-service";
 
 export default function QrDashboard() {
-  const shopId = "11111111-1111-1111-1111-111111111111"; // Auth fallback
+  const user = getCurrentUser();
+  const shopId = user?.shop_id;
   const { qrs, loading, updateQR, deleteQR } = useQRs(shopId);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const navigate = useNavigate();
 
   useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
     window.addEventListener("online", handleOnline);
