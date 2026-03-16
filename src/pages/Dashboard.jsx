@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCurrentUser, logout } from "../services/auth-service";
+import { supabase } from "../services/supabase-client";
 import { getOrdersPerDay, getPopularItems, getUpsellStats } from "../services/analytics-service";
 import { getSubscription } from "../services/subscription-service";
 import AnalyticsChart from "../components/AnalyticsChart";
@@ -11,6 +12,7 @@ export default function Dashboard() {
   const [popularItems, setPopularItems] = useState([]);
   const [upsellStats, setUpsellStats] = useState(null);
   const [subscription, setSubscription] = useState(null);
+  const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -49,6 +51,25 @@ export default function Dashboard() {
     fetchAnalytics();
   }, [shopId]);
 
+  // Dedicated poll for Actionable Orders
+  useEffect(() => {
+    if (!shopId) return;
+
+    const fetchPendingCount = async () => {
+      const { count } = await supabase
+        .from("orders")
+        .select('*', { count: 'exact', head: true })
+        .eq("shop_id", shopId)
+        .in("status", ["pending_payment", "pending", "stk_pushed"]);
+      
+      setPendingOrdersCount(count || 0);
+    };
+
+    fetchPendingCount();
+    const interval = setInterval(fetchPendingCount, 10000); // 10s poll
+    return () => clearInterval(interval);
+  }, [shopId]);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
@@ -72,6 +93,26 @@ export default function Dashboard() {
           <SubscriptionStatus subscription={subscription} />
         </div>
 
+        {/* Action Alert Banner */}
+        {pendingOrdersCount > 0 && (
+          <div className="mb-8 bg-red-50 border-l-4 border-red-500 p-4 rounded-xl shadow-sm flex items-center justify-between animate-pulse">
+            <div>
+              <h3 className="text-red-800 font-bold text-lg flex items-center gap-2">
+                <span className="text-2xl">🔔</span> Action Required
+              </h3>
+              <p className="text-red-700 text-sm mt-1">
+                You have {pendingOrdersCount} {pendingOrdersCount === 1 ? 'order' : 'orders'} waiting for your approval!
+              </p>
+            </div>
+            <Link 
+              to="/dashboard/orders"
+              className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-700 transition"
+            >
+              View Orders
+            </Link>
+          </div>
+        )}
+
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Link
@@ -79,6 +120,11 @@ export default function Dashboard() {
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-green-100 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+            {pendingOrdersCount > 0 && (
+               <div className="absolute top-4 right-4 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md">
+                 {pendingOrdersCount}
+               </div>
+            )}
             <h2 className="text-lg font-semibold text-gray-800 mb-2">
               🛎 Live Orders
             </h2>
