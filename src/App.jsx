@@ -22,6 +22,7 @@ import Campaign from "./pages/Campaign";
 import TrackOrder from "./pages/TrackOrder";
 import OrderManager from "./pages/OrderManager";
 import MyOrders from "./pages/MyOrders";
+import MarketingStudio from "./pages/MarketingStudio";
 
 export default function App() {
   return (
@@ -94,6 +95,7 @@ export default function App() {
       <Route path="/dashboard/qrs" element={<QrDashboard />} />
       <Route path="/dashboard/qrs/:qrId" element={<QRAnalytics />} />
       <Route path="/qr-generator" element={<QrGenerator />} />
+      <Route path="/dashboard/marketing" element={<MarketingStudio />} />
       <Route path="/plans" element={<Plans />} />
 
       {/* Admin */}
