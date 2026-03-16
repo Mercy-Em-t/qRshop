@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { createQrNode } from "../services/qr-node-service";
-import { getCurrentUser } from "../services/auth-service";
+import { getCurrentUser, logout } from "../services/auth-service";
 
 export default function QrGenerator() {
   const [location, setLocation] = useState("");
@@ -50,7 +50,14 @@ export default function QrGenerator() {
             ← QRs
           </Link>
           <h1 className="text-xl font-bold text-gray-800">QR Factory</h1>
-          <div className="w-16"></div>
+          <div className="flex items-center hidden sm:flex">
+             <button
+               onClick={() => { logout(); navigate("/login"); }}
+               className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+             >
+               Logout
+             </button>
+          </div>
         </div>
       </header>
 

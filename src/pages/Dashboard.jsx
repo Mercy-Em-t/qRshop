@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getCurrentUser } from "../services/auth-service";
+import { getCurrentUser, logout } from "../services/auth-service";
 import { getOrdersPerDay, getPopularItems, getUpsellStats } from "../services/analytics-service";
 import { getSubscription } from "../services/subscription-service";
 import AnalyticsChart from "../components/AnalyticsChart";
@@ -54,12 +54,15 @@ export default function Dashboard() {
       <header className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-800">Shop Dashboard</h1>
-          <Link
-            to="/login"
-            className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
+          <button
+            onClick={() => {
+              logout();
+              navigate("/login");
+            }}
+            className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
           >
             Logout
-          </Link>
+          </button>
         </div>
       </header>
 

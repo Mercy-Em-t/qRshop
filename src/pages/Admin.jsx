@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { getCurrentUser } from "../services/auth-service";
+import { getCurrentUser, logout } from "../services/auth-service";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -15,8 +15,14 @@ export default function Admin() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
+          <button
+             onClick={() => { logout(); navigate("/login"); }}
+             className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+          >
+             Logout
+          </button>
         </div>
       </header>
 

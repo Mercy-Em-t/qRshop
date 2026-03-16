@@ -4,7 +4,7 @@ import { useQRs } from "../hooks/useQRs";
 import QRList from "../components/QRList";
 import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
-import { getCurrentUser } from "../services/auth-service";
+import { getCurrentUser, logout } from "../services/auth-service";
 
 export default function QrDashboard() {
   const user = getCurrentUser();
@@ -39,13 +39,19 @@ export default function QrDashboard() {
             ← Dashboard
           </Link>
           <h1 className="text-xl font-bold text-gray-800">QR Manager</h1>
-          <div className="w-24 flex justify-end">
+          <div className="flex items-center gap-4 hidden sm:flex">
              <Link
               to="/qr-generator"
               className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors"
              >
                + Deploy QR
              </Link>
+             <button
+               onClick={() => { logout(); navigate("/login"); }}
+               className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+             >
+               Logout
+             </button>
           </div>
         </div>
       </header>

@@ -1,6 +1,8 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { getCurrentUser, logout } from "../services/auth-service";
 
 export default function Plans() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
@@ -12,7 +14,14 @@ export default function Plans() {
             ← Dashboard
           </Link>
           <h1 className="text-xl font-bold text-gray-800">Subscription Plans</h1>
-          <div className="w-24"></div>
+          <div className="flex items-center">
+             <button
+               onClick={() => { logout(); navigate("/login"); }}
+               className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+             >
+               Logout
+             </button>
+          </div>
         </div>
       </header>
 

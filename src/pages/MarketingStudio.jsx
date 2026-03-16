@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { toPng } from "html-to-image";
-import { getCurrentUser } from "../services/auth-service";
+import { getCurrentUser, logout } from "../services/auth-service";
 import { supabase } from "../services/supabase-client";
 
 export default function MarketingStudio() {
@@ -75,7 +75,14 @@ export default function MarketingStudio() {
             ← Dashboard
           </Link>
           <h1 className="text-xl font-bold text-gray-800">Marketing Studio</h1>
-          <div className="w-24"></div>
+          <div className="flex items-center">
+             <button
+               onClick={() => { logout(); navigate("/login"); }}
+               className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+             >
+               Logout
+             </button>
+          </div>
         </div>
       </header>
 

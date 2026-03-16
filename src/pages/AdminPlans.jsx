@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { getCurrentUser } from "../services/auth-service";
+import { getCurrentUser, logout } from "../services/auth-service";
 
 export default function AdminPlans() {
   const navigate = useNavigate();
@@ -65,12 +65,20 @@ export default function AdminPlans() {
             ← System Admin
           </Link>
           <h1 className="text-xl font-bold text-gray-800">Global Subscription Models</h1>
-          <button 
-             onClick={handleSave}
-             className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow cursor-pointer hover:bg-indigo-700"
-          >
-             Publish Changes
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+               onClick={() => { logout(); navigate("/login"); }}
+               className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+            >
+               Logout
+            </button>
+            <button 
+               onClick={handleSave}
+               className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm shadow cursor-pointer hover:bg-indigo-700"
+            >
+               Publish Changes
+            </button>
+          </div>
         </div>
       </header>
 
