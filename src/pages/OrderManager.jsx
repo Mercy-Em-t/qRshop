@@ -8,6 +8,8 @@ export default function OrderManager() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [stkPromptOrderId, setStkPromptOrderId] = useState(null);
+  const [stkPhoneNumber, setStkPhoneNumber] = useState("");
   const navigate = useNavigate();
 
   const user = getCurrentUser();
@@ -43,6 +45,14 @@ export default function OrderManager() {
       setOrders(orderData);
     }
     if (loading) setLoading(false);
+  };
+
+  const handleSubmitStkPush = async (orderId) => {
+    // In a live integration, the captured `stkPhoneNumber` would be passed natively to the MPesa Daraja API
+    console.log(`Pushing STK payload to ${stkPhoneNumber} for order ${orderId}`);
+    await updateOrderStatus(orderId, "stk_pushed");
+    setStkPromptOrderId(null);
+    setStkPhoneNumber("");
   };
 
   const updateOrderStatus = async (orderId, newStatus) => {
@@ -203,12 +213,42 @@ export default function OrderManager() {
 
                     <div className="grid grid-cols-2 gap-2 mt-auto">
                       {(order.status === "pending_payment" || order.status === "pending") ? (
-                        <button
-                          onClick={() => updateOrderStatus(order.id, "stk_pushed")}
-                          className="col-span-2 bg-indigo-600 text-white font-medium py-3 rounded-lg hover:bg-indigo-700 transition"
-                        >
-                          💸 Trigger STK Push
-                        </button>
+                        stkPromptOrderId === order.id ? (
+                          <div className="col-span-2 flex flex-col gap-2 bg-indigo-50 p-3 rounded-lg border border-indigo-100 shadow-inner">
+                             <label className="text-xs font-bold text-indigo-800 uppercase tracking-wide">Enter Customer M-Pesa Number</label>
+                             <div className="flex gap-2">
+                               <input 
+                                 type="tel"
+                                 autoFocus
+                                 value={stkPhoneNumber}
+                                 onChange={(e) => setStkPhoneNumber(e.target.value)}
+                                 placeholder="e.g. 2547..."
+                                 className="flex-1 border border-indigo-300 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 bg-white shadow-sm"
+                               />
+                               <button
+                                 onClick={() => handleSubmitStkPush(order.id)}
+                                 disabled={!stkPhoneNumber}
+                                 className="bg-indigo-600 text-white font-medium px-4 py-2 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 border border-indigo-700 shadow-sm"
+                               >
+                                 Push
+                               </button>
+                               <button
+                                 onClick={() => { setStkPromptOrderId(null); setStkPhoneNumber(""); }}
+                                 className="bg-white border border-gray-300 text-gray-700 font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition shadow-sm"
+                               >
+                                 Cancel
+                               </button>
+                             </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setStkPromptOrderId(order.id)}
+                            className="col-span-2 bg-indigo-600 text-white font-medium py-3 rounded-lg hover:bg-indigo-700 transition shadow-sm border border-indigo-700 flex items-center justify-center gap-2"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            Trigger STK Push
+                          </button>
+                        )
                       ) : order.status === "stk_pushed" ? (
                         <button
                           disabled
