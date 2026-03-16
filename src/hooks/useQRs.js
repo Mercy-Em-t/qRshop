@@ -21,7 +21,11 @@ export function useQRs(shopId) {
   }, [qrs, shopId]);
 
   useEffect(() => {
-    if (shopId) fetchQRs();
+    if (shopId) {
+       fetchQRs();
+    } else {
+       setLoading(false);
+    }
   }, [shopId]);
 
   async function fetchQRs() {
@@ -32,15 +36,25 @@ export function useQRs(shopId) {
     }
 
     try {
+      // Setup a timeout to forcefully kill the spinner after 6 seconds if network hangs
+      const timeoutId = setTimeout(() => {
+         setLoading(false);
+         console.warn("QR Sync timeout reached.");
+      }, 6000);
+
       const { data, error } = await supabase
         .from('qrs')
         .select('*')
         .eq('shop_id', shopId)
         .order('created_at', { ascending: false });
         
+      clearTimeout(timeoutId);
+
       if (!error && data) {
         setQrs(data);
         localStorage.setItem(`qrs_cache_${shopId}`, JSON.stringify(data));
+      } else if (error) {
+        console.error("Failed to sync nodes from Supabase:", error);
       }
     } catch (err) {
       console.warn("Offline fetch fallback active:", err);
