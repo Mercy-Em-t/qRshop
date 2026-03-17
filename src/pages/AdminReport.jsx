@@ -134,6 +134,68 @@ export default function AdminReport() {
            <p className="text-gray-500 text-xs mt-6 italic">We must tie these dependencies down together immediately.</p>
         </div>
       )
+    },
+    {
+      id: "economics",
+      title: "Platform Economics & Architecture Costs",
+      date: "CRITICAL: ONGOING",
+      author: "Financial Directive",
+      icon: "💸",
+      content: (
+        <div className="space-y-6">
+           <div className="bg-indigo-50 border border-indigo-200 p-6 rounded-2xl mb-6 shadow-sm">
+             <h3 className="font-black text-indigo-900 text-xl mb-4">Unit Analytics: What does a Shop cost us?</h3>
+             <p className="text-gray-700 leading-relaxed mb-4">
+               The V3 system is compiled on edge-serverless architecture (Vercel + Supabase). We pay exactly <strong>$0.00</strong> for idle time. Costs trigger exclusively upon dynamic engagement (scans).
+             </p>
+
+             <div className="space-y-3">
+               <div className="flex justify-between items-center py-2 border-b border-indigo-100">
+                  <span className="font-bold text-gray-800">Compute (Vercel Edge)</span>
+                  <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full shadow-sm">~$0.05 / 1k Scans</span>
+               </div>
+               <div className="flex justify-between items-center py-2 border-b border-indigo-100">
+                  <span className="font-bold text-gray-800">Database (Supabase I/O)</span>
+                  <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full shadow-sm">~$0.02 / 1k Scans</span>
+               </div>
+               <div className="flex justify-between items-center py-2 border-b border-indigo-100">
+                  <span className="font-bold text-gray-800">Media Pipeline (Supabase Storage)</span>
+                  <span className="text-sm text-gray-600 bg-white px-3 py-1 rounded-full shadow-sm">~$0.02 / 1k Scans</span>
+               </div>
+               <div className="flex justify-between items-center py-2">
+                  <span className="font-black text-indigo-900 text-lg">Total Operations Gravity</span>
+                  <span className="font-black text-indigo-700 text-lg bg-indigo-100 px-3 py-1 rounded-lg">~$0.09 / 1,000 Scans</span>
+               </div>
+             </div>
+           </div>
+
+           <div className="grid md:grid-cols-2 gap-6">
+             <div className="bg-white border text-gray-800 border-gray-200 p-5 rounded-2xl shadow-sm">
+                <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+                   <span className="text-xl">⚠️</span> The "Free Tier" Burden
+                </h4>
+                <p className="text-sm leading-relaxed mb-3">
+                   A free tier shop doing 100 scans/day generates ~3k monthly scans. The physical cost is exactly <strong>$0.27 USD / month</strong>.
+                </p>
+                <p className="text-sm leading-relaxed">
+                   While microscopic individually, 10,000 non-paying shops equates to <strong>$2,700/mo</strong> in dead compute weight. Therefore, "Free" shops are strictly blocked at 2 initial deploying nodes to constrain abuse.
+                </p>
+             </div>
+
+             <div className="bg-white border text-gray-800 border-gray-200 p-5 rounded-2xl shadow-sm ring-2 ring-emerald-500 ring-offset-2">
+                <h4 className="font-bold text-emerald-900 mb-2 flex items-center gap-2">
+                   <span className="text-xl">📈</span> The "Pro" Tier Margins
+                </h4>
+                <p className="text-sm leading-relaxed mb-3">
+                   If a premium shop processes 10,000 scans per month, their physical gravity cost is <strong>$0.90 USD</strong>.
+                </p>
+                <p className="text-sm leading-relaxed font-bold">
+                   If the Pro Subscription costs $15.00, our Gross Software Margin stands at 94.0%.
+                </p>
+             </div>
+           </div>
+        </div>
+      )
     }
   ];
 

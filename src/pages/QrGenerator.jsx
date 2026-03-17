@@ -6,7 +6,7 @@ import { getCurrentUser, logout } from "../services/auth-service";
 import usePlanAccess from "../hooks/usePlanAccess";
 import { useQRs } from "../hooks/useQRs";
 
-const FREE_QR_LIMIT = 5;
+const FREE_QR_LIMIT = 2;
 
 export default function QrGenerator() {
   const [location, setLocation] = useState("");
