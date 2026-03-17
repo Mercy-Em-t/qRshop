@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser, logout } from "../services/auth-service";
 import LoadingSpinner from "./LoadingSpinner";
+import { useQRs } from "../hooks/useQRs";
+import { createQrNode } from "../services/qr-node-service";
 
 export default function OnboardingGate({ children }) {
   const [shopStatus, setShopStatus] = useState(null);
@@ -24,6 +26,11 @@ export default function OnboardingGate({ children }) {
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [kycError, setKycError] = useState("");
   const [kycLoading, setKycLoading] = useState(false);
+
+  // Initial QR State
+  const { qrs, fetchQRs } = useQRs(user?.shop_id);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrError, setQrError] = useState("");
 
   useEffect(() => {
     // If not logged in, or is a system admin, they don't need this gate
@@ -138,16 +145,29 @@ export default function OnboardingGate({ children }) {
      }
   };
 
+  const handleGenerateFirstQr = async () => {
+     setQrError("");
+     setQrLoading(true);
+     try {
+       await createQrNode(user.shop_id, "Main Entrance", "open_menu");
+       await fetchQRs(); // Re-sync to satisfy the gate
+     } catch (err) {
+       setQrError(err.message);
+     } finally {
+       setQrLoading(false);
+     }
+  };
+
   if (loading) {
      return <LoadingSpinner message="Checking Security Vault..." />;
   }
 
-  // If they don't have constraints explicitly set to strict values, let them through.
-  // This ensures existing users (where these columns might be null) are automatically bypassed.
-  const needsPasswordChange = shopStatus?.needs_password_change === true;
-  const kycCompleted = shopStatus?.kyc_completed !== false; // null or true means bypassed
+  // Strict Security Checks
+  const needsPasswordChange = shopStatus?.needs_password_change !== false; 
+  const kycCompleted = shopStatus?.kyc_completed === true; 
+  const hasNodes = (qrs || []).length > 0;
 
-  if (!needsPasswordChange && kycCompleted) {
+  if (!needsPasswordChange && kycCompleted && hasNodes) {
      return children;
   }
 
@@ -303,9 +323,38 @@ export default function OnboardingGate({ children }) {
                   </button>
                </form>
            </div>
-        </div>
-     );
-  }
+         </div>
+      );
+   }
 
-  return <>{children}</>;
+   // FORCE FIRST QR GENERATION VIEW
+   if (!hasNodes) {
+      return (
+         <div className="min-h-screen bg-green-50 flex flex-col justify-center items-center p-4">
+            <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 border border-green-100 text-center">
+                <span className="text-5xl mb-3 block">📍</span>
+                <h1 className="text-2xl font-black text-gray-900">Deploy Your First Node</h1>
+                <p className="text-gray-500 mt-2 text-sm text-balance">
+                   Your workspace is ready. To begin routing traffic to your business, generate your first digital touchpoint.
+                </p>
+
+                {qrError && (
+                   <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm mt-6 border border-red-100 font-medium text-left">
+                      {qrError}
+                   </div>
+                )}
+
+                <button 
+                   onClick={handleGenerateFirstQr}
+                   disabled={qrLoading}
+                   className="w-full bg-green-600 text-white font-bold py-4 rounded-xl shadow-md hover:bg-green-700 transition mt-8 disabled:opacity-50"
+                >
+                   {qrLoading ? "Generating Touchpoint..." : "Deploy First Node & Enter Dashboard"}
+                </button>
+            </div>
+         </div>
+      );
+   }
+
+   return <>{children}</>;
 }
