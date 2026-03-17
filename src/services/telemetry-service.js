@@ -21,6 +21,7 @@ export async function logEvent(
     shop_id: shopId,
     session_id: sessionId,
     device_id: deviceId,
+    campaign_id: extraMetadata.campaign_id || null,
     // Note: user_id and visit_id are not in the base public.events schema
     // so we pack them safely into device_info until the V3 schema is manually applied
     device_info: {
@@ -29,7 +30,7 @@ export async function logEvent(
       visit_id: extraMetadata.visit_id || null,
       ...Object.fromEntries(
         Object.entries(extraMetadata).filter(
-          ([key]) => key !== "user_id" && key !== "visit_id"
+          ([key]) => key !== "user_id" && key !== "visit_id" && key !== "campaign_id"
         )
       ),
     },
@@ -41,6 +42,7 @@ export async function logEvent(
       const queue = saved ? JSON.parse(saved) : [];
       queue.push(evt);
       localStorage.setItem('offlineEvents', JSON.stringify(queue));
+      window.dispatchEvent(new Event('offline_event_added'));
     } catch {
       // ignore
     }

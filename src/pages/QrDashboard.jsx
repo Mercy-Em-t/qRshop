@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQRs } from "../hooks/useQRs";
+import { useCampaigns } from "../hooks/useCampaigns";
 import QRList from "../components/QRList";
 import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
@@ -9,8 +10,16 @@ import { getCurrentUser, logout } from "../services/auth-service";
 export default function QrDashboard() {
   const user = getCurrentUser();
   const shopId = user?.shop_id;
-  const { qrs, loading, updateQR, deleteQR } = useQRs(shopId);
+  const { qrs, loading: qrsLoading, updateQR, deleteQR } = useQRs(shopId);
+  const { campaigns, loading: campaignsLoading } = useCampaigns(shopId);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  // Dashboard Filters
+  const [filterCampaign, setFilterCampaign] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 12;
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -27,6 +36,26 @@ export default function QrDashboard() {
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
+
+  const filteredQRs = qrs?.filter(qr => {
+    if (filterStatus !== "all" && qr.status !== filterStatus) return false;
+    if (filterCampaign !== "all") {
+      if (filterCampaign === "unlinked" && qr.campaign_id) return false;
+      if (filterCampaign !== "unlinked" && qr.campaign_id !== filterCampaign) return false;
+    }
+    return true;
+  }) || [];
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterStatus, filterCampaign]);
+
+  const totalPages = Math.ceil(filteredQRs.length / itemsPerPage);
+  const paginatedQRs = filteredQRs.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -61,18 +90,68 @@ export default function QrDashboard() {
       )}
 
       <main className="max-w-7xl mx-auto px-4 py-8 animate-fade-in">
-        {loading ? (
-          <LoadingSpinner message="Syncing Nodes..." />
+        {qrsLoading || campaignsLoading ? (
+          <LoadingSpinner message="Syncing Nodes and Campaigns..." />
         ) : (
           <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm relative">
-            <div className="mb-6 flex justify-between items-center border-b border-gray-100 pb-4">
-               <h2 className="text-xl font-semibold text-gray-800">Deployed Fleet / Actions</h2>
-               <span className="bg-gray-100 text-gray-700 py-1 px-3 rounded-full text-sm font-bold shadow-inner">
-                 {qrs?.length || 0} Nodes
-               </span>
+            <div className="mb-6 flex flex-col md:flex-row md:justify-between items-start md:items-center space-y-4 md:space-y-0 border-b border-gray-100 pb-4">
+               <div>
+                 <h2 className="text-xl font-semibold text-gray-800 flex items-center gap-3">
+                   Deployed Fleet
+                   <span className="bg-gray-100 text-gray-700 py-0.5 px-3 rounded-full text-sm font-bold shadow-inner">
+                     {filteredQRs.length} Nodes
+                   </span>
+                 </h2>
+               </div>
+               
+               <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                 <select
+                   value={filterStatus}
+                   onChange={(e) => setFilterStatus(e.target.value)}
+                   className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
+                 >
+                   <option value="all">All Statuses</option>
+                   <option value="active">Active Only</option>
+                   <option value="inactive">Inactive Only</option>
+                 </select>
+                 
+                 <select
+                   value={filterCampaign}
+                   onChange={(e) => setFilterCampaign(e.target.value)}
+                   className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block p-2"
+                 >
+                   <option value="all">All Campaigns</option>
+                   <option value="unlinked">Unlinked Nodes</option>
+                   {campaigns?.map(c => (
+                     <option key={c.id} value={c.id}>{c.name}</option>
+                   ))}
+                 </select>
+               </div>
             </div>
             
-            <QRList qrs={qrs} updateQR={updateQR} deleteQR={deleteQR} />
+            <QRList qrs={paginatedQRs} campaigns={campaigns} updateQR={updateQR} deleteQR={deleteQR} />
+            
+            {totalPages > 1 && (
+              <div className="mt-8 flex justify-center items-center gap-2 border-t border-gray-100 pt-6">
+                 <button 
+                   disabled={currentPage === 1}
+                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                   className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg disabled:opacity-50 hover:bg-gray-50 transition"
+                 >
+                   Previous
+                 </button>
+                 <span className="text-gray-500 text-sm font-medium px-4">
+                   Page {currentPage} of {totalPages}
+                 </span>
+                 <button 
+                   disabled={currentPage === totalPages}
+                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                   className="px-4 py-2 bg-white border border-gray-200 text-gray-700 font-medium rounded-lg disabled:opacity-50 hover:bg-gray-50 transition"
+                 >
+                   Next
+                 </button>
+              </div>
+            )}
             
           </div>
         )}

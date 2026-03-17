@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { getQrMetrics } from '../services/telemetry-service';
 
-export default function QRCard({ qr, updateQR, deleteQR }) {
+export default function QRCard({ qr, campaigns = [], updateQR, deleteQR }) {
   const navigate = useNavigate();
   const [isPending, setIsPending] = useState(false);
   const [editingLoc, setEditingLoc] = useState(false);
@@ -89,7 +89,7 @@ export default function QRCard({ qr, updateQR, deleteQR }) {
                     setIsPending(false);
                  }}
                  disabled={isPending}
-                 className="appearance-none bg-white border border-blue-200 text-blue-700 font-bold py-1 pl-3 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm cursor-pointer disabled:opacity-50 transition-all hover:bg-blue-50"
+                 className="appearance-none w-full bg-white border border-blue-200 text-blue-700 font-bold py-1 pl-3 pr-8 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm cursor-pointer disabled:opacity-50 transition-all hover:bg-blue-50"
                >
                  <option value="open_menu">Open Menu</option>
                  <option value="open_order">Fast Order Mode</option>
@@ -100,6 +100,32 @@ export default function QRCard({ qr, updateQR, deleteQR }) {
                </div>
             </div>
           </div>
+          
+          {qr.action === 'open_campaign' && (
+            <div className="flex justify-between items-center bg-purple-50/50 border border-purple-100 px-3 py-2 rounded-lg">
+              <span className="text-purple-800 font-medium text-xs">Linked Campaign</span>
+              <div className="relative max-w-[140px]">
+                 <select 
+                   value={qr.campaign_id || ""}
+                   onChange={async (e) => {
+                      setIsPending(true);
+                      await updateQR(qr.id, { campaign_id: e.target.value || null });
+                      setIsPending(false);
+                   }}
+                   disabled={isPending}
+                   className="appearance-none w-full bg-white border border-purple-200 text-purple-700 font-bold py-1 pl-2 pr-6 rounded focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs cursor-pointer disabled:opacity-50 transition-all hover:bg-purple-50 truncate"
+                 >
+                   <option value="">-- Select --</option>
+                   {campaigns?.filter(c => c.is_active).map(c => (
+                     <option key={c.id} value={c.id}>{c.name}</option>
+                   ))}
+                 </select>
+                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-purple-500">
+                   <svg className="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                 </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       <div className="flex gap-2 mt-auto">

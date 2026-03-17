@@ -88,7 +88,7 @@ export default function Order() {
   }
 
   const shopName = shop?.name || "Shop";
-  const shopPhone = import.meta.env.VITE_SHOP_PHONE || shop?.phone || "";
+  const shopPhone = import.meta.env.VITE_SHOP_PHONE || shop?.whatsapp_number || shop?.phone || "";
 
   const generateDatabaseOrder = async () => {
      if (!isOnline) {

@@ -4,65 +4,62 @@ import { supabase } from '../services/supabase-client';
 export function useOfflineEventQueue() {
   const [queue, setQueue] = useState([]);
 
-  // Load queued events from localStorage on mount
-  useEffect(() => {
+  const loadQueue = useCallback(() => {
     try {
       const saved = localStorage.getItem('offlineEvents');
       if (saved) setQueue(JSON.parse(saved));
-    } catch {
-      // ignore parsing errors
-    }
+    } catch {}
   }, []);
 
-  // Sync queue to localStorage whenever it changes
+  // Load queued events from localStorage on mount
   useEffect(() => {
-    try {
-      if (queue.length > 0) {
-        localStorage.setItem('offlineEvents', JSON.stringify(queue));
-      } else {
-        localStorage.removeItem('offlineEvents');
-      }
-    } catch {
-      // ignore storage fullness
-    }
-  }, [queue]);
+    loadQueue();
+    // Also listen to storage events from other tabs or manual triggers
+    window.addEventListener('storage', loadQueue);
+    window.addEventListener('offline_event_added', loadQueue);
+    return () => {
+      window.removeEventListener('storage', loadQueue);
+      window.removeEventListener('offline_event_added', loadQueue);
+    };
+  }, [loadQueue]);
 
   // Flush queue to Supabase
   const flushQueue = useCallback(async () => {
-    if (!navigator.onLine || !queue.length) return;
+    if (!navigator.onLine) return;
     
-    // Copy queue and try to insert all
-    const copy = [...queue];
-    for (const event of copy) {
-      if (!supabase) continue;
+    try {
+      const saved = localStorage.getItem('offlineEvents');
+      let currentQueue = saved ? JSON.parse(saved) : [];
+      if (!currentQueue.length) return;
       
-      const { error } = await supabase.from('events').insert(event);
-      if (!error) {
-        // Remove successfully synced event from queue
-        setQueue((prev) => prev.filter((e) => e.id !== event.id));
+      let pendingQueue = [...currentQueue];
+      for (const event of currentQueue) {
+        if (!supabase) continue;
+        
+        const { error } = await supabase.from('events').insert(event);
+        if (!error) {
+          pendingQueue = pendingQueue.filter((e) => e.id !== event.id);
+        }
       }
+      
+      if (pendingQueue.length > 0) {
+        localStorage.setItem('offlineEvents', JSON.stringify(pendingQueue));
+      } else {
+        localStorage.removeItem('offlineEvents');
+      }
+      setQueue(pendingQueue);
+    } catch (err) {
+      console.error("Flush queue error:", err);
     }
-  }, [queue]);
+  }, []);
 
   // Automatically flush when device regains network
   useEffect(() => {
     window.addEventListener('online', flushQueue);
+    // Try flushing on mount if online
+    if (navigator.onLine) flushQueue();
     return () => window.removeEventListener('online', flushQueue);
   }, [flushQueue]);
 
-  // Add event to queue (or flush immediately if online)
-  const enqueueEvent = async (event) => {
-    if (navigator.onLine && supabase) {
-      const { error } = await supabase.from('events').insert(event);
-      if (error) {
-        // Fallback to queue if db insertion fails specifically
-        setQueue((prev) => [...prev, event]);
-      }
-    } else {
-      // Offline, push straight to local queue
-      setQueue((prev) => [...prev, event]);
-    }
-  };
-
-  return { queue, enqueueEvent, flushQueue };
+  return { queue, flushQueue };
 }

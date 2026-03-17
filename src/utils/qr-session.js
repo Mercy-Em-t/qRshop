@@ -48,7 +48,7 @@ export function getOrCreateTrackingSession() {
  * Create a QR session with server-validated data.
  * Supports both legacy (client-only) and V2 (server-validated) sessions.
  */
-export function createQrSession(shopId, table, serverSession = null) {
+export function createQrSession(shopId, table, serverSession = null, campaignId = null) {
   const deviceId = getOrCreateDeviceId();
   // We mint a fresh tracking session ID whenever a brand new QR scan happens
   // to ensure different visits map to different sessions.
@@ -57,6 +57,7 @@ export function createQrSession(shopId, table, serverSession = null) {
   const session = {
     shop_id: shopId,
     table: table,
+    campaign_id: campaignId,
     created_at: new Date().toISOString(),
     expires_at: serverSession?.expires_at || new Date(Date.now() + SESSION_EXPIRY_MINUTES * 60 * 1000).toISOString(),
     session_id: serverSession?.id || null, // Legacy server session ID

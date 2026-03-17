@@ -29,17 +29,21 @@ export function useQRs(shopId) {
   }, [shopId]);
 
   async function fetchQRs() {
-    setLoading(true);
-    if (!supabase) {
+    if (!supabase || !shopId) {
       setLoading(false);
       return;
     }
 
+    setLoading(true);
+    let isResolved = false;
+
     try {
       // Setup a timeout to forcefully kill the spinner after 6 seconds if network hangs
       const timeoutId = setTimeout(() => {
-         setLoading(false);
-         console.warn("QR Sync timeout reached.");
+         if (!isResolved) {
+             setLoading(false);
+             console.warn("QR Sync timeout reached.");
+         }
       }, 6000);
 
       const { data, error } = await supabase
@@ -48,6 +52,7 @@ export function useQRs(shopId) {
         .eq('shop_id', shopId)
         .order('created_at', { ascending: false });
         
+      isResolved = true;
       clearTimeout(timeoutId);
 
       if (!error && data) {
@@ -58,8 +63,10 @@ export function useQRs(shopId) {
       }
     } catch (err) {
       console.warn("Offline fetch fallback active:", err);
+    } finally {
+      isResolved = true;
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function addQR(newQR) {

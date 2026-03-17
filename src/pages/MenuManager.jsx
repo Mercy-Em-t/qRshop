@@ -18,6 +18,17 @@ export default function MenuManager() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Main");
+  
+  // eCommerce New Fields
+  const [stock, setStock] = useState("");
+  const [sku, setSku] = useState("");
+  const [productLink, setProductLink] = useState("");
+  const [tags, setTags] = useState("");
+  
+  // Image Upload State
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -46,32 +57,78 @@ export default function MenuManager() {
     e.preventDefault();
     setIsAdding(true);
 
+    const parsedTags = tags ? tags.split(',').map(t=>t.trim()).filter(Boolean) : [];
+
     const payload = {
       name,
       description,
       price: parseFloat(price),
       category,
+      stock: stock ? parseInt(stock) : -1,
+      sku: sku || null,
+      product_link: productLink || null,
+      tags: parsedTags,
     };
 
     let error;
+    let newProductId = editingId;
 
     if (editingId) {
        const res = await supabase.from("menu_items").update(payload).eq("id", editingId);
        error = res.error;
     } else {
        payload.shop_id = SHOP_ID;
-       const res = await supabase.from("menu_items").insert(payload);
+       const res = await supabase.from("menu_items").insert(payload).select();
        error = res.error;
+       if (res.data && res.data.length > 0) {
+          newProductId = res.data[0].id;
+       }
     }
 
     if (!error) {
-      handleCancelEdit();
-      fetchItems();
+       // Handle Image Upload if file exists
+       if (imageFile && newProductId) {
+          try {
+             setUploadProgress(10);
+             const fileExt = imageFile.name.split('.').pop();
+             const fileName = `${SHOP_ID}/${newProductId}-${Date.now()}.${fileExt}`;
+             
+             setUploadProgress(40);
+             const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('product-images')
+                .upload(fileName, imageFile);
+                
+             if (uploadError) throw uploadError;
+             
+             setUploadProgress(80);
+             const { data: publicUrlData } = supabase.storage
+                .from('product-images')
+                .getPublicUrl(fileName);
+                
+             const publicUrl = publicUrlData.publicUrl;
+             
+             // Save to product_images table
+             await supabase.from("product_images").insert({
+                 product_id: newProductId,
+                 url: publicUrl,
+                 position: 0
+             });
+             
+             setUploadProgress(100);
+          } catch (imgErr) {
+             console.error("Image upload failed:", imgErr);
+             alert("Product saved, but image upload failed: " + imgErr.message);
+          }
+       }
+
+       handleCancelEdit();
+       fetchItems();
     } else {
       console.error("Failed to save item", error);
       alert("Error saving item: " + error.message);
     }
     setIsAdding(false);
+    setUploadProgress(0);
   };
 
   const startEdit = (item) => {
@@ -80,6 +137,12 @@ export default function MenuManager() {
      setDescription(item.description || "");
      setPrice(item.price);
      setCategory(item.category);
+     setStock(item.stock === -1 ? "" : item.stock);
+     setSku(item.sku || "");
+     setProductLink(item.product_link || "");
+     setTags(item.tags ? item.tags.join(", ") : "");
+     setImageFile(null);
+     setImagePreview(null);
      window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -89,6 +152,24 @@ export default function MenuManager() {
      setDescription("");
      setPrice("");
      setCategory("Main");
+     setStock("");
+     setSku("");
+     setProductLink("");
+     setTags("");
+     setImageFile(null);
+     setImagePreview(null);
+  };
+  
+  const handleImageSelect = (e) => {
+     const file = e.target.files[0];
+     if (!file) return;
+     if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert("Image must be less than 5MB");
+        return;
+     }
+     setImageFile(file);
+     const objectUrl = URL.createObjectURL(file);
+     setImagePreview(objectUrl);
   };
 
   const handleExportCSV = () => {
@@ -98,18 +179,27 @@ export default function MenuManager() {
     }
     
     // Define exact CSV headers matching the import structure
-    const headers = ["Name", "Category", "Price", "Description"];
+    const headers = ["Name", "Category", "Price", "Description", "Stock", "SKU", "Product_Link", "Tags", "Variant_Options", "Image_URLs"];
     const csvRows = [headers.join(",")];
     
     for (const item of items) {
       // Escape internal double quotes by doubling them up, and wrap entire cell in double quotes for safety
       const escapeCell = (str) => `"${String(str || "").replace(/"/g, '""')}"`;
       
+      const tagsStr = Array.isArray(item.tags) ? item.tags.join(",") : "";
+      const variantStr = (item.variant_options && Object.keys(item.variant_options).length > 0) ? JSON.stringify(item.variant_options) : "";
+      
       const row = [
         escapeCell(item.name),
         escapeCell(item.category),
         item.price, // Prices are just numbers
-        escapeCell(item.description)
+        escapeCell(item.description),
+        item.stock || "",
+        escapeCell(item.sku),
+        escapeCell(item.product_link),
+        escapeCell(tagsStr),
+        escapeCell(variantStr),
+        "" // Can't easily export sub-table image URLs in this flat structure right now
       ];
       csvRows.push(row.join(","));
     }
@@ -118,7 +208,6 @@ export default function MenuManager() {
     const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     
-    // Create an invisible anchor tag to trigger the browser's native download dialog
     const link = document.createElement("a");
     link.href = url;
     link.setAttribute("download", "QR_Shop_Menu_Catalog.csv");
@@ -131,12 +220,11 @@ export default function MenuManager() {
   };
 
   const handleDownloadTemplate = () => {
-    // Generate a dummy CSV row as a template
     const templateContent = [
-      "Name,Category,Price,Description",
-      "Signature Burger,Main,750,Double beef patty with special sauce",
-      "Loaded Fries,Sides,300,Crispy fries topped with cheese and bacon",
-      "Vanilla Shake,Drinks,400,Classic thick vanilla milkshake"
+      "Name,Category,Price,Description,Stock,SKU,Product_Link,Tags,Variant_Options,Image_URLs",
+      "Signature Burger,Main,750,Double beef patty with special sauce,50,BURG-01,,beef,burger,\"{\"\"size\"\":[\"\"Single\"\",\"\"Double\"\"]}\",https://example.com/burger1.jpg|https://example.com/burger2.jpg",
+      "Loaded Fries,Sides,300,Crispy fries topped with cheese and bacon,-1,FRIES-01,,,,",
+      "Vanilla Shake,Drinks,400,Classic thick vanilla milkshake,100,SHK-01,,,,"
     ].join("\n");
     
     const blob = new Blob([templateContent], { type: "text/csv;charset=utf-8;" });
@@ -152,6 +240,38 @@ export default function MenuManager() {
     URL.revokeObjectURL(url);
   };
 
+  const parseCSVRow = (text) => {
+      let result = [];
+      let current = "";
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+         let char = text[i];
+         if (inQuotes) {
+            if (char === '"') {
+               if (i + 1 < text.length && text[i + 1] === '"') {
+                  current += '"';
+                  i++; // skip escaped quote
+               } else {
+                  inQuotes = false;
+               }
+            } else {
+               current += char;
+            }
+         } else {
+            if (char === '"') {
+               inQuotes = true;
+            } else if (char === ',') {
+               result.push(current);
+               current = "";
+            } else {
+               current += char;
+            }
+         }
+      }
+      result.push(current);
+      return result;
+  };
+
   const handleBulkUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -160,41 +280,82 @@ export default function MenuManager() {
     reader.onload = async (event) => {
       const csvData = event.target.result;
       const rows = csvData.split("\n");
-      // Assuming headers: Name, Category, Price, Description
       
       const bulkItems = [];
+      const imageCreations = []; // parallel array of image arrays
+
+      const cleanStr = (str) => str ? str.trim() : "";
+
       for (let i = 1; i < rows.length; i++) {
-        // Improved split to avoid breaking on inner commas inside quotes if possible, 
-        // falling back to basic split for MVP.
-        const row = rows[i].split(",");
-        if (row.length >= 3 && row[0].trim() !== "") {
-           // Helper to remove surrounding quotes if generated by Excel or our own exporter
-           const cleanStr = (str) => str ? str.trim().replace(/^"|"$/g, '').replace(/""/g, '"') : "";
+        if (rows[i].trim() === "") continue;
+        
+        const row = parseCSVRow(rows[i]);
+        if (row.length >= 3 && cleanStr(row[0]) !== "") {
+           let parsedVariants = {};
+           if (cleanStr(row[8])) {
+              try { parsedVariants = JSON.parse(cleanStr(row[8])); } 
+              catch(err) { console.warn("Invalid variants JSON for item: " + row[0]) }
+           }
+
+           let parsedTags = [];
+           if (cleanStr(row[7])) {
+              parsedTags = cleanStr(row[7]).split(',').map(t=>t.trim()).filter(Boolean);
+           }
            
            bulkItems.push({
               shop_id: SHOP_ID,
               name: cleanStr(row[0]),
               category: cleanStr(row[1]) || "Main",
               price: parseFloat(row[2]) || 0,
-              description: cleanStr(row[3])
+              description: cleanStr(row[3]),
+              stock: cleanStr(row[4]) ? parseInt(row[4]) : -1,
+              sku: cleanStr(row[5]) || null,
+              product_link: cleanStr(row[6]) || null,
+              tags: parsedTags,
+              variant_options: parsedVariants,
            });
+           
+           const imageUrls = cleanStr(row[9]) ? cleanStr(row[9]).split('|') : [];
+           imageCreations.push(imageUrls);
         }
       }
 
       if (bulkItems.length > 0) {
         setLoading(true);
-        const { error } = await supabase.from('menu_items').insert(bulkItems);
-        if (!error) {
-           alert(`Successfully imported ${bulkItems.length} items!`);
+        // Supabase select() returns the generated rows (so we get the IDs for image mappings)
+        const { data: insertedItems, error } = await supabase.from('menu_items').insert(bulkItems).select();
+        
+        if (!error && insertedItems) {
+           // Insert images for the newly created products
+           const imagePayloads = [];
+           for (let i = 0; i < insertedItems.length; i++) {
+              const productId = insertedItems[i].id;
+              const urls = imageCreations[i];
+              if (urls && urls.length > 0) {
+                 urls.forEach((url, index) => {
+                    imagePayloads.push({
+                       product_id: productId,
+                       url: url.trim(),
+                       position: index
+                    });
+                 });
+              }
+           }
+           
+           if (imagePayloads.length > 0) {
+              await supabase.from('product_images').insert(imagePayloads);
+           }
+           
+           alert(`Successfully imported ${bulkItems.length} products with ${imagePayloads.length} images!`);
            fetchItems();
         } else {
-           alert("Bulk upload failed: " + error.message);
+           alert("Bulk upload failed: " + error?.message);
         }
         setLoading(false);
       }
     };
     reader.readAsText(file);
-    e.target.value = null; // Reset input wrapper
+    e.target.value = null;
   };
 
   const handleToggleActive = async (id, currentStatus) => {
@@ -318,6 +479,84 @@ export default function MenuManager() {
                 placeholder="e.g. 500"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
               />
+            </div>
+            
+            <div className="md:col-span-2 pt-2 pb-1 border-t border-gray-100 mt-2">
+               <h3 className="text-sm font-bold text-gray-800">Advanced Inventory & eCommerce (Optional)</h3>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Stock Level</label>
+              <input
+                type="number"
+                value={stock}
+                onChange={(e) => setStock(e.target.value)}
+                placeholder="Leave blank for infinite"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Product SKU</label>
+              <input
+                type="text"
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                placeholder="e.g. BGR-01"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search Tags (comma separated)</label>
+              <input
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="e.g. vegan, spicy, bestseller"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">External Buy Link</label>
+              <input
+                type="url"
+                value={productLink}
+                onChange={(e) => setProductLink(e.target.value)}
+                placeholder="https://yourstore.com/item"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
+              />
+            </div>
+            
+            <div className="md:col-span-2 mt-4 flex gap-6 items-end">
+               <div className="flex-1">
+                 <label className="block text-sm font-medium text-gray-700 mb-2">Product Image (Max 5MB)</label>
+                 <div className="flex items-center gap-4">
+                    {imagePreview ? (
+                       <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm">
+                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                          <button 
+                            type="button" 
+                            onClick={() => {setImageFile(null); setImagePreview(null);}}
+                            className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-bl-lg text-xs font-bold"
+                          >
+                             ×
+                          </button>
+                       </div>
+                    ) : (
+                       <div className="w-16 h-16 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400">
+                          📷
+                       </div>
+                    )}
+                    <label className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 cursor-pointer shadow-sm transition">
+                       Choose Image
+                       <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImageSelect} className="hidden" />
+                    </label>
+                 </div>
+                 {uploadProgress > 0 && uploadProgress < 100 && (
+                    <div className="w-full bg-gray-200 rounded-full h-1.5 mt-3">
+                       <div className="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }}></div>
+                    </div>
+                 )}
+               </div>
             </div>
             <div className="flex items-end gap-2">
               {editingId && (

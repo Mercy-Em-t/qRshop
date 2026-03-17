@@ -51,6 +51,72 @@ export default function Admin() {
               Configure subscription plans and features.
             </p>
           </Link>
+
+          <Link
+            to="/admin/seo"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-100 relative overflow-hidden group"
+          >
+             <div className="absolute top-0 right-0 bg-blue-500 w-16 h-16 rounded-bl-full opacity-10 group-hover:scale-110 transition-transform"></div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              🔍 Global SEO
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Manage JSON-LD structured data and Google listings for the platform and individual shops.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/report"
+            className="bg-gray-900 rounded-xl shadow-sm p-6 hover:shadow-md transition-transform transform hover:-translate-y-1 relative overflow-hidden group"
+          >
+             <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-20 group-hover:scale-110 transition-transform"></div>
+            <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+              📊 System Report <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">V3 Live</span>
+            </h2>
+            <p className="text-gray-400 text-sm">
+              Live cohesion audit and overview of the platform architecture.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/engineering"
+            className="bg-black border border-green-900/50 rounded-xl shadow-2xl shadow-green-900/10 p-6 hover:shadow-green-900/30 transition-shadow relative overflow-hidden group"
+          >
+             <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-10 group-hover:scale-110 transition-transform"></div>
+            <h2 className="text-lg font-black text-green-500 mb-2 font-mono uppercase tracking-widest flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+              Engineering Compartment
+            </h2>
+            <p className="text-green-800/80 text-sm font-mono">
+              God-mode simulation access and infrastructure tooling controls.
+            </p>
+          </Link>
+
+          <a
+            href="/system_architecture.md"
+            download="V3_QR_System_Architecture.md"
+            className="bg-indigo-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border border-indigo-100"
+          >
+            <h2 className="text-lg font-semibold text-indigo-800 mb-2">
+              📚 System Architecture
+            </h2>
+            <p className="text-indigo-600/80 text-sm">
+              Download the official V3 Interaction Loop & Architecture Specs.
+            </p>
+          </a>
+
+          <a
+            href="/super_manager_guide.md"
+            download="V3_Super_Manager_Guide.md"
+            className="bg-purple-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border border-purple-100"
+          >
+            <h2 className="text-lg font-semibold text-purple-800 mb-2">
+              👑 Super Manager Guide
+            </h2>
+            <p className="text-purple-600/80 text-sm">
+              Download documentation on System Admin roles, capabilities, and security.
+            </p>
+          </a>
         </div>
       </main>
     </div>

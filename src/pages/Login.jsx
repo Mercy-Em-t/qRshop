@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { authenticateUser } from "../services/auth-service";
 
 export default function Login() {
@@ -78,10 +78,16 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 cursor-pointer"
+            className="w-full bg-green-600 text-white py-2 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50 cursor-pointer mb-2"
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
+          
+          <div className="text-center">
+             <Link to="/forgot-password" className="text-sm text-gray-500 hover:text-green-600 hover:underline transition-colors">
+                Forgot your password?
+             </Link>
+          </div>
         </form>
       </div>
     </div>

@@ -85,6 +85,8 @@ export default function OrderManager() {
       case "ready":
       case "completed":
         return <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Completed</span>;
+      case "archived":
+        return <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Archived</span>;
       default:
         return <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-bold uppercase">{status}</span>;
     }
@@ -134,7 +136,7 @@ export default function OrderManager() {
 
         {/* Segmented Pipeline Tabs */}
         <div className="flex bg-gray-200/50 p-1 rounded-xl mb-8 overflow-x-auto gap-1">
-          {["all", "pending", "preparing", "completed"].map((tab) => (
+          {["all", "pending", "preparing", "completed", "archived"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -160,10 +162,11 @@ export default function OrderManager() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {orders
               .filter((o) => {
-                 if (activeTab === "all") return true;
+                 if (activeTab === "all") return o.status !== "archived"; // Ditch archived from all to keep it clean, unless explicit
                  if (activeTab === "pending") return ["pending", "pending_payment", "stk_pushed"].includes(o.status);
                  if (activeTab === "preparing") return ["paid", "preparing"].includes(o.status);
                  if (activeTab === "completed") return ["ready", "completed"].includes(o.status);
+                 if (activeTab === "archived") return o.status === "archived";
                  return true;
               })
               .filter(o => {
@@ -264,12 +267,20 @@ export default function OrderManager() {
                         >
                           ✅ Mark Ready for Pickup
                         </button>
+                      ) : ["ready", "completed"].includes(order.status) ? (
+                        <button
+                          onClick={() => updateOrderStatus(order.id, "archived")}
+                          className="col-span-2 bg-gray-800 text-white font-medium py-3 rounded-lg hover:bg-gray-900 transition flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                          Archive Ticket
+                        </button>
                       ) : (
                         <button
                           disabled
                           className="col-span-2 bg-gray-100 text-gray-400 font-medium py-3 rounded-lg cursor-not-allowed"
                         >
-                          Completed
+                          Archived
                         </button>
                       )}
                     </div>

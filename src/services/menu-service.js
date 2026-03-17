@@ -5,7 +5,7 @@ export async function getMenuItems(shopId) {
 
   const { data, error } = await supabase
     .from("menu_items")
-    .select("*")
+    .select("*, product_images(url, position)")
     .eq("shop_id", shopId)
     .neq("is_active", false)
     .order("category", { ascending: true });

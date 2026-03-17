@@ -6,6 +6,9 @@ import { getOrdersPerDay, getPopularItems, getUpsellStats } from "../services/an
 import { getSubscription } from "../services/subscription-service";
 import AnalyticsChart from "../components/AnalyticsChart";
 import SubscriptionStatus from "../components/SubscriptionStatus";
+import OnboardingWizard from "../components/OnboardingWizard";
+import UpgradeModal from "../components/UpgradeModal";
+import usePlanAccess from "../hooks/usePlanAccess";
 
 export default function Dashboard() {
   const [ordersPerDay, setOrdersPerDay] = useState([]);
@@ -13,8 +16,11 @@ export default function Dashboard() {
   const [upsellStats, setUpsellStats] = useState(null);
   const [subscription, setSubscription] = useState(null);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [showWizard, setShowWizard] = useState(false);
+  const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const planAccess = usePlanAccess();
 
   const user = getCurrentUser();
   const shopId = user?.shop_id;
@@ -28,6 +34,24 @@ export default function Dashboard() {
       if (!shopId) {
         setLoading(false);
         return;
+      }
+
+      // Check Onboarding Status
+      try {
+        const hasSeenOnboarding = localStorage.getItem(`onboarded_${shopId}`);
+        if (!hasSeenOnboarding) {
+          const { count: qrCount } = await supabase.from('qrs').select('*', { count: 'exact', head: true }).eq('shop_id', shopId);
+          const { count: menuCount } = await supabase.from('menu_items').select('*', { count: 'exact', head: true }).eq('shop_id', shopId);
+          
+          if (qrCount === 0 && menuCount === 0) {
+            setShowWizard(true);
+          } else {
+             // If they already have data but no flag, just safely mark it
+             localStorage.setItem(`onboarded_${shopId}`, "true");
+          }
+        }
+      } catch (e) {
+         console.warn("Could not fetch onboarding stats", e);
       }
 
       try {
@@ -88,6 +112,20 @@ export default function Dashboard() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
+        {showWizard && (
+          <OnboardingWizard 
+            shopId={shopId} 
+            onComplete={() => setShowWizard(false)} 
+          />
+        )}
+        
+        {lockedFeatureFocus && (
+          <UpgradeModal 
+             featureName={lockedFeatureFocus} 
+             onClose={() => setLockedFeatureFocus(null)} 
+          />
+        )}
+        
         {/* Subscription Status */}
         <div className="mb-6">
           <SubscriptionStatus subscription={subscription} />
@@ -158,18 +196,69 @@ export default function Dashboard() {
             </p>
           </Link>
 
-          <Link
-            to="/dashboard/marketing"
-            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-100 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 bg-indigo-500 w-16 h-16 rounded-bl-full opacity-10"></div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">
-              🎨 Ad Generator
-            </h2>
-            <p className="text-gray-500 text-sm">
-              Create and download high-converting WhatsApp & Instagram Stories targeting your QR nodes.
-            </p>
-          </Link>
+          {planAccess.isPro ? (
+             <Link
+               to="/dashboard/campaigns"
+               className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-purple-100 relative overflow-hidden"
+             >
+               <div className="absolute top-0 right-0 bg-purple-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+               <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                 🎯 Campaigns
+               </h2>
+               <p className="text-gray-500 text-sm">
+                 Manage promotional campaigns and targeted QR rewards.
+               </p>
+             </Link>
+          ) : (
+             <div
+               onClick={() => setLockedFeatureFocus("Active Marketing Campaigns")}
+               className="bg-gray-50 rounded-xl border border-gray-200 p-6 relative overflow-hidden cursor-pointer group"
+             >
+               <div className="absolute top-4 right-4 text-gray-400 group-hover:text-indigo-500 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+               </div>
+               <h2 className="text-lg font-semibold text-gray-500 mb-2 transition-colors group-hover:text-gray-800">
+                 🎯 Campaigns
+               </h2>
+               <p className="text-gray-400 text-sm">
+                 Manage promotional campaigns and targeted QR rewards.
+               </p>
+             </div>
+          )}
+
+          {planAccess.isPro ? (
+             <Link
+               to="/dashboard/marketing"
+               className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-100 relative overflow-hidden"
+             >
+               <div className="absolute top-0 right-0 bg-indigo-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+               <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                 🎨 Ad Generator
+               </h2>
+               <p className="text-gray-500 text-sm">
+                 Create and download high-converting WhatsApp & Instagram Stories targeting your QR nodes.
+               </p>
+             </Link>
+          ) : (
+             <div
+               onClick={() => setLockedFeatureFocus("Ad Generator Studio")}
+               className="bg-gray-50 rounded-xl border border-gray-200 p-6 relative overflow-hidden cursor-pointer group"
+             >
+               <div className="absolute top-4 right-4 text-gray-400 group-hover:text-indigo-500 transition-colors">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+               </div>
+               <h2 className="text-lg font-semibold text-gray-500 mb-2 transition-colors group-hover:text-gray-800">
+                 🎨 Ad Generator
+               </h2>
+               <p className="text-gray-400 text-sm">
+                 Create and download high-converting WhatsApp & Instagram Stories targeting your QR nodes.
+               </p>
+             </div>
+          )}
 
           <Link
             to="/plans"
