@@ -4,7 +4,7 @@ import { supabase } from "./supabase-client";
  * Create an order record in the database before sending via WhatsApp.
  * This prevents spam and enables analytics tracking.
  */
-export async function createOrder(shopId, tableId, items, totalPrice) {
+export async function createOrder(shopId, tableId, items, totalPrice, discountAmount = 0, couponCode = null) {
   if (!supabase) {
     // Return a mock order when Supabase is not configured
     return {
@@ -12,6 +12,8 @@ export async function createOrder(shopId, tableId, items, totalPrice) {
       shop_id: shopId,
       table_id: tableId,
       total_price: totalPrice,
+      discount_amount: discountAmount,
+      coupon_code: couponCode,
       status: "pending",
       created_at: new Date().toISOString(),
     };
@@ -21,7 +23,10 @@ export async function createOrder(shopId, tableId, items, totalPrice) {
     .from("orders")
     .insert({
       shop_id: shopId,
+      table_id: tableId, // make sure to include this
       total_price: totalPrice,
+      discount_amount: discountAmount,
+      coupon_code: couponCode,
       status: "pending_payment",
     })
     .select()

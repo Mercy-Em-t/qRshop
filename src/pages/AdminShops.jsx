@@ -8,6 +8,7 @@ export default function AdminShops() {
   const [loading, setLoading] = useState(true);
   
   const [newShopName, setNewShopName] = useState("");
+  const [newShopSubdomain, setNewShopSubdomain] = useState("");
   const [newShopPhone, setNewShopPhone] = useState("");
   const [newShopWhatsApp, setNewShopWhatsApp] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
@@ -66,6 +67,7 @@ export default function AdminShops() {
         .from("shops")
         .insert([{ 
            name: newShopName, 
+           subdomain: newShopSubdomain ? newShopSubdomain.toLowerCase().replace(/[^a-z0-9-]/g, "") : null,
            phone: newShopPhone, 
            whatsapp_number: newShopWhatsApp || newShopPhone, 
            plan: "free" 
@@ -91,6 +93,7 @@ export default function AdminShops() {
       if (userErr) throw userErr;
 
       setNewShopName("");
+      setNewShopSubdomain("");
       setNewShopPhone("");
       setNewShopWhatsApp("");
       setNewAdminEmail("");
@@ -144,6 +147,11 @@ export default function AdminShops() {
                       <div>
                          <h3 className="text-lg font-bold text-gray-900">{shop.name}</h3>
                          <span className="font-mono text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded">{shop.id}</span>
+                         {shop.subdomain && (
+                            <span className="ml-2 font-bold text-xs text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">
+                               {shop.subdomain}.domain.com
+                            </span>
+                         )}
                       </div>
                       <div className="flex flex-col items-end gap-1">
                          <span className={`${shop.plan === 'pro' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'} font-bold px-2 py-1 rounded-full text-xs uppercase`}>
@@ -198,6 +206,16 @@ export default function AdminShops() {
                     onChange={(e) => setNewShopName(e.target.value)}
                     placeholder="e.g. The Rustic Burger"
                     className="w-full bg-indigo-700/50 border border-indigo-400 rounded-lg px-3 py-2 text-white placeholder-indigo-300 outline-none focus:ring-2 focus:ring-white transition"
+                  />
+               </div>
+               <div>
+                  <label className="block text-sm font-semibold mb-1 text-indigo-100">Subdomain Handle (Optional)</label>
+                  <input
+                    type="text"
+                    value={newShopSubdomain}
+                    onChange={(e) => setNewShopSubdomain(e.target.value)}
+                    placeholder="e.g. rusticburger"
+                    className="w-full bg-indigo-700/50 border border-indigo-400 rounded-lg px-3 py-2 text-white placeholder-indigo-300 outline-none focus:ring-2 focus:ring-white transition font-mono text-sm"
                   />
                </div>
                <div>

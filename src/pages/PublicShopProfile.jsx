@@ -3,8 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import { getShop } from "../services/shop-service";
 import { getMenuItemsByCategory } from "../services/menu-service";
 
-export default function PublicShopProfile() {
-  const { shopId } = useParams();
+export default function PublicShopProfile({ directShopId }) {
+  const params = useParams();
+  const shopId = directShopId || params.shopId;
   const [shop, setShop] = useState(null);
   const [menuCategories, setMenuCategories] = useState({});
   const [loading, setLoading] = useState(true);

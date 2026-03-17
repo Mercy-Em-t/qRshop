@@ -17,6 +17,23 @@ export async function getShop(shopId) {
   return data;
 }
 
+export async function getShopBySubdomain(subdomain) {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("shops")
+    .select("*")
+    .eq("subdomain", subdomain)
+    .single();
+
+  if (error) {
+    console.error("Error fetching shop by subdomain:", error);
+    return null;
+  }
+
+  return data;
+}
+
 export async function getTable(shopId, tableNumber) {
   if (!supabase) return null;
 

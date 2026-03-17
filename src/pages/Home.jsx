@@ -1,6 +1,57 @@
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import PublicShopProfile from "./PublicShopProfile";
+import { getShopBySubdomain } from "../services/shop-service";
+
+// Define domains that should NEVER be treated as tenant subdomains
+const RESERVED_DOMAINS = ["localhost", "127.0.0.1", "www", "tmsavannah.com", "tmsavannah", "shopqrplatform", "shopqr"];
 
 export default function Home() {
+  const [subdomainShopId, setSubdomainShopId] = useState(null);
+  const [isVerifyingSubdomain, setIsVerifyingSubdomain] = useState(true);
+
+  useEffect(() => {
+    // Intercept wildcard subdomains natively on the client
+    const hostname = window.location.hostname;
+    const parts = hostname.split(".");
+    
+    // e.g. "shop1.tmsavannah.com" -> parts[0] is "shop1".
+    // "localhost" -> parts[0] is "localhost"
+    const parsedSubdomain = parts[0];
+
+    // If it's a reserved core domain or standard IP, skip and show the regular Homepage
+    const isReserved = RESERVED_DOMAINS.some(domain => hostname.includes(domain) && parts.length <= 2) || RESERVED_DOMAINS.includes(parsedSubdomain);
+
+    if (isReserved) {
+      setIsVerifyingSubdomain(false);
+      return;
+    }
+
+    // We have what appears to be a legitimate tenant subdomain. Let's ask the database.
+    async function checkSubdomain() {
+       const shop = await getShopBySubdomain(parsedSubdomain);
+       if (shop) {
+          setSubdomainShopId(shop.id);
+       }
+       setIsVerifyingSubdomain(false);
+    }
+    
+    checkSubdomain();
+  }, []);
+
+  // Show a blank/loading screen while we ask Supabase if this subdomain is real
+  if (isVerifyingSubdomain) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+    </div>;
+  }
+
+  // If a shop was successfully found for this subdomain, hijack the Root Route and show the Shop!
+  if (subdomainShopId) {
+     return <PublicShopProfile directShopId={subdomainShopId} />;
+  }
+
+  // Otherwise, if no subdomain (or an invalid one) was found, show the standard Landing Page
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full text-center">

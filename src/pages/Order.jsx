@@ -16,6 +16,7 @@ import {
 import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
 import PaymentModal from "../components/PaymentModal";
+import SmartReceiptModal from "../components/SmartReceiptModal";
 
 export default function Order() {
   const session = getQrSession();
@@ -27,6 +28,7 @@ export default function Order() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [savedCoupon, setSavedCoupon] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [generatedOrder, setGeneratedOrder] = useState(null);
 
   useEffect(() => {
     try {
@@ -109,7 +111,9 @@ export default function Order() {
         session?.shop_id,
         session?.table,
         items,
-        total
+        total,
+        discountAmount,
+        activeCoupon?.code || null
       );
   };
 
@@ -153,18 +157,13 @@ export default function Order() {
             localStorage.setItem('customer_history', JSON.stringify(history));
          }
 
-         if (shopPhone) {
-            const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id);
-            const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
-            window.open(finalLink, "_blank", "noopener,noreferrer");
-         }
-         clearCart();
-         navigate(`/track/${order.id}`);
+         setGeneratedOrder(order);
       }
     } catch (err) {
       console.error("WhatsApp Checkout failed:", err);
+      // Fallback
       if (shopPhone) {
-        const fallbackMessage = buildWhatsAppMessage(shopName, session?.table, items, "OFFLINE");
+        const fallbackMessage = buildWhatsAppMessage(shopName, session?.table, items, "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline);
         const fallbackLink = buildWhatsAppLink(shopPhone, fallbackMessage);
         window.open(fallbackLink, "_blank", "noopener,noreferrer");
         clearCart();
@@ -172,6 +171,44 @@ export default function Order() {
     } finally {
       setSending(false);
     }
+  };
+
+  const shareTextReceipt = () => {
+     if (shopPhone) {
+        const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, generatedOrder?.id || "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline);
+        const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
+        window.open(finalLink, "_blank", "noopener,noreferrer");
+     }
+     clearCart();
+     navigate(`/track/${generatedOrder?.id}`);
+  };
+
+  const shareImageReceipt = async (dataUrl) => {
+     try {
+       // Convert Base64 dataURL to Blob for sharing
+       const blob = await (await fetch(dataUrl)).blob();
+       const file = new File([blob], `receipt_${generatedOrder?.id || 'offline'}.png`, { type: blob.type });
+
+       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+             files: [file],
+             title: 'Order Receipt',
+             text: `Order from ${shopName}. Please see the attached receipt.`
+          });
+       } else {
+          // Fallback: Download the receipt
+          const link = document.createElement('a');
+          link.download = file.name;
+          link.href = dataUrl;
+          link.click();
+          alert("Image downloaded. You can now manually attach it in WhatsApp.");
+       }
+     } catch (err) {
+       console.error("Error sharing image:", err);
+     }
+     
+     clearCart();
+     navigate(`/track/${generatedOrder?.id}`);
   };
 
   return (
@@ -296,6 +333,25 @@ export default function Order() {
            onComplete={processPaymentSuccess}
            onCancel={() => setShowPayment(false)}
         />
+      )}
+
+      {generatedOrder && (
+         <SmartReceiptModal 
+            shopName={shopName}
+            table={session?.table}
+            items={items}
+            total={total}
+            discountAmount={discountAmount}
+            couponCode={activeCoupon?.code}
+            orderId={generatedOrder.id}
+            isOffline={!isOnline}
+            onShareText={shareTextReceipt}
+            onShareImage={shareImageReceipt}
+            onClose={() => {
+               clearCart();
+               navigate(`/track/${generatedOrder.id}`);
+            }}
+         />
       )}
     </div>
   );

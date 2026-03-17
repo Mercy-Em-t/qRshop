@@ -199,6 +199,13 @@ export default function OrderManager() {
 
                   {/* Total & Actions */}
                   <div className="pt-4 border-t border-gray-100">
+                    {order.discount_amount > 0 && (
+                       <div className="bg-orange-50 text-orange-700 text-xs font-bold px-3 py-2 rounded-lg mb-3 flex justify-between items-center border border-orange-100">
+                          <span>🔥 Code: {order.coupon_code || "DISCOUNT"}</span>
+                          <span>-KSh {order.discount_amount}</span>
+                       </div>
+                    )}
+
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-gray-500 font-medium text-sm">Total</span>
                       <span className="text-xl font-bold text-green-700">KSh {order.total_price}</span>
