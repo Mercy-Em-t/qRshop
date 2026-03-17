@@ -22,7 +22,7 @@ export default function QrGenerator() {
   const { isFree, loading: planLoading } = usePlanAccess();
   const { qrs, loading: qrsLoading } = useQRs(shopId);
 
-  const isLimitReached = isFree && qrs.length >= FREE_QR_LIMIT;
+  const isLimitReached = isFree && (qrs || []).length >= FREE_QR_LIMIT;
 
   useEffect(() => {
     if (!user) {

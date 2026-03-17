@@ -24,6 +24,10 @@ import AdminPlans from "./pages/AdminPlans";
 import AdminSEO from "./pages/AdminSEO";
 import AdminReport from "./pages/AdminReport";
 import AdminEngineering from "./pages/AdminEngineering";
+import AdminGlobalOrders from "./pages/AdminGlobalOrders";
+import AdminGlobalProducts from "./pages/AdminGlobalProducts";
+import AdminMonitoring from "./pages/AdminMonitoring";
+import AdminAnalytics from "./pages/AdminAnalytics";
 import Campaign from "./pages/Campaign";
 import TrackOrder from "./pages/TrackOrder";
 import EditOrder from "./pages/EditOrder";
@@ -153,6 +157,10 @@ export default function App() {
       <Route path="/admin/seo" element={<AdminSEO />} />
       <Route path="/admin/report" element={<AdminReport />} />
       <Route path="/admin/engineering" element={<AdminEngineering />} />
+      <Route path="/admin/global-orders" element={<AdminGlobalOrders />} />
+      <Route path="/admin/global-products" element={<AdminGlobalProducts />} />
+      <Route path="/admin/monitoring" element={<AdminMonitoring />} />
+      <Route path="/admin/analytics" element={<AdminAnalytics />} />
     </Routes>
   );
 }

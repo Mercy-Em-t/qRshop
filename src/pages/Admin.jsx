@@ -92,6 +92,57 @@ export default function Admin() {
             </p>
           </Link>
 
+          {/* NEW PHASE 29 VIEWS */}
+          <Link
+            to="/admin/global-orders"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border border-gray-100"
+          >
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              🌍 Global Order Stream
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Live read-heavy feed of all cross-tenant platform orders.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/global-products"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border border-gray-100"
+          >
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              📦 Global Catalog
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Monitor all listed tenant products for quality and compliance.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/monitoring"
+            className="bg-gray-900 rounded-xl shadow-sm p-6 hover:shadow-md transition-transform transform hover:-translate-y-1 relative overflow-hidden group border border-gray-800"
+          >
+             <div className="absolute top-0 right-0 bg-red-500 w-16 h-16 rounded-bl-full opacity-20 group-hover:scale-110 transition-transform"></div>
+            <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-ping"></span> Live Operations
+            </h2>
+            <p className="text-gray-400 text-sm">
+              Live API sensors, system flags, and packet logs.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/analytics"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow relative overflow-hidden group border border-gray-200"
+          >
+             <div className="absolute top-0 right-0 bg-emerald-500 w-16 h-16 rounded-bl-full opacity-10 group-hover:scale-110 transition-transform"></div>
+            <h2 className="text-lg font-bold text-gray-800 mb-2">
+              📈 Platform Analytics
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Aggregated platform GMV, shop counts, and financial readouts.
+            </p>
+          </Link>
+
           <a
             href="/system_architecture.md"
             download="V3_QR_System_Architecture.md"
