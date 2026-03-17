@@ -21,7 +21,12 @@ import { useNomenclature } from "../hooks/use-nomenclature";
 import usePlanAccess from "../hooks/usePlanAccess";
 import UpgradeModal from "../components/UpgradeModal";
 
-// buildUnstructuredMessage removed per user request to revert to standard receipt format
+// Restoring unstructured message based on customer clarifying text vs audio
+const buildUnstructuredMessage = (shopName, table, items, identity) => {
+   const itemList = items.map(i => `${i.quantity}x ${i.name}`).join(", ");
+   const contactStr = identity?.name ? `\n\nName: ${identity.name}` : ''; // Exclude phone for free tier
+   return `Hi ${shopName}, I'd like to place an order from Table ${table}.${contactStr}\n\nItems: ${itemList}\n\nPlease confirm.`;
+};
 
 export default function Order() {
   const session = getQrSession();
@@ -165,19 +170,8 @@ export default function Order() {
   const handeFreeTierCheckout = () => {
       setSending(true);
       if (shopPhone) {
-         const formattedMsg = buildWhatsAppMessage(
-             shopName, 
-             session?.table, 
-             items, 
-             "UNLOGGED", // No DB order ID
-             total, 
-             discountAmount, 
-             activeCoupon?.code, 
-             !isOnline, 
-             identity.name, 
-             identity.phone
-         );
-         const link = buildWhatsAppLink(shopPhone, formattedMsg);
+         const unstructuredMsg = buildUnstructuredMessage(shopName, session?.table, items, identity);
+         const link = buildWhatsAppLink(shopPhone, unstructuredMsg);
          window.open(link, "_blank", "noopener,noreferrer");
       }
       
