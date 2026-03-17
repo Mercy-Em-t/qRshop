@@ -3,6 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { createQrNode } from "../services/qr-node-service";
 import { getCurrentUser, logout } from "../services/auth-service";
+import usePlanAccess from "../hooks/usePlanAccess";
+import { useQRs } from "../hooks/useQRs";
+
+const FREE_QR_LIMIT = 5;
 
 export default function QrGenerator() {
   const [location, setLocation] = useState("");
@@ -13,6 +17,11 @@ export default function QrGenerator() {
 
   const user = getCurrentUser();
   const shopId = user?.shop_id;
+
+  const { isFree, loading: planLoading } = usePlanAccess();
+  const { qrs, loading: qrsLoading } = useQRs(shopId);
+
+  const isLimitReached = isFree && qrs.length >= FREE_QR_LIMIT;
 
   useEffect(() => {
     if (!user) {
@@ -98,12 +107,23 @@ export default function QrGenerator() {
 
               <button
                 type="submit"
-                disabled={generating || !location}
+                disabled={generating || !location || isLimitReached || planLoading || qrsLoading}
                 className="w-full bg-green-600 text-white py-3 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
               >
                 {generating ? "Generating..." : "Generate Smart QR"}
               </button>
             </form>
+
+            {isLimitReached && (
+              <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg text-sm text-orange-800">
+                <p className="font-bold flex items-center gap-1">
+                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                   Free Plan Limit Reached
+                </p>
+                <p className="mt-1">You have deployed the maximum of {FREE_QR_LIMIT} free nodes. Upgrade to Pro to deploy an unlimited number of QR touchpoints across your venue.</p>
+                <Link to="/plans" className="inline-block mt-2 font-bold text-orange-900 hover:underline">View Upgrade Plans →</Link>
+              </div>
+            )}
           </div>
         </div>
 
