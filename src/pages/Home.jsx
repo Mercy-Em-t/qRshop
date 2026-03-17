@@ -66,7 +66,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <Link to="/login" className="text-gray-600 font-medium hover:text-green-600 transition">Log In</Link>
-            <Link to="/login" className="bg-gray-900 text-white px-5 py-2 rounded-full font-medium hover:bg-gray-800 transition transform hover:scale-105">Get Started</Link>
+            <Link to="/request-access" className="bg-gray-900 text-white px-5 py-2 rounded-full font-medium hover:bg-gray-800 transition transform hover:scale-105">Get Started</Link>
           </div>
         </div>
       </nav>
@@ -80,7 +80,7 @@ export default function Home() {
           Turn your tables and catalogs into instant, structured WhatsApp orders. Stop manually decoding messages. Capture customer data automatically.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-           <Link to="/login" className="w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-green-700 transition shadow-lg hover:shadow-green-200 transform hover:-translate-y-1">Launch Your Shop for Free</Link>
+           <Link to="/request-access" className="w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-green-700 transition shadow-lg hover:shadow-green-200 transform hover:-translate-y-1">Launch Your Shop for Free</Link>
            <a href="#pricing" className="w-full sm:w-auto text-gray-600 font-bold px-8 py-4 rounded-full border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition">View Pricing</a>
         </div>
       </section>

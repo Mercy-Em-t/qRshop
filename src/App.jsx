@@ -34,6 +34,7 @@ import CampaignManager from "./pages/CampaignManager";
 import PublicShopProfile from "./pages/PublicShopProfile";
 import PublicQrLanding from "./pages/PublicQrLanding";
 import Settings from "./pages/Settings";
+import RequestAccess from "./pages/RequestAccess";
 // Generic Legal Pages (Public)
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
@@ -49,6 +50,7 @@ export default function App() {
       <Route path="/invalid-access" element={<InvalidAccess />} />
       <Route path="/shops/:shopId" element={<PublicShopProfile />} />
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
+      <Route path="/request-access" element={<RequestAccess />} />
       
       {/* Legal Pages */}
       <Route path="/terms" element={<Terms />} />
