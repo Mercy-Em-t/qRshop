@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import html2canvas from 'html2canvas';
 
-export default function SmartReceiptModal({ shopName, table, items, total, discountAmount, couponCode, orderId, isOffline, onClose, onShareImage, onShareText }) {
+export default function SmartReceiptModal({ shopName, table, items, total, discountAmount, couponCode, orderId, isOffline, onClose, onShareImage, onShareText, isFree }) {
   const receiptRef = useRef(null);
   const [generating, setGenerating] = useState(false);
 
@@ -102,7 +102,7 @@ export default function SmartReceiptModal({ shopName, table, items, total, disco
                  onClick={onShareText}
                  className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition flex items-center justify-center gap-2 cursor-pointer"
               >
-                 💬 Send Text Receipt
+                 {isFree ? "🔒 Pro: Send Text Receipt" : "💬 Send Text Receipt"}
               </button>
            </div>
         </div>

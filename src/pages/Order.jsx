@@ -18,6 +18,8 @@ import OfflineAlert from "../components/OfflineAlert";
 import PaymentModal from "../components/PaymentModal";
 import SmartReceiptModal from "../components/SmartReceiptModal";
 import { useNomenclature } from "../hooks/use-nomenclature";
+import usePlanAccess from "../hooks/usePlanAccess";
+import UpgradeModal from "../components/UpgradeModal";
 
 export default function Order() {
   const session = getQrSession();
@@ -30,8 +32,10 @@ export default function Order() {
   const [savedCoupon, setSavedCoupon] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
   const [generatedOrder, setGeneratedOrder] = useState(null);
+  const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   
   const terms = useNomenclature(session?.shop_id);
+  const planAccess = usePlanAccess();
 
   useEffect(() => {
     try {
@@ -161,22 +165,41 @@ export default function Order() {
          }
 
          setGeneratedOrder(order);
+         
+         // Phase 24 Feature Gating: If the shop is free and online, do NOT redirect to WhatsApp. 
+         // Force them to just view the tracking page instead. Pro accounts get the WhatsApp redirect.
+         if (planAccess.isFree && isOnline) {
+             console.log("Free tier checkout recorded. Skipping WhatsApp notification.");
+             return; // Stop here, the SmartReceiptModal effect or track navigation will handle the rest
+         }
+
+         // For Pro users (or offline queue fallbacks), we construct the message here
+         if (shopPhone) {
+             const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id, total, discountAmount, activeCoupon?.code, !isOnline);
+             const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
+             window.open(finalLink, "_blank", "noopener,noreferrer");
+         }
       }
     } catch (err) {
       console.error("WhatsApp Checkout failed:", err);
       // Fallback
-      if (shopPhone) {
+      if (shopPhone && (!planAccess.isFree || !isOnline)) {
         const fallbackMessage = buildWhatsAppMessage(shopName, session?.table, items, "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline);
         const fallbackLink = buildWhatsAppLink(shopPhone, fallbackMessage);
         window.open(fallbackLink, "_blank", "noopener,noreferrer");
-        clearCart();
       }
+      clearCart();
     } finally {
       setSending(false);
     }
   };
 
   const shareTextReceipt = () => {
+     if (planAccess.isFree && isOnline) {
+         setLockedFeatureFocus("Direct WhatsApp Integration");
+         return;
+     }
+
      if (shopPhone) {
         const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, generatedOrder?.id || "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline);
         const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
@@ -231,6 +254,13 @@ export default function Order() {
 
       {!isOnline && (
         <OfflineAlert message={`You are offline — your ${terms.order.toLowerCase()} will be sent when connection is restored`} />
+      )}
+      
+      {lockedFeatureFocus && (
+        <UpgradeModal
+          featureName={lockedFeatureFocus}
+          onClose={() => setLockedFeatureFocus(null)}
+        />
       )}
 
       <main className="max-w-lg mx-auto px-4 py-6">
@@ -320,7 +350,11 @@ export default function Order() {
               disabled={sending}
               className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
             >
-              {!isOnline ? "📥 Queue via WhatsApp" : `💬 Place ${terms.order} via WhatsApp`}
+              {!isOnline 
+                 ? "📥 Queue via WhatsApp" 
+                 : planAccess.isFree 
+                    ? `💬 Place ${terms.order}` 
+                    : `💬 Place ${terms.order} via WhatsApp`}
             </button>
           </div>
         ) : (
@@ -348,6 +382,7 @@ export default function Order() {
             couponCode={activeCoupon?.code}
             orderId={generatedOrder.id}
             isOffline={!isOnline}
+            isFree={planAccess.isFree}
             onShareText={shareTextReceipt}
             onShareImage={shareImageReceipt}
             onClose={() => {
