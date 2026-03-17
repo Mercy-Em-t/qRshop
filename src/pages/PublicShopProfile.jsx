@@ -228,7 +228,7 @@ export default function PublicShopProfile({ directShopId }) {
       {/* Footer Call to Action */}
       <div className="bg-white py-10 sm:py-12 text-center border-t border-gray-200 px-4">
         <p className="text-gray-500 text-xs sm:text-sm mb-4">Want a smart {terms.menu.toLowerCase()} for your own business?</p>
-        <Link to="/" className="inline-block bg-gray-900 text-white font-medium px-6 py-3 sm:py-2 rounded-full hover:bg-gray-800 transition cursor-pointer text-sm sm:text-base">
+        <Link to="/request-access" className="inline-block bg-gray-900 text-white font-medium px-6 py-3 sm:py-2 rounded-full hover:bg-gray-800 transition cursor-pointer text-sm sm:text-base">
           Create your ShopQR Dashboard
         </Link>
       </div>

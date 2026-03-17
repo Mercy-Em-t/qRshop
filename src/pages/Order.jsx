@@ -434,16 +434,18 @@ export default function Order() {
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
                      />
                   </div>
-                  <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
-                     <input 
-                        type="tel" 
-                        value={identity.phone}
-                        onChange={(e) => setIdentity({...identity, phone: e.target.value})}
-                        placeholder="+2547..."
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-                     />
-                  </div>
+                  {planAccess.isBasic && (
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+                        <input 
+                           type="tel" 
+                           value={identity.phone}
+                           onChange={(e) => setIdentity({...identity, phone: e.target.value})}
+                           placeholder="+2547..."
+                           className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                     </div>
+                  )}
                </div>
 
                <button 
@@ -455,7 +457,7 @@ export default function Order() {
                         handleWhatsAppCheckout();
                      }
                   }}
-                  disabled={!identity.name || !identity.phone || sending}
+                  disabled={!identity.name || (planAccess.isBasic && !identity.phone) || sending}
                   className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer"
                >
                   {sending ? "Processing..." : `Confirm & Place ${terms.order}`}
