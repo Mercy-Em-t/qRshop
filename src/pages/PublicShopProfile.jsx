@@ -98,6 +98,28 @@ export default function PublicShopProfile({ directShopId }) {
             <p className="text-gray-500">This shop is still updating their digital {terms.menu.toLowerCase()}.</p>
           </div>
         ) : (
+          <>
+            {/* Category Navigation - Scrollable on mobile */}
+            {Object.keys(menuCategories).length > 0 && (
+              <div className="flex overflow-x-auto gap-2 pb-4 mb-6 scrollbar-hide snap-x">
+            {Object.keys(menuCategories).map((category, idx) => (
+              <a 
+                key={idx} 
+                href={`#cat-${category}`}
+                className="bg-gray-100 text-gray-800 px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap hover:bg-gray-200 transition shrink-0 snap-start"
+              >
+                {category}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {Object.keys(menuCategories).length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100">
+            <span className="text-4xl mb-4 block">🍽️</span>
+            <p className="text-gray-500">Menu items currently being prepared.</p>
+          </div>
+        ) : (
           <div className="space-y-8">
             {Object.keys(menuCategories).map((cat) => (
               <div key={cat}>
@@ -125,44 +147,88 @@ export default function PublicShopProfile({ directShopId }) {
                               <p className="text-sm font-bold text-indigo-600 mt-0.5">KSh {item.price}</p>
                            </div>
                            {item.product_link && (
-                              <a href={item.product_link} target="_blank" rel="noreferrer" className="text-indigo-600 bg-indigo-50 p-2 rounded-lg hover:bg-indigo-100 transition shadow-sm flex-shrink-0" title="View Full Store / Buy">
-                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                                   <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                                   <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-                                 </svg>
-                              </a>
-                           )}
-                        </div>
+          <>
+            {/* Category Navigation - Scrollable on mobile */}
+            {Object.keys(menuCategories).length > 0 && (
+              <div className="flex overflow-x-auto gap-2 pb-4 mb-6 scrollbar-hide snap-x">
+                {Object.keys(menuCategories).map((category, idx) => (
+                  <a 
+                    key={idx} 
+                    href={`#cat-${category}`}
+                    className="bg-gray-100 text-gray-800 px-4 py-2 rounded-full font-medium text-sm whitespace-nowrap hover:bg-gray-200 transition shrink-0 snap-start"
+                  >
+                    {category}
+                  </a>
+                ))}
+              </div>
+            )}
 
-                        {item.description && <p className="text-sm text-gray-500 mt-2 line-clamp-2">{item.description}</p>}
+            <div className="space-y-8">
+              {Object.keys(menuCategories).map((cat) => (
+                <div key={cat}>
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 border-b border-gray-200 pb-2">{cat}</h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {menuCategories[cat].map((item) => (
+                      <div key={item.id} className="bg-white p-4 rounded-xl flex items-start gap-4 shadow-sm border border-gray-100 hover:shadow-md transition">
                         
-                        {(item.tags?.length > 0 || (item.variant_options && Object.keys(item.variant_options).length > 0)) && (
-                           <div className="flex flex-wrap gap-1.5 mt-3">
-                              {item.tags?.map((t, idx) => (
-                                 <span key={idx} className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded tracking-wide uppercase border border-gray-200">{t}</span>
-                              ))}
-                              {item.variant_options && Object.keys(item.variant_options).slice(0, 2).map((vKey, idx) => (
-                                 <span key={`v-${idx}`} className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded tracking-wide uppercase border border-indigo-100 flex items-center gap-1">
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                                    Available {vKey}s
-                                 </span>
-                              ))}
+                        {/* Thumbnail Placeholder or Image */}
+                        {item.product_images && item.product_images.length > 0 && (
+                           <div className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden relative border border-gray-100">
+                              <img src={item.product_images[0].url} alt={item.name} className="w-full h-full object-cover" />
+                              {item.product_images.length > 1 && (
+                                 <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm">
+                                    +{item.product_images.length - 1}
+                                 </div>
+                              )}
                            </div>
                         )}
+                        
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start gap-2">
+                             <div>
+                                <h4 className="font-semibold text-gray-800">{item.name}</h4>
+                                <p className="text-sm font-bold text-indigo-600 mt-0.5">KSh {item.price}</p>
+                             </div>
+                             {item.product_link && (
+                                <a href={item.product_link} target="_blank" rel="noreferrer" className="text-indigo-600 bg-indigo-50 p-2 rounded-lg hover:bg-indigo-100 transition shadow-sm flex-shrink-0" title="View Full Store / Buy">
+                                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                     <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                                     <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                                   </svg>
+                                </a>
+                             )}
+                          </div>
+
+                          {item.description && <p className="text-sm text-gray-500 mt-2 line-clamp-2">{item.description}</p>}
+                          
+                          {(item.tags?.length > 0 || (item.variant_options && Object.keys(item.variant_options).length > 0)) && (
+                             <div className="flex flex-wrap gap-1.5 mt-3">
+                                {item.tags?.map((t, idx) => (
+                                   <span key={idx} className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded tracking-wide uppercase border border-gray-200">{t}</span>
+                                ))}
+                                {item.variant_options && Object.keys(item.variant_options).slice(0, 2).map((vKey, idx) => (
+                                   <span key={`v-${idx}`} className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-1 rounded tracking-wide uppercase border border-indigo-100 flex items-center gap-1">
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                                      Available {vKey}s
+                                   </span>
+                                ))}
+                             </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
       
       {/* Footer Call to Action */}
-      <div className="bg-white py-12 text-center border-t border-gray-200 px-4">
-        <p className="text-gray-500 text-sm mb-4">Want a smart {terms.menu.toLowerCase()} for your own business?</p>
-        <Link to="/" className="inline-block bg-gray-900 text-white font-medium px-6 py-2 rounded-full hover:bg-gray-800 transition cursor-pointer">
+      <div className="bg-white py-10 sm:py-12 text-center border-t border-gray-200 px-4">
+        <p className="text-gray-500 text-xs sm:text-sm mb-4">Want a smart {terms.menu.toLowerCase()} for your own business?</p>
+        <Link to="/" className="inline-block bg-gray-900 text-white font-medium px-6 py-3 sm:py-2 rounded-full hover:bg-gray-800 transition cursor-pointer text-sm sm:text-base">
           Create your ShopQR Dashboard
         </Link>
       </div>

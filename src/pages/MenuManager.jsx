@@ -459,12 +459,12 @@ export default function MenuManager() {
           />
         )}
         {/* ACTION BAR */}
-        <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
            <div>
               <h2 className="text-lg font-bold text-gray-900">Live Menu Catalog ({items.length})</h2>
            </div>
            
-           <div className="flex gap-3 relative">
+           <div className="flex flex-wrap gap-2 w-full sm:w-auto relative">
              <button 
                onClick={handleExportCSV}
                className="bg-white text-gray-700 font-bold text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition shadow-sm whitespace-nowrap"
@@ -480,7 +480,7 @@ export default function MenuManager() {
                </button>
                {/* Dropdown Menu */}
                {showImportMenu && (
-                 <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden transition-all duration-200 origin-top-right">
+                 <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-56 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden transition-all duration-200 origin-top-left sm:origin-top-right z-40">
                     <button 
                       onClick={() => { handleDownloadTemplate(); setShowImportMenu(false); }} 
                       className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium border-b border-gray-50 flex items-center gap-2"
@@ -685,11 +685,11 @@ export default function MenuManager() {
             </div>
           ) : (
             <>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden overflow-x-auto">
                 {currentItems.map((item) => (
-                  <div key={item.id} className={`p-4 flex items-center justify-between transition-colors ${item.is_active === false ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}`}>
-                    <div>
-                      <div className="flex items-center gap-2">
+                  <div key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${item.is_active === false ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}`}>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
                         <h3 className={`font-semibold ${item.is_active === false ? 'text-gray-500 line-through' : 'text-gray-800'}`}>{item.name}</h3>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.is_active === false ? 'bg-gray-200 text-gray-500' : 'bg-green-100 text-green-800'}`}>
                           {item.category}
@@ -698,10 +698,10 @@ export default function MenuManager() {
                            <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium shadow-sm border border-red-200">Offline</span>
                         )}
                       </div>
-                      {item.description && <p className="text-sm text-gray-500 mt-1">{item.description}</p>}
+                      {item.description && <p className="text-sm text-gray-500 mt-1 truncate">{item.description}</p>}
                       <p className={`text-sm font-medium mt-1 ${item.is_active === false ? 'text-gray-400' : 'text-gray-700'}`}>KSh {item.price}</p>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                       <button
                         onClick={() => startEdit(item)}
                         disabled={item.is_active === false}
