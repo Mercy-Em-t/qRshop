@@ -13,6 +13,7 @@ export default function QrGenerator() {
   const [action, setAction] = useState("open_menu");
   const [generating, setGenerating] = useState(false);
   const [createdQr, setCreatedQr] = useState(null);
+  const [shopSubdomain, setShopSubdomain] = useState("");
   const navigate = useNavigate();
 
   const user = getCurrentUser();
@@ -26,8 +27,22 @@ export default function QrGenerator() {
   useEffect(() => {
     if (!user) {
        navigate('/login');
+       return;
     }
-  }, [navigate]);
+    
+    if (shopId) {
+       supabase.from("shops").select("subdomain").eq("id", shopId).single()
+         .then(({ data }) => {
+            if (data?.subdomain) setShopSubdomain(data.subdomain);
+         });
+    }
+  }, [user, navigate, shopId]);
+
+  const qrLink = createdQr ? (
+     shopSubdomain 
+        ? `https://${shopSubdomain}.tmsavannah.com/q/${createdQr.id}`
+        : `${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${createdQr.id}`
+  ) : "";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -135,7 +150,7 @@ export default function QrGenerator() {
                
                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 inline-block mb-6">
                  <QRCodeSVG 
-                    value={`${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${createdQr.id}`} 
+                    value={qrLink} 
                     size={200}
                     level="H"
                     includeMargin={true}
@@ -143,7 +158,7 @@ export default function QrGenerator() {
                </div>
 
                <div className="bg-gray-50 rounded p-4 w-full text-left mb-6 font-mono text-sm break-all border border-gray-200">
-                  {`${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${createdQr.id}`}
+                  {qrLink}
                </div>
 
                <button 

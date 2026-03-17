@@ -1,6 +1,31 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { supabase } from "../services/supabase-client";
+import { getCurrentUser } from "../services/auth-service";
 
 export default function UpgradeModal({ featureName, onClose }) {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmitRequest = async () => {
+    const user = getCurrentUser();
+    if (!user?.shop_id) return;
+
+    setSubmitting(true);
+    const { error } = await supabase.from("upgrade_requests").insert([{
+      shop_id: user.shop_id,
+      requested_tier: "pro"
+    }]);
+
+    if (!error) {
+      setSubmitted(true);
+    } else {
+      console.error("Failed to submit request:", error);
+      alert("Error submitting request, please try again.");
+    }
+    setSubmitting(false);
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl overflow-hidden animate-fade-in-up">
@@ -34,15 +59,22 @@ export default function UpgradeModal({ featureName, onClose }) {
           </ul>
 
           <div className="flex flex-col gap-3">
-            <Link 
-               to="/plans" 
-               className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-center shadow-md hover:bg-indigo-700 transition transform hover:-translate-y-0.5"
-            >
-               View Upgrade Plans
-            </Link>
+            {!submitted ? (
+              <button 
+                 onClick={handleSubmitRequest}
+                 disabled={submitting}
+                 className="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl text-center shadow-md hover:bg-indigo-700 transition transform hover:-translate-y-0.5 disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
+              >
+                 {submitting ? "Submitting..." : "📨 Send Upgrade Request"}
+              </button>
+            ) : (
+              <div className="bg-green-50 text-green-700 font-bold py-3 rounded-xl text-center border border-green-100 flex justify-center items-center gap-2">
+                 ✅ Request Sent for Approval
+              </div>
+            )}
             <button 
                onClick={onClose}
-               className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl text-center hover:bg-gray-200 transition"
+               className="w-full bg-gray-100 text-gray-600 font-bold py-3 rounded-xl text-center hover:bg-gray-200 transition cursor-pointer"
             >
                Maybe Later
             </button>

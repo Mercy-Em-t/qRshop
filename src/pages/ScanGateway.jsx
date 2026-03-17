@@ -58,6 +58,9 @@ export default function ScanGateway() {
   const processAction = async (node) => {
      setIsProcessing(true);
      
+     // Phase 23: Strict Gating - Mark physical scan true
+     sessionStorage.setItem("scanned_qr_true_timestamp", Date.now().toString());
+
      // 1. Log Visit Record
      const visit = await logVisit(qrId, node.shop_id).catch((err) => {
         console.error("Visit logging failed:", err);

@@ -2,13 +2,17 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser, logout } from "../services/auth-service";
+import usePlanAccess from "../hooks/usePlanAccess";
+import UpgradeModal from "../components/UpgradeModal";
 
 export default function MenuManager() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const navigate = useNavigate();
+  const planAccess = usePlanAccess();
 
   const user = getCurrentUser();
   const SHOP_ID = user?.shop_id;
@@ -55,6 +59,13 @@ export default function MenuManager() {
 
   const handleAddItem = async (e) => {
     e.preventDefault();
+    
+    // Phase 23: Strict Free-Tier Gating Logic (Limit to 20 Products)
+    if (!editingId && planAccess.isFree && items.length >= 20) {
+       setLockedFeatureFocus("Expanded Menu Catalog (20+ Items)");
+       return;
+    }
+
     setIsAdding(true);
 
     const parsedTags = tags ? tags.split(',').map(t=>t.trim()).filter(Boolean) : [];
@@ -321,6 +332,12 @@ export default function MenuManager() {
       }
 
       if (bulkItems.length > 0) {
+        // Phase 23: Strict Free-Tier Gating Logic
+        if (planAccess.isFree && (items.length + bulkItems.length) > 20) {
+            setLockedFeatureFocus("Expanded Menu Catalog (20+ Items)");
+            return;
+        }
+        
         setLoading(true);
         // Supabase select() returns the generated rows (so we get the IDs for image mappings)
         const { data: insertedItems, error } = await supabase.from('menu_items').insert(bulkItems).select();
@@ -392,6 +409,12 @@ export default function MenuManager() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+        {lockedFeatureFocus && (
+          <UpgradeModal 
+             featureName={lockedFeatureFocus} 
+             onClose={() => setLockedFeatureFocus(null)} 
+          />
+        )}
         {/* ADD / EDIT ITEM FORM */}
         <section className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
           <div className="flex justify-between items-center mb-4">

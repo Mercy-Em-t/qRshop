@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getShop } from "../services/shop-service";
 import { getMenuItemsByCategory } from "../services/menu-service";
+import { useNomenclature } from "../hooks/use-nomenclature";
 
 export default function PublicShopProfile({ directShopId }) {
   const params = useParams();
@@ -10,6 +11,8 @@ export default function PublicShopProfile({ directShopId }) {
   const [menuCategories, setMenuCategories] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  const terms = useNomenclature(shopId);
 
   useEffect(() => {
     async function loadShop() {
@@ -86,13 +89,13 @@ export default function PublicShopProfile({ directShopId }) {
       {/* Public Menu Preview */}
       <div className="max-w-3xl mx-auto px-4 py-12">
         <div className="text-center mb-10">
-          <h2 className="text-2xl font-bold text-gray-800">Our Menu Preview</h2>
-          <p className="text-gray-500 mt-2">Visit us and scan our QR code at the table to order instantly.</p>
+          <h2 className="text-2xl font-bold text-gray-800">Our {terms.menu} Preview</h2>
+          <p className="text-gray-500 mt-2">Visit us and scan our QR code at the {terms.table.toLowerCase()} to {terms.order.toLowerCase()} instantly.</p>
         </div>
 
         {Object.keys(menuCategories).length === 0 ? (
           <div className="bg-white p-8 rounded-2xl shadow-sm text-center border border-gray-100">
-            <p className="text-gray-500">This shop is still updating their digital menu.</p>
+            <p className="text-gray-500">This shop is still updating their digital {terms.menu.toLowerCase()}.</p>
           </div>
         ) : (
           <div className="space-y-8">
@@ -158,8 +161,8 @@ export default function PublicShopProfile({ directShopId }) {
       
       {/* Footer Call to Action */}
       <div className="bg-white py-12 text-center border-t border-gray-200 px-4">
-        <p className="text-gray-500 text-sm mb-4">Want a smart menu for your own shop?</p>
-        <Link to="/" className="inline-block bg-gray-900 text-white font-medium px-6 py-2 rounded-full hover:bg-gray-800 transition">
+        <p className="text-gray-500 text-sm mb-4">Want a smart {terms.menu.toLowerCase()} for your own business?</p>
+        <Link to="/" className="inline-block bg-gray-900 text-white font-medium px-6 py-2 rounded-full hover:bg-gray-800 transition cursor-pointer">
           Create your ShopQR Dashboard
         </Link>
       </div>

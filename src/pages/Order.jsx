@@ -17,6 +17,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
 import PaymentModal from "../components/PaymentModal";
 import SmartReceiptModal from "../components/SmartReceiptModal";
+import { useNomenclature } from "../hooks/use-nomenclature";
 
 export default function Order() {
   const session = getQrSession();
@@ -29,6 +30,8 @@ export default function Order() {
   const [savedCoupon, setSavedCoupon] = useState(null);
   const [showPayment, setShowPayment] = useState(false);
   const [generatedOrder, setGeneratedOrder] = useState(null);
+  
+  const terms = useNomenclature(session?.shop_id);
 
   useEffect(() => {
     try {
@@ -54,15 +57,15 @@ export default function Order() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
           <p className="text-2xl mb-2">📥</p>
-          <p className="text-gray-800 font-semibold mb-2">Order Queued!</p>
+          <p className="text-gray-800 font-semibold mb-2">{terms.order} Queued!</p>
           <p className="text-gray-500 text-sm mb-4">
-            Your order has been saved and will be sent via WhatsApp automatically when your connection is restored.
+            Your {terms.order.toLowerCase()} has been saved and will be sent via WhatsApp automatically when your connection is restored.
           </p>
           <button
             onClick={() => navigate("/menu")}
             className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors cursor-pointer"
           >
-            Back to Menu
+            Back to {terms.menu}
           </button>
         </div>
       </div>
@@ -70,7 +73,7 @@ export default function Order() {
   }
 
   if (shopLoading) {
-    return <LoadingSpinner message="Preparing order..." />;
+    return <LoadingSpinner message={`Preparing ${terms.order.toLowerCase()}...`} />;
   }
 
   if (items.length === 0) {
@@ -82,7 +85,7 @@ export default function Order() {
             onClick={() => navigate("/menu")}
             className="bg-green-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors cursor-pointer"
           >
-            Go to Menu
+            Go to {terms.menu}
           </button>
         </div>
       </div>
@@ -221,13 +224,13 @@ export default function Order() {
           >
             ← Back to Cart
           </button>
-          <h1 className="text-xl font-bold text-gray-800">Order Summary</h1>
+          <h1 className="text-xl font-bold text-gray-800">{terms.order} Summary</h1>
           <div className="w-24"></div>
         </div>
       </header>
 
       {!isOnline && (
-        <OfflineAlert message="You are offline — your order will be sent when connection is restored" />
+        <OfflineAlert message={`You are offline — your ${terms.order.toLowerCase()} will be sent when connection is restored`} />
       )}
 
       <main className="max-w-lg mx-auto px-4 py-6">
@@ -236,7 +239,7 @@ export default function Order() {
             {shopName}
           </h2>
           <p className="text-sm text-gray-500 mb-4">
-            Table {session?.table}
+            {terms.table} {session?.table}
           </p>
 
           <div className="border-t border-gray-200 pt-4">
@@ -317,7 +320,7 @@ export default function Order() {
               disabled={sending}
               className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
             >
-              {!isOnline ? "📥 Queue via WhatsApp" : "💬 Place Order via WhatsApp"}
+              {!isOnline ? "📥 Queue via WhatsApp" : `💬 Place ${terms.order} via WhatsApp`}
             </button>
           </div>
         ) : (

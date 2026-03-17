@@ -34,7 +34,7 @@ export async function createOrder(shopId, tableId, items, totalPrice, discountAm
 
   if (orderError) {
     console.error("Error creating order:", orderError);
-    return null;
+    throw orderError; // Throw instead of returning null to trigger fallbacks
   }
 
   // Insert order items

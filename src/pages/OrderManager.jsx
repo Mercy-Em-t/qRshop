@@ -8,6 +8,8 @@ export default function OrderManager() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [editingOrder, setEditingOrder] = useState(null);
+  const [editTotal, setEditTotal] = useState("");
   const navigate = useNavigate();
 
   const user = getCurrentUser();
@@ -62,14 +64,41 @@ export default function OrderManager() {
     }
   };
 
+  const handleSaveEdit = async () => {
+    if (!editingOrder) return;
+    
+    const newTotal = parseFloat(editTotal);
+    if (isNaN(newTotal) || newTotal < 0) {
+       alert("Please enter a valid positive number for the new total.");
+       return;
+    }
+
+    // Optimistic Update
+    setOrders((current) =>
+      current.map((o) => (o.id === editingOrder.id ? { ...o, status: "pending_payment", total_price: newTotal } : o))
+    );
+
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: "pending_payment", total_price: newTotal })
+      .eq("id", editingOrder.id);
+
+    if (error) {
+      console.error("Failed to save edited order:", error);
+      fetchOrders();
+    }
+    setEditingOrder(null);
+  };
+
   const getStatusBadge = (status) => {
     switch (status) {
-      case "pending_payment":
       case "pending":
-        return <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Awaiting Action</span>;
+        return <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold uppercase">New Order</span>;
+      case "pending_payment":
+        return <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Awaiting Payment</span>;
       case "paid":
       case "preparing":
-        return <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Preparing</span>;
+        return <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Paid / Preparing</span>;
       case "stk_pushed":
         return <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-bold uppercase animate-pulse">Awaiting PIN Ping</span>;
       case "ready":
@@ -126,7 +155,7 @@ export default function OrderManager() {
 
         {/* Segmented Pipeline Tabs */}
         <div className="flex bg-gray-200/50 p-1 rounded-xl mb-8 overflow-x-auto gap-1">
-          {["all", "pending", "preparing", "completed", "archived"].map((tab) => (
+          {["all", "pending", "pending_payment", "paid", "completed", "archived"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -136,7 +165,10 @@ export default function OrderManager() {
                   : "text-gray-500 hover:text-gray-700 hover:bg-white/50"
               }`}
             >
-              {tab === "pending" ? "Awaiting Action" : tab}
+              {tab === "pending" ? "New Orders" 
+                : tab === "pending_payment" ? "Awaiting Pay" 
+                : tab === "paid" ? "Paid / Prep"
+                : tab}
             </button>
           ))}
         </div>
@@ -152,9 +184,10 @@ export default function OrderManager() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {orders
               .filter((o) => {
-                 if (activeTab === "all") return o.status !== "archived"; // Ditch archived from all to keep it clean, unless explicit
-                 if (activeTab === "pending") return ["pending", "pending_payment", "stk_pushed"].includes(o.status);
-                 if (activeTab === "preparing") return ["paid", "preparing"].includes(o.status);
+                 if (activeTab === "all") return o.status !== "archived"; 
+                 if (activeTab === "pending") return o.status === "pending";
+                 if (activeTab === "pending_payment") return ["pending_payment", "stk_pushed"].includes(o.status);
+                 if (activeTab === "paid") return ["paid", "preparing"].includes(o.status);
                  if (activeTab === "completed") return ["ready", "completed"].includes(o.status);
                  if (activeTab === "archived") return o.status === "archived";
                  return true;
@@ -212,25 +245,43 @@ export default function OrderManager() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 mt-auto">
-                      {(order.status === "pending_payment" || order.status === "pending") ? (
+                      {order.status === "pending" ? (
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditTotal(order.total_price);
+                              setEditingOrder(order);
+                            }}
+                            className="bg-orange-100 text-orange-700 font-bold py-3 rounded-lg hover:bg-orange-200 transition text-sm flex items-center justify-center gap-1 border border-orange-200"
+                          >
+                            ✏️ Edit & Req. Pay
+                          </button>
+                          <button
+                            onClick={() => updateOrderStatus(order.id, "paid")}
+                            className="bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 shadow-sm transition text-sm"
+                          >
+                            ✅ Mark as Paid
+                          </button>
+                        </>
+                      ) : order.status === "pending_payment" ? (
                         <button
-                          onClick={() => updateOrderStatus(order.id, "preparing")}
+                          onClick={() => updateOrderStatus(order.id, "paid")}
                           className="col-span-2 bg-indigo-600 text-white font-medium py-3 rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center justify-center gap-2"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                           Confirm Payment Received
                         </button>
-                      ) : order.status === "preparing" ? (
+                      ) : ["paid", "preparing"].includes(order.status) ? (
                         <button
-                          onClick={() => updateOrderStatus(order.id, "ready")}
-                          className="col-span-2 bg-green-600 text-white font-medium py-3 rounded-lg hover:bg-green-700 transition"
+                          onClick={() => updateOrderStatus(order.id, "completed")}
+                          className="col-span-2 bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700 transition shadow-sm"
                         >
-                          ✅ Mark Ready for Pickup
+                          📦 Mark Completed
                         </button>
                       ) : ["ready", "completed"].includes(order.status) ? (
                         <button
                           onClick={() => updateOrderStatus(order.id, "archived")}
-                          className="col-span-2 bg-gray-800 text-white font-medium py-3 rounded-lg hover:bg-gray-900 transition flex items-center justify-center gap-2"
+                          className="col-span-2 bg-gray-800 text-white font-medium py-3 rounded-lg hover:bg-gray-900 transition flex items-center justify-center gap-2 shadow-sm"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
                           Archive Ticket
@@ -251,6 +302,45 @@ export default function OrderManager() {
           </div>
         )}
       </main>
+
+      {/* Edit Order Modal */}
+      {editingOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Edit Order Total & Request Pay</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Receipt #{editingOrder.id.split("-")[0].toUpperCase()}<br/>
+              Original Total: KSh {editingOrder.total_price}
+            </p>
+            <div className="mb-6">
+               <label className="block text-sm font-semibold text-gray-700 mb-2">New Final Total (KSh)</label>
+               <input 
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={editTotal}
+                  onChange={(e) => setEditTotal(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 focus:bg-white text-lg font-bold"
+               />
+               <p className="text-xs text-gray-400 mt-2">Update the total to add manual service fees or ad-hoc items before requesting payment.</p>
+            </div>
+            <div className="flex gap-3">
+               <button 
+                  onClick={() => setEditingOrder(null)} 
+                  className="flex-1 bg-gray-100 text-gray-600 font-semibold py-3 rounded-lg hover:bg-gray-200 transition"
+               >
+                  Cancel
+               </button>
+               <button 
+                  onClick={handleSaveEdit}
+                  className="flex-1 bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition shadow-sm"
+               >
+                  Save & Publish
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

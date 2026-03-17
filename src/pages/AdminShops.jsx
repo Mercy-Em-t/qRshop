@@ -5,6 +5,7 @@ import { getCurrentUser, logout } from "../services/auth-service";
 
 export default function AdminShops() {
   const [shops, setShops] = useState([]);
+  const [upgradeRequests, setUpgradeRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [newShopName, setNewShopName] = useState("");
@@ -12,6 +13,7 @@ export default function AdminShops() {
   const [newShopPhone, setNewShopPhone] = useState("");
   const [newShopWhatsApp, setNewShopWhatsApp] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
+  const [newShopIndustry, setNewShopIndustry] = useState("food");
   const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
 
@@ -39,7 +41,40 @@ export default function AdminShops() {
     if (!shopsErr && shopsData) {
       setShops(shopsData);
     }
+
+    // Fetch pending upgrades requests
+    const { data: reqData, error: reqErr } = await supabase
+      .from("upgrade_requests")
+      .select(`
+         *,
+         shops (name)
+      `)
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+      
+    if (!reqErr && reqData) {
+       setUpgradeRequests(reqData);
+    }
+
     setLoading(false);
+  };
+
+  const handleProcessUpgrade = async (requestId, targetShopId, approved) => {
+     try {
+        if (approved) {
+           // update shop to pro
+           const { error: shopErr } = await supabase.from("shops").update({ plan: "pro" }).eq("id", targetShopId);
+           if (shopErr) throw shopErr;
+        }
+        // update request status
+        const { error: reqErr } = await supabase.from("upgrade_requests").update({ status: approved ? "approved" : "rejected" }).eq("id", requestId);
+        if (reqErr) throw reqErr;
+        
+        alert(`Request ${approved ? 'Approved' : 'Rejected'} successfully.`);
+        fetchShops(); // reload everything
+     } catch (err) {
+        alert("Failed to process request: " + err.message);
+     }
   };
 
   const handleTogglePlan = async (shopId, currentPlan) => {
@@ -70,7 +105,8 @@ export default function AdminShops() {
            subdomain: newShopSubdomain ? newShopSubdomain.toLowerCase().replace(/[^a-z0-9-]/g, "") : null,
            phone: newShopPhone, 
            whatsapp_number: newShopWhatsApp || newShopPhone, 
-           plan: "free" 
+           plan: "free",
+           industry_type: newShopIndustry
         }])
         .select()
         .single();
@@ -96,6 +132,7 @@ export default function AdminShops() {
       setNewShopSubdomain("");
       setNewShopPhone("");
       setNewShopWhatsApp("");
+      setNewShopIndustry("food");
       setNewAdminEmail("");
       
       alert(`✅ Success! Parallel Shop Space Deployed.\n\nShop Owner Platform Credentials:\nEmail: ${newAdminEmail}\nPassword: ${genPassword}\n\nPlease copy and email this password securely to the user.`);
@@ -132,8 +169,37 @@ export default function AdminShops() {
       <main className="max-w-5xl mx-auto px-4 py-8 grid md:grid-cols-[3fr_2fr] gap-8">
         
         {/* Network Operations Center */}
-        <section>
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Active Shop Ecosystem</h2>
+        <div className="flex flex-col gap-8">
+
+           {/* Upgrade Requests Inbox */}
+           {upgradeRequests.length > 0 && (
+              <section className="bg-orange-50 rounded-xl p-6 border border-orange-200">
+                 <h2 className="text-lg font-bold text-orange-800 mb-4 flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+                    </span>
+                    Action Required: Upgrade Requests
+                 </h2>
+                 <div className="space-y-3">
+                    {upgradeRequests.map(req => (
+                       <div key={req.id} className="bg-white rounded-lg p-4 shadow-sm border border-orange-100 flex justify-between items-center">
+                          <div>
+                             <p className="font-bold text-gray-800">{req.shops?.name}</p>
+                             <p className="text-xs text-gray-500 mt-0.5">Requested {req.requested_tier.toUpperCase()} tier on {new Date(req.created_at).toLocaleDateString()}</p>
+                          </div>
+                          <div className="flex gap-2">
+                             <button onClick={() => handleProcessUpgrade(req.id, req.shop_id, false)} className="px-3 py-1.5 bg-red-50 text-red-600 font-bold text-xs rounded-md hover:bg-red-100 transition cursor-pointer">Reject</button>
+                             <button onClick={() => handleProcessUpgrade(req.id, req.shop_id, true)} className="px-3 py-1.5 bg-green-500 text-white font-bold text-xs rounded-md hover:bg-green-600 transition shadow-sm cursor-pointer">Approve</button>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </section>
+           )}
+
+           <section>
+              <h2 className="text-lg font-bold text-gray-800 mb-4">Active Shop Ecosystem</h2>
           
           {loading ? (
              <p className="text-gray-500 py-4">Polling regional nodes...</p>
@@ -147,9 +213,10 @@ export default function AdminShops() {
                       <div>
                          <h3 className="text-lg font-bold text-gray-900">{shop.name}</h3>
                          <span className="font-mono text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded">{shop.id}</span>
+                         <span className="ml-1 font-mono text-xs text-purple-600 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded capitalize">{shop.industry_type || "Food"}</span>
                          {shop.subdomain && (
                             <span className="ml-2 font-bold text-xs text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">
-                               {shop.subdomain}.domain.com
+                               {shop.subdomain}.tmsavannah.com
                             </span>
                          )}
                       </div>
@@ -189,8 +256,9 @@ export default function AdminShops() {
              </div>
           )}
         </section>
+      </div>
 
-        {/* Space Launcher */}
+      {/* Space Launcher */}
         <section>
            <div className="bg-indigo-600 text-white rounded-xl shadow-lg p-6 sticky top-24">
              <h2 className="text-xl font-bold mb-2">Launch Sandbox</h2>
@@ -244,6 +312,18 @@ export default function AdminShops() {
                   <p className="text-[10px] text-indigo-300 mt-1">If blank, standard Gateway is targeted.</p>
                </div>
                <div className="border-t border-indigo-400/50 my-2 pt-4">
+                  <label className="block text-sm font-semibold mb-1 text-indigo-100">Industry Profile</label>
+                  <select
+                     value={newShopIndustry}
+                     onChange={(e) => setNewShopIndustry(e.target.value)}
+                     className="w-full bg-indigo-700/50 border border-indigo-400 rounded-lg px-3 py-2 text-white outline-none focus:ring-2 focus:ring-white transition mb-4"
+                  >
+                     <option value="food">Food & Beverage (Restaurant, Cafe)</option>
+                     <option value="retail">Retail & Stores (Boutique, Convenience)</option>
+                     <option value="service">Services (Salon, Spa, Clinic)</option>
+                     <option value="other">Other</option>
+                  </select>
+                  
                   <label className="block text-sm font-semibold mb-1 text-indigo-100">Owner Login Email</label>
                   <input
                     required

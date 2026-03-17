@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import QrAccessGuard from "./components/QrAccessGuard";
 import OfflineMenuWrapper from "./components/OfflineMenuWrapper";
+import OnboardingGate from "./components/OnboardingGate";
 import Home from "./pages/Home";
 import Enter from "./pages/Enter";
 import Menu from "./pages/Menu";
@@ -103,15 +104,27 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/dashboard/orders" element={<OrderManager />} />
-      <Route path="/menu-manager" element={<MenuManager />} />
-      <Route path="/dashboard/qrs" element={<QrDashboard />} />
-      <Route path="/dashboard/qrs/:qrId" element={<QRAnalytics />} />
-      <Route path="/dashboard/campaigns" element={<CampaignManager />} />
-      <Route path="/qr-generator" element={<QrGenerator />} />
-      <Route path="/dashboard/marketing" element={<MarketingStudio />} />
-      <Route path="/plans" element={<Plans />} />
+      
+      {/* Secured & Onboarded Operator Routes */}
+      <Route 
+         path="/dashboard/*" 
+         element={
+            <OnboardingGate>
+               <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="orders" element={<OrderManager />} />
+                  <Route path="qrs" element={<QrDashboard />} />
+                  <Route path="qrs/:qrId" element={<QRAnalytics />} />
+                  <Route path="campaigns" element={<CampaignManager />} />
+                  <Route path="marketing" element={<MarketingStudio />} />
+               </Routes>
+            </OnboardingGate>
+         } 
+      />
+      
+      <Route path="/menu-manager" element={<OnboardingGate><MenuManager /></OnboardingGate>} />
+      <Route path="/qr-generator" element={<OnboardingGate><QrGenerator /></OnboardingGate>} />
+      <Route path="/plans" element={<OnboardingGate><Plans /></OnboardingGate>} />
 
       {/* Superuser Admin Routes */}
       <Route path="/admin" element={<Admin />} />

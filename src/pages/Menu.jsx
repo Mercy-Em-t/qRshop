@@ -11,6 +11,7 @@ import UpsellModal from "../components/UpsellModal";
 import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
 import CouponWidget from "../components/CouponWidget";
+import { useNomenclature } from "../hooks/use-nomenclature";
 
 export default function Menu() {
   const session = getQrSession();
@@ -21,6 +22,8 @@ export default function Menu() {
   const [upsellItems, setUpsellItems] = useState([]);
   const [lastAddedItemId, setLastAddedItemId] = useState(null);
   const [showUpsell, setShowUpsell] = useState(false);
+  
+  const terms = useNomenclature(session?.shop_id);
 
   const handleAddItem = async (item) => {
     addItem(item);
@@ -79,9 +82,9 @@ export default function Menu() {
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-800">
-              {shop?.name || "Menu"}
+              {shop?.name || terms.menu}
             </h1>
-            <p className="text-sm text-gray-500">Table {session?.table}</p>
+            <p className="text-sm text-gray-500">{terms.table} {session?.table}</p>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -106,13 +109,13 @@ export default function Menu() {
       </header>
 
       {isOffline && (
-        <OfflineAlert message="Showing cached menu — you appear to be offline" />
+        <OfflineAlert message={`Showing cached ${terms.menu.toLowerCase()} — you appear to be offline`} />
       )}
 
       <main className="max-w-lg mx-auto px-4 py-6">
         {categoryNames.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            <p className="text-lg">No menu items available</p>
+            <p className="text-lg">No {terms.menu.toLowerCase()} items available</p>
           </div>
         ) : (
           categoryNames.map((category) => (

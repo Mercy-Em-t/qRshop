@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { useNomenclature } from "../hooks/use-nomenclature";
 
 export default function TrackOrder() {
   const { orderId } = useParams();
@@ -11,6 +12,8 @@ export default function TrackOrder() {
   const [error, setError] = useState(null);
   const [pin, setPin] = useState("");
   const [processingPin, setProcessingPin] = useState(false);
+  
+  const terms = useNomenclature(order?.shop_id);
 
   useEffect(() => {
     if (!supabase) {
@@ -64,10 +67,10 @@ export default function TrackOrder() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full text-center">
            <p className="text-4xl mb-4">🔍</p>
-           <h2 className="text-xl font-bold text-gray-800 mb-2">Order Not Found</h2>
+           <h2 className="text-xl font-bold text-gray-800 mb-2">{terms.order} Not Found</h2>
            <p className="text-gray-500 mb-6">{error}</p>
            <Link to="/menu" className="text-green-600 font-medium hover:underline">
-             Return to Menu
+             Return to {terms.menu}
            </Link>
         </div>
       </div>
@@ -75,28 +78,59 @@ export default function TrackOrder() {
   }
 
   // Define dynamic status UI elements
+  // Define dynamic status UI elements mapping backend states to "Pending -> Accepted -> Paid -> Fulfilled"
   const statusConfig = {
+    pending: {
+      color: "bg-gray-100 text-gray-800 border-gray-200",
+      icon: "⏳",
+      title: "Pending",
+      description: `Your ${terms.order.toLowerCase()} has been sent to the shop and is waiting to be reviewed.`
+    },
     pending_payment: {
       color: "bg-orange-100 text-orange-800 border-orange-200",
-      icon: "⏳",
-      title: "Awaiting Payment",
-      description: `Please send payment to the shop's M-Pesa number (${order?.shops?.phone || order?.shops?.whatsapp_number || "the counter"}) to confirm your order.`
+      icon: "📋",
+      title: "Accepted",
+      description: `The shop has accepted your ${terms.order.toLowerCase()}! Please send payment to the shop's M-Pesa number (${order?.shops?.phone || order?.shops?.whatsapp_number || "the counter"}) to confirm.`
+    },
+    stk_pushed: {
+      color: "bg-purple-100 text-purple-800 border-purple-200",
+      icon: "📲",
+      title: "Accepted",
+      description: "Please check your phone for the M-Pesa PIN prompt to complete payment."
+    },
+    paid: {
+      color: "bg-blue-100 text-blue-800 border-blue-200",
+      icon: "💳",
+      title: "Paid",
+      description: "Payment received! The shop is now preparing your items."
     },
     preparing: {
       color: "bg-blue-100 text-blue-800 border-blue-200",
       icon: "👨‍🍳",
-      title: "Preparing Order",
-      description: "Payment received! The kitchen is preparing your items."
+      title: "Paid",
+      description: "Payment received! The shop is now preparing your items."
     },
     ready: {
       color: "bg-green-100 text-green-800 border-green-200",
       icon: "✅",
-      title: "Ready for Pickup/Delivery!",
-      description: "Your order is ready. Thank you for dining with us!"
+      title: "Fulfilled",
+      description: `Your ${terms.order.toLowerCase()} is ready. Thank you for ${terms.eating} with us!`
+    },
+    completed: {
+      color: "bg-green-100 text-green-800 border-green-200",
+      icon: "✅",
+      title: "Fulfilled",
+      description: `Your ${terms.order.toLowerCase()} is completed. Thank you!`
+    },
+    archived: {
+      color: "bg-gray-100 text-gray-800 border-gray-200",
+      icon: "📦",
+      title: "Fulfilled",
+      description: `Your ${terms.order.toLowerCase()} is completed. Thank you!`
     }
   };
 
-  const currentStatus = statusConfig[order.status] || statusConfig.pending_payment;
+  const currentStatus = statusConfig[order.status] || statusConfig.pending;
   const shortId = orderId.split("-")[0].toUpperCase();
 
   return (
@@ -106,7 +140,7 @@ export default function TrackOrder() {
 
       <header className="bg-white shadow-sm border-b border-gray-100">
         <div className="max-w-md mx-auto px-4 py-4 text-center">
-          <Link to="/menu" className="absolute left-4 text-green-600 font-medium">← Menu</Link>
+          <Link to="/menu" className="absolute left-4 text-green-600 font-medium">← {terms.menu}</Link>
           <h1 className="text-xl font-bold text-gray-800">Live Tracker</h1>
         </div>
       </header>
