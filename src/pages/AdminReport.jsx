@@ -196,6 +196,49 @@ export default function AdminReport() {
            </div>
         </div>
       )
+    },
+    {
+      id: "cron",
+      title: "Background Jobs & Cron Analytics",
+      date: "REAL-TIME",
+      author: "Task Scheduler Engine",
+      icon: "⚙️",
+      content: (
+        <div className="space-y-6">
+           <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl mb-6 shadow-sm">
+             <h3 className="font-black text-slate-900 text-xl mb-4">Background Processing Architecture</h3>
+             <p className="text-gray-700 leading-relaxed mb-4">
+               The V3 infrastructure relies on lightweight, asynchronous "Cron-like" workers operating on the client-side edge to drastically reduce physical backend query costs.
+             </p>
+
+             <div className="space-y-4">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
+                   <div className="bg-indigo-100 text-indigo-700 p-3 rounded-lg text-xl">📡</div>
+                   <div>
+                      <h4 className="font-bold text-gray-900 mb-1">Long-Polling Sync Loops</h4>
+                      <p className="text-sm text-gray-600">Active dashboards (`OrderManager.jsx`) run detached interval workers that independently ping the Supabase edge every 5000ms. This simulates WebSockets perfectly without paying the high connection concurrency tax.</p>
+                   </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
+                   <div className="bg-amber-100 text-amber-700 p-3 rounded-lg text-xl">📶</div>
+                   <div>
+                      <h4 className="font-bold text-gray-900 mb-1">Service Worker Caching (Offline Queue)</h4>
+                      <p className="text-sm text-gray-600">The `useOfflineEventQueue` intercepts Cart requests during network drops. It acts as an implicit background worker mapping requests to LocalStorage and executing mutation retry loops immediately upon network restoration.</p>
+                   </div>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start gap-4">
+                   <div className="bg-emerald-100 text-emerald-700 p-3 rounded-lg text-xl">🧹</div>
+                   <div>
+                      <h4 className="font-bold text-gray-900 mb-1">Database Triggers (Ghost Jobs)</h4>
+                      <p className="text-sm text-gray-600">Hard-coded Postgres triggers execute instantly upon targeted mutations (e.g. migrating Phase 11 users to Auth upon insertion). These represent absolute zero-latency execution pipelines completely disconnected from the React UI thread.</p>
+                   </div>
+                </div>
+             </div>
+           </div>
+        </div>
+      )
     }
   ];
 
