@@ -94,16 +94,20 @@ export default function OnboardingGate({ children }) {
        if (updateError) throw updateError;
 
        // 3. Keep legacy `shop_users` table in sync for backend scripts
-       await supabase
+       const { error: legacyError } = await supabase
           .from("shop_users")
           .update({ password: newPassword })
           .eq("email", user.email);
+       // We won't block on legacy error necessarily if RLS is strict, but let's check it.
+       if (legacyError) console.error("Legacy sync error:", legacyError);
 
        // 4. Clear the flag on the shop
-       await supabase
+       const { error: shopError } = await supabase
           .from("shops")
           .update({ needs_password_change: false })
           .eq("id", user.shop_id);
+       
+       if (shopError) throw new Error("Failed to update security flag: " + shopError.message);
 
        setShopStatus(prev => ({ ...prev, needs_password_change: false }));
        
