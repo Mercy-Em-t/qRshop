@@ -21,6 +21,12 @@ import { useNomenclature } from "../hooks/use-nomenclature";
 import usePlanAccess from "../hooks/usePlanAccess";
 import UpgradeModal from "../components/UpgradeModal";
 
+const buildUnstructuredMessage = (shopName, table, items, identity) => {
+   const itemList = items.map(i => `${i.quantity}x ${i.name}`).join(", ");
+   const contactStr = identity?.name ? `\n\nName: ${identity.name}\nPhone: ${identity.phone || 'N/A'}` : '';
+   return `Hi ${shopName}, I'd like to place an order from Table ${table}.${contactStr}\n\nItems: ${itemList}\n\nPlease confirm.`;
+};
+
 export default function Order() {
   const session = getQrSession();
   const navigate = useNavigate();
@@ -160,6 +166,24 @@ export default function Order() {
       }
   };
 
+  const handeFreeTierCheckout = () => {
+      setSending(true);
+      if (shopPhone) {
+         const unstructuredMsg = buildUnstructuredMessage(shopName, session?.table, items, identity);
+         const link = buildWhatsAppLink(shopPhone, unstructuredMsg);
+         window.open(link, "_blank", "noopener,noreferrer");
+      }
+      
+      // Save identity for next time
+      localStorage.setItem('qr_customer_name', identity.name);
+      localStorage.setItem('qr_customer_phone', identity.phone);
+
+      clearCart();
+      // Navigate to menu instead of tracking since no ticket exists
+      alert("Order sent! Please follow up with the shop on WhatsApp.");
+      navigate("/menu");
+  };
+
   const handleWhatsAppCheckout = async () => {
     setSending(true);
     try {
@@ -178,14 +202,15 @@ export default function Order() {
          localStorage.setItem('qr_customer_name', identity.name);
          localStorage.setItem('qr_customer_phone', identity.phone);
          
-         // Phase 24 Feature Gating: If the shop is free and online, do NOT redirect to WhatsApp. 
-         // Force them to just view the tracking page instead. Pro accounts get the WhatsApp redirect.
-         if (planAccess.isFree && isOnline) {
-             console.log("Free tier checkout recorded. Skipping WhatsApp notification.");
-             return; // Stop here, the SmartReceiptModal effect or track navigation will handle the rest
+         // Phase 24/26 Feature Gating: 
+         // Basic tier and above get tracking. Free tier is handled separately via handleFreeTierCheckout.
+         // (If an order was somehow generated here by Free, we would force them to just view tracking without WA).
+         if (!planAccess.isBasic && isOnline) {
+             console.log("Free tier checkout recorded. Skipping structured notification.");
+             return;
          }
 
-         // For Pro users (or offline queue fallbacks), we construct the message here
+         // For Basic+ users (or offline queue fallbacks), we construct the message here
          if (shopPhone) {
              const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id, total, discountAmount, activeCoupon?.code, !isOnline, identity.name, identity.phone);
              const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
@@ -206,9 +231,9 @@ export default function Order() {
     }
   };
 
-  const shareTextReceipt = () => {
-     if (planAccess.isFree && isOnline) {
-         setLockedFeatureFocus("Direct WhatsApp Integration");
+   const shareTextReceipt = () => {
+     if (!planAccess.isBasic && isOnline) {
+         setLockedFeatureFocus("Structured Order Receipts");
          return;
      }
 
@@ -358,15 +383,17 @@ export default function Order() {
             */}
 
             <button
-              onClick={() => setCapturingIdentity(true)}
+              onClick={() => {
+                  setCapturingIdentity(true);
+              }}
               disabled={sending}
               className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
             >
               {!isOnline 
                  ? "📥 Queue via WhatsApp" 
-                 : planAccess.isFree 
-                    ? `💬 Place ${terms.order}` 
-                    : `💬 Place ${terms.order} via WhatsApp`}
+                 : !planAccess.isBasic 
+                    ? `💬 Place ${terms.order} via WhatsApp` 
+                    : `💬 Place ${terms.order} (Direct Checkout)`}
             </button>
           </div>
         ) : (
@@ -415,7 +442,11 @@ export default function Order() {
                <button 
                   onClick={() => {
                      setCapturingIdentity(false);
-                     handleWhatsAppCheckout();
+                     if (!planAccess.isBasic && isOnline) {
+                        handeFreeTierCheckout();
+                     } else {
+                        handleWhatsAppCheckout();
+                     }
                   }}
                   disabled={!identity.name || !identity.phone || sending}
                   className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer"

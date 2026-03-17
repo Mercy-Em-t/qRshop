@@ -26,11 +26,11 @@ export async function getOrdersPerDay(shopId, days = 7) {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
   const { data, error } = await supabase
-    .from("analytics_orders")
-    .select("*")
+    .from("orders")
+    .select("created_at, total_price")
     .eq("shop_id", shopId)
-    .gte("timestamp", since)
-    .order("timestamp", { ascending: true });
+    .gte("created_at", since)
+    .order("created_at", { ascending: true });
 
   if (error) {
     console.error("Error fetching orders per day:", error);
@@ -40,7 +40,7 @@ export async function getOrdersPerDay(shopId, days = 7) {
   // Group by date
   const grouped = {};
   for (const order of data || []) {
-    const date = new Date(order.timestamp).toLocaleDateString();
+    const date = new Date(order.created_at).toLocaleDateString();
     if (!grouped[date]) {
       grouped[date] = { date, count: 0, revenue: 0 };
     }
@@ -58,8 +58,13 @@ export async function getPopularItems(shopId, limit = 10) {
   if (!supabase) return [];
 
   const { data, error } = await supabase
-    .from("analytics_orders")
-    .select("items")
+    .from("orders")
+    .select(`
+       order_items (
+          quantity,
+          menu_items (name)
+       )
+    `)
     .eq("shop_id", shopId);
 
   if (error) {
@@ -70,19 +75,13 @@ export async function getPopularItems(shopId, limit = 10) {
   // Aggregate item counts
   const itemCounts = {};
   for (const order of data || []) {
-    let items;
-    try {
-      items = typeof order.items === "string" ? JSON.parse(order.items) : order.items;
-    } catch {
-      continue;
-    }
-    if (!Array.isArray(items)) continue;
-    for (const item of items) {
-      const key = item.name || item.id;
-      if (!itemCounts[key]) {
-        itemCounts[key] = { name: item.name || key, count: 0 };
+    if (!order.order_items || !Array.isArray(order.order_items)) continue;
+    for (const item of order.order_items) {
+      const name = item.menu_items?.name || "Unknown Item";
+      if (!itemCounts[name]) {
+        itemCounts[name] = { name, count: 0 };
       }
-      itemCounts[key].count += item.quantity || 1;
+      itemCounts[name].count += item.quantity || 1;
     }
   }
 
@@ -98,12 +97,12 @@ export async function getUpsellStats(shopId) {
   if (!supabase) return { total: 0, accepted: 0, rate: 0 };
 
   // Get all upsell items for this shop's menu items
-  const { data: menuItems } = await supabase
+  const { data: menuItems, error: menuErr } = await supabase
     .from("menu_items")
     .select("id")
     .eq("shop_id", shopId);
 
-  if (!menuItems || menuItems.length === 0) {
+  if (menuErr || !menuItems || menuItems.length === 0) {
     return { total: 0, accepted: 0, rate: 0 };
   }
 

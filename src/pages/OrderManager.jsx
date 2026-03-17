@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser, logout } from "../services/auth-service";
+import usePlanAccess from "../hooks/usePlanAccess";
+import UpgradeModal from "../components/UpgradeModal";
 
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
@@ -10,10 +12,13 @@ export default function OrderManager() {
   const [activeTab, setActiveTab] = useState("all");
   const [editingOrder, setEditingOrder] = useState(null);
   const [editTotal, setEditTotal] = useState("");
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const navigate = useNavigate();
 
   const user = getCurrentUser();
   const SHOP_ID = user?.shop_id;
+  const planAccess = usePlanAccess();
 
   useEffect(() => {
     if (!user) {
@@ -113,9 +118,9 @@ export default function OrderManager() {
         return <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Awaiting Payment</span>;
       case "paid":
       case "preparing":
-        return <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Paid / Preparing</span>;
+        return <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Paid & Prep</span>;
       case "stk_pushed":
-        return <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-bold uppercase animate-pulse">Awaiting PIN Ping</span>;
+        return <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-bold uppercase animate-pulse">Awaiting PIN</span>;
       case "ready":
       case "completed":
         return <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Completed</span>;
@@ -125,6 +130,11 @@ export default function OrderManager() {
         return <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-bold uppercase">{status}</span>;
     }
   };
+
+  const toggleExpand = (id) => {
+    setExpandedOrderId(prev => prev === id ? null : id);
+  };
+
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -149,6 +159,13 @@ export default function OrderManager() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {lockedFeatureFocus && (
+          <UpgradeModal 
+             featureName={lockedFeatureFocus} 
+             onClose={() => setLockedFeatureFocus(null)} 
+          />
+        )}
+        
         {/* Search / Pull Order Bar */}
         <div className="mb-8 bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -166,6 +183,26 @@ export default function OrderManager() {
                  Clear
               </button>
            )}
+        </div>
+
+        {/* Top Summary Metrics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex flex-col items-center justify-center">
+              <span className="text-3xl font-black text-gray-800">{orders.filter(o => o.status === "pending").length}</span>
+              <span className="text-xs text-gray-500 font-bold uppercase mt-1">New</span>
+           </div>
+           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex flex-col items-center justify-center">
+              <span className="text-3xl font-black text-orange-500">{orders.filter(o => ["pending_payment", "stk_pushed"].includes(o.status)).length}</span>
+              <span className="text-xs text-gray-500 font-bold uppercase mt-1">Awaiting Pay</span>
+           </div>
+           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex flex-col items-center justify-center">
+              <span className="text-3xl font-black text-blue-500">{orders.filter(o => ["paid", "preparing"].includes(o.status)).length}</span>
+              <span className="text-xs text-gray-500 font-bold uppercase mt-1">Paid / Prep</span>
+           </div>
+           <div className="bg-white rounded-xl border border-gray-100 p-4 shadow-sm flex flex-col items-center justify-center">
+              <span className="text-3xl font-black text-green-500">{orders.filter(o => ["completed", "ready"].includes(o.status)).length}</span>
+              <span className="text-xs text-gray-500 font-bold uppercase mt-1">Completed</span>
+           </div>
         </div>
 
         {/* Segmented Pipeline Tabs */}
@@ -196,7 +233,7 @@ export default function OrderManager() {
             <p className="text-gray-500 font-medium mt-4">No orders have been received yet.</p>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex flex-col gap-4">
             {orders
               .filter((o) => {
                  if (activeTab === "all") return o.status !== "archived"; 
@@ -215,109 +252,138 @@ export default function OrderManager() {
               })
               .map((order) => {
               const shortId = String(order?.id || "N/A").split("-")[0].toUpperCase();
+              const isExpanded = expandedOrderId === order.id;
               
               return (
-                <div key={order.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col">
-                  {/* Header */}
-                  <div className="flex justify-between items-start mb-4 pb-4 border-b border-gray-100">
-                    <div>
-                      <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider block mb-1">Receipt</span>
-                      <span className="font-mono text-gray-900 font-bold text-lg">
-                        #{shortId}
-                        {order.revision_count > 0 && (
-                           <span className="ml-2 bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full" title={`${order.revision_count} Revisions`}>
-                             R{order.revision_count}
-                           </span>
+                <div key={order.id} className={`bg-white rounded-xl shadow-sm border ${isExpanded ? 'border-indigo-300 ring-2 ring-indigo-50' : 'border-gray-100'} overflow-hidden transition-all duration-200`}>
+                  {/* Compact Header (Always Visible) */}
+                  <div 
+                     className="p-4 md:px-6 cursor-pointer hover:bg-gray-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                     onClick={() => toggleExpand(order.id)}
+                  >
+                     <div className="flex items-center gap-4">
+                         <div className="flex flex-col">
+                             <span className="text-xs text-gray-400 font-bold uppercase">Receipt</span>
+                             <span className="font-mono text-gray-900 font-bold text-lg md:text-xl">
+                               #{shortId}
+                               {order.revision_count > 0 && (
+                                  <span className="ml-2 bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full" title={`${order.revision_count} Revisions`}>
+                                    R{order.revision_count}
+                                  </span>
+                               )}
+                             </span>
+                         </div>
+                         <div className="hidden md:flex flex-col items-center justify-center border-l border-r border-gray-100 px-4 mx-2">
+                            <span className="text-xs text-gray-400 font-bold uppercase mb-1">Time</span>
+                            <span className="text-sm font-medium text-gray-700">
+                               {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </span>
+                         </div>
+                         <div className="flex flex-col">
+                            <span className="text-xs text-gray-400 font-bold uppercase mb-1">Total</span>
+                            <span className="text-sm font-bold text-green-700">KSh {order.total_price}</span>
+                         </div>
+                     </div>
+                     
+                     <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+                        {getStatusBadge(order.status)}
+                        <button className="text-gray-400 hover:text-gray-600 transition p-2 bg-gray-50 rounded-full">
+                           <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                           </svg>
+                        </button>
+                     </div>
+                  </div>
+
+                  {/* Expanded Content */}
+                  {isExpanded && (
+                  <div className="p-4 md:px-6 border-t border-gray-100 bg-gray-50/30 flex flex-col md:flex-row gap-6">
+                     
+                     {/* Left: Items List */}
+                     <div className="flex-1 space-y-2">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Order Details</h4>
+                        {order.order_items?.map((item, idx) => (
+                          <div key={idx} className="flex justify-between text-sm bg-white p-2 rounded border border-gray-100">
+                            <span className="text-gray-700">
+                              <span className="font-semibold text-gray-900 mr-2">{item.quantity}x</span>
+                              {item.menu_items?.name || "Item"}
+                            </span>
+                            <span className="font-medium text-gray-600">KSh {item.price * item.quantity}</span>
+                          </div>
+                        ))}
+                        
+                        {order.discount_amount > 0 && (
+                           <div className="bg-orange-50 text-orange-700 text-sm font-bold px-3 py-2 rounded-lg mt-3 flex justify-between items-center border border-orange-100">
+                              <span>🔥 Code: {order.coupon_code || "DISCOUNT"}</span>
+                              <span>-KSh {order.discount_amount}</span>
+                           </div>
                         )}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      {getStatusBadge(order.status)}
-                      <p className="text-xs text-gray-400 mt-2">
-                        {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                      </p>
-                    </div>
-                  </div>
+                        <div className="flex justify-between items-center pt-2 mt-2">
+                          <span className="text-gray-500 font-medium text-sm">Final Total</span>
+                          <span className="text-xl font-black text-green-700">KSh {order.total_price}</span>
+                        </div>
+                     </div>
 
-                  {/* Items */}
-                  <div className="flex-grow space-y-2 mb-6">
-                    {order.order_items?.map((item, idx) => (
-                      <div key={idx} className="flex justify-between text-sm">
-                        <span className="text-gray-700">
-                          <span className="font-semibold text-gray-900 mr-2">{item.quantity}x</span>
-                          {item.menu_items?.name || "Item"}
-                        </span>
-                        <span className="font-medium text-gray-600">KSh {item.price * item.quantity}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Total & Actions */}
-                  <div className="pt-4 border-t border-gray-100">
-                    {order.discount_amount > 0 && (
-                       <div className="bg-orange-50 text-orange-700 text-xs font-bold px-3 py-2 rounded-lg mb-3 flex justify-between items-center border border-orange-100">
-                          <span>🔥 Code: {order.coupon_code || "DISCOUNT"}</span>
-                          <span>-KSh {order.discount_amount}</span>
-                       </div>
-                    )}
-
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-gray-500 font-medium text-sm">Total</span>
-                      <span className="text-xl font-bold text-green-700">KSh {order.total_price}</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 mt-auto">
-                      {order.status === "pending" ? (
-                        <>
-                          <button
-                            onClick={() => {
-                              setEditTotal(order.total_price);
-                              setEditingOrder(order);
-                            }}
-                            className="bg-orange-100 text-orange-700 font-bold py-3 rounded-lg hover:bg-orange-200 transition text-sm flex items-center justify-center gap-1 border border-orange-200"
-                          >
-                            ✏️ Edit & Req. Pay
-                          </button>
+                     {/* Right: Actions */}
+                     <div className="w-full md:w-64 flex flex-col gap-2 justify-end bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
+                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-2 text-center">Manage Ticket</h4>
+                        
+                        {order.status === "pending" ? (
+                          <>
+                            <button
+                              onClick={() => {
+                                 if (!planAccess.isPro) {
+                                    setLockedFeatureFocus("Smart Order Revisions");
+                                    return;
+                                 }
+                                 setEditTotal(order.total_price);
+                                 setEditingOrder(order);
+                              }}
+                              className={`${planAccess.isPro ? 'bg-orange-50 text-orange-700 hover:bg-orange-100 border-orange-200' : 'bg-gray-100 text-gray-400 border-gray-200'} font-bold py-3 rounded-lg transition text-sm flex items-center justify-center gap-1 border`}
+                            >
+                              {!planAccess.isPro ? '🔒 ' : '✏️ '} Edit & Req. Pay
+                            </button>
+                            <button
+                              onClick={() => updateOrderStatus(order.id, "paid")}
+                              className="bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 shadow-sm transition text-sm"
+                            >
+                              ✅ Mark as Paid
+                            </button>
+                          </>
+                        ) : order.status === "pending_payment" ? (
                           <button
                             onClick={() => updateOrderStatus(order.id, "paid")}
-                            className="bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 shadow-sm transition text-sm"
+                            className="w-full bg-indigo-600 text-white font-medium py-3 rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center justify-center gap-2"
                           >
-                            ✅ Mark as Paid
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                            Confirm Pay Received
                           </button>
-                        </>
-                      ) : order.status === "pending_payment" ? (
-                        <button
-                          onClick={() => updateOrderStatus(order.id, "paid")}
-                          className="col-span-2 bg-indigo-600 text-white font-medium py-3 rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center justify-center gap-2"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                          Confirm Payment Received
-                        </button>
-                      ) : ["paid", "preparing"].includes(order.status) ? (
-                        <button
-                          onClick={() => updateOrderStatus(order.id, "completed")}
-                          className="col-span-2 bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700 transition shadow-sm"
-                        >
-                          📦 Mark Completed
-                        </button>
-                      ) : ["ready", "completed"].includes(order.status) ? (
-                        <button
-                          onClick={() => updateOrderStatus(order.id, "archived")}
-                          className="col-span-2 bg-gray-800 text-white font-medium py-3 rounded-lg hover:bg-gray-900 transition flex items-center justify-center gap-2 shadow-sm"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
-                          Archive Ticket
-                        </button>
-                      ) : (
-                        <button
-                          disabled
-                          className="col-span-2 bg-gray-100 text-gray-400 font-medium py-3 rounded-lg cursor-not-allowed"
-                        >
-                          Archived
-                        </button>
-                      )}
-                    </div>
+                        ) : ["paid", "preparing"].includes(order.status) ? (
+                          <button
+                            onClick={() => updateOrderStatus(order.id, "completed")}
+                            className="w-full bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700 transition shadow-sm"
+                          >
+                            📦 Mark Completed
+                          </button>
+                        ) : ["ready", "completed"].includes(order.status) ? (
+                          <button
+                            onClick={() => updateOrderStatus(order.id, "archived")}
+                            className="w-full bg-gray-800 text-white font-medium py-3 rounded-lg hover:bg-gray-900 transition flex items-center justify-center gap-2 shadow-sm"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                            Archive Ticket
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="w-full bg-gray-100 text-gray-400 font-medium py-3 rounded-lg cursor-not-allowed"
+                          >
+                            Archived
+                          </button>
+                        )}
+                     </div>
                   </div>
+                  )}
                 </div>
               );
             })}

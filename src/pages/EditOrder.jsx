@@ -4,6 +4,7 @@ import { supabase } from "../services/supabase-client";
 import { useCart } from "../hooks/use-cart";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { getQrSession } from "../utils/qr-session";
+import usePlanAccess from "../hooks/usePlanAccess";
 
 export default function EditOrder() {
   const { orderId } = useParams();
@@ -11,9 +12,17 @@ export default function EditOrder() {
   const { loadRevision, clearCart } = useCart();
   const [error, setError] = useState(null);
   const session = getQrSession();
+  const planAccess = usePlanAccess();
 
   useEffect(() => {
     async function loadOrder() {
+      if (planAccess.loading) return;
+
+      if (!planAccess.isPro) {
+          setError("Smart Order Revisions are only available on the Pro plan.");
+          return;
+      }
+
       if (!supabase) {
         setError("Database not connected.");
         return;
@@ -74,7 +83,7 @@ export default function EditOrder() {
     }
 
     loadOrder();
-  }, [orderId, navigate, loadRevision, clearCart, session]);
+  }, [orderId, navigate, loadRevision, clearCart, session, planAccess]);
 
   if (error) {
     return (

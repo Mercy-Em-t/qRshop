@@ -5,7 +5,9 @@ import { getSubscription } from "../services/subscription-service";
 export default function usePlanAccess() {
   const [access, setAccess] = useState({
     isFree: true,
+    isBasic: false,
     isPro: false,
+    isBusiness: false,
     isEnterprise: false,
     isSystemAdmin: false,
     loading: true
@@ -24,7 +26,9 @@ export default function usePlanAccess() {
       if (user.role === "system_admin") {
         setAccess({
           isFree: true,
+          isBasic: true,
           isPro: true,
+          isBusiness: true,
           isEnterprise: true,
           isSystemAdmin: true,
           loading: false
@@ -38,8 +42,10 @@ export default function usePlanAccess() {
         const planId = sub?.plan?.toLowerCase() || 'free';
         
         setAccess({
-          isFree: true, 
-          isPro: planId === 'pro' || planId === 'enterprise',
+          isFree: true, // Everyone gets free baseline
+          isBasic: ['basic', 'pro', 'business', 'enterprise'].includes(planId),
+          isPro: ['pro', 'business', 'enterprise'].includes(planId),
+          isBusiness: ['business', 'enterprise'].includes(planId),
           isEnterprise: planId === 'enterprise',
           isSystemAdmin: false,
           loading: false

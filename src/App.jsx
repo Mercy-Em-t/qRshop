@@ -33,6 +33,10 @@ import MarketingStudio from "./pages/MarketingStudio";
 import CampaignManager from "./pages/CampaignManager";
 import PublicShopProfile from "./pages/PublicShopProfile";
 import PublicQrLanding from "./pages/PublicQrLanding";
+import Settings from "./pages/Settings";
+// Generic Legal Pages (Public)
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 import { useOfflineEventQueue } from "./hooks/useOfflineEventQueue";
 
 export default function App() {
@@ -46,6 +50,10 @@ export default function App() {
       <Route path="/shops/:shopId" element={<PublicShopProfile />} />
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
       
+      {/* Legal Pages */}
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/privacy" element={<Privacy />} />
+
       {/* Platform Level QR Scanning Node */}
       <Route path="/q/:qrId" element={<ScanGateway />} />
 
@@ -126,6 +134,7 @@ export default function App() {
                   <Route path="qrs/:qrId" element={<QRAnalytics />} />
                   <Route path="campaigns" element={<CampaignManager />} />
                   <Route path="marketing" element={<MarketingStudio />} />
+                  <Route path="settings" element={<Settings />} />
                </Routes>
             </OnboardingGate>
          } 

@@ -9,8 +9,15 @@ export default function MenuManager() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showImportMenu, setShowImportMenu] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
   const navigate = useNavigate();
   const planAccess = usePlanAccess();
 
@@ -154,6 +161,7 @@ export default function MenuManager() {
      setTags(item.tags ? item.tags.join(", ") : "");
      setImageFile(null);
      setImagePreview(null);
+     setShowAddForm(true);
      window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -169,6 +177,7 @@ export default function MenuManager() {
      setTags("");
      setImageFile(null);
      setImagePreview(null);
+     setShowAddForm(false);
   };
   
   const handleImageSelect = (e) => {
@@ -287,13 +296,14 @@ export default function MenuManager() {
     const file = e.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
+      const reader = new FileReader();
     reader.onload = async (event) => {
       const csvData = event.target.result;
       const rows = csvData.split("\n");
       
       const bulkItems = [];
       const imageCreations = []; // parallel array of image arrays
+      let validationErrors = [];
 
       const cleanStr = (str) => str ? str.trim() : "";
 
@@ -301,34 +311,56 @@ export default function MenuManager() {
         if (rows[i].trim() === "") continue;
         
         const row = parseCSVRow(rows[i]);
-        if (row.length >= 3 && cleanStr(row[0]) !== "") {
-           let parsedVariants = {};
-           if (cleanStr(row[8])) {
-              try { parsedVariants = JSON.parse(cleanStr(row[8])); } 
-              catch(err) { console.warn("Invalid variants JSON for item: " + row[0]) }
-           }
-
-           let parsedTags = [];
-           if (cleanStr(row[7])) {
-              parsedTags = cleanStr(row[7]).split(',').map(t=>t.trim()).filter(Boolean);
-           }
-           
-           bulkItems.push({
-              shop_id: SHOP_ID,
-              name: cleanStr(row[0]),
-              category: cleanStr(row[1]) || "Main",
-              price: parseFloat(row[2]) || 0,
-              description: cleanStr(row[3]),
-              stock: cleanStr(row[4]) ? parseInt(row[4]) : -1,
-              sku: cleanStr(row[5]) || null,
-              product_link: cleanStr(row[6]) || null,
-              tags: parsedTags,
-              variant_options: parsedVariants,
-           });
-           
-           const imageUrls = cleanStr(row[9]) ? cleanStr(row[9]).split('|') : [];
-           imageCreations.push(imageUrls);
+        if (row.length < 3) {
+            validationErrors.push(`Row ${i + 1}: Missing required columns.`);
+            continue;
         }
+
+        const name = cleanStr(row[0]);
+        const priceRaw = cleanStr(row[2]);
+
+        if (!name) {
+            validationErrors.push(`Row ${i + 1}: Product name is required.`);
+            continue;
+        }
+
+        const parsedPrice = parseFloat(priceRaw);
+        if (isNaN(parsedPrice) || parsedPrice < 0) {
+            validationErrors.push(`Row ${i + 1}: Price must be a valid positive number.`);
+            continue;
+        }
+
+        let parsedVariants = {};
+        if (row.length >= 9 && cleanStr(row[8])) {
+           try { parsedVariants = JSON.parse(cleanStr(row[8])); } 
+           catch(err) { console.warn("Invalid variants JSON for item: " + name) }
+        }
+
+        let parsedTags = [];
+        if (row.length >= 8 && cleanStr(row[7])) {
+           parsedTags = cleanStr(row[7]).split(',').map(t=>t.trim()).filter(Boolean);
+        }
+        
+        bulkItems.push({
+           shop_id: SHOP_ID,
+           name: name,
+           category: cleanStr(row[1]) || "Main",
+           price: parsedPrice,
+           description: row.length >= 4 ? cleanStr(row[3]) : "",
+           stock: (row.length >= 5 && cleanStr(row[4])) ? parseInt(row[4]) : -1,
+           sku: row.length >= 6 ? (cleanStr(row[5]) || null) : null,
+           product_link: row.length >= 7 ? (cleanStr(row[6]) || null) : null,
+           tags: parsedTags,
+           variant_options: parsedVariants,
+        });
+        
+        const imageUrls = (row.length >= 10 && cleanStr(row[9])) ? cleanStr(row[9]).split('|') : [];
+        imageCreations.push(imageUrls);
+      }
+
+      if (validationErrors.length > 0) {
+          alert(`CSV Validation Failed:\n- ${validationErrors.slice(0, 5).join('\n- ')}\n${validationErrors.length > 5 ? `...and ${validationErrors.length - 5} more errors.` : ''}\nPlease fix these and try again.`);
+          return;
       }
 
       if (bulkItems.length > 0) {
@@ -338,6 +370,8 @@ export default function MenuManager() {
             return;
         }
         
+        if (!window.confirm(`Are you sure you want to import ${bulkItems.length} products to your menu?`)) return;
+
         setLoading(true);
         // Supabase select() returns the generated rows (so we get the IDs for image mappings)
         const { data: insertedItems, error } = await supabase.from('menu_items').insert(bulkItems).select();
@@ -377,7 +411,7 @@ export default function MenuManager() {
 
   const handleToggleActive = async (id, currentStatus) => {
     // If currentStatus is null/undefined, it means it's active.
-    const newStatus = currentStatus === false ? true : false;
+    const newStatus = currentStatus === false;
     const { error } = await supabase.from("menu_items").update({ is_active: newStatus }).eq("id", id);
     if (!error) {
        setItems((items) => items.map(item => item.id === id ? { ...item, is_active: newStatus } : item));
@@ -385,6 +419,15 @@ export default function MenuManager() {
        alert("Error updating status: " + error.message);
     }
   };
+
+  // Pagination Logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = items.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(items.length / itemsPerPage);
+
+  const goToNextPage = () => setCurrentPage((p) => Math.min(p + 1, totalPages));
+  const goToPrevPage = () => setCurrentPage((p) => Math.max(p - 1, 1));
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
@@ -415,45 +458,66 @@ export default function MenuManager() {
              onClose={() => setLockedFeatureFocus(null)} 
           />
         )}
-        {/* ADD / EDIT ITEM FORM */}
-        <section className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
-          <div className="flex justify-between items-center mb-4">
-             <h2 className="text-lg font-bold text-gray-800">{editingId ? "Edit Item" : "Add New Item"}</h2>
-             {!editingId && (
-                <div className="flex gap-2 relative">
-                  <button 
-                    onClick={handleExportCSV}
-                    className="bg-white text-gray-700 font-bold text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition shadow-sm whitespace-nowrap"
-                  >
-                     📥 Export CSV
-                  </button>
-                  <div className="relative group overflow-visible z-30">
-                    <button className="bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-lg hover:bg-indigo-100 transition whitespace-nowrap border border-indigo-100 flex items-center gap-1">
-                       📤 Import CSV ▼
+        {/* ACTION BAR */}
+        <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
+           <div>
+              <h2 className="text-lg font-bold text-gray-900">Live Menu Catalog ({items.length})</h2>
+           </div>
+           
+           <div className="flex gap-3 relative">
+             <button 
+               onClick={handleExportCSV}
+               className="bg-white text-gray-700 font-bold text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition shadow-sm whitespace-nowrap"
+             >
+                📥 Export
+             </button>
+             <div className="relative z-30">
+               <button 
+                 onClick={() => setShowImportMenu(!showImportMenu)}
+                 className="bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-lg hover:bg-indigo-100 transition whitespace-nowrap border border-indigo-100 flex items-center gap-1"
+               >
+                  📤 Import
+               </button>
+               {/* Dropdown Menu */}
+               {showImportMenu && (
+                 <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden transition-all duration-200 origin-top-right">
+                    <button 
+                      onClick={() => { handleDownloadTemplate(); setShowImportMenu(false); }} 
+                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium border-b border-gray-50 flex items-center gap-2"
+                    >
+                        📄 Download Template
                     </button>
-                    {/* Dropdown Menu */}
-                    <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right">
-                       <button 
-                         onClick={handleDownloadTemplate} 
-                         className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium border-b border-gray-50 flex items-center gap-2"
-                       >
-                           📄 Download Template
+                    <div className="relative hover:bg-gray-50 transition-colors">
+                       <button className="w-full text-left px-4 py-3 text-sm text-gray-700 font-medium flex items-center gap-2">
+                           ☁️ Upload Filled CSV
                        </button>
-                       <div className="relative hover:bg-gray-50 transition-colors">
-                          <button className="w-full text-left px-4 py-3 text-sm text-gray-700 font-medium flex items-center gap-2">
-                              ☁️ Upload Filled CSV
-                          </button>
-                          <input 
-                              type="file" 
-                              accept=".csv"
-                              onChange={handleBulkUpload}
-                              className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer"
-                          />
-                       </div>
+                       <input 
+                           type="file" 
+                           accept=".csv"
+                           onChange={(e) => { handleBulkUpload(e); setShowImportMenu(false); }}
+                           className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer"
+                       />
                     </div>
-                  </div>
-                </div>
-             )}
+                 </div>
+               )}
+             </div>
+             <button 
+               onClick={() => {
+                  handleCancelEdit(); // clears states
+                  setShowAddForm(!showAddForm);
+               }}
+               className="bg-green-600 text-white font-bold text-sm px-5 py-2 rounded-lg shadow-sm hover:bg-green-700 transition"
+             >
+                {showAddForm ? "− Cancel" : "+ Add Item"}
+             </button>
+           </div>
+        </div>
+
+        {/* ADD / EDIT ITEM FORM (COLLAPSIBLE) */}
+        {showAddForm && (
+        <section className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8 overflow-hidden transition-all">
+          <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
+             <h2 className="text-lg font-bold text-gray-800">{editingId ? "Edit Item" : "Create New Item"}</h2>
           </div>
           <form onSubmit={handleAddItem} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -602,68 +666,95 @@ export default function MenuManager() {
           </form>
           {!editingId && (
              <p className="text-xs text-gray-400 mt-4 text-right">
-                *CSV format req: Name, Category, Price, Description
+                *Ensure images are under 5MB for fast loading.
              </p>
           )}
         </section>
+        )}
 
-        {/* LIST ITEMS */}
+        {/* LIST ITEMS (PAGINATED) */}
         <section>
-          <h2 className="text-lg font-bold text-gray-800 mb-4">Live Menu Items ({items.length})</h2>
           {loading ? (
             <p className="text-center text-gray-500 py-8">Loading catalog...</p>
           ) : items.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm p-8 text-center border border-gray-100">
-              <p className="text-gray-500">Your menu is currently empty.</p>
-              <p className="text-sm text-gray-400 mt-1">Use the form above to add your first product!</p>
+            <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100 flex flex-col items-center">
+              <span className="text-4xl mb-4">🍽️</span>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Your menu is empty</h3>
+              <p className="text-gray-500 mb-6">Click the '+ Add Item' button above to build your catalog.</p>
+              <button onClick={() => setShowAddForm(true)} className="bg-green-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-green-700 transition">Add First Item</button>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden">
-              {items.map((item) => (
-                <div key={item.id} className={`p-4 flex items-center justify-between transition-colors ${item.is_active === false ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}`}>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className={`font-semibold ${item.is_active === false ? 'text-gray-500 line-through' : 'text-gray-800'}`}>{item.name}</h3>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.is_active === false ? 'bg-gray-200 text-gray-500' : 'bg-green-100 text-green-800'}`}>
-                        {item.category}
-                      </span>
-                      {item.is_active === false && (
-                         <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium">Inactive</span>
-                      )}
+            <>
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden">
+                {currentItems.map((item) => (
+                  <div key={item.id} className={`p-4 flex items-center justify-between transition-colors ${item.is_active === false ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}`}>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className={`font-semibold ${item.is_active === false ? 'text-gray-500 line-through' : 'text-gray-800'}`}>{item.name}</h3>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.is_active === false ? 'bg-gray-200 text-gray-500' : 'bg-green-100 text-green-800'}`}>
+                          {item.category}
+                        </span>
+                        {item.is_active === false && (
+                           <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium shadow-sm border border-red-200">Offline</span>
+                        )}
+                      </div>
+                      {item.description && <p className="text-sm text-gray-500 mt-1">{item.description}</p>}
+                      <p className={`text-sm font-medium mt-1 ${item.is_active === false ? 'text-gray-400' : 'text-gray-700'}`}>KSh {item.price}</p>
                     </div>
-                    {item.description && <p className="text-sm text-gray-500 mt-1">{item.description}</p>}
-                    <p className={`text-sm font-medium mt-1 ${item.is_active === false ? 'text-gray-400' : 'text-gray-700'}`}>KSh {item.price}</p>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => startEdit(item)}
+                        disabled={item.is_active === false}
+                        className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-gray-300 cursor-not-allowed' : 'text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'}`}
+                        title="Edit Item"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                           <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleToggleActive(item.id, item.is_active)}
+                        className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-green-500 hover:text-green-700 hover:bg-green-50' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'}`}
+                        title={item.is_active === false ? "Reactivate Item" : "Deactivate Item"}
+                      >
+                        {item.is_active === false ? (
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                             <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                           </svg>
+                        ) : (
+                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                             <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
+                           </svg>
+                        )}
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => startEdit(item)}
-                      disabled={item.is_active === false}
-                      className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-gray-300 cursor-not-allowed' : 'text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'}`}
-                      title="Edit Item"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                         <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => handleToggleActive(item.id, item.is_active)}
-                      className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-green-500 hover:text-green-700 hover:bg-green-50' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'}`}
-                      title={item.is_active === false ? "Reactivate Item" : "Deactivate Item"}
-                    >
-                      {item.is_active === false ? (
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                         </svg>
-                      ) : (
-                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                           <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
-                         </svg>
-                      )}
-                    </button>
-                  </div>
+                ))}
+              </div>
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                   <p className="text-sm text-gray-500 font-medium">Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, items.length)} of {items.length}</p>
+                   <div className="flex gap-2">
+                     <button 
+                       onClick={goToPrevPage}
+                       disabled={currentPage === 1}
+                       className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-100 transition disabled:opacity-50"
+                     >
+                        Previous
+                     </button>
+                     <button 
+                       onClick={goToNextPage}
+                       disabled={currentPage === totalPages}
+                       className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-100 transition disabled:opacity-50"
+                     >
+                        Next
+                     </button>
+                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </section>
       </main>

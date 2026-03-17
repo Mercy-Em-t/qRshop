@@ -77,15 +77,14 @@ export default function AdminShops() {
      }
   };
 
-  const handleTogglePlan = async (shopId, currentPlan) => {
-    const newPlan = currentPlan === 'free' ? 'pro' : 'free';
-    if (!window.confirm(`Are you sure you want to force change this shop's plan to ${newPlan.toUpperCase()}?`)) return;
+  const handleSetPlan = async (shopId, newPlan) => {
+    if (!window.confirm(`Are you sure you want to change this shop's plan to ${newPlan.toUpperCase()}?`)) return;
 
     try {
        const { error } = await supabase.from('shops').update({ plan: newPlan }).eq('id', shopId);
        if (error) throw error;
        
-       alert(`Shop plan successfully overridden to ${newPlan.toUpperCase()}`);
+       alert(`Shop plan successfully updated to ${newPlan.toUpperCase()}`);
        fetchShops(); // Refresh the list
     } catch (err) {
        alert("Failed to update plan: " + err.message);
@@ -98,20 +97,31 @@ export default function AdminShops() {
 
     try {
       // 1. Create the physical Shop space
-      const { data: newShop, error: shopErr } = await supabase
-        .from("shops")
-        .insert([{ 
-           name: newShopName, 
-           subdomain: newShopSubdomain ? newShopSubdomain.toLowerCase().replace(/[^a-z0-9-]/g, "") : null,
-           phone: newShopPhone, 
-           whatsapp_number: newShopWhatsApp || newShopPhone, 
-           plan: "free",
-           industry_type: newShopIndustry
-        }])
-        .select()
-        .single();
+      // Try with advanced fields first
+      const fullShopData = {
+         name: newShopName, 
+         subdomain: newShopSubdomain ? newShopSubdomain.toLowerCase().replace(/[^a-z0-9-]/g, "") : null,
+         phone: newShopPhone, 
+         whatsapp_number: newShopWhatsApp || newShopPhone, 
+         plan: "free",
+         industry_type: newShopIndustry
+      };
+
+      let newShop;
+      let shopErr;
+
+      const res = await supabase.from("shops").insert([fullShopData]).select().single();
       
-      if (shopErr) throw shopErr;
+      if (res.error) {
+         console.warn("Full insert failed, falling back to core columns...", res.error);
+         const basicData = { name: newShopName, phone: newShopPhone, plan: "free" };
+         const fallbackRes = await supabase.from("shops").insert([basicData]).select().single();
+         if (fallbackRes.error) throw fallbackRes.error;
+         newShop = fallbackRes.data;
+         alert("Warning: Core shop created, but advanced options (Subdomain, Industry, WhatsApp) were omitted because the Database schema is not fully updated. Please run all Phase 10-25 SQL scripts.");
+      } else {
+         newShop = res.data;
+      }
 
       // 2. Create the associated Admin User for that Shop space
       // Auto-generate a secure random 8-character password
@@ -221,15 +231,19 @@ export default function AdminShops() {
                          )}
                       </div>
                       <div className="flex flex-col items-end gap-1">
-                         <span className={`${shop.plan === 'pro' ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-800'} font-bold px-2 py-1 rounded-full text-xs uppercase`}>
+                         <span className={`${['pro', 'business'].includes(shop.plan) ? 'bg-indigo-100 text-indigo-800' : shop.plan === 'basic' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} font-bold px-2 py-1 rounded-full text-xs uppercase`}>
                             {shop.plan} Plan
                          </span>
-                         <button 
-                            onClick={() => handleTogglePlan(shop.id, shop.plan)}
-                            className="text-[10px] text-indigo-600 font-bold hover:underline"
+                         <select 
+                            value={shop.plan || 'free'}
+                            onChange={(e) => handleSetPlan(shop.id, e.target.value)}
+                            className="mt-1 text-[10px] font-bold text-indigo-700 bg-white border border-gray-200 rounded px-1 py-0.5 outline-none cursor-pointer hover:border-indigo-400"
                          >
-                            Force {shop.plan === 'free' ? 'Upgrade' : 'Downgrade'}
-                         </button>
+                            <option value="free">Set: FREE</option>
+                            <option value="basic">Set: BASIC</option>
+                            <option value="pro">Set: PRO</option>
+                            <option value="business">Set: BUSINESS</option>
+                         </select>
                       </div>
                    </div>
                    
