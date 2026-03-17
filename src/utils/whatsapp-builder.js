@@ -1,4 +1,4 @@
-export function buildWhatsAppMessage(shopName, table, items, orderId, total, discountAmount = 0, couponCode = null, isOffline = false) {
+export function buildWhatsAppMessage(shopName, table, items, orderId, total, discountAmount = 0, couponCode = null, isOffline = false, clientName = null, clientPhone = null) {
   const shortId = orderId ? orderId.split("-")[0].toUpperCase() : "N/A";
   
   // Create formatted datestring e.g. "17/03/2026, 13:02"
@@ -28,6 +28,8 @@ export function buildWhatsAppMessage(shopName, table, items, orderId, total, dis
 🏪 *${shopName.toUpperCase()}*
 🪑 Table: ${table}
 🕒 ${dateStrFormatted}
+
+${clientName ? `👤 Client: ${clientName}\n📞 ${clientPhone}\n` : ''}
 
 🧾 Receipt: #${shortId}
 

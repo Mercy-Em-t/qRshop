@@ -4,6 +4,7 @@ import { getQrSession } from "../utils/qr-session";
 
 const CART_STORAGE_KEY = "qr_cart";
 const COUPON_STORAGE_KEY = "qr_active_coupon";
+const PARENT_ORDER_KEY = "qr_parent_order";
 
 function loadCartFromStorage() {
   try {
@@ -36,6 +37,16 @@ function saveCartToStorage(items) {
 export function useCart() {
   const [items, setItems] = useState(() => loadCartFromStorage());
   const [activeCoupon, setActiveCoupon] = useState(() => loadCouponFromStorage());
+  const [parentOrderId, setParentOrderId] = useState(() => localStorage.getItem(PARENT_ORDER_KEY) || null);
+
+  // Persist parent order id
+  useEffect(() => {
+    if (parentOrderId) {
+      localStorage.setItem(PARENT_ORDER_KEY, parentOrderId);
+    } else {
+      localStorage.removeItem(PARENT_ORDER_KEY);
+    }
+  }, [parentOrderId]);
 
   // Persist cart to localStorage on change
   useEffect(() => {
@@ -104,7 +115,14 @@ export function useCart() {
   const clearCart = useCallback(() => {
     setItems([]);
     setActiveCoupon(null);
+    setParentOrderId(null);
     localStorage.removeItem(CART_STORAGE_KEY);
+    localStorage.removeItem(PARENT_ORDER_KEY);
+  }, []);
+
+  const loadRevision = useCallback((orderToRevise, itemsToLoad) => {
+    setItems(itemsToLoad);
+    setParentOrderId(orderToRevise.parent_order_id || orderToRevise.id);
   }, []);
 
   // Calculate Base Cost
@@ -133,6 +151,8 @@ export function useCart() {
     itemCount,
     activeCoupon,
     applyCoupon,
-    removeCoupon
+    removeCoupon,
+    parentOrderId,
+    loadRevision
   };
 }

@@ -26,6 +26,7 @@ import AdminReport from "./pages/AdminReport";
 import AdminEngineering from "./pages/AdminEngineering";
 import Campaign from "./pages/Campaign";
 import TrackOrder from "./pages/TrackOrder";
+import EditOrder from "./pages/EditOrder";
 import OrderManager from "./pages/OrderManager";
 import MyOrders from "./pages/MyOrders";
 import MarketingStudio from "./pages/MarketingStudio";
@@ -88,6 +89,14 @@ export default function App() {
         element={
           <QrAccessGuard>
             <TrackOrder />
+          </QrAccessGuard>
+        }
+      />
+      <Route
+        path="/edit/:orderId"
+        element={
+          <QrAccessGuard>
+            <EditOrder />
           </QrAccessGuard>
         }
       />

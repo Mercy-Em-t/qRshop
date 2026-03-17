@@ -42,7 +42,22 @@ export default function OrderManager() {
       .order("created_at", { ascending: false });
 
     if (!error && orderData) {
-      setOrders(orderData);
+      // Filter distinct topmost orders
+      const activeOrdersMap = new Map();
+      
+      orderData.forEach(o => {
+          const rootId = o.parent_order_id || o.id;
+          if (!activeOrdersMap.has(rootId)) {
+             // This is the newest one (since orderData is sorted descending by created_at)
+             activeOrdersMap.set(rootId, { ...o, root_id: rootId, revision_count: 0 });
+          } else {
+             // This is an older revision, increment the counter on the topmost ticket
+             const active = activeOrdersMap.get(rootId);
+             active.revision_count += 1;
+          }
+      });
+
+      setOrders(Array.from(activeOrdersMap.values()));
     }
     if (loading) setLoading(false);
   };
@@ -207,7 +222,14 @@ export default function OrderManager() {
                   <div className="flex justify-between items-start mb-4 pb-4 border-b border-gray-100">
                     <div>
                       <span className="text-gray-400 text-xs font-semibold uppercase tracking-wider block mb-1">Receipt</span>
-                      <span className="font-mono text-gray-900 font-bold text-lg">#{shortId}</span>
+                      <span className="font-mono text-gray-900 font-bold text-lg">
+                        #{shortId}
+                        {order.revision_count > 0 && (
+                           <span className="ml-2 bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full" title={`${order.revision_count} Revisions`}>
+                             R{order.revision_count}
+                           </span>
+                        )}
+                      </span>
                     </div>
                     <div className="text-right">
                       {getStatusBadge(order.status)}

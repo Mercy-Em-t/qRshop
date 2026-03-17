@@ -25,7 +25,7 @@ export default function Order() {
   const session = getQrSession();
   const navigate = useNavigate();
   const { shop, loading: shopLoading } = useShop(session?.shop_id);
-  const { items, total, subtotal, discountAmount, activeCoupon, applyCoupon, clearCart } = useCart();
+  const { items, total, subtotal, discountAmount, activeCoupon, applyCoupon, clearCart, parentOrderId } = useCart();
   const [sending, setSending] = useState(false);
   const [queued, setQueued] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -33,6 +33,11 @@ export default function Order() {
   const [showPayment, setShowPayment] = useState(false);
   const [generatedOrder, setGeneratedOrder] = useState(null);
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
+  const [capturingIdentity, setCapturingIdentity] = useState(false);
+  const [identity, setIdentity] = useState({
+      name: localStorage.getItem('qr_customer_name') || "",
+      phone: localStorage.getItem('qr_customer_phone') || ""
+  });
   
   const terms = useNomenclature(session?.shop_id);
   const planAccess = usePlanAccess();
@@ -120,7 +125,10 @@ export default function Order() {
         items,
         total,
         discountAmount,
-        activeCoupon?.code || null
+        activeCoupon?.code || null,
+        identity.name,
+        identity.phone,
+        parentOrderId
       );
   };
 
@@ -166,6 +174,10 @@ export default function Order() {
 
          setGeneratedOrder(order);
          
+         // Save identity for next time
+         localStorage.setItem('qr_customer_name', identity.name);
+         localStorage.setItem('qr_customer_phone', identity.phone);
+         
          // Phase 24 Feature Gating: If the shop is free and online, do NOT redirect to WhatsApp. 
          // Force them to just view the tracking page instead. Pro accounts get the WhatsApp redirect.
          if (planAccess.isFree && isOnline) {
@@ -175,7 +187,7 @@ export default function Order() {
 
          // For Pro users (or offline queue fallbacks), we construct the message here
          if (shopPhone) {
-             const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id, total, discountAmount, activeCoupon?.code, !isOnline);
+             const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id, total, discountAmount, activeCoupon?.code, !isOnline, identity.name, identity.phone);
              const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
              window.open(finalLink, "_blank", "noopener,noreferrer");
          }
@@ -184,7 +196,7 @@ export default function Order() {
       console.error("WhatsApp Checkout failed:", err);
       // Fallback
       if (shopPhone && (!planAccess.isFree || !isOnline)) {
-        const fallbackMessage = buildWhatsAppMessage(shopName, session?.table, items, "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline);
+        const fallbackMessage = buildWhatsAppMessage(shopName, session?.table, items, "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline, identity.name, identity.phone);
         const fallbackLink = buildWhatsAppLink(shopPhone, fallbackMessage);
         window.open(fallbackLink, "_blank", "noopener,noreferrer");
       }
@@ -201,7 +213,7 @@ export default function Order() {
      }
 
      if (shopPhone) {
-        const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, generatedOrder?.id || "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline);
+        const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, generatedOrder?.id || "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline, identity.name, identity.phone);
         const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
         window.open(finalLink, "_blank", "noopener,noreferrer");
      }
@@ -346,7 +358,7 @@ export default function Order() {
             */}
 
             <button
-              onClick={handleWhatsAppCheckout}
+              onClick={() => setCapturingIdentity(true)}
               disabled={sending}
               className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
             >
@@ -363,6 +375,56 @@ export default function Order() {
           </p>
         )}
       </main>
+
+      {/* Identity Capture Modal */}
+      {capturingIdentity && (
+         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative">
+               <button onClick={() => setCapturingIdentity(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+               </button>
+
+               <div className="mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-1">Your Details</h2>
+                  <p className="text-sm text-gray-500">How should the shop contact you?</p>
+               </div>
+
+               <div className="space-y-4 mb-6">
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                     <input 
+                        type="text" 
+                        value={identity.name}
+                        onChange={(e) => setIdentity({...identity, name: e.target.value})}
+                        placeholder="John Doe"
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                     />
+                  </div>
+                  <div>
+                     <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+                     <input 
+                        type="tel" 
+                        value={identity.phone}
+                        onChange={(e) => setIdentity({...identity, phone: e.target.value})}
+                        placeholder="+2547..."
+                        className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                     />
+                  </div>
+               </div>
+
+               <button 
+                  onClick={() => {
+                     setCapturingIdentity(false);
+                     handleWhatsAppCheckout();
+                  }}
+                  disabled={!identity.name || !identity.phone || sending}
+                  className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer"
+               >
+                  {sending ? "Processing..." : `Confirm & Place ${terms.order}`}
+               </button>
+            </div>
+         </div>
+      )}
 
       {showPayment && (
         <PaymentModal 
