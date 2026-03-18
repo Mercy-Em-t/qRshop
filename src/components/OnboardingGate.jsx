@@ -13,7 +13,6 @@ export default function OnboardingGate({ children }) {
   const navigate = useNavigate();
 
   // Password Setup State
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [pwdError, setPwdError] = useState("");
@@ -68,40 +67,18 @@ export default function OnboardingGate({ children }) {
       setPwdError("Password must be at least 8 characters long.");
       return;
     }
-    if (newPassword === currentPassword) {
-      setPwdError("New password must be different from the system-generated password.");
-      return;
-    }
 
     setPwdLoading(true);
 
     try {
-       // 1. Verify current system-generated password by forcing a re-login
-       const { error: verifyError } = await supabase.auth.signInWithPassword({
-          email: user.email,
-          password: currentPassword
-       });
-
-       if (verifyError) {
-          throw new Error("Current system-generated password is incorrect.");
-       }
-
-       // 2. Native Auth Update
+       // 1. Update the password via Native Auth (user is already authenticated)
        const { error: updateError } = await supabase.auth.updateUser({
           password: newPassword
        });
 
        if (updateError) throw updateError;
 
-       // 3. Keep legacy `shop_users` table in sync for backend scripts
-       const { error: legacyError } = await supabase
-          .from("shop_users")
-          .update({ password: newPassword })
-          .eq("email", user.email);
-       // We won't block on legacy error necessarily if RLS is strict, but let's check it.
-       if (legacyError) console.error("Legacy sync error:", legacyError);
-
-       // 4. Clear the flag on the shop
+       // 2. Permanently clear the one-time flag so this never triggers again
        const { error: shopError } = await supabase
           .from("shops")
           .update({ needs_password_change: false })
@@ -109,6 +86,7 @@ export default function OnboardingGate({ children }) {
        
        if (shopError) throw new Error("Failed to update security flag: " + shopError.message);
 
+       // 3. Update local state so gate advances immediately
        setShopStatus(prev => ({ ...prev, needs_password_change: false }));
        
     } catch (err) {
@@ -183,9 +161,9 @@ export default function OnboardingGate({ children }) {
                <div className="absolute top-0 left-0 w-full h-1 bg-red-500"></div>
                <div className="flex flex-col items-center text-center mb-8">
                   <span className="text-4xl mb-3">🛡️</span>
-                  <h1 className="text-2xl font-black text-gray-900">Security Requirement</h1>
+                  <h1 className="text-2xl font-black text-gray-900">One-Time Security Setup</h1>
                   <p className="text-gray-500 mt-2 text-sm text-balance">
-                     For your protection, you must immediately change the system-generated password you were issued by the Super Admin before accessing your operator environment.
+                     Your account was provisioned by the Platform Admin. Please set your own private password now. This screen will never appear again after you save.
                   </p>
                </div>
 
@@ -197,18 +175,7 @@ export default function OnboardingGate({ children }) {
 
                <form onSubmit={handlePasswordSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Current Password</label>
-                    <input 
-                      type="password"
-                      required
-                      value={currentPassword}
-                      onChange={e => setCurrentPassword(e.target.value)}
-                      placeholder="The generated password you logged in with"
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-red-500 focus:bg-white"
-                    />
-                  </div>
-                  <div className="pt-2 border-t border-gray-100">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">New Secure Password</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">New Password</label>
                     <input 
                       type="password"
                       required
@@ -235,7 +202,7 @@ export default function OnboardingGate({ children }) {
                      disabled={pwdLoading}
                      className="w-full bg-red-600 text-white font-bold py-3.5 rounded-xl hover:bg-red-700 transition mt-4 disabled:opacity-50"
                   >
-                     {pwdLoading ? "Locking Vault..." : "Update Password & Secure Account"}
+                     {pwdLoading ? "Setting Password..." : "Set My Password & Continue"}
                   </button>
                </form>
 
