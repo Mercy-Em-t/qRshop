@@ -183,6 +183,34 @@ export default function Dashboard() {
             </p>
           </Link>
 
+          {planAccess.isPro ? (
+             <Link
+               to="/dashboard/analytics"
+               className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-100 relative overflow-hidden"
+             >
+               <div className="absolute top-0 right-0 bg-blue-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+               <h2 className="text-lg font-semibold text-gray-800 mb-2">
+                 📈 Analytics
+               </h2>
+               <p className="text-gray-500 text-sm">
+                 Historical data, popular items, and upsell tracking.
+               </p>
+             </Link>
+          ) : (
+             <div 
+               onClick={() => setLockedFeatureFocus("Advanced Analytics")}
+               className="bg-gray-50 rounded-xl p-6 border-2 border-dashed border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors relative"
+             >
+                <div className="absolute top-4 right-4 text-gray-400">🔒</div>
+                <h2 className="text-lg font-semibold text-gray-500 mb-2">
+                  📈 Analytics (Pro)
+                </h2>
+                <p className="text-gray-400 text-sm">
+                  Upgrade to unlock historical data and upsell tracking.
+                </p>
+             </div>
+          )}
+
           <Link
             to="/dashboard/qrs"
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-100 relative overflow-hidden"
@@ -196,6 +224,19 @@ export default function Dashboard() {
             </p>
           </Link>
 
+          <Link
+            to="/dashboard/settings"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-gray-200 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-gray-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              ⚙️ Settings
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Update store info, logo, passwords, and manage plan.
+            </p>
+          </Link>
+        
           {planAccess.isPro ? (
              <Link
                to="/dashboard/campaigns"
