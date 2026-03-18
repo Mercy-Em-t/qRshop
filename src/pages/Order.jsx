@@ -169,19 +169,16 @@ export default function Order() {
 
   const handeFreeTierCheckout = () => {
       setSending(true);
+      // Save identity before redirecting so it's always persisted
+      localStorage.setItem('qr_customer_name', identity.name);
+      if (identity.phone) localStorage.setItem('qr_customer_phone', identity.phone);
+      
       if (shopPhone) {
          const unstructuredMsg = buildUnstructuredMessage(shopName, session?.table, items, identity);
          const link = buildWhatsAppLink(shopPhone, unstructuredMsg);
          window.open(link, "_blank", "noopener,noreferrer");
       }
-      
-      // Save identity for next time
-      localStorage.setItem('qr_customer_name', identity.name);
-      localStorage.setItem('qr_customer_phone', identity.phone);
-
       clearCart();
-      // Navigate to menu instead of tracking since no ticket exists
-      alert("Order sent! Please follow up with the shop on WhatsApp.");
       navigate("/menu");
   };
 
@@ -451,7 +448,7 @@ export default function Order() {
                         handleWhatsAppCheckout();
                      }
                   }}
-                  disabled={!identity.name || (planAccess.isBasic && !identity.phone) || sending}
+                  disabled={!identity.name || sending}
                   className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer"
                >
                   {sending ? "Processing..." : `Confirm & Place ${terms.order}`}

@@ -39,7 +39,20 @@ export default function usePlanAccess() {
       // If regular shop owner, check subscription tier
       try {
         const sub = await getSubscription(user.shop_id);
-        const planId = sub?.plan?.toLowerCase() || 'free';
+        // First check the subscriptions table, then fall back to shops.plan column
+        // (AdminShops directly updates shops.plan so we must read both sources)
+        let planId = sub?.plan?.toLowerCase() || null;
+        
+        if (!planId) {
+          // Fall back to reading the shop's plan column directly
+          const { supabase } = await import('./supabase-client');
+          const { data: shopData } = await supabase
+            .from('shops')
+            .select('plan')
+            .eq('id', user.shop_id)
+            .single();
+          planId = shopData?.plan?.toLowerCase() || 'free';
+        }
         
         setAccess({
           isFree: true, // Everyone gets free baseline

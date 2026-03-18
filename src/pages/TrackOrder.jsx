@@ -89,44 +89,44 @@ export default function TrackOrder() {
     pending_payment: {
       color: "bg-orange-100 text-orange-800 border-orange-200",
       icon: "📋",
-      title: "Accepted",
-      description: `The shop has accepted your ${terms.order.toLowerCase()}! Please send payment to the shop's M-Pesa number (${order?.shops?.phone || order?.shops?.whatsapp_number || "the counter"}) to confirm.`
+      title: "Accepted – Awaiting Payment",
+      description: `The shop has accepted your ${terms.order.toLowerCase()}! Please send payment to the shop's number (${order?.shops?.phone || order?.shops?.whatsapp_number || "the counter"}) to confirm.`
     },
     stk_pushed: {
-      color: "bg-purple-100 text-purple-800 border-purple-200",
-      icon: "📲",
-      title: "Accepted",
-      description: "Please check your phone for the M-Pesa PIN prompt to complete payment."
+      color: "bg-orange-100 text-orange-800 border-orange-200",
+      icon: "📋",
+      title: "Accepted – Awaiting Payment",
+      description: `The shop has accepted your ${terms.order.toLowerCase()}! Please send payment to confirm.`
     },
     paid: {
       color: "bg-blue-100 text-blue-800 border-blue-200",
       icon: "💳",
-      title: "Paid",
+      title: "Paid – Being Prepared",
       description: "Payment received! The shop is now preparing your items."
     },
     preparing: {
       color: "bg-blue-100 text-blue-800 border-blue-200",
       icon: "👨‍🍳",
-      title: "Paid",
+      title: "Paid – Being Prepared",
       description: "Payment received! The shop is now preparing your items."
     },
     ready: {
       color: "bg-green-100 text-green-800 border-green-200",
       icon: "✅",
-      title: "Fulfilled",
-      description: `Your ${terms.order.toLowerCase()} is ready. Thank you for ${terms.eating} with us!`
+      title: "Ready for Pickup!",
+      description: `Your ${terms.order.toLowerCase()} is ready. Thank you!`
     },
     completed: {
       color: "bg-green-100 text-green-800 border-green-200",
       icon: "✅",
-      title: "Fulfilled",
+      title: "Completed",
       description: `Your ${terms.order.toLowerCase()} is completed. Thank you!`
     },
     archived: {
-      color: "bg-gray-100 text-gray-800 border-gray-200",
-      icon: "📦",
-      title: "Fulfilled",
-      description: `Your ${terms.order.toLowerCase()} is completed. Thank you!`
+      color: "bg-green-100 text-green-800 border-green-200",
+      icon: "✅",
+      title: "Completed",
+      description: `Your ${terms.order.toLowerCase()} is completed. Thank you for visiting!`
     }
   };
 
