@@ -131,10 +131,13 @@ export default function OnboardingGate({ children }) {
      setQrError("");
      setQrLoading(true);
      try {
-       await createQrNode(user.shop_id, "Main Entrance", "open_menu");
+       const result = await createQrNode(user.shop_id, "Main Entrance", "open_menu");
+       if (!result) throw new Error("QR creation returned empty. Check RLS policies in Supabase (run database_phase33_campaigns_qr_rls.sql).");
        await fetchQRs(); // Re-sync to satisfy the gate
      } catch (err) {
-       setQrError(err.message);
+       const msg = err.message || "Unknown error";
+       setQrError(msg);
+       console.error("First QR deploy failed:", msg);
      } finally {
        setQrLoading(false);
      }
@@ -149,8 +152,11 @@ export default function OnboardingGate({ children }) {
   const kycCompleted = shopStatus?.kyc_completed === true; 
   const hasNodes = (qrs || []).length > 0;
 
-  if (!needsPasswordChange && kycCompleted && hasNodes) {
-     return children;
+  // Let through: password done + kyc done (QR step comes after these)
+  if (!needsPasswordChange && kycCompleted) {
+     // If they've also got QRs or the QR fetch is still loading, just let them in
+     // The deploy step ONLY appears for brand-new shops that truly have zero nodes
+     if (hasNodes || loading) return children;
   }
 
   // FORCE PASSWORD CHANGE VIEW
