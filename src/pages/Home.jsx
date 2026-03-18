@@ -134,7 +134,7 @@ export default function Home() {
                   <li className="flex gap-3 text-sm text-gray-400"><span className="text-gray-300">✗</span> No structured receipts</li>
                   <li className="flex gap-3 text-sm text-gray-400"><span className="text-gray-300">✗</span> No customer database</li>
                </ul>
-               <Link to="/login" className="w-full text-center py-3 rounded-xl border-2 border-green-600 text-green-700 font-bold hover:bg-green-50 transition">Start Free</Link>
+               <Link to="/request-access" className="w-full text-center py-3 rounded-xl border-2 border-green-600 text-green-700 font-bold hover:bg-green-50 transition">Start Free</Link>
             </div>
 
             {/* Basic */}
@@ -149,7 +149,7 @@ export default function Home() {
                   <li className="flex gap-3 text-sm text-gray-300"><span className="text-green-400">✓</span> <strong>Customer Identity Capture</strong></li>
                   <li className="flex gap-3 text-sm text-gray-300"><span className="text-green-400">✓</span> Active Order Dashboard</li>
                </ul>
-               <Link to="/login" className="w-full text-center py-3 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition shadow-[0_0_20px_rgba(34,197,94,0.3)]">Upgrade to Basic</Link>
+               <Link to="/request-access" className="w-full text-center py-3 rounded-xl bg-green-500 text-white font-bold hover:bg-green-600 transition shadow-[0_0_20px_rgba(34,197,94,0.3)]">Upgrade to Basic</Link>
             </div>
 
             {/* Pro */}
@@ -164,7 +164,7 @@ export default function Home() {
                   <li className="flex gap-3 text-sm text-gray-800 font-medium"><span className="text-blue-500">✓</span> Historical Analytics Tracking</li>
                   <li className="flex gap-3 text-sm text-gray-600"><span className="text-blue-500">✓</span> Priority Notification Flows</li>
                </ul>
-               <Link to="/login" className="w-full text-center py-3 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition">Get Pro</Link>
+               <Link to="/request-access" className="w-full text-center py-3 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition">Get Pro</Link>
             </div>
 
             {/* Business */}
@@ -178,7 +178,7 @@ export default function Home() {
                   <li className="flex gap-3 text-sm text-gray-600"><span className="text-purple-500">✓</span> Multi-User Seat Access</li>
                   <li className="flex gap-3 text-sm text-gray-600"><span className="text-purple-500">✓</span> Native POS API Hooks</li>
                </ul>
-               <Link to="/login" className="w-full text-center py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-bold hover:bg-gray-50 hover:border-gray-300 transition">Contact Sales</Link>
+               <Link to="/request-access" className="w-full text-center py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-bold hover:bg-gray-50 hover:border-gray-300 transition">Contact Sales</Link>
             </div>
          </div>
       </section>
