@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getCurrentUser } from "../services/auth-service";
 import { getSubscription } from "../services/subscription-service";
+import { supabase } from "../services/supabase-client";
 
 export default function usePlanAccess() {
   const [access, setAccess] = useState({
@@ -10,67 +11,73 @@ export default function usePlanAccess() {
     isBusiness: false,
     isEnterprise: false,
     isSystemAdmin: false,
+    planId: "free",
     loading: true
   });
 
-  useEffect(() => {
-    async function checkPlan() {
-      const user = getCurrentUser();
-      
-      if (!user) {
-        setAccess(prev => ({ ...prev, loading: false }));
-        return;
-      }
+  const checkPlan = useCallback(async () => {
+    const user = getCurrentUser();
 
-      // System Admins bypass all locks
-      if (user.role === "system_admin") {
-        setAccess({
-          isFree: true,
-          isBasic: true,
-          isPro: true,
-          isBusiness: true,
-          isEnterprise: true,
-          isSystemAdmin: true,
-          loading: false
-        });
-        return;
-      }
-
-      // If regular shop owner, check subscription tier
-      try {
-        const sub = await getSubscription(user.shop_id);
-        // First check the subscriptions table, then fall back to shops.plan column
-        // (AdminShops directly updates shops.plan so we must read both sources)
-        let planId = sub?.plan?.toLowerCase() || null;
-        
-        if (!planId) {
-          // Fall back to reading the shop's plan column directly
-          const { supabase } = await import('./supabase-client');
-          const { data: shopData } = await supabase
-            .from('shops')
-            .select('plan')
-            .eq('id', user.shop_id)
-            .single();
-          planId = shopData?.plan?.toLowerCase() || 'free';
-        }
-        
-        setAccess({
-          isFree: true, // Everyone gets free baseline
-          isBasic: ['basic', 'pro', 'business', 'enterprise'].includes(planId),
-          isPro: ['pro', 'business', 'enterprise'].includes(planId),
-          isBusiness: ['business', 'enterprise'].includes(planId),
-          isEnterprise: planId === 'enterprise',
-          isSystemAdmin: false,
-          loading: false
-        });
-      } catch (err) {
-        console.warn("Failed to verify plan access, defaulting to free", err);
-        setAccess(prev => ({ ...prev, loading: false }));
-      }
+    if (!user) {
+      setAccess(prev => ({ ...prev, loading: false }));
+      return;
     }
 
-    checkPlan();
+    // System Admins bypass all locks
+    if (user.role === "system_admin") {
+      setAccess({
+        isFree: true, isBasic: true, isPro: true,
+        isBusiness: true, isEnterprise: true,
+        isSystemAdmin: true, planId: "enterprise", loading: false
+      });
+      return;
+    }
+
+    try {
+      // Primary: read shops.plan directly (AdminShops writes here)
+      const { data: shopData } = await supabase
+        .from("shops")
+        .select("plan")
+        .eq("id", user.shop_id)
+        .single();
+
+      let planId = shopData?.plan?.toLowerCase() || null;
+
+      // Fallback: check subscriptions table (plan_type column)
+      if (!planId || planId === "free") {
+        const sub = await getSubscription(user.shop_id);
+        if (sub?.plan_type) {
+          planId = sub.plan_type.toLowerCase();
+        }
+      }
+
+      planId = planId || "free";
+
+      setAccess({
+        isFree: true,
+        isBasic: ["basic", "pro", "business", "enterprise"].includes(planId),
+        isPro:   ["pro", "business", "enterprise"].includes(planId),
+        isBusiness: ["business", "enterprise"].includes(planId),
+        isEnterprise: planId === "enterprise",
+        isSystemAdmin: false,
+        planId,
+        loading: false
+      });
+    } catch (err) {
+      console.warn("Failed to verify plan access, defaulting to free", err);
+      setAccess(prev => ({ ...prev, loading: false }));
+    }
   }, []);
+
+  useEffect(() => {
+    // Initial check
+    checkPlan();
+
+    // Re-check whenever the tab comes back into focus (catches admin upgrades)
+    const onFocus = () => checkPlan();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [checkPlan]);
 
   return access;
 }
