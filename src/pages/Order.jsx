@@ -184,6 +184,50 @@ export default function Order() {
       navigate("/menu");
   };
 
+  const handleMpesaCheckout = async () => {
+    setSending(true);
+    try {
+      const order = await generateDatabaseOrder();
+
+      if (order && !queued) {
+         const history = JSON.parse(localStorage.getItem('customer_history') || '[]');
+         if (!history.includes(order.id)) {
+            history.push(order.id);
+            localStorage.setItem('customer_history', JSON.stringify(history));
+         }
+
+         setGeneratedOrder(order);
+         localStorage.setItem('qr_customer_name', identity.name);
+         localStorage.setItem('qr_customer_phone', identity.phone);
+         
+         // Trigger STK Push via Edge Function
+         console.log("Triggering M-Pesa STK Push...");
+         const { data, error: pushErr } = await supabase.functions.invoke('mpesa-stk-push', {
+             body: { 
+                 order_id: order.id,
+                 phone: identity.phone,
+                 amount: totals.finalTotal,
+                 shop_id: shop?.id
+             }
+         });
+
+         if (pushErr) {
+             console.error("STK Push invocation failed:", pushErr);
+             // We gracefully fall back to just tracking the unpaid order
+         }
+
+         clearCart();
+         // Navigate to tracker, passing a query param so the UI knows to show "Awaiting M-Pesa PIN"
+         navigate(`/track/${order.id}?payment=mpesa_pending`);
+      }
+    } catch (err) {
+      console.error("M-Pesa Checkout failed:", err);
+      alert("Checkout failed. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   const handleWhatsAppCheckout = async () => {
     setSending(true);
     try {
@@ -464,20 +508,33 @@ export default function Order() {
                   )}
                </div>
 
-               <button 
-                  onClick={() => {
-                     setCapturingIdentity(false);
-                     if (!planAccess.isBasic && isOnline) {
-                        handeFreeTierCheckout();
-                     } else {
-                        handleWhatsAppCheckout();
-                     }
-                  }}
-                  disabled={!identity.name || sending}
-                  className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer"
-               >
-                  {sending ? "Processing..." : `Confirm & Place ${terms.order}`}
-               </button>
+               {shop?.mpesa_shortcode && planAccess.isBasic ? (
+                 <button 
+                    onClick={() => {
+                       setCapturingIdentity(false);
+                       handleMpesaCheckout();
+                    }}
+                    disabled={!identity.name || !identity.phone || sending}
+                    className="w-full bg-[#3CBC3C] text-white font-bold py-3 rounded-xl hover:bg-[#32a832] transition disabled:opacity-50 cursor-pointer shadow-md flex items-center justify-center gap-2"
+                 >
+                    {sending ? "Processing..." : `📲 Pay with M-Pesa (KSh ${totals.finalTotal})`}
+                 </button>
+               ) : (
+                 <button 
+                    onClick={() => {
+                       setCapturingIdentity(false);
+                       if (!planAccess.isBasic && isOnline) {
+                          handeFreeTierCheckout();
+                       } else {
+                          handleWhatsAppCheckout();
+                       }
+                    }}
+                    disabled={!identity.name || sending}
+                    className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer shadow-md"
+                 >
+                    {sending ? "Processing..." : `💬 Place ${terms.order} via WhatsApp`}
+                 </button>
+               )}
             </div>
          </div>
       )}

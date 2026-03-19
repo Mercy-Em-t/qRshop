@@ -144,7 +144,7 @@ export default function OnboardingGate({ children }) {
   };
 
   if (loading) {
-     return <LoadingSpinner message="Checking Security Vault..." />;
+     return <LoadingSpinner message="Authenticating..." />;
   }
 
   // Strict Security Checks

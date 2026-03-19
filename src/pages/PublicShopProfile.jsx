@@ -26,7 +26,7 @@ export default function PublicShopProfile({ directShopId }) {
         setShop(shopData);
         
         // Update Title dynamically for SEO
-        document.title = `${shopData.shop_name} - Menu & Ordering`;
+        document.title = `${shopData.name} - Menu & Ordering`;
 
         const menuData = await getMenuItemsByCategory(shopId);
         setMenuCategories(menuData);
@@ -61,7 +61,7 @@ export default function PublicShopProfile({ directShopId }) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CafeOrCoffeeShop",
-    "name": shop.shop_name,
+    "name": shop.name,
     "url": `https://www.shopqrplatform.com/shops/${shop.id}`,
     "telephone": shop.contact_number || "",
     "address": {
@@ -79,9 +79,9 @@ export default function PublicShopProfile({ directShopId }) {
       {/* Hero Section */}
       <div className="bg-indigo-600 text-white py-16 px-4 text-center">
         <div className="w-24 h-24 bg-white text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl font-bold shadow-lg">
-          {shop.shop_name.charAt(0).toUpperCase()}
+          {shop.name.charAt(0).toUpperCase()}
         </div>
-        <h1 className="text-4xl font-extrabold mb-2">{shop.shop_name}</h1>
+        <h1 className="text-4xl font-extrabold mb-2">{shop.name}</h1>
         {shop.tagline ? <p className="text-indigo-100 mb-4">{shop.tagline}</p> : <p className="text-indigo-100 mb-4">Quality food & drinks, powered by Smart QR</p>}
         {shop.contact_number && <p className="text-indigo-200">📞 {shop.contact_number}</p>}
       </div>

@@ -21,6 +21,7 @@ export default function Settings() {
   const [formData, setFormData] = useState({
     name: "", description: "", tagline: "", address: "",
     phone: "", whatsapp_number: "", is_online: true, subdomain: "",
+    mpesa_shortcode: "", mpesa_passkey: "",
   });
 
   // Logo upload
@@ -55,6 +56,7 @@ export default function Settings() {
           tagline: data.tagline || "", address: data.address || "",
           phone: data.phone || "", whatsapp_number: data.whatsapp_number || "",
           is_online: data.is_online ?? true, subdomain: data.subdomain || "",
+          mpesa_shortcode: data.mpesa_shortcode || "", mpesa_passkey: data.mpesa_passkey || "",
         });
         if (data.logo_url) setLogoPreview(data.logo_url);
       }
@@ -74,6 +76,12 @@ export default function Settings() {
       if (updatePayload.subdomain === "") updatePayload.subdomain = null;
       // Only update subdomain for Pro+ shops
       if (!planAccess.isPro) delete updatePayload.subdomain;
+
+      // Only allow M-Pesa configurations for Basic+
+      if (planAccess.isFree) {
+          delete updatePayload.mpesa_shortcode;
+          delete updatePayload.mpesa_passkey;
+      }
 
       const { error } = await supabase.from("shops").update(updatePayload).eq("id", shopId);
       
@@ -110,29 +118,31 @@ export default function Settings() {
     }
   };
 
-  const handleLogoChange = (e) => {
+  const handleLogoChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    
     setLogoFile(file);
-    setLogoPreview(URL.createObjectURL(file));
-  };
-
-  const handleLogoUpload = async () => {
-    if (!logoFile) return;
+    const tempUrl = URL.createObjectURL(file);
+    setLogoPreview(tempUrl);
     setLogoUploading(true);
+    
     try {
-      const ext = logoFile.name.split('.').pop();
+      const ext = file.name.split('.').pop();
       const path = `logos/${shopId}/logo-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("product-images").upload(path, logoFile, { upsert: true });
+      const { error: upErr } = await supabase.storage.from("product-images").upload(path, file, { upsert: true });
       if (upErr) throw upErr;
+      
       const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
       const logoUrl = urlData.publicUrl;
       await supabase.from("shops").update({ logo_url: logoUrl }).eq("id", shopId);
+      
       setLogoPreview(logoUrl);
-      setLogoFile(null);
-      alert("Logo updated!");
+      setLogoFile(null); // clear after successful upload
     } catch (err) {
       alert("Logo upload failed: " + err.message);
+      // Revert if it completely failed and we had no previous logo
+      if (tempUrl === logoPreview) setLogoPreview(null); 
     } finally {
       setLogoUploading(false);
     }
@@ -259,16 +269,8 @@ export default function Settings() {
                 : <span className="text-3xl">🏪</span>}
             </div>
             <div className="flex-1">
-              <input type="file" accept="image/*" onChange={handleLogoChange} className="text-sm text-gray-600 mb-3 block" />
-              {logoFile && (
-                <button
-                  onClick={handleLogoUpload}
-                  disabled={logoUploading}
-                  className="bg-gray-900 text-white text-sm px-4 py-2 rounded-xl font-bold hover:bg-gray-800 transition disabled:opacity-50"
-                >
-                  {logoUploading ? "Uploading..." : "Upload Logo"}
-                </button>
-              )}
+              <input type="file" accept="image/*" onChange={handleLogoChange} disabled={logoUploading} className="text-sm text-gray-600 mb-3 block" />
+              {logoUploading && <p className="text-xs text-indigo-600 font-bold animate-pulse">Uploading and saving...</p>}
             </div>
           </div>
         </div>
@@ -334,6 +336,53 @@ export default function Settings() {
                   </div>
                   <button type="button" onClick={() => setShowUpgrade(true)} className="text-xs text-blue-600 font-bold hover:underline whitespace-nowrap">
                     Unlock →
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* M-Pesa Automatic Checkout — Basic+ */}
+            <div className={`mt-6 rounded-xl border p-5 ${!planAccess.isFree ? 'border-green-100 bg-green-50/20' : 'border-gray-100 bg-gray-50 opacity-70'}`}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <label className="block text-base font-bold text-gray-900">M-Pesa Auto-Checkout</label>
+                  <p className="text-xs text-gray-500 mt-0.5">Allow customers to pay instantly via STK Push to your Till/Paybill.</p>
+                </div>
+                {planAccess.isFree && (
+                  <span className="text-xs bg-gray-200 text-gray-600 px-3 py-1 rounded-full font-bold shadow-sm">🔒 Basic+</span>
+                )}
+              </div>
+              
+              {!planAccess.isFree ? (
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Till or Paybill Shortcode</label>
+                    <input
+                      type="text"
+                      value={formData.mpesa_shortcode}
+                      onChange={e => setFormData({...formData, mpesa_shortcode: e.target.value.replace(/[^0-9]/g, '')})}
+                      placeholder="e.g. 174379"
+                      className="w-full px-4 py-2.5 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Daraja API Passkey</label>
+                    <input
+                      type="password"
+                      value={formData.mpesa_passkey}
+                      onChange={e => setFormData({...formData, mpesa_passkey: e.target.value})}
+                      placeholder="bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+                      className="w-full px-4 py-2.5 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white font-mono"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 px-4 py-3 border border-gray-200 rounded-xl bg-white text-sm text-gray-400 italic">
+                    Upgrade to unlock M-Pesa automatic payments
+                  </div>
+                  <button type="button" onClick={() => setShowUpgrade(true)} className="bg-gray-900 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:bg-gray-800 transition">
+                    Enable
                   </button>
                 </div>
               )}

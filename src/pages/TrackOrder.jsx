@@ -93,10 +93,10 @@ export default function TrackOrder() {
       description: `The shop has accepted your ${terms.order.toLowerCase()}! Please send payment to the shop's number (${order?.shops?.phone || order?.shops?.whatsapp_number || "the counter"}) to confirm.`
     },
     stk_pushed: {
-      color: "bg-orange-100 text-orange-800 border-orange-200",
-      icon: "📋",
-      title: "Accepted – Awaiting Payment",
-      description: `The shop has accepted your ${terms.order.toLowerCase()}! Please send payment to confirm.`
+      color: "bg-green-100 text-green-800 border-green-200",
+      icon: "📲",
+      title: "Enter M-Pesa PIN",
+      description: `Please check your phone! An M-Pesa prompt has been sent to your number. Enter your PIN to pay.`
     },
     paid: {
       color: "bg-blue-100 text-blue-800 border-blue-200",
