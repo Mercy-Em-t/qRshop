@@ -20,7 +20,7 @@ export default function Settings() {
   const [savedOk, setSavedOk] = useState(false);
   const [formData, setFormData] = useState({
     name: "", description: "", tagline: "", address: "",
-    phone: "", whatsapp_number: "", is_online: true,
+    phone: "", whatsapp_number: "", is_online: true, subdomain: "",
   });
 
   // Logo upload
@@ -53,7 +53,7 @@ export default function Settings() {
           name: data.name || "", description: data.description || "",
           tagline: data.tagline || "", address: data.address || "",
           phone: data.phone || "", whatsapp_number: data.whatsapp_number || "",
-          is_online: data.is_online ?? true,
+          is_online: data.is_online ?? true, subdomain: data.subdomain || "",
         });
         if (data.logo_url) setLogoPreview(data.logo_url);
       }
@@ -67,7 +67,10 @@ export default function Settings() {
     setSaving(true);
     setSavedOk(false);
     try {
-      const { error } = await supabase.from("shops").update(formData).eq("id", shopId);
+    const updatePayload = { ...formData };
+    // Only update subdomain for Pro+ shops
+    if (!planAccess.isPro) delete updatePayload.subdomain;
+    const { error } = await supabase.from("shops").update(updatePayload).eq("id", shopId);
       if (error) throw error;
       setSavedOk(true);
       setTimeout(() => setSavedOk(false), 3000);
@@ -161,7 +164,7 @@ export default function Settings() {
 
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-6">
 
-        {/* Plan Status */}
+        {/* Plan Status + Expiry */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -180,6 +183,27 @@ export default function Settings() {
               </button>
             )}
           </div>
+          {/* Expiry Warning */}
+          {shop?.plan_expires_at && (() => {
+            const daysLeft = Math.ceil((new Date(shop.plan_expires_at) - new Date()) / (1000 * 60 * 60 * 24));
+            if (daysLeft <= 0) return (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 font-medium flex items-center gap-2">
+                <span>🔴</span>
+                <span>Your <strong>{planInfo.label}</strong> plan has <strong>expired</strong>. You have been downgraded to Free. Renew to restore access.</span>
+              </div>
+            );
+            if (daysLeft <= 7) return (
+              <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-xl text-sm text-orange-700 font-medium flex items-center gap-2">
+                <span>⚠️</span>
+                <span>Your plan expires in <strong>{daysLeft} day{daysLeft !== 1 ? 's' : ''}</strong>. Renew to keep your features.</span>
+              </div>
+            );
+            return (
+              <div className="mt-4 p-3 bg-gray-50 border border-gray-100 rounded-xl text-xs text-gray-400">
+                Plan renews: {new Date(shop.plan_expires_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Storefront Status */}
@@ -255,6 +279,40 @@ export default function Settings() {
               <label className="block text-sm font-bold text-gray-700 mb-1.5">Physical Address</label>
               <textarea className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" rows="2" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Where are you located?" />
             </div>
+            {/* Subdomain — Pro+ only */}
+            <div className={`rounded-xl border p-4 ${planAccess.isPro ? 'border-blue-100 bg-blue-50/30' : 'border-gray-100 bg-gray-50 opacity-70'}`}>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-bold text-gray-700">Custom Subdomain</label>
+                {!planAccess.isPro && (
+                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-bold">🔒 Pro+</span>
+                )}
+              </div>
+              {planAccess.isPro ? (
+                <>
+                  <div className="flex items-center gap-0 rounded-xl border border-gray-200 overflow-hidden bg-white">
+                    <input
+                      type="text"
+                      value={formData.subdomain}
+                      onChange={e => setFormData({...formData, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'')})}
+                      placeholder="yourshop"
+                      className="flex-1 px-4 py-2.5 outline-none text-sm"
+                    />
+                    <span className="px-3 py-2.5 text-sm text-gray-400 bg-gray-50 border-l border-gray-200">.tmsavannah.com</span>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-1.5">Customers can access your shop at <strong>{formData.subdomain || 'yourshop'}.tmsavannah.com</strong></p>
+                </>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-400">
+                    {shop?.subdomain ? `${shop.subdomain}.tmsavannah.com` : "e.g. myshop.tmsavannah.com"}
+                  </div>
+                  <button type="button" onClick={() => setShowUpgrade(true)} className="text-xs text-blue-600 font-bold hover:underline whitespace-nowrap">
+                    Unlock →
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="pt-4 border-t border-gray-100 flex items-center gap-4">
               <button type="submit" disabled={saving} className="bg-gray-900 text-white px-7 py-2.5 rounded-xl font-bold hover:bg-gray-800 transition disabled:opacity-50 text-sm">
                 {saving ? "Saving..." : "Save Changes"}
