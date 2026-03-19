@@ -67,10 +67,22 @@ export default function MenuManager() {
   const handleAddItem = async (e) => {
     e.preventDefault();
     
-    // Phase 23: Strict Free-Tier Gating Logic (Limit to 20 Products)
-    if (!editingId && planAccess.isFree && items.length >= 20) {
-       setLockedFeatureFocus("Expanded Menu Catalog (20+ Items)");
-       return;
+    // Phase 23 + 36: Tiered Product Limit Gating
+    if (!editingId) {
+      const FREE_PRODUCT_LIMIT = 20;
+      const BASIC_PRODUCT_LIMIT = 100;
+
+      const isAtFreeLimit = planAccess.isFree && !planAccess.isBasic && items.length >= FREE_PRODUCT_LIMIT;
+      const isAtBasicLimit = planAccess.isBasic && !planAccess.isPro && items.length >= BASIC_PRODUCT_LIMIT;
+
+      if (isAtFreeLimit) {
+        setLockedFeatureFocus(`Expanded Menu Catalog (${FREE_PRODUCT_LIMIT}+ Items)`);
+        return;
+      }
+      if (isAtBasicLimit) {
+        setLockedFeatureFocus(`Expanded Menu Catalog (${BASIC_PRODUCT_LIMIT}+ Items on Basic)`);
+        return;
+      }
     }
 
     setIsAdding(true);

@@ -3,14 +3,20 @@ import { useCart } from "../hooks/use-cart";
 import { logEvent } from "../services/telemetry-service";
 import { getQrSession } from "../utils/qr-session";
 
-export default function CouponWidget() {
+const PRO_PLANS = ['pro', 'business', 'enterprise'];
+
+export default function CouponWidget({ shopPlan }) {
   const { activeCoupon, applyCoupon } = useCart();
   const [isVisible, setIsVisible] = useState(false);
   const [isClaimed, setIsClaimed] = useState(false);
   const session = getQrSession();
+  
+  // Only show coupon widget on Pro+ shops
+  const isProShop = PRO_PLANS.includes(shopPlan?.toLowerCase());
 
   // Show the widget gracefully 1.5 seconds after loading the menu
   useEffect(() => {
+    if (!isProShop) return; // Don't show for free/basic shops
     if (activeCoupon) return; // Don't show if they already have one active
     
     const timer = setTimeout(() => {
@@ -54,6 +60,7 @@ export default function CouponWidget() {
     sessionStorage.setItem("has_seen_promo", "true");
   };
 
+  if (!isProShop) return null;
   if (!isVisible && !isClaimed) return null;
 
   return (

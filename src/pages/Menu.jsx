@@ -172,7 +172,7 @@ export default function Menu() {
         )}
       </main>
 
-      <CouponWidget />
+      <CouponWidget shopPlan={shop?.plan} />
 
       {/* ── Branded Footer ── */}
       <footer className="bg-white border-t border-gray-100 mt-4 pt-6 pb-8 px-4">
