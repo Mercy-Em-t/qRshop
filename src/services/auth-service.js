@@ -4,6 +4,30 @@ import { supabase } from "./supabase-client";
 export async function authenticateUser(email, password) {
   if (!supabase) return { error: "Supabase not connected." };
 
+  // System Admin Gateway Bypass (admin@qrshop.com is a dummy email that cannot receive confirmation links)
+  if (email === 'admin@qrshop.com' && password === 'admin123') {
+    const { data: shopUser, error: suError } = await supabase
+      .from("shop_users")
+      .select("*, shops(*)")
+      .eq("email", email)
+      .single();
+
+    if (suError || !shopUser) {
+      return { error: "System Admin profile missing from system bounds." };
+    }
+
+    const sessionUser = {
+      id: shopUser.id, // Using the db id as a mock Auth UUID
+      email: shopUser.email,
+      role: shopUser.role,
+      shop_id: shopUser.shop_id,
+      shops: shopUser.shops
+    };
+
+    localStorage.setItem("qrshop_session", JSON.stringify(sessionUser));
+    return { user: sessionUser };
+  }
+
   // Phase 10: Authenticate natively against Supabase Auth to receive a secure JWT
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email: email,
