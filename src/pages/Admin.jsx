@@ -168,6 +168,32 @@ export default function Admin() {
               Download documentation on System Admin roles, capabilities, and security.
             </p>
           </a>
+          <Link
+            to="/admin/booklet"
+            className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl shadow-md p-6 hover:shadow-xl transition-transform transform hover:-translate-y-1 relative overflow-hidden group border border-indigo-500/30"
+          >
+             <div className="absolute top-0 right-0 bg-white w-20 h-20 rounded-bl-full opacity-5 group-hover:scale-110 transition-transform"></div>
+            <h2 className="text-lg font-bold text-white mb-2 flex items-center gap-2">
+              📖 Features Booklet
+            </h2>
+            <p className="text-indigo-200 text-sm">
+              Plain-language guide to every ShopQR feature. Perfect for explaining the platform to business owners.
+            </p>
+          </Link>
+
+          <Link
+            to="/admin/todo"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-yellow-200 relative overflow-hidden group"
+          >
+             <div className="absolute top-0 right-0 bg-yellow-400 w-16 h-16 rounded-bl-full opacity-10 group-hover:scale-110 transition-transform"></div>
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-lg font-semibold text-gray-800">📋 System TODO</h2>
+              <span className="text-xs bg-yellow-100 text-yellow-700 border border-yellow-200 px-2 py-0.5 rounded-full font-bold">3 Pending</span>
+            </div>
+            <p className="text-gray-500 text-sm">
+              Step-by-step integration checklists for M-Pesa, WhatsApp API, and Subscription management.
+            </p>
+          </Link>
         </div>
       </main>
     </div>

@@ -28,6 +28,8 @@ import AdminGlobalOrders from "./pages/AdminGlobalOrders";
 import AdminGlobalProducts from "./pages/AdminGlobalProducts";
 import AdminMonitoring from "./pages/AdminMonitoring";
 import AdminAnalytics from "./pages/AdminAnalytics";
+import AdminTodo from "./pages/AdminTodo";
+import AdminBooklet from "./pages/AdminBooklet";
 import Campaign from "./pages/Campaign";
 import TrackOrder from "./pages/TrackOrder";
 import EditOrder from "./pages/EditOrder";
@@ -161,6 +163,8 @@ export default function App() {
       <Route path="/admin/global-products" element={<AdminGlobalProducts />} />
       <Route path="/admin/monitoring" element={<AdminMonitoring />} />
       <Route path="/admin/analytics" element={<AdminAnalytics />} />
+      <Route path="/admin/todo" element={<AdminTodo />} />
+      <Route path="/admin/booklet" element={<AdminBooklet />} />
     </Routes>
   );
 }
