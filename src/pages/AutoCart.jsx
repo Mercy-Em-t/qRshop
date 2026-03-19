@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { useCart } from "../hooks/use-cart";
 import { shortToUuid } from "../utils/short-id";
@@ -9,6 +9,7 @@ import { shortToUuid } from "../utils/short-id";
 
 export default function AutoCart() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { addItem, clearCart } = useCart();
   const [status, setStatus] = useState("loading"); // 'loading' | 'ready' | 'error'
   const [shopName, setShopName] = useState("");
@@ -121,7 +122,7 @@ export default function AutoCart() {
              table: "Fallback Redirect",
              expiresAt: Date.now() + 4 * 60 * 60 * 1000
            }));
-           window.location.href = `/menu`;
+           navigate("/menu", { replace: true });
            return;
         }
         
@@ -129,7 +130,7 @@ export default function AutoCart() {
       }
     }
     seedCart();
-  }, []);
+  }, [navigate, addItem, clearCart, searchParams]);
 
   if (status === "loading") {
     return (
