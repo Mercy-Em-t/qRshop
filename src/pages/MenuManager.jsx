@@ -615,12 +615,12 @@ export default function MenuManager() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">External Buy Link</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">External Buy Link / Digital Auto-Delivery Link</label>
               <input
                 type="url"
                 value={productLink}
                 onChange={(e) => setProductLink(e.target.value)}
-                placeholder="https://yourstore.com/item"
+                placeholder="https://yourstore.com/item or Google Drive download link"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-gray-50"
               />
             </div>

@@ -23,6 +23,7 @@ export default function Settings() {
     phone: "", whatsapp_number: "", is_online: true, subdomain: "",
     mpesa_shortcode: "", mpesa_passkey: "",
     offers_pickup: true, offers_delivery: false, delivery_fee: 0,
+    industry_type: "restaurant", offers_dine_in: true, offers_digital: false
   });
 
   // Logo upload
@@ -61,6 +62,9 @@ export default function Settings() {
           offers_pickup: data.offers_pickup ?? true, 
           offers_delivery: data.offers_delivery ?? false, 
           delivery_fee: data.delivery_fee || 0,
+          industry_type: data.industry_type || "restaurant",
+          offers_dine_in: data.offers_dine_in ?? true,
+          offers_digital: data.offers_digital ?? false
         });
         if (data.logo_url) setLogoPreview(data.logo_url);
       }
@@ -90,9 +94,11 @@ export default function Settings() {
       const { error } = await supabase.from("shops").update(updatePayload).eq("id", shopId);
       
       if (error) {
-         // If error is about the missing subdomain column (meaning they haven't run the SQL yet), trying fallback
-         if (error.message?.includes('subdomain') && error.code === '42703') {
+         // If error is about missing columns (e.g. subdomain, offers_dine_in)
+         if (error.code === '42703') {
              delete updatePayload.subdomain;
+             delete updatePayload.offers_dine_in;
+             delete updatePayload.offers_digital;
              const { error: fallbackError } = await supabase.from("shops").update(updatePayload).eq("id", shopId);
              if (fallbackError) throw fallbackError;
          } else {
@@ -347,50 +353,95 @@ export default function Settings() {
 
             {/* Fulfillment configuration */}
             <div className="mt-6 rounded-xl border border-gray-100 p-5 bg-white">
-               <h3 className="text-base font-bold text-gray-900 mb-4">Fulfillment Options</h3>
+               <div className="flex justify-between items-center mb-4">
+                 <h3 className="text-base font-bold text-gray-900">Shop Type & Fulfillment</h3>
+               </div>
+
+               <div className="mb-6">
+                 <label className="block text-sm font-bold text-gray-700 mb-1.5">Shop Industry Type</label>
+                 <select 
+                    value={formData.industry_type}
+                    onChange={(e) => setFormData({...formData, industry_type: e.target.value})}
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white"
+                 >
+                   <option value="restaurant">Restaurant / Food & Beverage</option>
+                   <option value="retail">Online Shop / Physical Retail</option>
+                   <option value="digital">Digital Products / Downloads</option>
+                 </select>
+               </div>
+
                <div className="space-y-4">
                  
-                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                   <div>
-                     <p className="text-sm font-bold text-gray-800">🛍️ Allow Pickup</p>
-                     <p className="text-xs text-gray-500 mt-0.5">Customers can order ahead and pick up their items</p>
+                 {formData.industry_type === 'restaurant' && (
+                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                     <div>
+                       <p className="text-sm font-bold text-gray-800">🍽️ Allow Dine-In</p>
+                       <p className="text-xs text-gray-500 mt-0.5">Customers can order directly from their tables.</p>
+                     </div>
+                     <button
+                       type="button"
+                       onClick={() => setFormData(p => ({...p, offers_dine_in: !p.offers_dine_in}))}
+                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_dine_in ? 'bg-green-500' : 'bg-gray-300'}`}
+                     >
+                       <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.offers_dine_in ? 'translate-x-6' : 'translate-x-1'}`} />
+                     </button>
                    </div>
-                   <button
-                     type="button"
-                     onClick={() => setFormData(p => ({...p, offers_pickup: !p.offers_pickup}))}
-                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_pickup ? 'bg-green-500' : 'bg-gray-300'}`}
-                   >
-                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.offers_pickup ? 'translate-x-6' : 'translate-x-1'}`} />
-                   </button>
-                 </div>
+                 )}
 
-                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                   <div>
-                     <p className="text-sm font-bold text-gray-800">🚗 Allow Delivery</p>
-                     <p className="text-xs text-gray-500 mt-0.5">Customers can request delivery to their address</p>
-                   </div>
-                   <button
-                     type="button"
-                     onClick={() => setFormData(p => ({...p, offers_delivery: !p.offers_delivery}))}
-                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_delivery ? 'bg-green-500' : 'bg-gray-300'}`}
-                   >
-                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.offers_delivery ? 'translate-x-6' : 'translate-x-1'}`} />
-                   </button>
-                 </div>
+                 {['restaurant', 'retail'].includes(formData.industry_type) && (
+                   <>
+                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                       <div>
+                         <p className="text-sm font-bold text-gray-800">🛍️ Allow Pickup</p>
+                         <p className="text-xs text-gray-500 mt-0.5">Customers can order ahead and pick up their items</p>
+                       </div>
+                       <button
+                         type="button"
+                         onClick={() => setFormData(p => ({...p, offers_pickup: !p.offers_pickup}))}
+                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_pickup ? 'bg-green-500' : 'bg-gray-300'}`}
+                       >
+                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.offers_pickup ? 'translate-x-6' : 'translate-x-1'}`} />
+                       </button>
+                     </div>
 
-                 {formData.offers_delivery && (
-                   <div className="pl-3 mt-2 border-l-2 border-green-200">
-                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Flat Delivery Fee (KSh)</label>
-                     <input
-                       type="number"
-                       min="0"
-                       value={formData.delivery_fee}
-                       onChange={e => setFormData({...formData, delivery_fee: parseInt(e.target.value) || 0})}
-                       placeholder="e.g. 150"
-                       className="w-full md:w-1/2 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white"
-                     />
-                     <p className="text-xs text-gray-400 mt-1">This amount will be added to the customer's total.</p>
-                   </div>
+                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                       <div>
+                         <p className="text-sm font-bold text-gray-800">🚗 Allow Delivery</p>
+                         <p className="text-xs text-gray-500 mt-0.5">Customers can request delivery to their address</p>
+                       </div>
+                       <button
+                         type="button"
+                         onClick={() => setFormData(p => ({...p, offers_delivery: !p.offers_delivery}))}
+                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_delivery ? 'bg-green-500' : 'bg-gray-300'}`}
+                       >
+                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.offers_delivery ? 'translate-x-6' : 'translate-x-1'}`} />
+                       </button>
+                     </div>
+
+                     {formData.offers_delivery && (
+                       <div className="pl-3 mt-2 border-l-2 border-green-200">
+                         <label className="block text-sm font-bold text-gray-700 mb-1.5">Flat Delivery Fee (KSh)</label>
+                         <input
+                           type="number"
+                           min="0"
+                           value={formData.delivery_fee}
+                           onChange={e => setFormData({...formData, delivery_fee: parseInt(e.target.value) || 0})}
+                           placeholder="e.g. 150"
+                           className="w-full md:w-1/2 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white"
+                         />
+                         <p className="text-xs text-gray-400 mt-1">This amount will be added to the customer's total.</p>
+                       </div>
+                     )}
+                   </>
+                 )}
+
+                 {formData.industry_type === 'digital' && (
+                    <div className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                      <div>
+                        <p className="text-sm font-bold text-indigo-800">💻 Digital Delivery Only</p>
+                        <p className="text-xs text-indigo-600 mt-0.5">Physical fulfillment is hidden. Customers will provide an email address at checkout.</p>
+                      </div>
+                    </div>
                  )}
                </div>
             </div>

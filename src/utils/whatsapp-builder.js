@@ -33,6 +33,8 @@ export function buildWhatsAppMessage(shopName, table, items, orderId, total, dis
       fulfillmentBlock = `🚗 *DELIVERY*\n📍 Address: ${deliveryAddress || "N/A"}\n📞 ${clientPhone}`;
   } else if (fulfillmentType === 'pickup') {
       fulfillmentBlock = `🛍️ *PICKUP*\n📞 ${clientPhone}`;
+  } else if (fulfillmentType === 'digital') {
+      fulfillmentBlock = `💻 *DIGITAL DELIVERY*\n📧 Email (Delivery To): ${deliveryAddress || "N/A"}\n📞 ${clientPhone}`;
   } else {
       fulfillmentBlock = `🍽️ *DINE IN*\n🪑 Table: ${table}`;
   }

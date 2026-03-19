@@ -40,7 +40,7 @@ export default function OrderManager() {
         order_items (
           quantity,
           price,
-          menu_items (name)
+          menu_items (name, product_link)
         )
       `)
       .eq("shop_id", SHOP_ID)
@@ -274,12 +274,14 @@ export default function OrderManager() {
                                    )}
                                  </span>
                              </div>
-                             {order.fulfillment_type === 'delivery' ? (
-                                <span className="bg-purple-100 text-purple-700 font-bold text-[10px] px-2 py-0.5 rounded uppercase w-fit tracking-wider">🚗 Delivery</span>
+                             {order.fulfillment_type === 'digital' ? (
+                                <span className="bg-indigo-100 text-indigo-700 font-bold text-[10px] px-2 py-0.5 rounded-full uppercase w-fit tracking-wider">💻 Digital Delivery</span>
+                             ) : order.fulfillment_type === 'delivery' ? (
+                                <span className="bg-purple-100 text-purple-700 font-bold text-[10px] px-2 py-0.5 rounded-full uppercase w-fit tracking-wider">🚗 Delivery</span>
                              ) : order.fulfillment_type === 'pickup' ? (
-                                <span className="bg-yellow-100 text-yellow-700 font-bold text-[10px] px-2 py-0.5 rounded uppercase w-fit tracking-wider">🛍️ Pickup</span>
+                                <span className="bg-yellow-100 text-yellow-700 font-bold text-[10px] px-2 py-0.5 rounded-full uppercase w-fit tracking-wider">🛍️ Pickup</span>
                              ) : (
-                                <span className="bg-gray-100 text-gray-600 font-bold text-[10px] px-2 py-0.5 rounded uppercase w-fit tracking-wider">🍽️ Table {order.table_id || 'N/A'}</span>
+                                <span className="bg-gray-100 text-gray-600 font-bold text-[10px] px-2 py-0.5 rounded-full uppercase w-fit tracking-wider">🍽️ Table {order.table_id || 'N/A'}</span>
                              )}
                          </div>
                          <div className="hidden md:flex flex-col items-center justify-center border-l border-r border-gray-100 px-4 mx-2">
@@ -310,16 +312,66 @@ export default function OrderManager() {
                      
                      {/* Left: Items List */}
                      <div className="flex-1 space-y-2">
-                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Order Details</h4>
-                        {order.order_items?.map((item, idx) => (
-                          <div key={idx} className="flex justify-between text-sm bg-white p-2 rounded border border-gray-100">
-                            <span className="text-gray-700">
-                              <span className="font-semibold text-gray-900 mr-2">{item.quantity}x</span>
-                              {item.menu_items?.name || "Item"}
-                            </span>
-                            <span className="font-medium text-gray-600">KSh {item.price * item.quantity}</span>
-                          </div>
-                        ))}
+                        
+                        {/* Customer & Fulfillment Info */}
+                        <div className="mb-4 bg-white p-3 rounded-xl border border-gray-200 text-sm shadow-sm">
+                           <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Customer Details</h4>
+                           {(order.client_name || order.client_phone) && (
+                              <p className="text-gray-800 font-bold mb-1.5 flex items-center gap-2">
+                                 <span className="bg-gray-100 p-1 rounded">👤</span> 
+                                 {order.client_name || "Guest"} 
+                                 <span className="text-gray-400 font-normal ml-2">📞 {order.client_phone || "N/A"}</span>
+                              </p>
+                           )}
+                           {order.fulfillment_type === 'delivery' && (
+                              <p className="text-gray-600 font-medium flex items-start gap-2 mt-2 pt-2 border-t border-gray-100">
+                                 <span className="bg-purple-50 text-purple-600 p-1 rounded text-xs">🚗 Address</span> 
+                                 <span className="mt-0.5 leading-tight">{order.delivery_address || "No address provided"}</span>
+                              </p>
+                           )}
+                           {order.fulfillment_type === 'digital' && (
+                              <p className="text-indigo-700 font-medium flex items-center gap-2 mt-2 pt-2 border-t border-indigo-50">
+                                 <span className="bg-indigo-100 p-1 rounded text-xs">📧 Email</span> 
+                                 <span>{order.delivery_address || "No email provided"}</span>
+                              </p>
+                           )}
+                           {order.fulfillment_type === 'pickup' && (
+                              <p className="text-yellow-700 font-medium flex items-center gap-2 mt-2 pt-2 border-t border-yellow-50">
+                                 <span className="bg-yellow-100 p-1 rounded text-xs">🛍️ Type</span> 
+                                 <span>Customer Pickup</span>
+                              </p>
+                           )}
+                        </div>
+
+                        <h4 className="text-xs font-bold text-gray-500 uppercase mb-3">Order Items</h4>
+                        {order.order_items?.map((item, idx) => {
+                          const productLink = item.menu_items?.product_link;
+                          return (
+                            <div key={idx} className="flex flex-col text-sm bg-white p-2 rounded border border-gray-100">
+                              <div className="flex justify-between items-center">
+                                <span className="text-gray-700">
+                                  <span className="font-semibold text-gray-900 mr-2">{item.quantity}x</span>
+                                  {item.menu_items?.name || "Item"}
+                                </span>
+                                <span className="font-medium text-gray-600">KSh {item.price * item.quantity}</span>
+                              </div>
+                              {productLink && order.fulfillment_type === 'digital' && (
+                                <div className="mt-2 text-xs flex items-center justify-between bg-indigo-50 text-indigo-800 px-2 py-1.5 rounded">
+                                   <span className="font-mono truncate mr-2" title={productLink}>{productLink}</span>
+                                   <button 
+                                     onClick={() => {
+                                        navigator.clipboard.writeText(productLink);
+                                        alert("Link copied!");
+                                     }}
+                                      className="font-bold shrink-0 hover:text-indigo-600 cursor-pointer"
+                                   >
+                                      📄 Copy
+                                   </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                         
                         {order.discount_amount > 0 && (
                            <div className="bg-orange-50 text-orange-700 text-sm font-bold px-3 py-2 rounded-lg mt-3 flex justify-between items-center border border-orange-100">

@@ -30,6 +30,8 @@ const buildUnstructuredMessage = (shopName, table, items, identity, deliveryFee 
       fulfillStr = `Delivery to ${identity.address}\n🚗 Delivery Fee: KSh ${deliveryFee}`;
    } else if (identity?.fulfillment_type === 'pickup') {
       fulfillStr = `Pickup`;
+   } else if (identity?.fulfillment_type === 'digital') {
+      fulfillStr = `Digital Delivery to ${identity.address}`;
    }
    
    return `Hi ${shopName}, I'd like to place an order for ${fulfillStr}.${contactStr}\n\nItems: ${itemList}\n\nPlease confirm.`;
@@ -77,6 +79,26 @@ export default function Order() {
       window.removeEventListener("offline", goOffline);
     };
   }, []);
+
+  // Update default fulfillment based on shop industry type once loaded
+  useEffect(() => {
+     if (shop) {
+        setIdentity(prev => {
+           // Don't override if they already selected something valid
+           if (prev.fulfillment_type === 'digital' && shop.industry_type === 'digital') return prev;
+           if (['pickup', 'delivery'].includes(prev.fulfillment_type) && shop.industry_type === 'retail') return prev;
+           
+           if (shop.industry_type === 'digital') {
+               return { ...prev, fulfillment_type: 'digital' };
+           } else if (shop.industry_type === 'retail') {
+               return { ...prev, fulfillment_type: shop.offers_pickup ? 'pickup' : 'delivery' };
+           } else {
+               // Restaurant
+               return { ...prev, fulfillment_type: shop.offers_dine_in !== false ? 'dine_in' : (shop.offers_pickup ? 'pickup' : 'delivery') };
+           }
+        });
+     }
+  }, [shop]);
 
   if (queued) {
     return (
@@ -303,7 +325,11 @@ export default function Order() {
 
          // For Basic users (or if automated dispatch failed fallback), we construct the manual message here
          if (shopPhone) {
-             const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id, total, discountAmount, activeCoupon?.code, !isOnline, identity.name, identity.phone);
+             const finalMessage = buildWhatsAppMessage(
+                shopName, session?.table, items, order.id, total, discountAmount, 
+                activeCoupon?.code, !isOnline, identity.name, identity.phone, 
+                identity.fulfillment_type, identity.address, deliveryFee
+             );
              const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
              // Graceful WA transition
              setTransferringToWhatsApp(true);
@@ -324,7 +350,11 @@ export default function Order() {
       
       // Fallback for actual connection or server unavailability
       if (shopPhone && (!planAccess.isFree || !isOnline)) {
-        const fallbackMessage = buildWhatsAppMessage(shopName, session?.table, items, "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline, identity.name, identity.phone);
+        const fallbackMessage = buildWhatsAppMessage(
+           shopName, session?.table, items, "OFFLINE", total, discountAmount, 
+           activeCoupon?.code, !isOnline, identity.name, identity.phone,
+           identity.fulfillment_type, identity.address, deliveryFee
+        );
         const fallbackLink = buildWhatsAppLink(shopPhone, fallbackMessage);
         setTransferringToWhatsApp(true);
         setTimeout(() => {
@@ -345,7 +375,11 @@ export default function Order() {
      }
 
      if (shopPhone) {
-        const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, generatedOrder?.id || "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline, identity.name, identity.phone);
+        const finalMessage = buildWhatsAppMessage(
+           shopName, session?.table, items, generatedOrder?.id || "OFFLINE", total, 
+           discountAmount, activeCoupon?.code, !isOnline, identity.name, identity.phone,
+           identity.fulfillment_type, identity.address, deliveryFee
+        );
         const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
         window.open(finalLink, "_blank", "noopener,noreferrer");
      }
@@ -527,32 +561,41 @@ export default function Order() {
                </div>
 
                {/* Fulfillment Selection */}
-               <div className="mb-5 flex gap-2">
-                 {session?.table && (
-                   <button 
-                      onClick={() => setIdentity({...identity, fulfillment_type: 'dine_in'})}
-                      className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'dine_in' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
-                   >
-                     🍽️ Dine In
-                   </button>
-                 )}
-                 {shop?.offers_pickup && (
-                   <button 
-                      onClick={() => setIdentity({...identity, fulfillment_type: 'pickup'})}
-                      className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'pickup' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
-                   >
-                     🛍️ Pickup
-                   </button>
-                 )}
-                 {shop?.offers_delivery && (
-                   <button 
-                      onClick={() => setIdentity({...identity, fulfillment_type: 'delivery'})}
-                      className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'delivery' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
-                   >
-                     🚗 Delivery
-                   </button>
-                 )}
-               </div>
+               {shop?.industry_type !== 'digital' && (
+                 <div className="mb-5 flex gap-2">
+                   {(!shop?.industry_type || shop?.industry_type === 'restaurant') && shop?.offers_dine_in !== false && session?.table && (
+                     <button 
+                        onClick={() => setIdentity({...identity, fulfillment_type: 'dine_in'})}
+                        className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'dine_in' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
+                     >
+                       🍽️ Dine In
+                     </button>
+                   )}
+                   {shop?.offers_pickup && (
+                     <button 
+                        onClick={() => setIdentity({...identity, fulfillment_type: 'pickup'})}
+                        className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'pickup' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
+                     >
+                       🛍️ Pickup
+                     </button>
+                   )}
+                   {shop?.offers_delivery && (
+                     <button 
+                        onClick={() => setIdentity({...identity, fulfillment_type: 'delivery'})}
+                        className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'delivery' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
+                     >
+                       🚗 Delivery
+                     </button>
+                   )}
+                 </div>
+               )}
+
+               {shop?.industry_type === 'digital' && (
+                 <div className="mb-5 p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-center">
+                    <p className="text-sm font-bold text-indigo-800">💻 Digital Delivery</p>
+                    <p className="text-xs text-indigo-600">Items will be sent to your email</p>
+                 </div>
+               )}
 
                <div className="space-y-4 mb-6">
                   {identity.fulfillment_type === 'delivery' && (
@@ -564,6 +607,20 @@ export default function Order() {
                            value={identity.address}
                            onChange={(e) => setIdentity({...identity, address: e.target.value})}
                            placeholder="Enter your street/apartment..."
+                           className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                        />
+                     </div>
+                  )}
+
+                  {identity.fulfillment_type === 'digital' && (
+                     <div className="animate-fade-in">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address for Delivery</label>
+                        <input 
+                           type="email"
+                           required
+                           value={identity.address}
+                           onChange={(e) => setIdentity({...identity, address: e.target.value})}
+                           placeholder="youremail@example.com"
                            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                         />
                      </div>
