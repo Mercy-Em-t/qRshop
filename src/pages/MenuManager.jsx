@@ -435,27 +435,16 @@ export default function MenuManager() {
 
   const generateAdLink = async (item) => {
     try {
-      // Create a URL-friendly name
+      // Create a clean URL-friendly slug
       const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const randomChars = Math.random().toString(36).substr(2, 4);
-      const shortId = `${slug}-${randomChars}`;
-
-      // Insert as a digital QR code in the system
-      const { error } = await supabase.from('qrs').insert({
-          id: shortId,
-          shop_id: item.shop_id,
-          location: item.id, // Store the item ID in the location param
-          action: 'open_order',
-          status: 'active'
-      });
-
-      if (error && error.code !== '23505') throw error; // Ignore uniqueness conflicts (highly unlikely)
+      const shortId = uuidToShort(item.id);
 
       const baseUrl = window.location.origin;
-      const link = `${baseUrl}/q/${shortId}`;
+      // We embed the slug in the URL path to make it look trustworthy, and pass the short ID safely in the exact same way
+      const link = `${baseUrl}/buy/${slug}?i=${shortId}`;
       
       navigator.clipboard.writeText(link);
-      alert("✅ Trustworthy ad link generated & copied!\n\nUse this clean link in WhatsApp, Facebook, or SMS:\n" + link);
+      alert("✅ Ad link generated & copied!\n\nUse this clean link in WhatsApp, Facebook, or SMS:\n" + link);
     } catch (err) {
       console.error("Link generation failed:", err);
       // Fallback

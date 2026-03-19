@@ -59,6 +59,7 @@ export default function App() {
       <Route path="/shops/:shopId" element={<PublicShopProfile />} />
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
       <Route path="/request-access" element={<RequestAccess />} />
+      <Route path="/buy/:itemName" element={<AutoCart />} />
       <Route path="/buy" element={<AutoCart />} />
       <Route path="/auto-cart" element={<AutoCart />} />
       
