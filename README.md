@@ -1,107 +1,75 @@
-# qRshop
+# qRshop (V3 Commerce OS)
 
-QR-based onsite ordering platform for restaurants, cafés, sports venues, and kiosks. Customers scan a QR code at the venue to access a digital menu and place an order sent via WhatsApp.
+qRshop is a multi-tenant, lightweight digital commerce operating system designed for restaurants, cafés, sports venues, and kiosks. By combining dynamic QR codes, automated M-Pesa payments, and WhatsApp Cloud APIs, it bridges the gap between physical storefronts and digital fulfillment without requiring customers to download an app.
 
-## Tech Stack
+## 🚀 The V3 Architecture Showcase
+The platform has evolved from a basic static menu viewer into a secure, tiered, Multi-Tenant SaaS.
 
-- **Frontend:** React, Vite, TailwindCSS
-- **Backend:** Supabase
-QR-based ordering platform for restaurants, cafés, sports venues, and kiosks. Customers scan a QR code at their table to browse the menu, add items to cart, and send orders via WhatsApp.
+### Core Capabilities
+*   **Dynamic QR Engine:** Physical codes that execute time-based routing (`opens_at`/`closes_at`), conditionally locking access during off-hours or defaulting to specific promotional filtering.
+*   **Smart Links & Auto-Cart:** Generate single-click "Ad Links" and "Bundle Deals" that automatically load the frontend, populate the user's cart, and jump straight to the checkout gate.
+*   **Secure Atomic Checkout (RPC):** A Postgres-backed server-side pricing engine. Cart totals are verified against the truth table, and inventory is mathematically deducted in a single unbreakable transaction, blocking client-side tampering.
+*   **M-Pesa Daraja Integration:** Built-in STK Push pipeline. Automatically deducts the platform commission and standard delivery fees before channeling the remaining balance functionally to the shop owner.
+*   **WhatsApp Cloud API:** Edge Functions deliver Interactive Checkout Cards directly to the shop operator’s WhatsApp, fully bypassing manual `wa.me` links for premium tiers.
+*   **Multi-Tier SaaS Gating:** A 4-tier model (Free, Basic, Pro, Business) enforced at both the React Router layer and the Database RLS layer.
+*   **God-Mode System Administration:** A master dashboard offering total visibility into platform economics, 3rd-party API costs, global product graphs, and an automated threat-model scanner.
 
-## Tech Stack
+## 🛠 Tech Stack
 
-- **Frontend:** React + Vite + TailwindCSS
-- **Backend:** Supabase (PostgreSQL)
-- **Deployment:** Vercel
-- **Communication:** WhatsApp Deep Links
+*   **Frontend Ecosystem:** React 18, Vite, Tailwind CSS, React Router DOM, HTML2Canvas (for Smart Receipts).
+*   **Backend & Database:** Supabase (PostgreSQL 15), Supabase Native Auth, Row Level Security (RLS).
+*   **Serverless Execution:** Deno-based Supabase Edge Functions (`whatsapp-dispatch`, `whatsapp-webhook`, `mpesa-stk-push`, `mpesa-webhook`).
+*   **Cloud Hosting:** Vercel (Edge Network).
 
-## Getting Started
+## 🗄️ Database & Security Constraints
+
+This platform relies heavily on **Supabase Row Level Security (RLS)** to enforce tenant boundaries (`shop_id`). Furthermore, critical operations execute via Postgres constraints and RPCs:
+*   `checkout_cart` RPC guarantees untampered pricing.
+*   `CHECK (quantity > 0)` and `CHECK (price >= 0)` guarantee data integrity.
+
+To deploy or update schemas, use the `.sql` scripts located in the project's tracking artifacts or the Supabase SQL Editor.
+
+## ⚙️ Getting Started (Local Development)
+
+1. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Environment Variables:**
+   Copy the template and fill in your Supabase credentials.
+   ```bash
+   cp .env.example .env.local
+   ```
+   **Required variables:**
+   *   `VITE_SUPABASE_URL`
+   *   `VITE_SUPABASE_ANON_KEY`
+   *   `VITE_GATEWAY_URL` (For generating formatted QR payloads, e.g. `http://localhost:5173`)
+
+3. **Start the Frontend Server:**
+   ```bash
+   npm run dev
+   ```
+
+## 🌩️ Deploying Edge Functions
+
+The platform relies on Supabase Edge functions for critical 3rd-party APIs. You must install the [Supabase CLI](https://supabase.com/docs/guides/cli) to deploy these.
 
 ```bash
-npm install
-cp .env.example .env
-# Edit .env with your Supabase credentials
-npm run dev
+# Login to your Supabase account
+supabase login
+
+# Deploy the WhatsApp routing function
+supabase functions deploy whatsapp-dispatch --project-ref YOUR_PROJECT_REF
+
+# Deploy the M-Pesa STK push trigger
+supabase functions deploy mpesa-stk-push --project-ref YOUR_PROJECT_REF
+
+# Note: You must bind secret environment variables (like API keys) via the Supabase Dashboard.
 ```
 
-## Environment Variables
+## 🔒 Security Operations
+If you are taking over the repository, check the `AdminReport.jsx` file. The "Threat Model & Anti-Sabotage" tab explicitly documents the platform's defense vectors against cart-tampering, negative quantity injections, and Denial of Service spam. 
 
-| Variable | Description |
-|---|---|
-| `VITE_SUPABASE_URL` | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous key |
-1. Install dependencies:
-
-```bash
-npm install
-```
-
-2. Copy the environment template and configure Supabase:
-
-```bash
-cp .env.example .env
-```
-
-Fill in your `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the `.env` file.
-
-3. Start the development server:
-
-```bash
-npm run dev
-```
-
-4. Build for production:
-
-```bash
-npm run build
-```
-
-## Project Structure
-
-```
-src/
-├── components/   # Reusable UI components
-├── pages/        # Route pages
-├── services/     # Supabase API services
-├── utils/        # Utility functions
-└── hooks/        # Custom React hooks
-```
-
-See [ARCHITECTURE.md](./ARCHITECTURE.md) for full details.
-├── components/    # Reusable React components
-├── pages/         # Page components (routes)
-├── services/      # Supabase client and data services
-├── utils/         # Utility functions
-└── hooks/         # Custom React hooks
-```
-
-## Routes
-
-### Customer
-- `/enter?shop=SHOP_ID&table=TABLE_NUMBER` — QR entry point (server-side validation)
-- `/menu` — Browse menu (requires QR session, offline caching)
-- `/cart` — View and manage cart (persisted across reloads)
-- `/order` — Order confirmation and WhatsApp send (DB-tracked)
-
-### Shop Owner
-- `/login` — Shop owner login
-- `/dashboard` — Shop management dashboard with analytics
-- `/menu-manager` — Menu CRUD
-- `/qr-generator` — QR code generator for tables
-- `/plans` — Subscription plan management
-
-### Admin
-- `/admin` — Admin panel
-- `/admin/shops` — Shop management
-- `/admin/plans` — Plan configuration
-
-## V2 Features
-
-- **Server-side QR validation** with device tracking and session expiry
-- **Optional geolocation check** to verify customer is at the venue
-- **Analytics dashboard** with orders per day, popular items, and upsell conversion rates
-- **Offline menu caching** using localStorage for resilience
-- **Cart persistence** across page reloads and network drops
-- **Subscription plans** with free and paid tiers
-- **Payment integration** scaffold for M-Pesa and card payments
-- **Order tracking** — all orders registered in DB before WhatsApp generation
+## 📜 License
+Private & Proprietary. All rights reserved.
