@@ -29,6 +29,7 @@ export default function Settings() {
   const [logoUploading, setLogoUploading] = useState(false);
 
   // Password change
+  const [currentPwd, setCurrentPwd] = useState("");
   const [newPwd, setNewPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
   const [pwdSaving, setPwdSaving] = useState(false);
@@ -67,11 +68,25 @@ export default function Settings() {
     setSaving(true);
     setSavedOk(false);
     try {
-    const updatePayload = { ...formData };
-    // Only update subdomain for Pro+ shops
-    if (!planAccess.isPro) delete updatePayload.subdomain;
-    const { error } = await supabase.from("shops").update(updatePayload).eq("id", shopId);
-      if (error) throw error;
+      const updatePayload = { ...formData };
+      
+      // Nullify empty subdomain to avoid Postgres UNIQUE constraint errors
+      if (updatePayload.subdomain === "") updatePayload.subdomain = null;
+      // Only update subdomain for Pro+ shops
+      if (!planAccess.isPro) delete updatePayload.subdomain;
+
+      const { error } = await supabase.from("shops").update(updatePayload).eq("id", shopId);
+      
+      if (error) {
+         // If error is about the missing subdomain column (meaning they haven't run the SQL yet), trying fallback
+         if (error.message?.includes('subdomain') && error.code === '42703') {
+             delete updatePayload.subdomain;
+             const { error: fallbackError } = await supabase.from("shops").update(updatePayload).eq("id", shopId);
+             if (fallbackError) throw fallbackError;
+         } else {
+             throw error;
+         }
+      }
       setSavedOk(true);
       setTimeout(() => setSavedOk(false), 3000);
     } catch (err) {
@@ -126,14 +141,25 @@ export default function Settings() {
   const handlePasswordChange = async (e) => {
     e.preventDefault();
     setPwdError(""); setPwdOk(false);
+    if (!currentPwd) { setPwdError("Current password is required."); return; }
     if (newPwd.length < 8) { setPwdError("Minimum 8 characters."); return; }
     if (newPwd !== confirmPwd) { setPwdError("Passwords do not match."); return; }
+    
     setPwdSaving(true);
     try {
+      // 1. Verify current password
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+         email: user.email,
+         password: currentPwd
+      });
+      if (signInErr) throw new Error("Current password is incorrect.");
+
+      // 2. Update to new password
       const { error } = await supabase.auth.updateUser({ password: newPwd });
       if (error) throw error;
+      
       setPwdOk(true);
-      setNewPwd(""); setConfirmPwd("");
+      setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
       setTimeout(() => setPwdOk(false), 3000);
     } catch (err) {
       setPwdError(err.message);
@@ -329,7 +355,11 @@ export default function Settings() {
           <form onSubmit={handlePasswordChange} className="space-y-4">
             {pwdError && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm border border-red-100 font-medium">{pwdError}</div>}
             {pwdOk && <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm border border-green-100 font-medium">✓ Password updated successfully!</div>}
-            <div className="grid md:grid-cols-2 gap-5">
+            <div className="grid md:grid-cols-2 gap-5 mb-5">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-bold text-gray-700 mb-1.5">Current Password</label>
+                <input type="password" value={currentPwd} onChange={e => setCurrentPwd(e.target.value)} required placeholder="Enter current password" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500 outline-none text-sm" />
+              </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">New Password</label>
                 <input type="password" value={newPwd} onChange={e => setNewPwd(e.target.value)} required minLength={8} placeholder="Min. 8 characters" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500 outline-none text-sm" />

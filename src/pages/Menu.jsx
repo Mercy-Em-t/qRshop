@@ -72,24 +72,26 @@ export default function Menu() {
       {/* ── Shop Header with Logo ── */}
       <header className="bg-white shadow-sm sticky top-0 z-20">
         {/* Shop Identity Bar */}
-        <div className="bg-green-700 text-white px-4 py-3 flex items-center gap-3">
-          {shop?.logo_url ? (
-            <img
-              src={shop.logo_url}
-              alt={shop?.name}
-              className="w-10 h-10 rounded-full object-cover border-2 border-white/40 flex-shrink-0"
-            />
-          ) : (
-            <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-xl flex-shrink-0 border-2 border-white/40">
-              {(shop?.name || "S").charAt(0).toUpperCase()}
-            </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-base font-bold truncate leading-tight">{shop?.name || "Shop"}</h1>
-            {shop?.tagline && (
-              <p className="text-xs text-green-200 truncate">{shop.tagline}</p>
+        <div className="bg-green-700 text-white px-4 py-3 flex items-center gap-3 justify-between">
+          <Link to={shop?.id ? `/p/${shop.id}` : '#'} className="flex w-full items-center gap-3 active:opacity-75 transition-opacity">
+            {shop?.logo_url ? (
+              <img
+                src={shop.logo_url}
+                alt={shop?.name}
+                className="w-10 h-10 rounded-full object-cover border-2 border-white/40 flex-shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold text-xl flex-shrink-0 border-2 border-white/40">
+                {(shop?.name || "S").charAt(0).toUpperCase()}
+              </div>
             )}
-          </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-bold truncate leading-tight">{shop?.name || "Shop"}</h1>
+              {shop?.tagline && (
+                <p className="text-xs text-green-200 truncate">{shop.tagline}</p>
+              )}
+            </div>
+          </Link>
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className={`w-2 h-2 rounded-full ${shop?.is_online !== false ? 'bg-green-300 animate-pulse' : 'bg-red-400'}`}></div>
             <span className="text-xs text-green-100">{shop?.is_online !== false ? 'Open' : 'Closed'}</span>

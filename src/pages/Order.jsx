@@ -217,7 +217,7 @@ export default function Order() {
              setTransferringToWhatsApp(true);
              setTimeout(() => {
                setTransferringToWhatsApp(false);
-               window.open(finalLink, "_blank", "noopener,noreferrer");
+               window.location.href = finalLink;
              }, 1800);
          }
       }
@@ -230,7 +230,7 @@ export default function Order() {
         setTransferringToWhatsApp(true);
         setTimeout(() => {
           setTransferringToWhatsApp(false);
-          window.open(fallbackLink, "_blank", "noopener,noreferrer");
+          window.location.href = fallbackLink;
         }, 1800);
       }
       clearCart();
@@ -444,8 +444,19 @@ export default function Order() {
                         <input 
                            type="tel" 
                            value={identity.phone}
-                           onChange={(e) => setIdentity({...identity, phone: e.target.value})}
-                           placeholder="+2547..."
+                           onChange={(e) => {
+                             let val = e.target.value.replace(/[^0-9+]/g, '');
+                             setIdentity({...identity, phone: val});
+                           }}
+                           onBlur={(e) => {
+                             // Basic KE formatting on blur
+                             let val = e.target.value;
+                             if (val.startsWith('0')) val = '+254' + val.substring(1);
+                             else if (val.startsWith('254')) val = '+' + val;
+                             else if (val.startsWith('7') || val.startsWith('1')) val = '+254' + val;
+                             setIdentity({...identity, phone: val});
+                           }}
+                           placeholder="07..."
                            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
                      </div>
