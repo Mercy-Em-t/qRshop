@@ -169,6 +169,19 @@ export default function Admin() {
             </p>
           </a>
           <Link
+            to="/admin/payouts"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border border-green-100 relative overflow-hidden group"
+          >
+             <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-10 group-hover:scale-110 transition-transform"></div>
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-lg font-semibold text-gray-800">💰 Shop Payouts</h2>
+            </div>
+            <p className="text-gray-500 text-sm">
+              Track outstanding balances, platform commissions, delivery fee splits, and mark shops as settled.
+            </p>
+          </Link>
+
+          <Link
             to="/admin/booklet"
             className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl shadow-md p-6 hover:shadow-xl transition-transform transform hover:-translate-y-1 relative overflow-hidden group border border-indigo-500/30"
           >

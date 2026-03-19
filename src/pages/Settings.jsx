@@ -478,6 +478,30 @@ export default function Settings() {
           </form>
         </div>
 
+        {/* Commission & Settlement Info */}
+        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-6">
+          <h2 className="text-base font-bold text-indigo-900 mb-1">💰 Platform Commission & Settlement</h2>
+          <p className="text-sm text-indigo-700 mb-4">ShopQR retains a platform fee on every paid order. Your net payout is settled by the platform operator.</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="bg-white rounded-xl p-4 border border-indigo-100">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-1">Your Commission Rate</p>
+              <p className="text-2xl font-black text-indigo-700">{shop?.platform_commission_rate ?? 5}%</p>
+              <p className="text-[11px] text-gray-400 mt-1">of goods sold per order</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 border border-indigo-100">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-1">Delivery Fees</p>
+              <p className="text-sm font-bold text-indigo-700 mt-2">Retained by Platform</p>
+              <p className="text-[11px] text-gray-400 mt-1">When platform runs delivery</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 border border-indigo-100">
+              <p className="text-xs text-gray-400 uppercase font-bold mb-1">Payout Cycle</p>
+              <p className="text-sm font-bold text-indigo-700 mt-2">Weekly</p>
+              <p className="text-[11px] text-gray-400 mt-1">Net of commission & fees</p>
+            </div>
+          </div>
+          <p className="text-xs text-indigo-400 mt-4">Questions about your account balance? Contact your ShopQR account manager.</p>
+        </div>
+
       </main>
     </div>
   );
