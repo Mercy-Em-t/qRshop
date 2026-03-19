@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { createQrNode } from "../services/qr-node-service";
 import { getCurrentUser, logout } from "../services/auth-service";
+import { supabase } from "../services/supabase-client";
 import usePlanAccess from "../hooks/usePlanAccess";
 import { useQRs } from "../hooks/useQRs";
 
