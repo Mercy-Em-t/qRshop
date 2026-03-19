@@ -105,6 +105,14 @@ export default function AutoCart() {
       } catch (err) {
         console.error("AutoCart error:", err);
         setError(err.message || "Something went wrong loading this link.");
+        
+        // If we know the shop ID from the URL, gracefully route them to the menu instead of dead-ending.
+        const fallbackShop = searchParams.get("shop");
+        if (fallbackShop) {
+           window.location.href = `/menu?shop=${fallbackShop}`;
+           return;
+        }
+        
         setStatus("error");
       }
     }
@@ -146,14 +154,20 @@ export default function AutoCart() {
 
         <div className="p-6">
           <p className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Your cart has been loaded with:</p>
-          <div className="space-y-2 mb-6">
-            {loadedItems.map(item => (
-              <div key={item.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                <span className="text-sm font-semibold text-gray-700">{item.quantity}× {item.name}</span>
-                <span className="text-sm font-bold text-indigo-700">KSh {item.price * item.quantity}</span>
-              </div>
-            ))}
-          </div>
+          {loadedItems.length === 0 ? (
+             <div className="text-center py-6 text-gray-500 text-sm italic">
+                (The requested item is temporarily misconfigured or unavailable)
+             </div>
+          ) : (
+            <div className="space-y-2 mb-6">
+              {loadedItems.map(item => (
+                <div key={item.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                  <span className="text-sm font-semibold text-gray-700">{item.quantity}× {item.name}</span>
+                  <span className="text-sm font-bold text-indigo-700">KSh {item.price * item.quantity}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <Link
             to="/cart"

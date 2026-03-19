@@ -445,7 +445,7 @@ export default function MenuManager() {
           id: shortId,
           shop_id: item.shop_id,
           location: item.id, // Store the item ID in the location param
-          action: 'buy_item',
+          action: 'open_order',
           status: 'active'
       });
 

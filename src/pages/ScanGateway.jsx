@@ -108,17 +108,18 @@ export default function ScanGateway() {
           
         case 'open_order':
           createQrSession(node.shop_id, node.location);
-          navigate("/cart", { replace: true });
+          if (node.location && node.location.length === 36 && node.location.includes('-')) {
+             // It's a semantic Product link! Forward immediately to AutoCart.
+             navigate(`/buy?shop=${node.shop_id}&items=${node.location}:1`, { replace: true });
+          } else {
+             // Standard shop table checkout
+             navigate("/cart", { replace: true });
+          }
           break;
           
         case 'open_campaign':
            createQrSession(node.shop_id, node.location, null, node.campaign_id);
            navigate("/campaign", { replace: true, state: { campaignId: node.campaign_id } });
-           break;
-           
-        case 'buy_item':
-           // Uses the QR gateway as a shortlink redirector into the cart seeder
-           navigate(`/buy?shop=${node.shop_id}&items=${node.location}:1`, { replace: true });
            break;
            
         case 'open_loyalty':
