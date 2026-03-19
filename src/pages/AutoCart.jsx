@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { useCart } from "../hooks/use-cart";
+import { shortToUuid } from "../utils/short-id";
 
 // AutoCart — Pre-populate cart from a share link and redirect to cart
 // URL format: /auto-cart?shop=SHOP_ID&items=ITEM_ID:QTY,ITEM_ID2:QTY&promo=CODE&name=Bundle+Name
@@ -26,14 +27,15 @@ export default function AutoCart() {
 
         // Handle ultra-short link format: ?i=ITEM_ID
         if (singleItemId) {
+           const fullUuid = shortToUuid(singleItemId);
            const { data: itemData, error: itemErr } = await supabase
               .from("menu_items")
-              .select("shop_id, name")
-              .eq("id", singleItemId)
+              .select("shop_id, name, id")
+              .eq("id", fullUuid)
               .single();
            if (!itemErr && itemData) {
               shopId = itemData.shop_id;
-              itemsParam = `${singleItemId}:1`;
+              itemsParam = `${itemData.id}:1`;
               if (!name) setBundleName(itemData.name);
            }
         }

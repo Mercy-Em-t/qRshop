@@ -4,6 +4,7 @@ import { supabase } from "../services/supabase-client";
 import { getCurrentUser, logout } from "../services/auth-service";
 import usePlanAccess from "../hooks/usePlanAccess";
 import UpgradeModal from "../components/UpgradeModal";
+import { uuidToShort } from "../utils/short-id";
 
 export default function MenuManager() {
   const [items, setItems] = useState([]);
@@ -717,7 +718,7 @@ export default function MenuManager() {
                       <button
                         onClick={() => {
                           const baseUrl = window.location.origin;
-                          const link = `${baseUrl}/buy?i=${item.id}`;
+                          const link = `${baseUrl}/buy?i=${uuidToShort(item.id)}`;
                           navigator.clipboard.writeText(link);
                           alert("Ad Link copied! Paste this in your WhatsApp or Facebook ad.");
                         }}
