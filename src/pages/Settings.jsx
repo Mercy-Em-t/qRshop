@@ -22,6 +22,7 @@ export default function Settings() {
     name: "", description: "", tagline: "", address: "",
     phone: "", whatsapp_number: "", is_online: true, subdomain: "",
     mpesa_shortcode: "", mpesa_passkey: "",
+    offers_pickup: true, offers_delivery: false, delivery_fee: 0,
   });
 
   // Logo upload
@@ -57,6 +58,9 @@ export default function Settings() {
           phone: data.phone || "", whatsapp_number: data.whatsapp_number || "",
           is_online: data.is_online ?? true, subdomain: data.subdomain || "",
           mpesa_shortcode: data.mpesa_shortcode || "", mpesa_passkey: data.mpesa_passkey || "",
+          offers_pickup: data.offers_pickup ?? true, 
+          offers_delivery: data.offers_delivery ?? false, 
+          delivery_fee: data.delivery_fee || 0,
         });
         if (data.logo_url) setLogoPreview(data.logo_url);
       }
@@ -339,6 +343,56 @@ export default function Settings() {
                   </button>
                 </div>
               )}
+            </div>
+
+            {/* Fulfillment configuration */}
+            <div className="mt-6 rounded-xl border border-gray-100 p-5 bg-white">
+               <h3 className="text-base font-bold text-gray-900 mb-4">Fulfillment Options</h3>
+               <div className="space-y-4">
+                 
+                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                   <div>
+                     <p className="text-sm font-bold text-gray-800">🛍️ Allow Pickup</p>
+                     <p className="text-xs text-gray-500 mt-0.5">Customers can order ahead and pick up their items</p>
+                   </div>
+                   <button
+                     type="button"
+                     onClick={() => setFormData(p => ({...p, offers_pickup: !p.offers_pickup}))}
+                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_pickup ? 'bg-green-500' : 'bg-gray-300'}`}
+                   >
+                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.offers_pickup ? 'translate-x-6' : 'translate-x-1'}`} />
+                   </button>
+                 </div>
+
+                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                   <div>
+                     <p className="text-sm font-bold text-gray-800">🚗 Allow Delivery</p>
+                     <p className="text-xs text-gray-500 mt-0.5">Customers can request delivery to their address</p>
+                   </div>
+                   <button
+                     type="button"
+                     onClick={() => setFormData(p => ({...p, offers_delivery: !p.offers_delivery}))}
+                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_delivery ? 'bg-green-500' : 'bg-gray-300'}`}
+                   >
+                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.offers_delivery ? 'translate-x-6' : 'translate-x-1'}`} />
+                   </button>
+                 </div>
+
+                 {formData.offers_delivery && (
+                   <div className="pl-3 mt-2 border-l-2 border-green-200">
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Flat Delivery Fee (KSh)</label>
+                     <input
+                       type="number"
+                       min="0"
+                       value={formData.delivery_fee}
+                       onChange={e => setFormData({...formData, delivery_fee: parseInt(e.target.value) || 0})}
+                       placeholder="e.g. 150"
+                       className="w-full md:w-1/2 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white"
+                     />
+                     <p className="text-xs text-gray-400 mt-1">This amount will be added to the customer's total.</p>
+                   </div>
+                 )}
+               </div>
             </div>
 
             {/* M-Pesa Automatic Checkout — Basic+ */}

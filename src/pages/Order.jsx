@@ -21,11 +21,18 @@ import { useNomenclature } from "../hooks/use-nomenclature";
 import usePlanAccess from "../hooks/usePlanAccess";
 import UpgradeModal from "../components/UpgradeModal";
 
-// Restoring unstructured message based on customer clarifying text vs audio
-const buildUnstructuredMessage = (shopName, table, items, identity) => {
+const buildUnstructuredMessage = (shopName, table, items, identity, deliveryFee = 0) => {
    const itemList = items.map(i => `${i.quantity}x ${i.name}`).join(", ");
-   const contactStr = identity?.name ? `\n\nName: ${identity.name}` : ''; // Exclude phone for free tier
-   return `Hi ${shopName}, I'd like to place an order from Table ${table}.${contactStr}\n\nItems: ${itemList}\n\nPlease confirm.`;
+   const contactStr = identity?.name ? `\n\nName: ${identity.name}` : ''; 
+   
+   let fulfillStr = `Table ${table}`;
+   if (identity?.fulfillment_type === 'delivery') {
+      fulfillStr = `Delivery to ${identity.address}\n🚗 Delivery Fee: KSh ${deliveryFee}`;
+   } else if (identity?.fulfillment_type === 'pickup') {
+      fulfillStr = `Pickup`;
+   }
+   
+   return `Hi ${shopName}, I'd like to place an order for ${fulfillStr}.${contactStr}\n\nItems: ${itemList}\n\nPlease confirm.`;
 };
 
 export default function Order() {
@@ -44,7 +51,9 @@ export default function Order() {
   const [transferringToWhatsApp, setTransferringToWhatsApp] = useState(false);
   const [identity, setIdentity] = useState({
       name: localStorage.getItem('qr_customer_name') || "",
-      phone: localStorage.getItem('qr_customer_phone') || ""
+      phone: localStorage.getItem('qr_customer_phone') || "",
+      fulfillment_type: "dine_in",
+      address: ""
   });
   
   const terms = useNomenclature(session?.shop_id);
@@ -112,6 +121,9 @@ export default function Order() {
   const shopName = shop?.name || "Shop";
   const shopPhone = import.meta.env.VITE_SHOP_PHONE || shop?.whatsapp_number || shop?.phone || "";
 
+  const deliveryFee = identity.fulfillment_type === 'delivery' ? (shop?.delivery_fee || 0) : 0;
+  const finalPayableTotal = Number(total) + Number(deliveryFee);
+
   const generateDatabaseOrder = async () => {
      if (!isOnline) {
        queueOrder(shopName, shopPhone, session?.table, items, total);
@@ -132,12 +144,15 @@ export default function Order() {
         session?.shop_id,
         session?.table,
         items,
-        total,
+        finalPayableTotal,
         discountAmount,
         activeCoupon?.code || null,
         identity.name,
         identity.phone,
-        parentOrderId
+        parentOrderId,
+        identity.fulfillment_type,
+        identity.address,
+        deliveryFee
       );
   };
 
@@ -176,7 +191,7 @@ export default function Order() {
       if (identity.phone) localStorage.setItem('qr_customer_phone', identity.phone);
       
       if (shopPhone) {
-         const unstructuredMsg = buildUnstructuredMessage(shopName, session?.table, items, identity);
+         const unstructuredMsg = buildUnstructuredMessage(shopName, session?.table, items, identity, deliveryFee);
          const link = buildWhatsAppLink(shopPhone, unstructuredMsg);
          window.open(link, "_blank", "noopener,noreferrer");
       }
@@ -206,7 +221,7 @@ export default function Order() {
              body: { 
                  order_id: order.id,
                  phone: identity.phone,
-                 amount: totals.finalTotal,
+                 amount: finalPayableTotal,
                  shop_id: shop?.id
              }
          });
@@ -467,12 +482,54 @@ export default function Order() {
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                </button>
 
-               <div className="mb-6">
+               <div className="mb-5">
                   <h2 className="text-xl font-bold text-gray-900 mb-1">Your Details</h2>
-                  <p className="text-sm text-gray-500">How should the shop contact you?</p>
+                  <p className="text-sm text-gray-500">How should the shop handle this {terms.order.toLowerCase()}?</p>
+               </div>
+
+               {/* Fulfillment Selection */}
+               <div className="mb-5 flex gap-2">
+                 {session?.table && (
+                   <button 
+                      onClick={() => setIdentity({...identity, fulfillment_type: 'dine_in'})}
+                      className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'dine_in' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
+                   >
+                     🍽️ Dine In
+                   </button>
+                 )}
+                 {shop?.offers_pickup && (
+                   <button 
+                      onClick={() => setIdentity({...identity, fulfillment_type: 'pickup'})}
+                      className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'pickup' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
+                   >
+                     🛍️ Pickup
+                   </button>
+                 )}
+                 {shop?.offers_delivery && (
+                   <button 
+                      onClick={() => setIdentity({...identity, fulfillment_type: 'delivery'})}
+                      className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'delivery' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
+                   >
+                     🚗 Delivery
+                   </button>
+                 )}
                </div>
 
                <div className="space-y-4 mb-6">
+                  {identity.fulfillment_type === 'delivery' && (
+                     <div className="animate-fade-in">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Delivery Address</label>
+                        <textarea 
+                           rows="2"
+                           required
+                           value={identity.address}
+                           onChange={(e) => setIdentity({...identity, address: e.target.value})}
+                           placeholder="Enter your street/apartment..."
+                           className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                        />
+                     </div>
+                  )}
+
                   <div>
                      <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                      <input 
@@ -514,10 +571,10 @@ export default function Order() {
                        setCapturingIdentity(false);
                        handleMpesaCheckout();
                     }}
-                    disabled={!identity.name || !identity.phone || sending}
+                    disabled={!identity.name || !identity.phone || sending || (identity.fulfillment_type === 'delivery' && !identity.address)}
                     className="w-full bg-[#3CBC3C] text-white font-bold py-3 rounded-xl hover:bg-[#32a832] transition disabled:opacity-50 cursor-pointer shadow-md flex items-center justify-center gap-2"
                  >
-                    {sending ? "Processing..." : `📲 Pay with M-Pesa (KSh ${totals.finalTotal})`}
+                    {sending ? "Processing..." : `📲 Pay with M-Pesa (KSh ${finalPayableTotal})`}
                  </button>
                ) : (
                  <button 

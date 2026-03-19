@@ -1,4 +1,4 @@
-export function buildWhatsAppMessage(shopName, table, items, orderId, total, discountAmount = 0, couponCode = null, isOffline = false, clientName = null, clientPhone = null) {
+export function buildWhatsAppMessage(shopName, table, items, orderId, total, discountAmount = 0, couponCode = null, isOffline = false, clientName = null, clientPhone = null, fulfillmentType = 'dine_in', deliveryAddress = null, deliveryFeeCharged = 0) {
   const shortId = orderId ? orderId.split("-")[0].toUpperCase() : "N/A";
   
   // Create formatted datestring e.g. "17/03/2026, 13:02"
@@ -20,23 +20,36 @@ export function buildWhatsAppMessage(shopName, table, items, orderId, total, dis
   if (discountAmount > 0) {
      discountSection = `\n🔥 Discount: -KSh ${discountAmount}`;
   }
+  
+  let deliverySection = "";
+  if (deliveryFeeCharged > 0) {
+     deliverySection = `\n🚗 Delivery Fee: +KSh ${deliveryFeeCharged}`;
+  }
 
-  const status = isOffline ? "Awaiting Payment (Pay at Desk / Offline)" : "Awaiting Payment (STK / Cash)";
+  const status = isOffline ? "Awaiting Payment (Pay Offline)" : "Awaiting Payment (STK / Cash)";
+  
+  let fulfillmentBlock = "";
+  if (fulfillmentType === 'delivery') {
+      fulfillmentBlock = `🚗 *DELIVERY*\n📍 Address: ${deliveryAddress || "N/A"}\n📞 ${clientPhone}`;
+  } else if (fulfillmentType === 'pickup') {
+      fulfillmentBlock = `🛍️ *PICKUP*\n📞 ${clientPhone}`;
+  } else {
+      fulfillmentBlock = `🍽️ *DINE IN*\n🪑 Table: ${table}`;
+  }
 
   return `🧾 *NEW ORDER*
 
 🏪 *${shopName.toUpperCase()}*
-🪑 Table: ${table}
 🕒 ${dateStrFormatted}
 
-${clientName ? `👤 Client: ${clientName}\n📞 ${clientPhone}\n` : ''}
-
+${fulfillmentBlock}
+${clientName ? `👤 Client: ${clientName}\n` : ''}
 🧾 Receipt: #${shortId}
 
 *ITEMS:*
 ${itemLines}
 
-Subtotal: KSh ${subtotal}${discountSection}
+Subtotal: KSh ${subtotal}${discountSection}${deliverySection}
 
 💰 *TOTAL: KSh ${total}*
 

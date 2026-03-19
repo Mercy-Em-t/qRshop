@@ -262,16 +262,25 @@ export default function OrderManager() {
                      onClick={() => toggleExpand(order.id)}
                   >
                      <div className="flex items-center gap-4">
-                         <div className="flex flex-col">
-                             <span className="text-xs text-gray-400 font-bold uppercase">Receipt</span>
-                             <span className="font-mono text-gray-900 font-bold text-lg md:text-xl">
-                               #{shortId}
-                               {order.revision_count > 0 && (
-                                  <span className="ml-2 bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full" title={`${order.revision_count} Revisions`}>
-                                    R{order.revision_count}
-                                  </span>
-                               )}
-                             </span>
+                         <div className="flex flex-col gap-2">
+                             <div className="flex flex-col">
+                                 <span className="text-xs text-gray-400 font-bold uppercase">Receipt</span>
+                                 <span className="font-mono text-gray-900 font-bold text-lg md:text-xl">
+                                   #{shortId}
+                                   {order.revision_count > 0 && (
+                                      <span className="ml-2 bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-full" title={`${order.revision_count} Revisions`}>
+                                        R{order.revision_count}
+                                      </span>
+                                   )}
+                                 </span>
+                             </div>
+                             {order.fulfillment_type === 'delivery' ? (
+                                <span className="bg-purple-100 text-purple-700 font-bold text-[10px] px-2 py-0.5 rounded uppercase w-fit tracking-wider">🚗 Delivery</span>
+                             ) : order.fulfillment_type === 'pickup' ? (
+                                <span className="bg-yellow-100 text-yellow-700 font-bold text-[10px] px-2 py-0.5 rounded uppercase w-fit tracking-wider">🛍️ Pickup</span>
+                             ) : (
+                                <span className="bg-gray-100 text-gray-600 font-bold text-[10px] px-2 py-0.5 rounded uppercase w-fit tracking-wider">🍽️ Table {order.table_id || 'N/A'}</span>
+                             )}
                          </div>
                          <div className="hidden md:flex flex-col items-center justify-center border-l border-r border-gray-100 px-4 mx-2">
                             <span className="text-xs text-gray-400 font-bold uppercase mb-1">Time</span>
@@ -318,6 +327,13 @@ export default function OrderManager() {
                               <span>-KSh {order.discount_amount}</span>
                            </div>
                         )}
+                        {order.delivery_fee_charged > 0 && (
+                           <div className="flex justify-between items-center p-2 rounded border border-gray-100 mt-2 text-sm bg-purple-50">
+                              <span className="text-purple-800 font-bold">🚗 Delivery Fee</span>
+                              <span className="font-medium text-purple-700">+KSh {order.delivery_fee_charged}</span>
+                           </div>
+                        )}
+
                         <div className="flex justify-between items-center pt-2 mt-2">
                           <span className="text-gray-500 font-medium text-sm">Final Total</span>
                           <span className="text-xl font-black text-green-700">KSh {order.total_price}</span>

@@ -171,6 +171,20 @@ export default function TrackOrder() {
                     <span className="font-medium">KSh {item.price * item.quantity}</span>
                  </div>
               ))}
+              
+              {order.discount_amount > 0 && (
+                 <div className="flex justify-between text-orange-600 font-medium text-sm pt-2 border-t border-gray-100 mt-3">
+                    <span>Discount</span>
+                    <span>-KSh {order.discount_amount}</span>
+                 </div>
+              )}
+              
+              {order.delivery_fee_charged > 0 && (
+                 <div className="flex justify-between text-purple-600 font-medium text-sm pt-1">
+                    <span>Delivery Fee</span>
+                    <span>+KSh {order.delivery_fee_charged}</span>
+                 </div>
+              )}
            </div>
 
            <div className="border-t border-gray-200 pt-4 flex justify-between items-center">

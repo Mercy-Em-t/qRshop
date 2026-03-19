@@ -112,6 +112,15 @@ export default function AdminMonitoring() {
               <span className="text-red-400 text-[10px] bg-red-900/30 px-2 py-0.5 rounded border border-red-800">1 ALERT</span>
            </div>
            <div className="p-4 space-y-2 text-sm flex-1 overflow-y-auto">
+              <div className="border border-green-500 bg-green-500/10 p-3 mb-4 rounded relative overflow-hidden">
+                 <div className="text-green-400 font-bold mb-1 uppercase tracking-wider text-xs">🚀 Action Required: M-Pesa Integration</div>
+                 <div className="text-gray-300 text-[11px] leading-relaxed">
+                    Remember to configure the Daraja API for ShopQR! <br/><br/>
+                    1. Run <span className="text-white font-mono bg-black/40 px-1 rounded">supabase secrets set MPESA_CONSUMER_KEY=xyz MPESA_CONSUMER_SECRET=abc MPESA_ENVIRONMENT=sandbox</span><br/>
+                    2. Deploy edge functions <span className="text-white font-mono bg-black/40 px-1 rounded">mpesa-stk-push</span> & <span className="text-white font-mono bg-black/40 px-1 rounded">mpesa-webhook</span><br/>
+                    <span className="text-green-500/70 text-[10px] mt-1 block font-bold">Waiting for Supabase remote deployment...</span>
+                 </div>
+              </div>
               <div className="border-l-2 border-red-500 pl-3 py-1">
                  <div className="text-red-400 text-xs font-bold mb-1">[WARN] Auth Override Attempt</div>
                  <div className="text-gray-400 text-[11px]">Multiple failed logins detected from IP 192.168.1.144 addressing Shop UUID `d8f2...`.</div>
