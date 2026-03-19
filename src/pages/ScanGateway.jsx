@@ -116,6 +116,11 @@ export default function ScanGateway() {
            navigate("/campaign", { replace: true, state: { campaignId: node.campaign_id } });
            break;
            
+        case 'buy_item':
+           // Uses the QR gateway as a shortlink redirector into the cart seeder
+           navigate(`/buy?shop=${node.shop_id}&items=${node.location}:1`, { replace: true });
+           break;
+           
         case 'open_loyalty':
            setError(`The Loyalty experience is currently under construction.`);
            break;

@@ -433,6 +433,37 @@ export default function MenuManager() {
     }
   };
 
+  const generateAdLink = async (item) => {
+    try {
+      // Create a URL-friendly name
+      const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      const randomChars = Math.random().toString(36).substr(2, 4);
+      const shortId = `${slug}-${randomChars}`;
+
+      // Insert as a digital QR code in the system
+      const { error } = await supabase.from('qrs').insert({
+          id: shortId,
+          shop_id: item.shop_id,
+          location: item.id, // Store the item ID in the location param
+          action: 'buy_item',
+          status: 'active'
+      });
+
+      if (error && error.code !== '23505') throw error; // Ignore uniqueness conflicts (highly unlikely)
+
+      const baseUrl = window.location.origin;
+      const link = `${baseUrl}/q/${shortId}`;
+      
+      navigator.clipboard.writeText(link);
+      alert("✅ Trustworthy ad link generated & copied!\n\nUse this clean link in WhatsApp, Facebook, or SMS:\n" + link);
+    } catch (err) {
+      console.error("Link generation failed:", err);
+      // Fallback
+      navigator.clipboard.writeText(`${window.location.origin}/buy?i=${uuidToShort(item.id)}`);
+      alert("Ad Link copied (Fallback generated).");
+    }
+  };
+
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -716,15 +747,14 @@ export default function MenuManager() {
                     </div>
                     <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                       <button
-                        onClick={() => {
-                          const baseUrl = window.location.origin;
-                          const link = `${baseUrl}/buy?i=${uuidToShort(item.id)}`;
-                          navigator.clipboard.writeText(link);
-                          alert("Ad Link copied! Paste this in your WhatsApp or Facebook ad.");
+                        onClick={(e) => {
+                           e.currentTarget.disabled = true;
+                           const btn = e.currentTarget;
+                           generateAdLink(item).finally(() => btn.disabled = false);
                         }}
                         disabled={item.is_active === false}
                         className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-gray-300 cursor-not-allowed' : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50'}`}
-                        title="Copy Ad Link to Cart"
+                        title="Generate & Copy Semantic Link"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
