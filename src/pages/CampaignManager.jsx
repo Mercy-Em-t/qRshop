@@ -122,7 +122,7 @@ export default function CampaignManager() {
 
                     <div className="grid grid-cols-2 gap-4 mt-auto pt-4 border-t border-gray-100">
                       <div>
-                        <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">Total Scans</p>
+                        <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">Total Claims</p>
                         <p className="text-2xl font-bold text-gray-800">{metrics[camp.id]?.totalScans || 0}</p>
                       </div>
                       <div>

@@ -124,7 +124,8 @@ export default function Order() {
      logEvent("order_started", "N/A", session?.shop_id, navigator.userAgent, {
          total_price: total,
          item_count: items.length,
-         is_offline: !isOnline
+         is_offline: !isOnline,
+         campaign_id: activeCoupon?.campaignId || null
      });
 
      return await createOrder(

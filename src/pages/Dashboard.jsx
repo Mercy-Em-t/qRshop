@@ -14,7 +14,7 @@ export default function Dashboard() {
   const [ordersPerDay, setOrdersPerDay] = useState([]);
   const [popularItems, setPopularItems] = useState([]);
   const [upsellStats, setUpsellStats] = useState(null);
-  const [subscription, setSubscription] = useState(null);
+  const [shop, setShop] = useState(null);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [showWizard, setShowWizard] = useState(false);
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
@@ -55,16 +55,16 @@ export default function Dashboard() {
       }
 
       try {
-        const [orders, popular, upsells, sub] = await Promise.all([
+        const [orders, popular, upsells, shopRes] = await Promise.all([
           getOrdersPerDay(shopId),
           getPopularItems(shopId),
           getUpsellStats(shopId),
-          getSubscription(shopId),
+          supabase.from("shops").select("*").eq("id", shopId).single(),
         ]);
         setOrdersPerDay(orders);
         setPopularItems(popular);
         setUpsellStats(upsells);
-        setSubscription(sub);
+        setShop(shopRes?.data || null);
       } catch {
         // Analytics loading failed silently
       } finally {
@@ -128,7 +128,7 @@ export default function Dashboard() {
         
         {/* Subscription Status */}
         <div className="mb-6">
-          <SubscriptionStatus subscription={subscription} />
+          <SubscriptionStatus shop={shop} />
         </div>
 
         {/* Action Alert Banner */}

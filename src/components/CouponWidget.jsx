@@ -5,7 +5,7 @@ import { getQrSession } from "../utils/qr-session";
 
 const PRO_PLANS = ['pro', 'business', 'enterprise'];
 
-export default function CouponWidget({ shopPlan }) {
+export default function CouponWidget({ shopPlan, campaign }) {
   const { activeCoupon, applyCoupon } = useCart();
   const [isVisible, setIsVisible] = useState(false);
   const [isClaimed, setIsClaimed] = useState(false);
@@ -16,7 +16,7 @@ export default function CouponWidget({ shopPlan }) {
 
   // Show the widget gracefully 1.5 seconds after loading the menu
   useEffect(() => {
-    if (!isProShop) return; // Don't show for free/basic shops
+    if (!isProShop || !campaign) return; // Don't show for free/basic shops, or if no campaign active
     if (activeCoupon) return; // Don't show if they already have one active
     
     const timer = setTimeout(() => {
@@ -32,9 +32,10 @@ export default function CouponWidget({ shopPlan }) {
 
   const handleClaim = () => {
     const promo = {
-      code: "WELCOME20",
-      description: "Smart Scan Promo",
-      discountPercentage: 20
+      code: campaign?.name?.replace(/\s+/g, '').toUpperCase() || "PROMO",
+      description: campaign?.name || "Smart Scan Promo",
+      discountPercentage: campaign?.reward_value?.percentage || 20,
+      campaignId: campaign?.id
     };
     
     applyCoupon(promo);
@@ -45,7 +46,8 @@ export default function CouponWidget({ shopPlan }) {
     if (session) {
       logEvent("reward_claimed", "N/A", session.shop_id, navigator.userAgent, {
         promo_code: promo.code,
-        discount: promo.discountPercentage
+        discount: promo.discountPercentage,
+        campaign_id: campaign.id
       });
     }
 
@@ -61,7 +63,7 @@ export default function CouponWidget({ shopPlan }) {
     sessionStorage.setItem("has_seen_promo", "true");
   };
 
-  if (!isProShop) return null;
+  if (!isProShop || !campaign) return null;
   if (!isVisible && !isClaimed) return null;
 
   return (
@@ -81,7 +83,7 @@ export default function CouponWidget({ shopPlan }) {
               <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-2 shadow-inner">
                 <svg className="w-6 h-6 text-green-600 animate-[bounce_1s_infinite]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
               </div>
-              <h3 className="text-white font-bold text-lg tracking-tight">20% Discount Activated!</h3>
+              <h3 className="text-white font-bold text-lg tracking-tight">{campaign?.reward_value?.percentage || 20}% Discount Activated!</h3>
               <p className="text-green-100 text-sm mt-1">Discount will be applied at checkout.</p>
             </div>
           ) : (
@@ -90,8 +92,8 @@ export default function CouponWidget({ shopPlan }) {
                  <span className="text-xl font-black text-purple-900">%</span>
               </div>
               <div className="flex-1">
-                <h3 className="text-white font-bold text-lg leading-tight mb-1">Secret Scan Reward! 🎁</h3>
-                <p className="text-purple-100 text-sm leading-snug pr-4">Claim 20% off your entire order just for browsing the digital menu.</p>
+                <h3 className="text-white font-bold text-lg leading-tight mb-1">{campaign?.name || "Smart Scan Reward!"} 🎁</h3>
+                <p className="text-purple-100 text-sm leading-snug pr-4">Claim {campaign?.reward_value?.percentage || 20}% off your entire order just for browsing.</p>
               </div>
               <button 
                 onClick={handleClaim}

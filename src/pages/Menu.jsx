@@ -12,6 +12,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
 import CouponWidget from "../components/CouponWidget";
 import { useNomenclature } from "../hooks/use-nomenclature";
+import { useCampaigns } from "../hooks/useCampaigns";
 
 export default function Menu() {
   const session = getQrSession();
@@ -25,6 +26,8 @@ export default function Menu() {
   const [activeCategory, setActiveCategory] = useState(null);
 
   const terms = useNomenclature(session?.shop_id);
+  const { campaigns } = useCampaigns(session?.shop_id);
+  const activeCampaign = campaigns?.find(c => c.is_active);
 
   const handleAddItem = async (item) => {
     addItem(item);
@@ -173,8 +176,7 @@ export default function Menu() {
           ))
         )}
       </main>
-
-      <CouponWidget shopPlan={shop?.plan} />
+      <CouponWidget shopPlan={shop?.plan} campaign={activeCampaign} />
 
       {/* ── Branded Footer ── */}
       <footer className="bg-white border-t border-gray-100 mt-4 pt-6 pb-8 px-4">

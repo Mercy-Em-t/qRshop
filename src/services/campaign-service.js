@@ -82,7 +82,7 @@ export async function getCampaignMetrics(campaignId) {
     return { totalScans: 0, conversionRate: 0 };
   }
 
-  const scans = events?.filter(e => e.event_type === "qr_scanned").length || 0;
+  const scans = events?.filter(e => e.event_type === "reward_claimed").length || 0;
   const orders = events?.filter(e => e.event_type === "order_completed" || e.event_type === "order_started").length || 0;
   
   const conversionRate = scans > 0 ? (orders / scans) * 100 : 0;
