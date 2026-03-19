@@ -125,6 +125,24 @@ export default function Order() {
   const finalPayableTotal = Number(total) + Number(deliveryFee);
 
   const generateDatabaseOrder = async () => {
+     if (sending) return null; // Synchronous re-entry guard
+     
+     // Phase 46: Duplicate Order Guard (30 sec throttle on exact cart matches)
+     const orderHashData = { count: items.length, total: total, phone: identity.phone };
+     const hashString = JSON.stringify(orderHashData);
+     const lastHash = localStorage.getItem("qr_last_order_hash");
+     const lastHashTime = localStorage.getItem("qr_last_order_time");
+     
+     if (lastHash === hashString && lastHashTime && (Date.now() - Number(lastHashTime) < 30000)) {
+         console.warn("Duplicate order detected! Rejecting.");
+         alert("You just placed this exact order! Please wait a moment before ordering again.");
+         clearCart(); // Clear the double-clicked cart
+         return null; 
+     }
+
+     localStorage.setItem("qr_last_order_hash", hashString);
+     localStorage.setItem("qr_last_order_time", Date.now().toString());
+
      if (!isOnline) {
        queueOrder(shopName, shopPhone, session?.table, items, total);
        registerOnlineSync();
@@ -179,6 +197,7 @@ export default function Order() {
          }
       } catch (err) {
          console.error("Direct Checkout Failed:", err);
+         alert(err.message || "Checkout failed. Please try again.");
       } finally {
          setSending(false);
       }
@@ -237,7 +256,7 @@ export default function Order() {
       }
     } catch (err) {
       console.error("M-Pesa Checkout failed:", err);
-      alert("Checkout failed. Please try again.");
+      alert(err.message || "Checkout failed. Please try again.");
     } finally {
       setSending(false);
     }
@@ -296,7 +315,14 @@ export default function Order() {
       }
     } catch (err) {
       console.error("WhatsApp Checkout failed:", err);
-      // Fallback
+      
+      // If the backend actively rejected the transaction due to boundary constraints (like stock limits), STOP.
+      if (err.message && (err.message.includes("Insufficient") || err.message.includes("Invalid"))) {
+          alert(err.message);
+          return; 
+      }
+      
+      // Fallback for actual connection or server unavailability
       if (shopPhone && (!planAccess.isFree || !isOnline)) {
         const fallbackMessage = buildWhatsAppMessage(shopName, session?.table, items, "OFFLINE", total, discountAmount, activeCoupon?.code, !isOnline, identity.name, identity.phone);
         const fallbackLink = buildWhatsAppLink(shopPhone, fallbackMessage);

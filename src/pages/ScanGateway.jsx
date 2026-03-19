@@ -67,14 +67,43 @@ export default function ScanGateway() {
      // 2. Log Telemetry Event (Fire and Forget)
      logEvent("qr_scanned", qrId, node.shop_id, navigator.userAgent, {
         visit_id: visit?.visit_id || null,
-        campaign_id: node.campaign_id || null, // Track campaign engagement
+        campaign_id: node.campaign_id || null,
      }).catch((err) => console.error("Telemetry failed:", err));
 
-     // 3. Resolve Behavior based on Standardized Actions
+     // 3. Dynamic QR — Time-Based Routing (Phase 46)
+     if (node.opens_at || node.closes_at) {
+       const now = new Date();
+       const toMinutes = (t) => {
+         if (!t) return null;
+         const [h, m] = t.split(":").map(Number);
+         return h * 60 + m;
+       };
+       const currentMinutes = now.getHours() * 60 + now.getMinutes();
+       const opensAtMinutes = toMinutes(node.opens_at);
+       const closesAtMinutes = toMinutes(node.closes_at);
+
+       const isOpen = (
+         (opensAtMinutes !== null && closesAtMinutes !== null)
+           ? currentMinutes >= opensAtMinutes && currentMinutes < closesAtMinutes
+           : true
+       );
+
+       if (!isOpen) {
+         const msg = node.closed_message || "We are currently closed. Please come back during our business hours!";
+         const opens = node.opens_at ? node.opens_at.slice(0,5) : null;
+         const closes = node.closes_at ? node.closes_at.slice(0,5) : null;
+         setError(`${msg}${opens && closes ? ` (We're open ${opens} – ${closes})` : ""}`);
+         return;
+       }
+     }
+
+     // 4. Resolve Behavior based on Standardized Actions
+     const categoryParam = node.category_filter ? `?category=${encodeURIComponent(node.category_filter)}` : "";
+
      switch (node.action) {
         case 'open_menu':
           createQrSession(node.shop_id, node.location);
-          navigate("/menu", { replace: true });
+          navigate(`/menu${categoryParam}`, { replace: true });
           break;
           
         case 'open_order':

@@ -1,5 +1,5 @@
 const SESSION_KEY = "qr_session";
-const SESSION_EXPIRY_MINUTES = 60; // Extended to 60 for better session tracking
+const SESSION_EXPIRY_MINUTES = 240; // Extended to 4 hours for better session tracking
 
 const DEVICE_ID_KEY = "qr_platform_device_id";
 

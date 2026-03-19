@@ -25,50 +25,37 @@ export async function createOrder(shopId, tableId, items, totalPrice, discountAm
     };
   }
 
-  const { data: order, error: orderError } = await supabase
-    .from("orders")
-    .insert({
-      shop_id: shopId,
-      table_id: tableId, // make sure to include this
-      total_price: totalPrice,
-      discount_amount: discountAmount,
-      coupon_code: couponCode,
-      client_name: clientName,
-      client_phone: clientPhone,
-      parent_order_id: parentOrderId,
-      fulfillment_type: fulfillmentType,
-      delivery_address: deliveryAddress,
-      delivery_fee_charged: deliveryFeeCharged,
-      status: "pending_payment",
-    })
-    .select()
-    .single();
+  const payload = {
+    shop_id: shopId,
+    table_id: tableId,
+    total_price: totalPrice,
+    discount_amount: discountAmount,
+    coupon_code: couponCode,
+    client_name: clientName,
+    client_phone: clientPhone,
+    parent_order_id: parentOrderId,
+    fulfillment_type: fulfillmentType,
+    delivery_address: deliveryAddress,
+    delivery_fee_charged: deliveryFeeCharged,
+    items: items.map(i => ({ id: i.id, quantity: i.quantity }))
+  };
 
-  if (orderError) {
-    console.error("Error creating order:", orderError);
-    throw orderError; // Throw instead of returning null to trigger fallbacks
-  }
+  const { data: orderId, error: rpcError } = await supabase.rpc('checkout_cart', { payload });
 
-  // Insert order items
-  const orderItems = items.map((item) => ({
-    order_id: order.id,
-    menu_item_id: item.id,
-    quantity: item.quantity,
-    price: item.price,
-  }));
-
-  const { error: itemsError } = await supabase
-    .from("order_items")
-    .insert(orderItems);
-
-  if (itemsError) {
-    console.error("Error creating order items:", itemsError);
+  if (rpcError) {
+    console.error("Secure Checkout Error:", rpcError);
+    // Suppress general cryptic errors but pass through readable ones like "Insufficient stock"
+    if (rpcError.message.includes("Insufficient") || rpcError.message.includes("Invalid")) {
+      throw new Error(rpcError.message);
+    }
+    throw new Error("Unable to complete checkout at this time. Please try again.");
   }
 
   // Track in analytics
   await trackOrder(shopId, tableId, items, totalPrice);
 
-  return order;
+  // Return a shell mimicking the old return object for frontend compatibility
+  return { id: orderId };
 }
 
 /**

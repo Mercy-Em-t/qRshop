@@ -101,6 +101,63 @@ export default function AdminReport() {
       )
     },
     {
+      id: "threat_model",
+      title: "Threat Model & Anti-Sabotage",
+      date: "System Security Desk",
+      author: "Red Team Diagnostics",
+      icon: "🛡️",
+      content: (
+        <div className="space-y-6">
+           <div className="flex gap-2 text-sm text-yellow-700 font-medium mb-4">
+              <span className="bg-yellow-100 border border-yellow-200 px-2 py-1 rounded">Status: Mitigated (Phase 47)</span>
+              <span className="bg-gray-100 border border-gray-200 text-gray-700 px-2 py-1 rounded">Vectors: 3 Analyzed</span>
+           </div>
+           
+           <p className="text-gray-700 leading-relaxed">
+              <strong>Sabotage Assessment:</strong> A deployed commerce ecosystem is an inevitable target for malicious actors. The following vectors detail how hackers previously could have attacked the system, and how the core architecture now neutralizes them.
+           </p>
+
+           <div className="space-y-4 text-sm mt-4">
+              <div className="bg-white border text-gray-800 border-gray-200 p-5 rounded-2xl shadow-sm">
+                 <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+                    1. The Free-Cart Injection (Tampered Prices)
+                 </h4>
+                 <p className="text-sm leading-relaxed mb-2">
+                    <strong>The Hack:</strong> A malicious user uses Chrome DevTools to edit their frontend React state, changing a "KSh 500 Burger" to cost "KSh 0", and submits the checkout payload to bypass payment requirements.
+                 </p>
+                 <p className="text-sm leading-relaxed text-indigo-700">
+                    <strong>The Defense (RPC Checkout):</strong> The database completely ignores frontend pricing data. The `checkout_cart` Postgres function manually queries the source of truth (`menu_items.price`) via the item IDs and calculates the mathematical total securely out of the hacker's reach.
+                 </p>
+              </div>
+
+              <div className="bg-white border text-gray-800 border-gray-200 p-5 rounded-2xl shadow-sm">
+                 <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+                    2. Inventory Manipulation & Negative Orders
+                 </h4>
+                 <p className="text-sm leading-relaxed mb-2">
+                    <strong>The Hack:</strong> A hacker orders a "Quantity: -10" of an expensive item to mathematically refund themselves, or orders 10,000 artificial items to wipe out a competitor shop's digital stock.
+                 </p>
+                 <p className="text-sm leading-relaxed text-indigo-700">
+                    <strong>The Defense (Data Boundaries & Soft Limits):</strong> The database constraints `CHECK (quantity &gt; 0)` mathematically block negative quantities on insertion. As for stock exhaustion, we deployed <em>Soft Limits</em>—the database handles the math (even into negative integers) but still passes the order payload to the Shop Owner's WhatsApp natively, allowing the physical human operator to assess if they are actually out of stock or if it was an attack.
+                 </p>
+              </div>
+
+              <div className="bg-white border text-gray-800 border-gray-200 p-5 rounded-2xl shadow-sm">
+                 <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
+                    3. Impatient Double-Click Polling (Denial of Service)
+                 </h4>
+                 <p className="text-sm leading-relaxed mb-2">
+                    <strong>The Hack:</strong> A user clicks the "Checkout" button very fast 50 times during a slow 3G connection, writing 50 duplicate orders to the database.
+                 </p>
+                 <p className="text-sm leading-relaxed text-indigo-700">
+                    <strong>The Defense (Client-Side Cart Hashing):</strong> The `Order.jsx` module fingerprints the cart layout via JSON stringification. If an identical cart is submitted within 30 seconds, the client layer natively blocks the submission network request, preventing database pollution.
+                 </p>
+              </div>
+           </div>
+        </div>
+      )
+    },
+    {
       id: "security",
       title: "Automated Security Audit (Action Required)",
       date: "CRITICAL: ONGOING",
@@ -144,9 +201,9 @@ export default function AdminReport() {
       content: (
         <div className="space-y-6">
            <div className="bg-indigo-50 border border-indigo-200 p-6 rounded-2xl mb-6 shadow-sm">
-             <h3 className="font-black text-indigo-900 text-xl mb-4">Unit Analytics: What does a Shop cost us?</h3>
+             <h3 className="font-black text-indigo-900 text-xl mb-4">Unit Analytics & Infrastructure Costs</h3>
              <p className="text-gray-700 leading-relaxed mb-4">
-               The V3 system is compiled on edge-serverless architecture (Vercel + Supabase). We pay exactly <strong>$0.00</strong> for idle time. Costs trigger exclusively upon dynamic engagement (scans).
+               The V3 system is compiled on edge-serverless architecture (Vercel + Supabase). We pay exactly <strong>$0.00</strong> for idle time. Costs trigger exclusively upon dynamic engagement (scans) and API dispatch.
              </p>
 
              <div className="space-y-3">
@@ -189,11 +246,45 @@ export default function AdminReport() {
                 <p className="text-sm leading-relaxed mb-3">
                    If a premium shop processes 10,000 scans per month, their physical gravity cost is <strong>$0.90 USD</strong>.
                 </p>
-                <p className="text-sm leading-relaxed font-bold">
-                   If the Pro Subscription costs $15.00, our Gross Software Margin stands at 94.0%.
-                </p>
-             </div>
-           </div>
+                 <p className="text-sm leading-relaxed font-bold">
+                    If the Pro Subscription costs $15.00, our Gross Software Margin stands at 94.0%.
+                 </p>
+              </div>
+            </div>
+
+            {/* WhatsApp & M-Pesa Cost Model */}
+            <div className="bg-white border text-gray-800 border-gray-200 p-6 rounded-2xl mb-6 shadow-sm mt-6">
+              <h3 className="font-black text-gray-900 text-lg mb-4 flex items-center gap-2">
+                 <span>📞</span> 3rd Party API Cost Pass-Through Model
+              </h3>
+              
+              <div className="space-y-4">
+                 <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                    <h4 className="font-bold text-blue-900 mb-2">WhatsApp Cloud API (Meta)</h4>
+                    <p className="text-sm text-blue-800 mb-3">
+                       Meta charges per 24-hour conversation window. Utility conversations (Order dispatched to shop) cost approx <strong>KES 1.50 per conversation</strong> in Kenya.
+                    </p>
+                    <ul className="text-xs text-blue-700 space-y-1 list-disc list-inside">
+                       <li>If a Pro shop receives 10 orders/day → ~300 convos/month = <strong>KES 450/mo</strong> direct Meta cost.</li>
+                       <li>If a Business shop receives 50 orders/day → ~1,500 convos/month = <strong>KES 2,250/mo</strong> direct Meta cost.</li>
+                    </ul>
+                    <p className="text-xs font-bold text-blue-900 mt-3 pt-3 border-t border-blue-200">
+                       Recommendation: Ensure Pro/Business tier pricing (e.g., KES 2,499 & 4,999) safely absorbs this API floor.
+                    </p>
+                 </div>
+
+                 <div className="p-4 bg-green-50 border border-green-100 rounded-xl">
+                    <h4 className="font-bold text-green-900 mb-2">M-Pesa Daraja STK Push</h4>
+                    <p className="text-sm text-green-800 mb-3">
+                       Safaricom does not charge for STK push initiation. Revenue is collected via our platform commission slice (e.g., 5%) upon successful settlement.
+                    </p>
+                    <ul className="text-xs text-green-700 space-y-1 list-disc list-inside">
+                       <li>Cost to System per STK payload: <strong>KES 0.00</strong></li>
+                       <li>Settlement B2B auto-transfer (Future Phase): <strong>KES 15.00 - 45.00</strong> per bulk payout.</li>
+                    </ul>
+                 </div>
+              </div>
+            </div>
         </div>
       )
     },

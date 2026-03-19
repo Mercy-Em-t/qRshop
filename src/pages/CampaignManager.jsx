@@ -13,6 +13,7 @@ export default function CampaignManager() {
 
   const [metrics, setMetrics] = useState({});
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
   const [newCampaign, setNewCampaign] = useState({
     name: "",
     reward_type: "discount",
@@ -54,6 +55,17 @@ export default function CampaignManager() {
 
   const handleToggleActive = async (camp) => {
     await updateCampaign(camp.id, { is_active: !camp.is_active });
+  };
+
+  const handleCopyLink = (camp) => {
+    // Build an auto-cart promo link — a campaign link opens the Campaign landing page
+    // For bundle-type campaigns in the future, this would use /auto-cart
+    const baseUrl = window.location.origin;
+    const link = `${baseUrl}/campaign?promo=${camp.reward_value?.code || camp.id}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopiedId(camp.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
   };
 
   return (
@@ -120,6 +132,18 @@ export default function CampaignManager() {
                       </span>
                     </div>
 
+                     <div className="mt-3 pt-3 border-t border-gray-100">
+                       <button
+                         onClick={() => handleCopyLink(camp)}
+                         className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition ${
+                           copiedId === camp.id
+                             ? 'bg-green-100 text-green-700'
+                             : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                         }`}
+                       >
+                         {copiedId === camp.id ? '✅ Link Copied!' : '🔗 Copy Share Link'}
+                       </button>
+                     </div>
                     <div className="grid grid-cols-2 gap-4 mt-auto pt-4 border-t border-gray-100">
                       <div>
                         <p className="text-gray-500 text-xs font-medium uppercase tracking-wider">Total Claims</p>
@@ -161,12 +185,13 @@ export default function CampaignManager() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Reward Type</label>
-                  <select
+                   <select
                     value={newCampaign.reward_type}
                     onChange={(e) => setNewCampaign({...newCampaign, reward_type: e.target.value})}
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:outline-none"
                   >
                     <option value="discount">Discount Percentage</option>
+                    <option value="bundle">Product Bundle Deal</option>
                   </select>
                 </div>
                 <div>
