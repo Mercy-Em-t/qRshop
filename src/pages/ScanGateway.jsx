@@ -107,12 +107,14 @@ export default function ScanGateway() {
           break;
           
         case 'open_order':
-          createQrSession(node.shop_id, node.location);
-          if (node.location && node.location.length === 36 && node.location.includes('-')) {
-             // It's a semantic Product link! Forward immediately to AutoCart.
-             navigate(`/buy?shop=${node.shop_id}&items=${node.location}:1`, { replace: true });
+          if (node.location && node.location.startsWith('AD:')) {
+             // It's a hidden, semantic digital Ad Link! Forward immediately to AutoCart.
+             const payload = node.location.substring(3);
+             createQrSession(node.shop_id, "Direct Link");
+             navigate(`/buy?shop=${node.shop_id}&items=${payload}:1`, { replace: true });
           } else {
-             // Standard shop table checkout
+             // Standard shop table physical QR checkout
+             createQrSession(node.shop_id, node.location);
              navigate("/cart", { replace: true });
           }
           break;

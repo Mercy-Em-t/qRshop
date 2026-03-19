@@ -76,7 +76,7 @@ export default function Menu() {
       <header className="bg-white shadow-sm sticky top-0 z-20">
         {/* Shop Identity Bar */}
         <div className="bg-green-700 text-white px-4 py-3 flex items-center gap-3 justify-between">
-          <Link to={shop?.id ? `/p/${shop.id}` : '#'} className="flex w-full items-center gap-3 active:opacity-75 transition-opacity">
+          <Link to={shop?.id ? `/shops/${shop.id}` : '#'} className="flex w-full items-center gap-3 active:opacity-75 transition-opacity">
             {shop?.logo_url ? (
               <img
                 src={shop.logo_url}

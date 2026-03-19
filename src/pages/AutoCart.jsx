@@ -19,11 +19,14 @@ export default function AutoCart() {
   useEffect(() => {
     async function seedCart() {
       try {
-        let shopId = searchParams.get("shop");
-        let itemsParam = searchParams.get("items");
+        let urlShopId = searchParams.get("shop");
+        let urlItemsParam = searchParams.get("items");
         const promoCode = searchParams.get("promo");
         const name = searchParams.get("name");
         const singleItemId = searchParams.get("i");
+        
+        // We track the active ID in outer scope for the catch block fallback
+        let activeShopId = urlShopId;
 
         // Handle ultra-short link format: ?i=ITEM_ID
         if (singleItemId) {
@@ -33,14 +36,16 @@ export default function AutoCart() {
               .select("shop_id, name, id")
               .eq("id", fullUuid)
               .single();
-           if (!itemErr && itemData) {
-              shopId = itemData.shop_id;
-              itemsParam = `${itemData.id}:1`;
-              if (!name) setBundleName(itemData.name);
-           }
+           
+           if (itemErr || !itemData) throw new Error(`Product lookup failed: ${itemErr?.message || 'Item disabled or removed. (ID: ' + fullUuid + ')'}`);
+           
+           urlShopId = itemData.shop_id;
+           activeShopId = itemData.shop_id; // Cache for fallback catch block
+           urlItemsParam = `${itemData.id}:1`;
+           if (!name) setBundleName(itemData.name);
         }
 
-        if (!shopId || !itemsParam) throw new Error("Invalid link — missing shop or items.");
+        if (!urlShopId || !urlItemsParam) throw new Error(`Invalid link — missing shop or items. (shopId: ${urlShopId})`);
 
         if (!singleItemId) setBundleName(name ? decodeURIComponent(name) : "Special Offer");
 
@@ -48,16 +53,16 @@ export default function AutoCart() {
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
           .select("id, name, is_online")
-          .eq("id", shopId)
+          .eq("id", urlShopId)
           .single();
 
-        if (shopErr || !shop) throw new Error("This shop could not be found.");
+        if (shopErr || !shop) throw new Error(`This shop could not be found: ${shopErr?.message || 'Store deleted.'}`);
         if (!shop.is_online) throw new Error(`${shop.name} is currently offline.`);
 
         setShopName(shop.name);
 
         // 2. Parse items: "id1:2,id2:1"
-        const parsedItems = itemsParam.split(",").map(chunk => {
+        const parsedItems = urlItemsParam.split(",").map(chunk => {
           const [id, qty] = chunk.split(":");
           return { id: id.trim(), qty: parseInt(qty) || 1 };
         });
@@ -69,16 +74,16 @@ export default function AutoCart() {
           .from("menu_items")
           .select("id, name, price, image_url, category")
           .in("id", itemIds)
-          .eq("shop_id", shopId);
+          .eq("shop_id", urlShopId);
 
-        if (prodErr) throw new Error("Could not load products.");
+        if (prodErr) throw new Error(`Could not load products: ${prodErr.message}`);
 
         // 4. Set QR session for this shop
         const sessionKey = "qrshop_session";
         const existingSession = JSON.parse(localStorage.getItem(sessionKey) || "{}");
         localStorage.setItem(sessionKey, JSON.stringify({
           ...existingSession,
-          shopId,
+          shopId: urlShopId,
           table: "Direct Link",
           expiresAt: Date.now() + 4 * 60 * 60 * 1000
         }));
@@ -106,10 +111,17 @@ export default function AutoCart() {
         console.error("AutoCart error:", err);
         setError(err.message || "Something went wrong loading this link.");
         
-        // If we know the shop ID from the URL, gracefully route them to the menu instead of dead-ending.
-        const fallbackShop = searchParams.get("shop");
-        if (fallbackShop) {
-           window.location.href = `/menu?shop=${fallbackShop}`;
+        // If we know the shop ID, gracefully route them to the menu instead of dead-ending.
+        if (activeShopId) {
+           const sessionKey = "qrshop_session";
+           const existingSession = JSON.parse(localStorage.getItem(sessionKey) || "{}");
+           localStorage.setItem(sessionKey, JSON.stringify({
+             ...existingSession,
+             shopId: activeShopId,
+             table: "Fallback Redirect",
+             expiresAt: Date.now() + 4 * 60 * 60 * 1000
+           }));
+           window.location.href = `/menu`;
            return;
         }
         

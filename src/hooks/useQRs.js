@@ -50,6 +50,7 @@ export function useQRs(shopId) {
         .from('qrs')
         .select('*')
         .eq('shop_id', shopId)
+        .not('location', 'ilike', 'AD:%')
         .order('created_at', { ascending: false });
         
       isResolved = true;
