@@ -288,7 +288,7 @@ export default function AdminBooklet() {
         </div>
       </header>
 
-      <div className="flex-1 flex max-w-6xl mx-auto w-full">
+      <div className="flex-1 flex flex-col md:flex-row max-w-6xl mx-auto w-full">
         {/* Sidebar */}
         <aside className="w-64 shrink-0 bg-white border-r border-gray-100 hidden md:block sticky top-[65px] self-start h-[calc(100vh-65px)] overflow-y-auto">
           <nav className="p-4 space-y-1">

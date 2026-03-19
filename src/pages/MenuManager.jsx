@@ -717,7 +717,7 @@ export default function MenuManager() {
                       <button
                         onClick={() => {
                           const baseUrl = window.location.origin;
-                          const link = `${baseUrl}/auto-cart?shop=${item.shop_id}&items=${item.id}:1&name=${encodeURIComponent(item.name)}`;
+                          const link = `${baseUrl}/buy?i=${item.id}`;
                           navigator.clipboard.writeText(link);
                           alert("Ad Link copied! Paste this in your WhatsApp or Facebook ad.");
                         }}

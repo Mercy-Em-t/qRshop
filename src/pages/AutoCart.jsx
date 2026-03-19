@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
-import { useCart } from "../hooks/useCart";
+import { useCart } from "../hooks/use-cart";
 
 // AutoCart — Pre-populate cart from a share link and redirect to cart
 // URL format: /auto-cart?shop=SHOP_ID&items=ITEM_ID:QTY,ITEM_ID2:QTY&promo=CODE&name=Bundle+Name
@@ -18,14 +18,29 @@ export default function AutoCart() {
   useEffect(() => {
     async function seedCart() {
       try {
-        const shopId = searchParams.get("shop");
-        const itemsParam = searchParams.get("items");
+        let shopId = searchParams.get("shop");
+        let itemsParam = searchParams.get("items");
         const promoCode = searchParams.get("promo");
         const name = searchParams.get("name");
+        const singleItemId = searchParams.get("i");
+
+        // Handle ultra-short link format: ?i=ITEM_ID
+        if (singleItemId) {
+           const { data: itemData, error: itemErr } = await supabase
+              .from("menu_items")
+              .select("shop_id, name")
+              .eq("id", singleItemId)
+              .single();
+           if (!itemErr && itemData) {
+              shopId = itemData.shop_id;
+              itemsParam = `${singleItemId}:1`;
+              if (!name) setBundleName(itemData.name);
+           }
+        }
 
         if (!shopId || !itemsParam) throw new Error("Invalid link — missing shop or items.");
 
-        setBundleName(name ? decodeURIComponent(name) : "Special Offer");
+        if (!singleItemId) setBundleName(name ? decodeURIComponent(name) : "Special Offer");
 
         // 1. Validate the shop exists and is online
         const { data: shop, error: shopErr } = await supabase
