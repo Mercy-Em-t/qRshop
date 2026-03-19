@@ -34,6 +34,8 @@ export default function MyOrders() {
             )
           `)
           .in('id', historyIds)
+          .neq('status', 'archived')
+          .neq('status', 'stk_pushed')
           .order('created_at', { ascending: false });
 
         if (!error && data) {
@@ -114,9 +116,13 @@ export default function MyOrders() {
                        )}
                     </div>
 
-                    <div className="pt-3 border-t border-gray-50 flex justify-between items-center text-sm">
+                    <div className="pt-3 pb-1 border-t border-gray-50 flex justify-between items-center text-sm">
                        <span className="text-gray-500 font-medium">Total</span>
                        <span className="font-bold text-gray-900">KSh {order.total_price}</span>
+                    </div>
+
+                    <div className="mt-2 text-center py-2 bg-gray-50 rounded-lg text-green-700 text-xs font-bold group-hover:bg-green-50 transition-colors">
+                       View Full Details →
                     </div>
                  </Link>
               );

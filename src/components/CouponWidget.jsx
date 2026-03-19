@@ -52,6 +52,7 @@ export default function CouponWidget({ shopPlan }) {
     // Hide the widget completely after the success animation
     setTimeout(() => {
       setIsVisible(false);
+      setIsClaimed(false);
     }, 2000);
   };
 
