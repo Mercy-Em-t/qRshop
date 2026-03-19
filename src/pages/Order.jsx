@@ -261,15 +261,28 @@ export default function Order() {
          localStorage.setItem('qr_customer_name', identity.name);
          localStorage.setItem('qr_customer_phone', identity.phone);
          
-         // Phase 24/26 Feature Gating: 
-         // Basic tier and above get tracking. Free tier is handled separately via handleFreeTierCheckout.
-         // (If an order was somehow generated here by Free, we would force them to just view tracking without WA).
-         if (!planAccess.isBasic && isOnline) {
-             console.log("Free tier checkout recorded. Skipping structured notification.");
-             return;
+         // Phase 44: Automated WhatsApp API Dispatch for Pro/Business Teams
+         if ((planAccess.isPro || planAccess.isBusiness) && isOnline && shopPhone) {
+             console.log("Dispatching automated Meta WhatsApp template...");
+             const { error: dispatchErr } = await supabase.functions.invoke('whatsapp-dispatch', {
+                 body: { 
+                     order_id: order.id,
+                     shop_phone: shopPhone,
+                     customer_name: identity.name,
+                     total: finalPayableTotal,
+                     summary: items.map(i => `${i.quantity}x ${i.name}`).join(", ")
+                 }
+             });
+
+             if (!dispatchErr) {
+                 clearCart();
+                 navigate(`/track/${order.id}`);
+                 return; // Stop execution, system automated the prompt successfully!
+             }
+             console.warn("Automated WA dispatch failed, falling back to manual wa.me", dispatchErr);
          }
 
-         // For Basic+ users (or offline queue fallbacks), we construct the message here
+         // For Basic users (or if automated dispatch failed fallback), we construct the manual message here
          if (shopPhone) {
              const finalMessage = buildWhatsAppMessage(shopName, session?.table, items, order.id, total, discountAmount, activeCoupon?.code, !isOnline, identity.name, identity.phone);
              const finalLink = buildWhatsAppLink(shopPhone, finalMessage);

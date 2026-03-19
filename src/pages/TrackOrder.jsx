@@ -193,6 +193,16 @@ export default function TrackOrder() {
            </div>
         </section>
         
+        {order.status === 'rejected' && (
+           <div className="bg-red-50 border border-red-200 p-6 rounded-xl text-center shadow-sm">
+             <h3 className="font-bold text-red-800 mb-2">Want to change your order?</h3>
+             <p className="text-red-600 text-sm mb-4 leading-relaxed">You can review your items, remove unavailable ones, and easily resubmit without checking out from scratch.</p>
+             <Link to={`/edit-order/${order.id}`} className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm transition inline-block w-full">
+                Review & Edit Cart
+             </Link>
+           </div>
+        )}
+        
         <p className="text-center text-xs text-gray-400 mt-8">
            This page updates automatically.
         </p>
