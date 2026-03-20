@@ -1,7 +1,16 @@
 -- ==========================================
 --  QR SHOP PLATFORM V3
---  Phase 7: Advanced Progressive KYC Matrix (Regenerated)
+--  Phase 7: Advanced Progressive KYC Matrix (Idempotent Migration)
 -- ==========================================
+
+-- 0. CLEAN SLATE FOR UPGRADE (Since you ran the V1 script earlier)
+DROP TABLE IF EXISTS public.shop_kyc CASCADE;
+DROP TYPE IF EXISTS kyc_tier CASCADE;
+DROP TYPE IF EXISTS business_structure CASCADE;
+DROP TYPE IF EXISTS store_deployment CASCADE;
+DROP TYPE IF EXISTS business_category CASCADE;
+DROP TYPE IF EXISTS price_bracket CASCADE;
+DROP TYPE IF EXISTS risk_bracket CASCADE;
 
 -- 1. Create strict Enum types for data integrity
 CREATE TYPE kyc_tier AS ENUM ('tier1', 'tier2', 'tier3', 'suspended', 'rejected', 'pending');
@@ -12,7 +21,7 @@ CREATE TYPE price_bracket AS ENUM ('low', 'mid', 'high');
 CREATE TYPE risk_bracket AS ENUM ('low', 'medium', 'high');
 
 -- 2. Create the exhaustive KYC Table
-CREATE TABLE IF NOT EXISTS public.shop_kyc (
+CREATE TABLE public.shop_kyc (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     shop_id UUID REFERENCES public.shops(id) ON DELETE CASCADE UNIQUE NOT NULL,
     
@@ -34,11 +43,12 @@ CREATE TABLE IF NOT EXISTS public.shop_kyc (
     bank_account_name TEXT,
 
     -- Tier 2: Business & Operations
-    business_name TEXT,
+    legal_business_name TEXT,
     business_type business_structure,
-    business_reg_no TEXT,
+    business_reg_number TEXT,
     kra_pin TEXT,
-    reg_cert_url TEXT,
+    director_id_url TEXT,
+    business_permit_url TEXT,
     kra_cert_url TEXT,
     shop_description TEXT,
     
@@ -58,7 +68,7 @@ CREATE TABLE IF NOT EXISTS public.shop_kyc (
     accepted_terms BOOLEAN DEFAULT false,
 
     -- Invisible Admin / Internal Flags
-    kyc_status kyc_tier DEFAULT 'tier1',
+    verification_status kyc_tier DEFAULT 'tier1',
     risk_level risk_bracket DEFAULT 'low',
     flag_high_volume BOOLEAN DEFAULT false,
     flag_refund_abuse BOOLEAN DEFAULT false,
@@ -91,7 +101,10 @@ INSERT INTO storage.buckets (id, name, public)
 VALUES ('shop-documents', 'shop-documents', false)
 ON CONFLICT (id) DO NOTHING;
 
--- 5. Bucket Security Policies
+-- 5. Bucket Security Policies (Safely dropping if they exist first)
+DROP POLICY IF EXISTS "Allow authenticated uploads to shop-documents" ON storage.objects;
+DROP POLICY IF EXISTS "Allow authenticated reads on shop-documents" ON storage.objects;
+
 CREATE POLICY "Allow authenticated uploads to shop-documents"
 ON storage.objects FOR INSERT
 TO authenticated

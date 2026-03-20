@@ -67,9 +67,15 @@ export default function Admin() {
            });
         }
 
+        // --- CRITICAL SECURITY TODOS ---
         newAlerts.push({
-            type: "info", title: "3 System Configurations Pending",
-            desc: "Finish setting up Production APIs (M-Pesa, WhatsApp Cloud, SMTP).", link: "/admin/todo"
+            type: "warning", title: "M-Pesa Webhook Vulnerable",
+            desc: "ACTION REQUIRED: Add MPESA_WEBHOOK_SECRET to Supabase Edge Functions to prevent DDoS STK Spam.", link: "#"
+        });
+
+        newAlerts.push({
+            type: "error", title: "Admin Account Hijack Risk",
+            desc: "ACTION REQUIRED: Enable Mandatory MFA (2-Factor Authentication) in your Supabase Auth Settings immediately.", link: "#"
         });
 
         setMetrics({

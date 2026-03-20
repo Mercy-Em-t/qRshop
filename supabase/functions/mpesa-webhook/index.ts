@@ -8,6 +8,16 @@ serve(async (req) => {
   }
 
   try {
+    // SECURITY: Validate Webhook Secret Token to prevent spoofing/DDoS
+    const url = new URL(req.url)
+    const providedSecret = url.searchParams.get('secret')
+    const expectedSecret = Deno.env.get('MPESA_WEBHOOK_SECRET')
+    
+    if (expectedSecret && providedSecret !== expectedSecret) {
+       console.error(`[SECURITY EVENT] Dropped unauthorized webhook hit from ${req.headers.get('x-forwarded-for') || 'unknown IP'}`)
+       return new Response("Unauthorized", { status: 401 })
+    }
+
     const payload = await req.json()
     console.log("M-Pesa Webhook Payload:", JSON.stringify(payload, null, 2))
 

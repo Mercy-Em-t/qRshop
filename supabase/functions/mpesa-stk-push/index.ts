@@ -71,7 +71,10 @@ serve(async (req) => {
     if (safePhone.startsWith('0')) safePhone = '254' + safePhone.substring(1)
 
     // 6. Push to STK
-    const callbackUrl = `${supabaseUrl}/functions/v1/mpesa-webhook`
+    const webhookSecret = Deno.env.get('MPESA_WEBHOOK_SECRET')
+    const callbackUrl = webhookSecret 
+        ? `${supabaseUrl}/functions/v1/mpesa-webhook?secret=${webhookSecret}`
+        : `${supabaseUrl}/functions/v1/mpesa-webhook`
     
     const stkPayload = {
       BusinessShortCode: shortcode,
