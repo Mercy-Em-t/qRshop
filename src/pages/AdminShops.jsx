@@ -128,7 +128,7 @@ export default function AdminShops() {
 
   const handleProcessKYC = async (kycId, approved) => {
      try {
-        const newStatus = approved ? "approved" : "rejected";
+        const newStatus = approved ? "tier3" : "rejected";
         const { error: reqErr } = await supabase.from("shop_kyc").update({ verification_status: newStatus }).eq("id", kycId);
         if (reqErr) throw reqErr;
         
@@ -285,8 +285,13 @@ export default function AdminShops() {
                        <div key={req.id} className="bg-white rounded-lg p-4 shadow-sm border border-blue-100 flex flex-col gap-3">
                           <div className="flex justify-between items-start">
                              <div>
-                                <p className="font-bold text-gray-800">{req.legal_business_name} <span className="text-xs text-gray-500 font-normal">({req.shops?.name})</span></p>
-                                <p className="text-xs text-gray-500 mt-1">KRA PIN: <span className="font-mono bg-gray-100 px-1">{req.kra_pin}</span> | Reg No: <span className="font-mono bg-gray-100 px-1">{req.business_reg_number || 'N/A'}</span></p>
+                                <p className="font-bold text-gray-800 uppercase">{req.legal_business_name} <span className="text-xs text-gray-500 font-normal normal-case">({req.shops?.name})</span></p>
+                                <div className="text-xs text-gray-600 mt-2 space-y-1">
+                                   <p>🏢 <span className="font-bold">Structure:</span> {req.business_type} | <span className="font-bold">Loc:</span> {req.county_city} | <span className="font-bold">Type:</span> {req.store_type}</p>
+                                   <p>🧾 <span className="font-bold">KRA PIN:</span> <span className="font-mono bg-gray-100 px-1">{req.kra_pin}</span> | <span className="font-bold">Reg No:</span> <span className="font-mono bg-gray-100 px-1">{req.business_reg_number || 'N/A'}</span></p>
+                                   <p>👤 <span className="font-bold">Owner:</span> {req.owner_full_name} | <span className="font-bold">ID:</span> {req.owner_national_id} | <span className="font-bold">Tel:</span> {req.owner_phone}</p>
+                                   <p>💸 <span className="font-bold">M-Pesa Payout:</span> {req.mpesa_phone} ({req.mpesa_account_name})</p>
+                                </div>
                              </div>
                              <div className="flex gap-2">
                                 <button onClick={() => handleProcessKYC(req.id, false)} className="px-3 py-1.5 bg-red-50 text-red-600 font-bold text-xs rounded-md hover:bg-red-100 transition cursor-pointer">Reject</button>

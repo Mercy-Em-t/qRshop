@@ -28,9 +28,12 @@ export default function Settings() {
 
   // KYC States
   const [kycData, setKycData] = useState({
-    legal_business_name: "", kra_pin: "", business_reg_number: "",
+    legal_business_name: "", business_type: "individual", business_reg_number: "", kra_pin: "",
+    county_city: "", store_type: "online_only",
+    owner_full_name: "", owner_phone: "", owner_national_id: "",
+    mpesa_phone: "", mpesa_account_name: "", bank_name: "", bank_account_no: "",
     director_id_url: "", business_permit_url: "", kra_cert_url: "",
-    verification_status: "incomplete"
+    verification_status: "tier1"
   });
   const [kycSaving, setKycSaving] = useState(false);
   const [kycUploading, setKycUploading] = useState({ director_id_url: false, business_permit_url: false, kra_cert_url: false });
@@ -83,7 +86,7 @@ export default function Settings() {
            setKycData(kyc);
         } else {
            // Insert a placeholder to prevent upsert conflicts
-           await supabase.from("shop_kyc").insert({ shop_id: shopId, legal_business_name: "Pending", kra_pin: "Pending", verification_status: "incomplete" }).select().single();
+           await supabase.from("shop_kyc").insert({ shop_id: shopId, legal_business_name: "Pending", kra_pin: "Pending", verification_status: "tier1" }).select().single();
         }
       }
       setLoading(false);
@@ -573,7 +576,7 @@ export default function Settings() {
                 <p className="text-sm text-gray-500 mt-1">Required to unlock unrestricted M-Pesa payouts and limits.</p>
              </div>
              <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase ${
-               kycData.verification_status === 'approved' ? 'bg-green-100 text-green-800' :
+               ['tier3', 'approved'].includes(kycData.verification_status) ? 'bg-green-100 text-green-800' :
                kycData.verification_status === 'pending' ? 'bg-amber-100 text-amber-800' :
                kycData.verification_status === 'rejected' ? 'bg-red-100 text-red-800' :
                'bg-gray-100 text-gray-800'
@@ -583,18 +586,69 @@ export default function Settings() {
           </div>
           
           <form onSubmit={handleKycSubmit} className="space-y-6">
-             <div className="grid md:grid-cols-2 gap-5 pt-2 border-t border-gray-100">
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Legal Business Name</label>
-                  <input type="text" required value={kycData.legal_business_name} onChange={e => setKycData({...kycData, legal_business_name: e.target.value})} disabled={kycData.verification_status === 'approved'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50" />
+             {/* --- TIER 2: BUSINESS INFO --- */}
+             <div className="pt-2 border-t border-gray-100">
+                <h3 className="text-sm font-bold text-gray-800 mb-4">Tier 2: Business & Operations Profile</h3>
+                <div className="grid md:grid-cols-2 gap-5">
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Legal Business Name</label>
+                     <input type="text" required value={kycData.legal_business_name} onChange={e => setKycData({...kycData, legal_business_name: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50" />
+                   </div>
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Business Structure</label>
+                     <select value={kycData.business_type} onChange={e => setKycData({...kycData, business_type: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50">
+                        <option value="individual">Individual / Sole Proprietor</option>
+                        <option value="partnership">Partnership</option>
+                        <option value="company">Registered Company</option>
+                     </select>
+                   </div>
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Registration No. / Certificate No.</label>
+                     <input type="text" value={kycData.business_reg_number} onChange={e => setKycData({...kycData, business_reg_number: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50" />
+                   </div>
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Tax Details (KRA PIN)</label>
+                     <input type="text" required value={kycData.kra_pin} onChange={e => setKycData({...kycData, kra_pin: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono uppercase disabled:opacity-50" />
+                   </div>
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">County/City</label>
+                     <input type="text" required value={kycData.county_city} onChange={e => setKycData({...kycData, county_city: e.target.value})} disabled={kycData.verification_status === 'tier3'} placeholder="e.g. Nairobi" className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50" />
+                   </div>
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Store Deployment</label>
+                     <select value={kycData.store_type} onChange={e => setKycData({...kycData, store_type: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50">
+                        <option value="physical">Physical Brick & Mortar</option>
+                        <option value="online_only">Online Only</option>
+                        <option value="mobile_vendor">Mobile / Pop-up Vendor</option>
+                     </select>
+                   </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Business Registration No. / ID No.</label>
-                  <input type="text" value={kycData.business_reg_number} onChange={e => setKycData({...kycData, business_reg_number: e.target.value})} disabled={kycData.verification_status === 'approved'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50" />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Tax Details (KRA PIN)</label>
-                  <input type="text" required value={kycData.kra_pin} onChange={e => setKycData({...kycData, kra_pin: e.target.value})} disabled={kycData.verification_status === 'approved'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono uppercase disabled:opacity-50" />
+             </div>
+
+             {/* --- TIER 3: OWNER IDENTITY & FINANCIALS --- */}
+             <div className="pt-4 border-t border-gray-100">
+                <h3 className="text-sm font-bold text-gray-800 mb-4">Tier 3: Identity & Financials (Payout Unlock)</h3>
+                <div className="grid md:grid-cols-3 gap-5">
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Owner Full Name</label>
+                     <input type="text" value={kycData.owner_full_name} onChange={e => setKycData({...kycData, owner_full_name: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm disabled:opacity-50" />
+                   </div>
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">National ID Number</label>
+                     <input type="text" value={kycData.owner_national_id} onChange={e => setKycData({...kycData, owner_national_id: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm disabled:opacity-50" />
+                   </div>
+                   <div>
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Personal Phone</label>
+                     <input type="text" value={kycData.owner_phone} onChange={e => setKycData({...kycData, owner_phone: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm disabled:opacity-50" />
+                   </div>
+                   <div className="md:col-span-1">
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Payout M-Pesa Phone</label>
+                     <input type="text" value={kycData.mpesa_phone} onChange={e => setKycData({...kycData, mpesa_phone: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono disabled:opacity-50" />
+                   </div>
+                   <div className="md:col-span-2">
+                     <label className="block text-sm font-bold text-gray-700 mb-1.5">M-Pesa Registered Name</label>
+                     <input type="text" value={kycData.mpesa_account_name} onChange={e => setKycData({...kycData, mpesa_account_name: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm disabled:opacity-50" />
+                   </div>
                 </div>
              </div>
 
@@ -609,9 +663,9 @@ export default function Settings() {
                    </div>
                    <div className="flex items-center gap-3">
                       {kycData.director_id_url && <a href={kycData.director_id_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 font-bold hover:underline">View Uploaded</a>}
-                      <label className={`bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${kycData.verification_status === 'approved' ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <label className={`bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${kycData.verification_status === 'tier3' ? 'opacity-50 pointer-events-none' : ''}`}>
                          {kycUploading.director_id_url ? 'Uploading...' : 'Upload File'}
-                         <input type="file" accept="image/*,.pdf" className="hidden" disabled={kycData.verification_status === 'approved' || kycUploading.director_id_url} onChange={(e) => handleKycUpload(e, 'director_id_url')} />
+                         <input type="file" accept="image/*,.pdf" className="hidden" disabled={kycData.verification_status === 'tier3' || kycUploading.director_id_url} onChange={(e) => handleKycUpload(e, 'director_id_url')} />
                       </label>
                    </div>
                 </div>
@@ -624,9 +678,9 @@ export default function Settings() {
                    </div>
                    <div className="flex items-center gap-3">
                       {kycData.business_permit_url && <a href={kycData.business_permit_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 font-bold hover:underline">View Uploaded</a>}
-                      <label className={`bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${kycData.verification_status === 'approved' ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <label className={`bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${kycData.verification_status === 'tier3' ? 'opacity-50 pointer-events-none' : ''}`}>
                          {kycUploading.business_permit_url ? 'Uploading...' : 'Upload File'}
-                         <input type="file" accept="image/*,.pdf" className="hidden" disabled={kycData.verification_status === 'approved' || kycUploading.business_permit_url} onChange={(e) => handleKycUpload(e, 'business_permit_url')} />
+                         <input type="file" accept="image/*,.pdf" className="hidden" disabled={kycData.verification_status === 'tier3' || kycUploading.business_permit_url} onChange={(e) => handleKycUpload(e, 'business_permit_url')} />
                       </label>
                    </div>
                 </div>
@@ -639,16 +693,16 @@ export default function Settings() {
                    </div>
                    <div className="flex items-center gap-3">
                       {kycData.kra_cert_url && <a href={kycData.kra_cert_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 font-bold hover:underline">View Uploaded</a>}
-                      <label className={`bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${kycData.verification_status === 'approved' ? 'opacity-50 pointer-events-none' : ''}`}>
+                      <label className={`bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${kycData.verification_status === 'tier3' ? 'opacity-50 pointer-events-none' : ''}`}>
                          {kycUploading.kra_cert_url ? 'Uploading...' : 'Upload File'}
-                         <input type="file" accept="image/*,.pdf" className="hidden" disabled={kycData.verification_status === 'approved' || kycUploading.kra_cert_url} onChange={(e) => handleKycUpload(e, 'kra_cert_url')} />
+                         <input type="file" accept="image/*,.pdf" className="hidden" disabled={kycData.verification_status === 'tier3' || kycUploading.kra_cert_url} onChange={(e) => handleKycUpload(e, 'kra_cert_url')} />
                       </label>
                    </div>
                 </div>
              </div>
 
              <div className="pt-2">
-                <button type="submit" disabled={kycSaving || kycData.verification_status === 'approved'} className="w-full bg-blue-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-50 text-sm flex items-center justify-center gap-2">
+                <button type="submit" disabled={kycSaving || kycData.verification_status === 'tier3'} className="w-full bg-blue-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-50 text-sm flex items-center justify-center gap-2">
                    {kycSaving ? "Submitting for Review..." : "Submit Profile for Verification"}
                 </button>
              </div>
