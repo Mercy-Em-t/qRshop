@@ -1,16 +1,73 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getCurrentUser, logout } from "../services/auth-service";
+import { supabase } from "../services/supabase-client";
 
 export default function Admin() {
   const navigate = useNavigate();
   const user = getCurrentUser();
+  const [alerts, setAlerts] = useState([]);
+  const [loadingAlerts, setLoadingAlerts] = useState(true);
 
   useEffect(() => {
     if (!user || user.role !== "system_admin") {
       navigate("/login");
+      return;
     }
-  }, [navigate]);
+    fetchAlerts();
+  }, [user, navigate]);
+
+  const fetchAlerts = async () => {
+     try {
+        setLoadingAlerts(true);
+        const newAlerts = [];
+
+        // 1. Check for Orphaned Shops (No Menu Items)
+        const { data: shops } = await supabase.from("shops").select("id, name");
+        if (shops) {
+           const { data: items } = await supabase.from("menu_items").select("shop_id");
+           const shopsWithItems = new Set(items?.map(i => i.shop_id));
+           const emptyShops = shops.filter(s => !shopsWithItems.has(s.id));
+           if (emptyShops.length > 0) {
+              newAlerts.push({
+                 type: "warning",
+                 title: `${emptyShops.length} Orphaned Shops Detected`,
+                 desc: "These shops have registered but haven't added any menu items.",
+                 link: "/admin/shops"
+              });
+           }
+        }
+
+        // 2. Check for Stale Pending Orders (M-Pesa drop-offs)
+        const { count: staleCount } = await supabase
+           .from("orders")
+           .select("*", { count: "exact", head: true })
+           .in("status", ["pending_payment", "stk_pushed"]);
+           
+        if (staleCount > 0) {
+           newAlerts.push({
+               type: "error",
+               title: `${staleCount} Pending/Stale Global Orders`,
+               desc: "Orders stuck awaiting M-Pesa payment or WhatsApp verification.",
+               link: "/admin/global-orders"
+           });
+        }
+
+        // 3. System Integrations
+        newAlerts.push({
+            type: "info",
+            title: "3 System Configurations Pending",
+            desc: "Finish setting up Production APIs (M-Pesa, WhatsApp Cloud, SMTP).",
+            link: "/admin/todo"
+        });
+
+        setAlerts(newAlerts);
+     } catch (err) {
+        console.error("Failed to fetch admin alerts", err);
+     } finally {
+        setLoadingAlerts(false);
+     }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -27,6 +84,58 @@ export default function Admin() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-8">
+        
+        {/* Admin Attention Widget */}
+        <div className="mb-8">
+           <h2 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+              Admin Attention Required
+           </h2>
+           
+           {loadingAlerts ? (
+              <div className="bg-white rounded-xl shadow-sm p-6 animate-pulse">
+                 <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                 <div className="h-3 bg-gray-100 rounded w-1/2"></div>
+              </div>
+           ) : alerts.length === 0 ? (
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+                 <span className="text-green-600 text-xl">✅</span>
+                 <p className="text-green-800 font-medium text-sm">All systems nominal. No alerts.</p>
+              </div>
+           ) : (
+              <div className="flex flex-col gap-3">
+                 {alerts.map((alert, i) => (
+                    <Link key={i} to={alert.link} className={`block rounded-xl p-4 border transition-all hover:-translate-y-0.5 shadow-sm hover:shadow active:scale-[0.99] ${
+                       alert.type === 'error' ? 'bg-red-50 border-red-200' :
+                       alert.type === 'warning' ? 'bg-amber-50 border-amber-200' :
+                       'bg-blue-50 border-blue-200'
+                    }`}>
+                       <div className="flex items-start gap-3">
+                          <span className="text-xl mt-0.5">
+                             {alert.type === 'error' ? '🚨' : alert.type === 'warning' ? '⚠️' : 'ℹ️'}
+                          </span>
+                          <div>
+                             <h3 className={`font-bold text-sm ${
+                                alert.type === 'error' ? 'text-red-900' :
+                                alert.type === 'warning' ? 'text-amber-900' :
+                                'text-blue-900'
+                             }`}>{alert.title}</h3>
+                             <p className={`text-xs mt-1 ${
+                                alert.type === 'error' ? 'text-red-700' :
+                                alert.type === 'warning' ? 'text-amber-700' :
+                                'text-blue-700'
+                             }`}>{alert.desc}</p>
+                          </div>
+                          <div className="ml-auto">
+                             <span className="text-gray-400 text-xs font-bold uppercase tracking-wider">Review &rarr;</span>
+                          </div>
+                       </div>
+                    </Link>
+                 ))}
+              </div>
+           )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link
             to="/admin/shops"
