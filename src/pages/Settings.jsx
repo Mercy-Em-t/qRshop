@@ -26,6 +26,15 @@ export default function Settings() {
     industry_type: "restaurant", offers_dine_in: true, offers_digital: false
   });
 
+  // KYC States
+  const [kycData, setKycData] = useState({
+    legal_business_name: "", kra_pin: "", business_reg_number: "",
+    director_id_url: "", business_permit_url: "", kra_cert_url: "",
+    verification_status: "incomplete"
+  });
+  const [kycSaving, setKycSaving] = useState(false);
+  const [kycUploading, setKycUploading] = useState({ director_id_url: false, business_permit_url: false, kra_cert_url: false });
+
   // Logo upload
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState(null);
@@ -67,6 +76,15 @@ export default function Settings() {
           offers_digital: data.offers_digital ?? false
         });
         if (data.logo_url) setLogoPreview(data.logo_url);
+        
+        // Fetch KYC data
+        const { data: kyc } = await supabase.from("shop_kyc").select("*").eq("shop_id", shopId).single();
+        if (kyc) {
+           setKycData(kyc);
+        } else {
+           // Insert a placeholder to prevent upsert conflicts
+           await supabase.from("shop_kyc").insert({ shop_id: shopId, legal_business_name: "Pending", kra_pin: "Pending", verification_status: "incomplete" }).select().single();
+        }
       }
       setLoading(false);
     }
@@ -155,6 +173,49 @@ export default function Settings() {
       if (tempUrl === logoPreview) setLogoPreview(null); 
     } finally {
       setLogoUploading(false);
+    }
+  };
+
+  const handleKycSubmit = async (e) => {
+    e.preventDefault();
+    setKycSaving(true);
+    try {
+      const payload = { ...kycData, verification_status: 'pending' };
+      delete payload.id;
+      delete payload.created_at;
+      delete payload.shop_id; // prevent mutation errors
+
+      const { error } = await supabase.from("shop_kyc").update(payload).eq("shop_id", shopId);
+      if (error) throw error;
+      
+      setKycData(prev => ({ ...prev, verification_status: 'pending' }));
+      alert("✅ Verification documents submitted successfully. They are now pending Admin review.");
+    } catch (err) {
+      alert("Failed to submit KYC: " + err.message);
+    } finally {
+      setKycSaving(false);
+    }
+  };
+
+  const handleKycUpload = async (e, fieldKey) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setKycUploading(prev => ({...prev, [fieldKey]: true}));
+    
+    try {
+      const ext = file.name.split('.').pop();
+      const path = `${shopId}/${fieldKey}-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("shop-documents").upload(path, file, { upsert: true });
+      if (error) {
+         if (error.message.includes('Bucket not found')) throw new Error("Storage bucket 'shop-documents' does not exist. Please inform the system admin.");
+         throw error;
+      }
+      const { data } = supabase.storage.from("shop-documents").getPublicUrl(path);
+      setKycData(prev => ({ ...prev, [fieldKey]: data.publicUrl }));
+    } catch (err) {
+      alert("Document upload failed: " + err.message);
+    } finally {
+      setKycUploading(prev => ({...prev, [fieldKey]: false}));
     }
   };
 
@@ -499,6 +560,98 @@ export default function Settings() {
               </button>
               {savedOk && <span className="text-green-600 text-sm font-semibold">✓ Saved successfully!</span>}
             </div>
+          </form>
+        </div>
+
+        {/* --- KYC & Compliance Module --- */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex justify-between items-start mb-4">
+             <div>
+                <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                   ⚖️ Compliance & Identity Verification
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">Required to unlock unrestricted M-Pesa payouts and limits.</p>
+             </div>
+             <span className={`px-3 py-1 text-xs font-bold rounded-full uppercase ${
+               kycData.verification_status === 'approved' ? 'bg-green-100 text-green-800' :
+               kycData.verification_status === 'pending' ? 'bg-amber-100 text-amber-800' :
+               kycData.verification_status === 'rejected' ? 'bg-red-100 text-red-800' :
+               'bg-gray-100 text-gray-800'
+             }`}>
+                {kycData.verification_status}
+             </span>
+          </div>
+          
+          <form onSubmit={handleKycSubmit} className="space-y-6">
+             <div className="grid md:grid-cols-2 gap-5 pt-2 border-t border-gray-100">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Legal Business Name</label>
+                  <input type="text" required value={kycData.legal_business_name} onChange={e => setKycData({...kycData, legal_business_name: e.target.value})} disabled={kycData.verification_status === 'approved'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Business Registration No. / ID No.</label>
+                  <input type="text" value={kycData.business_reg_number} onChange={e => setKycData({...kycData, business_reg_number: e.target.value})} disabled={kycData.verification_status === 'approved'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50" />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-bold text-gray-700 mb-1.5">Tax Details (KRA PIN)</label>
+                  <input type="text" required value={kycData.kra_pin} onChange={e => setKycData({...kycData, kra_pin: e.target.value})} disabled={kycData.verification_status === 'approved'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono uppercase disabled:opacity-50" />
+                </div>
+             </div>
+
+             <div className="space-y-4 pt-4 border-t border-gray-100">
+                <h3 className="text-sm font-bold text-gray-800">Secure Document Uploads</h3>
+                
+                {/* Director ID */}
+                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-xl">
+                   <div>
+                      <p className="text-sm font-bold text-gray-800">Director National ID / Passport</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Clear image or PDF of identifying document.</p>
+                   </div>
+                   <div className="flex items-center gap-3">
+                      {kycData.director_id_url && <a href={kycData.director_id_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 font-bold hover:underline">View Uploaded</a>}
+                      <label className={`bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${kycData.verification_status === 'approved' ? 'opacity-50 pointer-events-none' : ''}`}>
+                         {kycUploading.director_id_url ? 'Uploading...' : 'Upload File'}
+                         <input type="file" accept="image/*,.pdf" className="hidden" disabled={kycData.verification_status === 'approved' || kycUploading.director_id_url} onChange={(e) => handleKycUpload(e, 'director_id_url')} />
+                      </label>
+                   </div>
+                </div>
+
+                {/* Business Certificate */}
+                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-xl">
+                   <div>
+                      <p className="text-sm font-bold text-gray-800">Business Registration Cert.</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Required for Companies / Partnerships.</p>
+                   </div>
+                   <div className="flex items-center gap-3">
+                      {kycData.business_permit_url && <a href={kycData.business_permit_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 font-bold hover:underline">View Uploaded</a>}
+                      <label className={`bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${kycData.verification_status === 'approved' ? 'opacity-50 pointer-events-none' : ''}`}>
+                         {kycUploading.business_permit_url ? 'Uploading...' : 'Upload File'}
+                         <input type="file" accept="image/*,.pdf" className="hidden" disabled={kycData.verification_status === 'approved' || kycUploading.business_permit_url} onChange={(e) => handleKycUpload(e, 'business_permit_url')} />
+                      </label>
+                   </div>
+                </div>
+
+                {/* KRA PIN Cert */}
+                <div className="flex items-center justify-between p-3 border border-gray-200 rounded-xl">
+                   <div>
+                      <p className="text-sm font-bold text-gray-800">KRA PIN Certificate</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Official tax registration document.</p>
+                   </div>
+                   <div className="flex items-center gap-3">
+                      {kycData.kra_cert_url && <a href={kycData.kra_cert_url} target="_blank" rel="noreferrer" className="text-xs text-blue-600 font-bold hover:underline">View Uploaded</a>}
+                      <label className={`bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition ${kycData.verification_status === 'approved' ? 'opacity-50 pointer-events-none' : ''}`}>
+                         {kycUploading.kra_cert_url ? 'Uploading...' : 'Upload File'}
+                         <input type="file" accept="image/*,.pdf" className="hidden" disabled={kycData.verification_status === 'approved' || kycUploading.kra_cert_url} onChange={(e) => handleKycUpload(e, 'kra_cert_url')} />
+                      </label>
+                   </div>
+                </div>
+             </div>
+
+             <div className="pt-2">
+                <button type="submit" disabled={kycSaving || kycData.verification_status === 'approved'} className="w-full bg-blue-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-blue-700 transition disabled:opacity-50 text-sm flex items-center justify-center gap-2">
+                   {kycSaving ? "Submitting for Review..." : "Submit Profile for Verification"}
+                </button>
+             </div>
           </form>
         </div>
 

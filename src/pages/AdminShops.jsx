@@ -6,6 +6,7 @@ import { getCurrentUser, logout } from "../services/auth-service";
 export default function AdminShops() {
   const [shops, setShops] = useState([]);
   const [upgradeRequests, setUpgradeRequests] = useState([]);
+  const [kycRequests, setKycRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [newShopName, setNewShopName] = useState("");
@@ -54,6 +55,20 @@ export default function AdminShops() {
       
     if (!reqErr && reqData) {
        setUpgradeRequests(reqData);
+    }
+
+    // Fetch pending KYC requests
+    const { data: kycData, error: kycErr } = await supabase
+      .from("shop_kyc")
+      .select(`
+         *,
+         shops (name)
+      `)
+      .eq("verification_status", "pending")
+      .order("submitted_at", { ascending: false });
+      
+    if (!kycErr && kycData) {
+       setKycRequests(kycData);
     }
 
     setLoading(false);
@@ -108,6 +123,19 @@ export default function AdminShops() {
         fetchShops(); // reload everything
      } catch (err) {
         alert("Failed to process request: " + err.message);
+     }
+  };
+
+  const handleProcessKYC = async (kycId, approved) => {
+     try {
+        const newStatus = approved ? "approved" : "rejected";
+        const { error: reqErr } = await supabase.from("shop_kyc").update({ verification_status: newStatus }).eq("id", kycId);
+        if (reqErr) throw reqErr;
+        
+        alert(`KYC Profile marked as ${newStatus.toUpperCase()}`);
+        fetchShops(); // reload everything
+     } catch (err) {
+        alert("Failed to process KYC: " + err.message);
      }
   };
 
@@ -235,6 +263,40 @@ export default function AdminShops() {
                           <div className="flex gap-2">
                              <button onClick={() => handleProcessUpgrade(req.id, req.shop_id, false)} className="px-3 py-1.5 bg-red-50 text-red-600 font-bold text-xs rounded-md hover:bg-red-100 transition cursor-pointer">Reject</button>
                              <button onClick={() => handleProcessUpgrade(req.id, req.shop_id, true)} className="px-3 py-1.5 bg-green-500 text-white font-bold text-xs rounded-md hover:bg-green-600 transition shadow-sm cursor-pointer">Approve</button>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </section>
+           )}
+
+           {/* KYC Verification Inbox */}
+           {kycRequests.length > 0 && (
+              <section className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                 <h2 className="text-lg font-bold text-blue-800 mb-4 flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                    </span>
+                    Compliance Required: KYC Profiles
+                 </h2>
+                 <div className="space-y-3">
+                    {kycRequests.map(req => (
+                       <div key={req.id} className="bg-white rounded-lg p-4 shadow-sm border border-blue-100 flex flex-col gap-3">
+                          <div className="flex justify-between items-start">
+                             <div>
+                                <p className="font-bold text-gray-800">{req.legal_business_name} <span className="text-xs text-gray-500 font-normal">({req.shops?.name})</span></p>
+                                <p className="text-xs text-gray-500 mt-1">KRA PIN: <span className="font-mono bg-gray-100 px-1">{req.kra_pin}</span> | Reg No: <span className="font-mono bg-gray-100 px-1">{req.business_reg_number || 'N/A'}</span></p>
+                             </div>
+                             <div className="flex gap-2">
+                                <button onClick={() => handleProcessKYC(req.id, false)} className="px-3 py-1.5 bg-red-50 text-red-600 font-bold text-xs rounded-md hover:bg-red-100 transition cursor-pointer">Reject</button>
+                                <button onClick={() => handleProcessKYC(req.id, true)} className="px-3 py-1.5 bg-green-500 text-white font-bold text-xs rounded-md hover:bg-green-600 transition shadow-sm cursor-pointer">Approve</button>
+                             </div>
+                          </div>
+                          <div className="flex gap-4 pt-3 border-t border-gray-100 text-xs">
+                             {req.director_id_url && <a href={req.director_id_url} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline border border-blue-100 bg-blue-50 px-2 py-1 rounded">📄 View Director ID</a>}
+                             {req.business_permit_url && <a href={req.business_permit_url} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline border border-blue-100 bg-blue-50 px-2 py-1 rounded">📄 View Business Reg</a>}
+                             {req.kra_cert_url && <a href={req.kra_cert_url} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline border border-blue-100 bg-blue-50 px-2 py-1 rounded">📄 View KRA Cert</a>}
                           </div>
                        </div>
                     ))}

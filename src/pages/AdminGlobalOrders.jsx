@@ -47,6 +47,8 @@ export default function AdminGlobalOrders() {
     } finally {
       setLoading(false);
     }
+  };
+
   const exportToCSV = () => {
     if (!orders || orders.length === 0) return;
     
