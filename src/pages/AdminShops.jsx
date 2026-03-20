@@ -59,6 +59,40 @@ export default function AdminShops() {
     setLoading(false);
   };
 
+  const exportToCSV = () => {
+    if (!shops || shops.length === 0) return;
+    
+    const headers = ["Shop ID", "Shop Name", "Subdomain", "Industry", "Subscription Plan", "Phone", "Admin Emails", "Registration Date"];
+    
+    const rows = shops.map(s => {
+      const adminList = s.shop_users?.map(u => u.email).join("; ") || "No Admin";
+      return [
+        s.id,
+        s.name,
+        s.subdomain || "",
+        s.industry_type || "food",
+        s.plan,
+        s.phone || "",
+        adminList,
+        new Date(s.created_at).toLocaleString()
+      ];
+    });
+    
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `ShopQR_Registry_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleProcessUpgrade = async (requestId, targetShopId, approved) => {
      try {
         if (approved) {
@@ -209,7 +243,13 @@ export default function AdminShops() {
            )}
 
            <section>
-              <h2 className="text-lg font-bold text-gray-800 mb-4">Active Shop Ecosystem</h2>
+              <div className="flex items-center justify-between mb-4">
+                 <h2 className="text-lg font-bold text-gray-800">Active Shop Ecosystem</h2>
+                 <button onClick={exportToCSV} disabled={loading || shops.length === 0} className="text-xs bg-green-50 hover:bg-green-100 text-green-700 font-bold px-3 py-1.5 rounded-lg border border-green-200 transition flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Export Registry (CSV)
+                 </button>
+              </div>
           
           {loading ? (
              <p className="text-gray-500 py-4">Polling regional nodes...</p>

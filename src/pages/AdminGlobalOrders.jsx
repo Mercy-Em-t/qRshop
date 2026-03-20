@@ -47,6 +47,35 @@ export default function AdminGlobalOrders() {
     } finally {
       setLoading(false);
     }
+  const exportToCSV = () => {
+    if (!orders || orders.length === 0) return;
+    
+    const headers = ["Order ID", "Shop Name", "Shop Subdomain", "Total (KSh)", "Customer Name", "Customer Phone", "Status", "Date Created"];
+    
+    const rows = orders.map(o => [
+      o.id,
+      o.shops?.name || "Unknown",
+      o.shops?.subdomain || "",
+      o.total,
+      o.client_name || "Anonymous",
+      o.client_phone || "",
+      o.status,
+      new Date(o.created_at).toLocaleString()
+    ]);
+    
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `ShopQR_Global_Orders_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -61,10 +90,16 @@ export default function AdminGlobalOrders() {
                 🌍 Global Order Stream
              </h1>
           </div>
-          <button onClick={fetchGlobalOrders} className="text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 transition flex items-center gap-2">
-             <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-             Refresh
-          </button>
+          <div className="flex items-center gap-3">
+             <button onClick={exportToCSV} disabled={loading || orders.length === 0} className="text-sm bg-green-50 hover:bg-green-100 text-green-700 font-bold px-3 py-1.5 rounded-lg border border-green-200 transition flex items-center gap-2 cursor-pointer disabled:opacity-50">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                Export CSV
+             </button>
+             <button onClick={fetchGlobalOrders} className="text-sm bg-gray-800 hover:bg-gray-700 text-gray-300 px-3 py-1.5 rounded-lg border border-gray-700 transition flex items-center gap-2 cursor-pointer">
+                <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Refresh
+             </button>
+          </div>
         </div>
       </header>
 
