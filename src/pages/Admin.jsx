@@ -306,9 +306,6 @@ export default function Admin() {
 
         </div>
       </main>
-          </Link>
-        </div>
-      </main>
     </div>
   );
 }
