@@ -114,7 +114,8 @@ export default function Menu() {
             </button>
             <button
               onClick={() => navigate("/cart")}
-              className="relative bg-green-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors cursor-pointer shadow-sm"
+              disabled={shop?.is_online === false}
+              className={`relative px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-colors ${shop?.is_online === false ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-80' : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'}`}
             >
               🛒 Cart
               {itemCount > 0 && (
@@ -149,6 +150,13 @@ export default function Menu() {
         )}
       </header>
 
+      {shop?.is_online === false && (
+        <div className="bg-red-50 border-b border-red-200 px-4 py-3 text-center">
+          <p className="text-red-800 font-bold text-sm">🔴 Shop is currently Closed</p>
+          <p className="text-red-600 text-xs mt-0.5">We are not accepting orders at this time. Please check back later.</p>
+        </div>
+      )}
+
       {isOffline && (
         <OfflineAlert message={`Showing cached ${terms.menu.toLowerCase()} — you appear to be offline`} />
       )}
@@ -169,7 +177,7 @@ export default function Menu() {
               </h2>
               <div className="grid gap-3">
                 {categories[category].map((item) => (
-                  <MenuItem key={item.id} item={item} onAdd={handleAddItem} />
+                  <MenuItem key={item.id} item={item} onAdd={handleAddItem} isShopOnline={shop?.is_online !== false} />
                 ))}
               </div>
             </div>

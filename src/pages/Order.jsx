@@ -18,7 +18,6 @@ import OfflineAlert from "../components/OfflineAlert";
 import PaymentModal from "../components/PaymentModal";
 import SmartReceiptModal from "../components/SmartReceiptModal";
 import { useNomenclature } from "../hooks/use-nomenclature";
-import usePlanAccess from "../hooks/usePlanAccess";
 import UpgradeModal from "../components/UpgradeModal";
 
 const buildUnstructuredMessage = (shopName, table, items, identity, deliveryFee = 0) => {
@@ -59,7 +58,15 @@ export default function Order() {
   });
   
   const terms = useNomenclature(session?.shop_id);
-  const planAccess = usePlanAccess();
+  
+  const shopPlan = shop?.plan?.toLowerCase() || 'free';
+  const shopPlanAccess = {
+      isFree: shopPlan === 'free',
+      isBasic: ['basic', 'pro', 'business', "enterprise"].includes(shopPlan),
+      isPro: ['pro', "business", "enterprise"].includes(shopPlan),
+      isBusiness: ["business", "enterprise"].includes(shopPlan),
+      isEnterprise: shopPlan === 'enterprise'
+  };
 
   useEffect(() => {
     try {
@@ -303,7 +310,7 @@ export default function Order() {
          localStorage.setItem('qr_customer_phone', identity.phone);
          
          // Phase 44: Automated WhatsApp API Dispatch for Pro/Business Teams
-         if ((planAccess.isPro || planAccess.isBusiness) && isOnline && shopPhone) {
+         if ((shopPlanAccess.isPro || shopPlanAccess.isBusiness) && isOnline && shopPhone) {
              console.log("Dispatching automated Meta WhatsApp template...");
              const { error: dispatchErr } = await supabase.functions.invoke('whatsapp-dispatch', {
                  body: { 
@@ -349,7 +356,7 @@ export default function Order() {
       }
       
       // Fallback for actual connection or server unavailability
-      if (shopPhone && (!planAccess.isFree || !isOnline)) {
+      if (shopPhone && (!shopPlanAccess.isFree || !isOnline)) {
         const fallbackMessage = buildWhatsAppMessage(
            shopName, session?.table, items, "OFFLINE", total, discountAmount, 
            activeCoupon?.code, !isOnline, identity.name, identity.phone,
@@ -369,7 +376,7 @@ export default function Order() {
   };
 
    const shareTextReceipt = () => {
-     if (!planAccess.isBasic && isOnline) {
+     if (!shopPlanAccess.isBasic && isOnline) {
          setLockedFeatureFocus("Structured Order Receipts");
          return;
      }
@@ -449,6 +456,12 @@ export default function Order() {
           <h2 className="text-lg font-semibold text-gray-800 mb-1">
             {shopName}
           </h2>
+          {shop?.is_online === false && (
+            <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm font-semibold border border-red-100 flex items-center gap-2">
+              <span>🔴</span>
+              <span>This shop is currently closed. You cannot place an order right now.</span>
+            </div>
+          )}
           <p className="text-sm text-gray-500 mb-4">
             {terms.table} {session?.table}
           </p>
@@ -530,12 +543,12 @@ export default function Order() {
               onClick={() => {
                   setCapturingIdentity(true);
               }}
-              disabled={sending}
-              className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-md"
+              disabled={sending || shop?.is_online === false}
+              className={`w-full py-4 rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2 shadow-md ${sending || shop?.is_online === false ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-80' : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'}`}
             >
               {!isOnline 
                  ? "📥 Queue via WhatsApp" 
-                 : !planAccess.isBasic 
+                 : !shopPlanAccess.isBasic 
                     ? `💬 Place ${terms.order} via WhatsApp` 
                     : `💬 Place ${terms.order} (Direct Checkout)`}
             </button>
@@ -636,7 +649,7 @@ export default function Order() {
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
                      />
                   </div>
-                  {planAccess.isBasic && (
+                  {shopPlanAccess.isBasic && (
                      <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
                         <input 
@@ -661,7 +674,7 @@ export default function Order() {
                   )}
                </div>
 
-               {shop?.mpesa_shortcode && planAccess.isBasic ? (
+               {shop?.mpesa_shortcode && shopPlanAccess.isBasic ? (
                  <button 
                     onClick={() => {
                        setCapturingIdentity(false);
@@ -676,7 +689,7 @@ export default function Order() {
                  <button 
                     onClick={() => {
                        setCapturingIdentity(false);
-                       if (!planAccess.isBasic && isOnline) {
+                       if (!shopPlanAccess.isBasic && isOnline) {
                           handeFreeTierCheckout();
                        } else {
                           handleWhatsAppCheckout();
@@ -710,7 +723,7 @@ export default function Order() {
             couponCode={activeCoupon?.code}
             orderId={generatedOrder.id}
             isOffline={!isOnline}
-            isFree={planAccess.isFree}
+            isFree={shopPlanAccess.isFree}
             onShareText={shareTextReceipt}
             onShareImage={shareImageReceipt}
             onClose={() => {

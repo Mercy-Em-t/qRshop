@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../hooks/use-cart";
+import { getQrSession } from "../utils/qr-session";
+import { useShop } from "../hooks/use-shop";
 import CartComponent from "../components/Cart";
 import OfflineAlert from "../components/OfflineAlert";
 
 export default function CartPage() {
   const navigate = useNavigate();
+  const session = getQrSession();
+  const { shop } = useShop(session?.shop_id);
   const { items, addItem, removeItem, total } = useCart();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
@@ -48,12 +52,20 @@ export default function CartPage() {
         />
 
         {items.length > 0 && (
-          <button
-            onClick={() => navigate("/order")}
-            className="w-full mt-6 bg-green-600 text-white py-3 rounded-lg font-semibold text-lg hover:bg-green-700 transition-colors cursor-pointer"
-          >
-            Confirm Order — KSh {total}
-          </button>
+          <div className="mt-6 space-y-3">
+            {shop?.is_online === false && (
+              <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm font-semibold border border-red-100 text-center">
+                🔴 Shop is currently closed.
+              </div>
+            )}
+            <button
+              onClick={() => navigate("/order")}
+              disabled={shop?.is_online === false}
+              className={`w-full py-3 rounded-lg font-semibold text-lg transition-colors ${shop?.is_online === false ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'}`}
+            >
+              Confirm Order — KSh {total}
+            </button>
+          </div>
         )}
       </main>
     </div>

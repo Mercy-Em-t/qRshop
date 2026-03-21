@@ -1,4 +1,4 @@
-export default function MenuItem({ item, onAdd }) {
+export default function MenuItem({ item, onAdd, isShopOnline = true }) {
   return (
     <div className="border border-gray-100 rounded-2xl p-4 flex gap-4 bg-white shadow-sm hover:shadow-md transition">
       
@@ -46,8 +46,9 @@ export default function MenuItem({ item, onAdd }) {
                KSh {item.price}
             </span>
             <button
-               onClick={() => onAdd(item)}
-               className="bg-gray-900 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-black transition-transform transform active:scale-95 flex items-center gap-1.5"
+               onClick={() => isShopOnline && onAdd(item)}
+               disabled={!isShopOnline}
+               className={`px-4 py-2 rounded-xl text-sm font-bold shadow-md flex items-center gap-1.5 transition-transform transform ${!isShopOnline ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-900 text-white hover:bg-black active:scale-95'}`}
             >
                <span>Add</span>
                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">

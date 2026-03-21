@@ -22,13 +22,12 @@ export default function AdminGlobalProducts() {
       setLoading(true);
       
       const { data, error } = await supabase
-        .from("products")
+        .from("menu_items")
         .select(`
           id,
           name,
           category,
           price,
-          is_available,
           created_at,
           shop_id,
           shops (
@@ -117,11 +116,7 @@ export default function AdminGlobalProducts() {
                           KSh {p.price.toLocaleString()}
                        </td>
                        <td className="px-6 py-4">
-                          {p.is_available ? (
-                             <span className="flex items-center gap-1 text-green-600 font-medium text-xs"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Available</span>
-                          ) : (
-                             <span className="flex items-center gap-1 text-gray-400 font-medium text-xs"><div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div> Hidden</span>
-                          )}
+                          <span className="flex items-center gap-1 text-green-600 font-medium text-xs"><div className="w-1.5 h-1.5 rounded-full bg-green-500"></div> Available</span>
                        </td>
                      </tr>
                    ))

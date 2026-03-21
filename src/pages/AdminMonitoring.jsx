@@ -25,19 +25,19 @@ export default function AdminMonitoring() {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from("qr_events")
+        .from("events")
         .select(`
           id,
           qr_id,
           event_type,
-          created_at,
-          metadata,
-          qr_nodes (
+          timestamp,
+          device_info,
+          qrs (
              shop_id,
              shops ( name )
           )
         `)
-        .order("created_at", { ascending: false })
+        .order("timestamp", { ascending: false })
         .limit(50);
         
       if (error) throw error;
@@ -156,18 +156,18 @@ export default function AdminMonitoring() {
              ) : (
                 logs.map((log) => (
                    <div key={log.id} className="flex gap-2">
-                      <span className="text-gray-600 shrink-0">
-                         {new Date(log.created_at).toLocaleTimeString('en-GB')}
-                      </span>
-                      <span className="text-blue-500 shrink-0">[{log.event_type.toUpperCase()}]</span>
-                      <span className="text-gray-400 truncate">
-                         {log.qr_nodes?.shops?.name ? `[${log.qr_nodes.shops.name}]` : '[Unknown Shop]'} 
-                         {' '}
-                         {log.metadata?.context === 'menu' ? 'Menu Scanned' : 
-                          log.metadata?.context === 'order' ? 'Pre-checkout Session' : 
-                          log.metadata?.context === 'campaign' ? 'Ad Campaign Click' : 
-                          'Node Resolving'}
-                      </span>
+                       <span className="text-gray-600 shrink-0">
+                          {log.timestamp ? new Date(log.timestamp).toLocaleTimeString('en-GB') : ''}
+                       </span>
+                       <span className="text-blue-500 shrink-0">[{log.event_type?.toUpperCase()}]</span>
+                       <span className="text-gray-400 truncate">
+                          {log.qrs?.shops?.name ? `[${log.qrs.shops.name}]` : '[Unknown Shop]'} 
+                          {' '}
+                          {log.device_info?.context === 'menu' ? 'Menu Scanned' : 
+                           log.device_info?.context === 'order' ? 'Pre-checkout Session' : 
+                           log.device_info?.context === 'campaign' ? 'Ad Campaign Click' : 
+                           'Node Resolving'}
+                       </span>
                    </div>
                 ))
              )}

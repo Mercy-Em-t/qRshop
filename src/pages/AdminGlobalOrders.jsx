@@ -27,7 +27,7 @@ export default function AdminGlobalOrders() {
         .select(`
           id,
           shop_id,
-          total,
+          total_price,
           status,
           created_at,
           client_name,
@@ -58,7 +58,7 @@ export default function AdminGlobalOrders() {
       o.id,
       o.shops?.name || "Unknown",
       o.shops?.subdomain || "",
-      o.total,
+      o.total_price,
       o.client_name || "Anonymous",
       o.client_phone || "",
       o.status,
@@ -153,7 +153,7 @@ export default function AdminGlobalOrders() {
                          <div className="text-xs text-gray-400">{o.client_phone || 'No Phone provided'}</div>
                        </td>
                        <td className="px-6 py-4 font-bold text-gray-900">
-                          KSh {o.total.toLocaleString()}
+                          KSh {o.total_price?.toLocaleString()}
                        </td>
                        <td className="px-6 py-4">
                          <span className={`px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider border ${

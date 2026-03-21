@@ -158,47 +158,33 @@ export default function AdminShops() {
     setIsCreating(true);
 
     try {
-      // 1. Create the physical Shop space
-      // Try with advanced fields first
-      const fullShopData = {
-         name: newShopName, 
-         subdomain: newShopSubdomain ? newShopSubdomain.toLowerCase().replace(/[^a-z0-9-]/g, "") : null,
-         phone: newShopPhone, 
-         whatsapp_number: newShopWhatsApp || newShopPhone, 
-         plan: "free",
-         industry_type: newShopIndustry
-      };
-
-      let newShop;
-      let shopErr;
-
-      const res = await supabase.from("shops").insert([fullShopData]).select().single();
-      
-      if (res.error) {
-         console.warn("Full insert failed, falling back to core columns...", res.error);
-         const basicData = { name: newShopName, phone: newShopPhone, plan: "free" };
-         const fallbackRes = await supabase.from("shops").insert([basicData]).select().single();
-         if (fallbackRes.error) throw fallbackRes.error;
-         newShop = fallbackRes.data;
-         alert("Warning: Core shop created, but advanced options (Subdomain, Industry, WhatsApp) were omitted because the Database schema is not fully updated. Please run all Phase 10-25 SQL scripts.");
-      } else {
-         newShop = res.data;
+      // Fetch session token for secure provisioning
+      let adminToken = "mock-admin-token-for-admin@qrshop.com";
+      const { data: authData } = await supabase.auth.getSession();
+      if (authData?.session?.access_token) {
+         adminToken = authData.session.access_token;
       }
 
-      // 2. Create the associated Admin User for that Shop space
-      // Auto-generate a secure random 8-character password
-      const genPassword = Math.random().toString(36).substring(2, 10);
+      // Delegate pure SQL queries to the Backend Vercel Gateway to isolate keys and enable Native Emails
+      const response = await fetch("/api/admin/create-shop", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+            adminToken,
+            shopName: newShopName,
+            subdomain: newShopSubdomain,
+            phone: newShopPhone,
+            whatsapp: newShopWhatsApp,
+            industry: newShopIndustry,
+            ownerEmail: newAdminEmail
+         })
+      });
 
-      const { error: userErr } = await supabase
-        .from("shop_users")
-        .insert([{
-           email: newAdminEmail,
-           password: genPassword,
-           role: "shop_owner",
-           shop_id: newShop.id
-        }]);
+      const resData = await response.json();
       
-      if (userErr) throw userErr;
+      if (!response.ok || !resData.success) {
+         throw new Error(resData.error || "Deployment execution aborted by security gateway.");
+      }
 
       setNewShopName("");
       setNewShopSubdomain("");
@@ -207,10 +193,10 @@ export default function AdminShops() {
       setNewShopIndustry("food");
       setNewAdminEmail("");
       
-      alert(`✅ Success! Parallel Shop Space Deployed.\n\nShop Owner Platform Credentials:\nEmail: ${newAdminEmail}\nPassword: ${genPassword}\n\nPlease copy and email this password securely to the user.`);
+      alert(`✅ Success! Sandbox Space Deployed.\n\nAn official setup email has been dispatched via Supabase to:\n${newAdminEmail}\n\nThe user can now click the link inside their email to securely construct their password and dock with the platform.`);
       fetchShops();
     } catch (err) {
-      alert("Deployment failed. Have you run the Multi-Tenant SQL Migration script? Error: " + err.message);
+      alert("Deployment failed. Error: " + err.message);
     } finally {
       setIsCreating(false);
     }

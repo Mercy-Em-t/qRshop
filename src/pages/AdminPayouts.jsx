@@ -30,7 +30,8 @@ export default function AdminPayouts() {
           shops ( name, phone, platform_commission_rate )
         `)
         .eq("status", "paid")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(99999);
 
       if (error) throw error;
 

@@ -35,7 +35,8 @@ export default function AdminAnalytics() {
       // 2. Global Orders Aggregation
       const { data: allOrders, error } = await supabase
         .from("orders")
-        .select("total, status");
+        .select("total_price, status")
+        .limit(99999);
 
       if (error) throw error;
 
@@ -46,10 +47,10 @@ export default function AdminAnalytics() {
       if (allOrders) {
          allOrders.forEach(o => {
             if (o.status.includes('paid') || o.status.includes('completed')) {
-               totalCompletedVolume += Number(o.total || 0);
+               totalCompletedVolume += Number(o.total_price || 0);
             } else if (o.status !== 'archived' && o.status !== 'cancelled') {
                activeOrdersCount++;
-               totalPendingVolume += Number(o.total || 0);
+               totalPendingVolume += Number(o.total_price || 0);
             }
          });
       }

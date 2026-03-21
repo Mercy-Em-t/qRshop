@@ -84,6 +84,40 @@ export default function OrderManager() {
     }
   };
 
+  const handleMpesaPush = async (order) => {
+    let phone = order.client_phone;
+    if (!phone || phone === "N/A") {
+       phone = window.prompt(`Customer phone missing for receipt #${order.id.split('-')[0].toUpperCase()}.\nEnter a Safaricom number (e.g., 0712345678):`);
+       if (!phone) return; // User cancelled
+    }
+
+    const originalStatus = order.status;
+    updateOrderStatus(order.id, "stk_pushed");
+
+    try {
+      const response = await fetch("/api/mpesa/stkpush", {
+         method: "POST",
+         headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({
+            phone: phone,
+            amount: order.total_price,
+            orderId: order.id
+         })
+      });
+      
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+         throw new Error(data.error || "Failed to push STK.");
+      }
+      
+      alert(data.data?.CustomerMessage || "M-Pesa prompt sent successfully to " + phone);
+    } catch (err) {
+      console.error(err);
+      alert("M-Pesa Push Error: " + err.message);
+      updateOrderStatus(order.id, originalStatus); // Revert status
+    }
+  };
+
   const handleSaveEdit = async () => {
     if (!editingOrder) return;
     
@@ -126,6 +160,8 @@ export default function OrderManager() {
         return <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Completed</span>;
       case "archived":
         return <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Archived</span>;
+      case "rejected":
+        return <span className="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-bold uppercase">Rejected</span>;
       default:
         return <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-bold uppercase">{status}</span>;
     }
@@ -207,7 +243,7 @@ export default function OrderManager() {
 
         {/* Segmented Pipeline Tabs */}
         <div className="flex bg-gray-200/50 p-1 rounded-xl mb-8 overflow-x-auto gap-1">
-          {["all", "pending", "pending_payment", "paid", "completed", "archived"].map((tab) => (
+          {["all", "pending", "pending_payment", "paid", "completed", "rejected", "archived"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -220,6 +256,7 @@ export default function OrderManager() {
               {tab === "pending" ? "New Orders" 
                 : tab === "pending_payment" ? "Awaiting Pay" 
                 : tab === "paid" ? "Paid / Prep"
+                : tab === "rejected" ? "Rejected"
                 : tab}
             </button>
           ))}
@@ -236,11 +273,12 @@ export default function OrderManager() {
           <div className="flex flex-col gap-4">
             {orders
               .filter((o) => {
-                 if (activeTab === "all") return o.status !== "archived"; 
+                 if (activeTab === "all") return !["archived", "rejected"].includes(o.status); 
                  if (activeTab === "pending") return o.status === "pending";
                  if (activeTab === "pending_payment") return ["pending_payment", "stk_pushed"].includes(o.status);
                  if (activeTab === "paid") return ["paid", "preparing"].includes(o.status);
                  if (activeTab === "completed") return ["ready", "completed"].includes(o.status);
+                 if (activeTab === "rejected") return o.status === "rejected";
                  if (activeTab === "archived") return o.status === "archived";
                  return true;
               })
@@ -398,6 +436,26 @@ export default function OrderManager() {
                         
                         {order.status === "pending" ? (
                           <>
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                               <button
+                                 onClick={() => updateOrderStatus(order.id, "preparing")}
+                                 className="bg-green-600 text-white border border-green-700 font-bold py-2.5 rounded-lg hover:bg-green-700 shadow-sm transition text-xs flex items-center justify-center gap-1"
+                               >
+                                 ✅ Accept
+                               </button>
+                               <button
+                                 onClick={() => updateOrderStatus(order.id, "rejected")}
+                                 className="bg-red-50 text-red-600 border border-red-200 font-bold py-2.5 rounded-lg hover:bg-red-100 transition text-xs flex items-center justify-center gap-1"
+                               >
+                                 ❌ Reject
+                               </button>
+                            </div>
+                            <button
+                              onClick={() => handleMpesaPush(order)}
+                              className="w-full bg-green-100 text-green-800 border border-green-300 font-bold py-2.5 rounded-lg hover:bg-green-200 transition text-xs flex items-center justify-center gap-2 mb-2"
+                            >
+                              📲 Push M-Pesa PIN
+                            </button>
                             <button
                               onClick={() => {
                                  if (!planAccess.isPro) {
@@ -407,18 +465,28 @@ export default function OrderManager() {
                                  setEditTotal(order.total_price);
                                  setEditingOrder(order);
                               }}
-                              className={`${planAccess.isPro ? 'bg-orange-50 text-orange-700 hover:bg-orange-100 border-orange-200' : 'bg-gray-100 text-gray-400 border-gray-200'} font-bold py-3 rounded-lg transition text-sm flex items-center justify-center gap-1 border`}
+                              className={`w-full ${planAccess.isPro ? 'bg-orange-50 text-orange-700 hover:bg-orange-100 border-orange-200' : 'bg-gray-100 text-gray-400 border-gray-200'} font-bold py-2.5 rounded-lg transition text-xs flex items-center justify-center gap-1 border`}
                             >
                               {!planAccess.isPro ? '🔒 ' : '✏️ '} Edit & Req. Pay
                             </button>
-                            <button
-                              onClick={() => updateOrderStatus(order.id, "paid")}
-                              className="bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700 shadow-sm transition text-sm"
-                            >
-                              ✅ Mark as Paid
-                            </button>
                           </>
                         ) : order.status === "pending_payment" ? (
+                          <>
+                            <button
+                              onClick={() => handleMpesaPush(order)}
+                              className="w-full bg-green-100 text-green-800 border border-green-300 font-bold py-3 rounded-lg hover:bg-green-200 transition shadow-sm mb-2 text-sm flex items-center justify-center gap-2"
+                            >
+                              📲 Push M-Pesa PIN
+                            </button>
+                            <button
+                              onClick={() => updateOrderStatus(order.id, "paid")}
+                              className="w-full bg-indigo-600 text-white font-medium py-3 rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center justify-center gap-2"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                              Confirm Pay Received
+                            </button>
+                          </>
+                        ) : order.status === "stk_pushed" ? (
                           <button
                             onClick={() => updateOrderStatus(order.id, "paid")}
                             className="w-full bg-indigo-600 text-white font-medium py-3 rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center justify-center gap-2"

@@ -32,7 +32,7 @@ export default function AdminSEO() {
     setConfigs(existingConfigs);
     
     // Fetch all active shops to allow the admin to select a shop that doesn't have SEO yet
-    const { data: allShops } = await supabase.from('shops').select('id, shop_name');
+    const { data: allShops } = await supabase.from('shops').select('id, name');
     setShops(allShops || []);
     
     setLoading(false);
@@ -119,7 +119,7 @@ export default function AdminSEO() {
                         return (
                            <div key={shop.id} className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition">
                               <div>
-                                 <h3 className="font-bold text-gray-800 text-lg">{shop.shop_name}</h3>
+                                 <h3 className="font-bold text-gray-800 text-lg">{shop.name}</h3>
                                  <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
                                     Status: 
                                     {isConfigured ? (
@@ -133,7 +133,7 @@ export default function AdminSEO() {
                                  </p>
                               </div>
                               <button
-                                 onClick={() => handleOpenModal('shop', shop.id, shop.shop_name)}
+                                 onClick={() => handleOpenModal('shop', shop.id, shop.name)}
                                  className={`px-4 py-2 font-medium rounded-xl border text-sm transition ${isConfigured ? 'border-gray-200 text-gray-700 hover:bg-gray-100' : 'border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100'}`}
                               >
                                  {isConfigured ? "Manage Listing" : "Enhance SEO"}
