@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
+import { getQrSession } from "../utils/qr-session";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function MyOrders() {
@@ -23,7 +24,8 @@ export default function MyOrders() {
            return;
         }
 
-        const { data, error } = await supabase
+        const session = getQrSession();
+        let query = supabase
           .from("orders")
           .select(`
             *,
@@ -35,8 +37,13 @@ export default function MyOrders() {
           `)
           .in('id', historyIds)
           .neq('status', 'archived')
-          .neq('status', 'stk_pushed')
-          .order('created_at', { ascending: false });
+          .neq('status', 'stk_pushed');
+          
+        if (session && session.shop_id) {
+           query = query.eq('shop_id', session.shop_id);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
 
         if (!error && data) {
           setOrders(data);

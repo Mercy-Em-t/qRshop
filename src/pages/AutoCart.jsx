@@ -17,17 +17,20 @@ export default function AutoCart() {
   const [loadedItems, setLoadedItems] = useState([]);
   const [error, setError] = useState("");
 
+  const urlShopId = searchParams.get("shop");
+  const urlItemsParam = searchParams.get("items");
+  const promoCode = searchParams.get("promo");
+  const name = searchParams.get("name");
+  const singleItemId = searchParams.get("i");
+
   useEffect(() => {
     async function seedCart() {
       try {
-        let urlShopId = searchParams.get("shop");
-        let urlItemsParam = searchParams.get("items");
-        const promoCode = searchParams.get("promo");
-        const name = searchParams.get("name");
-        const singleItemId = searchParams.get("i");
+        let currentShopId = urlShopId;
+        let currentItemsParam = urlItemsParam;
         
         // We track the active ID in outer scope for the catch block fallback
-        let activeShopId = urlShopId;
+        let activeShopId = currentShopId;
 
         // Handle ultra-short link format: ?i=ITEM_ID
         if (singleItemId) {
@@ -40,13 +43,13 @@ export default function AutoCart() {
            
            if (itemErr || !itemData) throw new Error(`Product lookup failed: ${itemErr?.message || 'Item disabled or removed. (ID: ' + fullUuid + ')'}`);
            
-           urlShopId = itemData.shop_id;
+           currentShopId = itemData.shop_id;
            activeShopId = itemData.shop_id; // Cache for fallback catch block
-           urlItemsParam = `${itemData.id}:1`;
+           currentItemsParam = `${itemData.id}:1`;
            if (!name) setBundleName(itemData.name);
         }
 
-        if (!urlShopId || !urlItemsParam) throw new Error(`Invalid link — missing shop or items. (shopId: ${urlShopId})`);
+        if (!currentShopId || !currentItemsParam) throw new Error(`Invalid link — missing shop or items. (shopId: ${currentShopId})`);
 
         if (!singleItemId) setBundleName(name ? decodeURIComponent(name) : "Special Offer");
 
@@ -54,7 +57,7 @@ export default function AutoCart() {
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
           .select("id, name, is_online")
-          .eq("id", urlShopId)
+          .eq("id", currentShopId)
           .single();
 
         if (shopErr || !shop) throw new Error(`This shop could not be found: ${shopErr?.message || 'Store deleted.'}`);
@@ -63,7 +66,7 @@ export default function AutoCart() {
         setShopName(shop.name);
 
         // 2. Parse items: "id1:2,id2:1"
-        const parsedItems = urlItemsParam.split(",").map(chunk => {
+        const parsedItems = currentItemsParam.split(",").map(chunk => {
           const [id, qty] = chunk.split(":");
           return { id: id.trim(), qty: parseInt(qty) || 1 };
         });
@@ -75,7 +78,7 @@ export default function AutoCart() {
           .from("menu_items")
           .select("id, name, price, image_url, category")
           .in("id", itemIds)
-          .eq("shop_id", urlShopId);
+          .eq("shop_id", currentShopId);
 
         if (prodErr) throw new Error(`Could not load products: ${prodErr.message}`);
 
@@ -84,7 +87,7 @@ export default function AutoCart() {
         const existingSession = JSON.parse(localStorage.getItem(sessionKey) || "{}");
         localStorage.setItem(sessionKey, JSON.stringify({
           ...existingSession,
-          shopId: urlShopId,
+          shopId: currentShopId,
           table: "Direct Link",
           expiresAt: Date.now() + 4 * 60 * 60 * 1000
         }));
@@ -119,7 +122,7 @@ export default function AutoCart() {
            localStorage.setItem(sessionKey, JSON.stringify({
              ...existingSession,
              shopId: activeShopId,
-             table: "Fallback Redirect",
+             table: "Fallback",
              expiresAt: Date.now() + 4 * 60 * 60 * 1000
            }));
            navigate("/menu", { replace: true });
@@ -130,7 +133,7 @@ export default function AutoCart() {
       }
     }
     seedCart();
-  }, [navigate, addItem, clearCart, searchParams]);
+  }, [navigate, addItem, clearCart, urlShopId, urlItemsParam, promoCode, name, singleItemId]);
 
   if (status === "loading") {
     return (

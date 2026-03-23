@@ -14,7 +14,8 @@ export default function AdminShops() {
   const [newShopPhone, setNewShopPhone] = useState("");
   const [newShopWhatsApp, setNewShopWhatsApp] = useState("");
   const [newAdminEmail, setNewAdminEmail] = useState("");
-  const [newShopIndustry, setNewShopIndustry] = useState("food");
+  const [newShopIndustry, setNewShopIndustry] = useState("");
+  const [industryTypes, setIndustryTypes] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
   const navigate = useNavigate();
 
@@ -69,6 +70,17 @@ export default function AdminShops() {
       
     if (!kycErr && kycData) {
        setKycRequests(kycData);
+    }
+    
+    // Fetch mapped global taxonomies
+    const { data: indData } = await supabase
+      .from("industry_types")
+      .select("*")
+      .order("created_at", { ascending: true });
+      
+    if (indData) {
+       setIndustryTypes(indData);
+       if (indData.length > 0 && !newShopIndustry) setNewShopIndustry(indData[0].slug);
     }
 
     setLoading(false);
@@ -180,6 +192,10 @@ export default function AdminShops() {
          })
       });
 
+      if (response.headers.get("content-type")?.includes("text/html")) {
+          throw new Error("API Route not found. Ensure you are running the app with 'vercel dev' instead of 'npm run dev'.");
+      }
+
       const resData = await response.json();
       
       if (!response.ok || !resData.success) {
@@ -190,7 +206,7 @@ export default function AdminShops() {
       setNewShopSubdomain("");
       setNewShopPhone("");
       setNewShopWhatsApp("");
-      setNewShopIndustry("food");
+      if (industryTypes.length > 0) setNewShopIndustry(industryTypes[0].slug);
       setNewAdminEmail("");
       
       alert(`✅ Success! Sandbox Space Deployed.\n\nAn official setup email has been dispatched via Supabase to:\n${newAdminEmail}\n\nThe user can now click the link inside their email to securely construct their password and dock with the platform.`);
@@ -425,10 +441,12 @@ export default function AdminShops() {
                      onChange={(e) => setNewShopIndustry(e.target.value)}
                      className="w-full bg-indigo-700/50 border border-indigo-400 rounded-lg px-3 py-2 text-white outline-none focus:ring-2 focus:ring-white transition mb-4"
                   >
-                     <option value="food">Food & Beverage (Restaurant, Cafe)</option>
-                     <option value="retail">Retail & Stores (Boutique, Convenience)</option>
-                     <option value="service">Services (Salon, Spa, Clinic)</option>
-                     <option value="other">Other</option>
+                     {industryTypes.map(ind => (
+                        <option key={ind.slug} value={ind.slug}>{ind.name}</option>
+                     ))}
+                     {industryTypes.length === 0 && (
+                        <option value="none" disabled>Missing Database Migrations!</option>
+                     )}
                   </select>
                   
                   <label className="block text-sm font-semibold mb-1 text-indigo-100">Owner Login Email</label>

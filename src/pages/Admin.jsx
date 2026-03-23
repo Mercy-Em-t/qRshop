@@ -20,7 +20,8 @@ export default function Admin() {
       return;
     }
     fetchGodMode();
-  }, [user, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   const fetchGodMode = async () => {
      try {

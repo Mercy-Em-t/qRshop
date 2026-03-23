@@ -19,7 +19,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [savedOk, setSavedOk] = useState(false);
   const [formData, setFormData] = useState({
-    name: "", description: "", tagline: "", address: "",
+    name: "", description: "", tagline: "", address: "", google_maps_url: "",
     phone: "", whatsapp_number: "", is_online: true, subdomain: "",
     mpesa_shortcode: "", mpesa_passkey: "",
     offers_pickup: true, offers_delivery: false, delivery_fee: 0,
@@ -67,7 +67,7 @@ export default function Settings() {
         setShop(data);
         setFormData({
           name: data.name || "", description: data.description || "",
-          tagline: data.tagline || "", address: data.address || "",
+          tagline: data.tagline || "", address: data.address || "", google_maps_url: data.google_maps_url || "",
           phone: data.phone || "", whatsapp_number: data.whatsapp_number || "",
           is_online: data.is_online ?? true, subdomain: data.subdomain || "",
           mpesa_shortcode: data.mpesa_shortcode || "", mpesa_passkey: data.mpesa_passkey || "",
@@ -380,6 +380,10 @@ export default function Settings() {
             <div>
               <label className="block text-sm font-bold text-gray-700 mb-1.5">Physical Address</label>
               <textarea className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" rows="2" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Where are you located?" />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1.5">Google Maps Pin URL (Optional)</label>
+              <input type="url" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500 outline-none text-sm" value={formData.google_maps_url} onChange={e => setFormData({...formData, google_maps_url: e.target.value})} placeholder="https://maps.app.goo.gl/..." />
             </div>
             {/* Subdomain — Pro+ only */}
             <div className={`rounded-xl border p-4 ${planAccess.isPro ? 'border-blue-100 bg-blue-50/30' : 'border-gray-100 bg-gray-50 opacity-70'}`}>

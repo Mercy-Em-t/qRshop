@@ -552,6 +552,15 @@ export default function Order() {
                     ? `💬 Place ${terms.order} via WhatsApp` 
                     : `💬 Place ${terms.order} (Direct Checkout)`}
             </button>
+            
+            <a
+               href={buildWhatsAppLink(shopPhone, `Hi ${shopName}, I have a question about my order/menu.`)}
+               target="_blank"
+               rel="noopener noreferrer"
+               className={`w-full py-4 rounded-xl font-bold text-lg border-2 transition-colors flex items-center justify-center gap-2 shadow-sm ${shop?.is_online === false ? 'border-gray-300 text-gray-400 cursor-not-allowed pointer-events-none' : 'border-green-600 bg-white text-green-700 hover:bg-green-50 z-10'}`}
+            >
+               💬 Inquire via Chatbot
+            </a>
           </div>
         ) : (
           <p className="mt-6 text-center text-red-500 text-sm">
@@ -691,6 +700,8 @@ export default function Order() {
                        setCapturingIdentity(false);
                        if (!shopPlanAccess.isBasic && isOnline) {
                           handeFreeTierCheckout();
+                       } else if (shopPlanAccess.isBasic && !shopPlanAccess.isPro) {
+                          handleDirectCheckout();
                        } else {
                           handleWhatsAppCheckout();
                        }
@@ -698,7 +709,7 @@ export default function Order() {
                     disabled={!identity.name || sending}
                     className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer shadow-md"
                  >
-                    {sending ? "Processing..." : `💬 Place ${terms.order} via WhatsApp`}
+                    {sending ? "Processing..." : shopPlanAccess.isBasic && !shopPlanAccess.isPro ? `🛒 Place ${terms.order} (Direct Checkout)` : `💬 Place ${terms.order} via WhatsApp`}
                  </button>
                )}
             </div>

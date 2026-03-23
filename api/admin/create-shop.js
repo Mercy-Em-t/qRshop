@@ -59,7 +59,17 @@ export default async function handler(req, res) {
        industry_type: industry
     };
 
-    const { data: shopRes, error: shopErr } = await adminDb.from('shops').insert([shopInsertPayload]).select().single();
+    let shopRes, shopErr;
+    ({ data: shopRes, error: shopErr } = await adminDb.from('shops').insert([shopInsertPayload]).select().single());
+    
+    if (shopErr && shopErr.code === '42703') {
+       // Graceful degradation: The user hasn't executed the Phase 3 schema migrations yet (missing subdomain, industry_type, etc).
+       delete shopInsertPayload.subdomain;
+       delete shopInsertPayload.whatsapp_number;
+       delete shopInsertPayload.industry_type;
+       ({ data: shopRes, error: shopErr } = await adminDb.from('shops').insert([shopInsertPayload]).select().single());
+    }
+
     if (shopErr) throw new Error(`Failed to isolate database structural bounds: ${shopErr.message}`);
 
     // 5. Connect User to physical shop inside the SQL cross-reference table using the real Auth UUID

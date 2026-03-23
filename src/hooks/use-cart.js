@@ -2,42 +2,33 @@ import { useState, useCallback, useEffect } from "react";
 import { logEvent } from "../services/telemetry-service";
 import { getQrSession } from "../utils/qr-session";
 
-const CART_STORAGE_KEY = "qr_cart";
-const COUPON_STORAGE_KEY = "qr_active_coupon";
-const PARENT_ORDER_KEY = "qr_parent_order";
-
-function loadCartFromStorage() {
-  try {
-    const raw = localStorage.getItem(CART_STORAGE_KEY);
-    if (raw) {
-      return JSON.parse(raw);
-    }
-  } catch {
-    // ignore corrupt data
-  }
-  return [];
-}
-
-function loadCouponFromStorage() {
-  try {
-    const raw = localStorage.getItem(COUPON_STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return null;
-}
-
-function saveCartToStorage(items) {
-  try {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // ignore storage errors
-  }
-}
-
 export function useCart() {
-  const [items, setItems] = useState(() => loadCartFromStorage());
-  const [activeCoupon, setActiveCoupon] = useState(() => loadCouponFromStorage());
-  const [parentOrderId, setParentOrderId] = useState(() => localStorage.getItem(PARENT_ORDER_KEY) || null);
+  const session = getQrSession();
+  const shopId = session?.shop_id || "global";
+
+  const CART_STORAGE_KEY = `qr_cart_${shopId}`;
+  const COUPON_STORAGE_KEY = `qr_active_coupon_${shopId}`;
+  const PARENT_ORDER_KEY = `qr_parent_order_${shopId}`;
+
+  const [items, setItems] = useState(() => {
+    try {
+      const raw = localStorage.getItem(CART_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return [];
+  });
+
+  const [activeCoupon, setActiveCoupon] = useState(() => {
+    try {
+      const raw = localStorage.getItem(COUPON_STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch {}
+    return null;
+  });
+
+  const [parentOrderId, setParentOrderId] = useState(() => {
+    return localStorage.getItem(PARENT_ORDER_KEY) || null;
+  });
 
   // Persist parent order id
   useEffect(() => {
@@ -46,12 +37,14 @@ export function useCart() {
     } else {
       localStorage.removeItem(PARENT_ORDER_KEY);
     }
-  }, [parentOrderId]);
+  }, [parentOrderId, PARENT_ORDER_KEY]);
 
   // Persist cart to localStorage on change
   useEffect(() => {
-    saveCartToStorage(items);
-  }, [items]);
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    } catch {}
+  }, [items, CART_STORAGE_KEY]);
 
   // Persist active coupon
   useEffect(() => {
@@ -62,7 +55,7 @@ export function useCart() {
         localStorage.removeItem(COUPON_STORAGE_KEY);
       }
     } catch {}
-  }, [activeCoupon]);
+  }, [activeCoupon, COUPON_STORAGE_KEY]);
 
   const applyCoupon = useCallback((coupon) => {
     setActiveCoupon(coupon);
@@ -83,9 +76,9 @@ export function useCart() {
       return [...prev, { ...menuItem, quantity: 1 }];
     });
 
-    const session = getQrSession();
-    if (session) {
-      logEvent("item_added_to_cart", "N/A", session.shop_id, navigator.userAgent, {
+    const currentSession = getQrSession();
+    if (currentSession) {
+      logEvent("item_added_to_cart", "N/A", currentSession.shop_id, navigator.userAgent, {
         item_id: menuItem.id,
         item_name: menuItem.name,
         price: menuItem.price
@@ -104,9 +97,9 @@ export function useCart() {
       return prev.filter((i) => i.id !== itemId);
     });
     
-    const session = getQrSession();
-    if (session) {
-      logEvent("item_removed_from_cart", "N/A", session.shop_id, navigator.userAgent, {
+    const currentSession = getQrSession();
+    if (currentSession) {
+      logEvent("item_removed_from_cart", "N/A", currentSession.shop_id, navigator.userAgent, {
         item_id: itemId
       });
     }
@@ -116,8 +109,13 @@ export function useCart() {
     setItems([]);
     setActiveCoupon(null);
     setParentOrderId(null);
-    localStorage.removeItem(CART_STORAGE_KEY);
-    localStorage.removeItem(PARENT_ORDER_KEY);
+    
+    // Deletions using dynamic latest keys
+    const currentSession = getQrSession();
+    const sid = currentSession?.shop_id || "global";
+    localStorage.removeItem(`qr_cart_${sid}`);
+    localStorage.removeItem(`qr_parent_order_${sid}`);
+    localStorage.removeItem(`qr_active_coupon_${sid}`);
   }, []);
 
   const loadRevision = useCallback((orderToRevise, itemsToLoad) => {

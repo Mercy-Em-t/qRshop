@@ -15,7 +15,8 @@ export default function AdminGlobalOrders() {
       return;
     }
     fetchGlobalOrders();
-  }, [user, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   const fetchGlobalOrders = async () => {
     try {

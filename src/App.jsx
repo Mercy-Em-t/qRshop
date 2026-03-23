@@ -16,6 +16,7 @@ import MenuManager from "./pages/MenuManager";
 import QrGenerator from "./pages/QrGenerator";
 import QrDashboard from "./pages/QrDashboard";
 import QRAnalytics from "./pages/dashboard/qr-detail";
+import DynamicQrSettings from "./pages/dashboard/DynamicQrSettings";
 import ScanGateway from "./pages/ScanGateway";
 import Plans from "./pages/Plans";
 import Admin from "./pages/Admin";
@@ -31,6 +32,7 @@ import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminTodo from "./pages/AdminTodo";
 import AdminBooklet from "./pages/AdminBooklet";
 import AdminPayouts from "./pages/AdminPayouts";
+import AdminIndustries from "./pages/AdminIndustries";
 import Campaign from "./pages/Campaign";
 import TrackOrder from "./pages/TrackOrder";
 import EditOrder from "./pages/EditOrder";
@@ -43,6 +45,8 @@ import PublicQrLanding from "./pages/PublicQrLanding";
 import Settings from "./pages/Settings";
 import RequestAccess from "./pages/RequestAccess";
 import AutoCart from "./pages/AutoCart";
+// Social & Community Integration
+import CommunityFeed from "./pages/social/CommunityFeed";
 // Generic Legal Pages (Public)
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
@@ -62,6 +66,9 @@ export default function App() {
       <Route path="/buy/:itemName" element={<AutoCart />} />
       <Route path="/buy" element={<AutoCart />} />
       <Route path="/auto-cart" element={<AutoCart />} />
+      
+      {/* Social Sub-Platform */}
+      <Route path="/community" element={<CommunityFeed />} />
       
       {/* Legal Pages */}
       <Route path="/terms" element={<Terms />} />
@@ -145,6 +152,7 @@ export default function App() {
                   <Route path="orders" element={<OrderManager />} />
                   <Route path="qrs" element={<QrDashboard />} />
                   <Route path="qrs/:qrId" element={<QRAnalytics />} />
+                  <Route path="qrs/:qrId/settings" element={<DynamicQrSettings />} />
                   <Route path="campaigns" element={<CampaignManager />} />
                   <Route path="marketing" element={<MarketingStudio />} />
                   <Route path="settings" element={<Settings />} />
@@ -171,6 +179,7 @@ export default function App() {
       <Route path="/admin/todo" element={<AdminTodo />} />
       <Route path="/admin/booklet" element={<AdminBooklet />} />
       <Route path="/admin/payouts" element={<AdminPayouts />} />
+      <Route path="/admin/industries" element={<AdminIndustries />} />
     </Routes>
   );
 }

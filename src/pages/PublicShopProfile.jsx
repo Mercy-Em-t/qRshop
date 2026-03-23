@@ -90,7 +90,13 @@ export default function PublicShopProfile({ directShopId }) {
         </div>
         <h1 className="text-4xl font-extrabold mb-2">{shop.name}</h1>
         {shop.tagline ? <p className="text-indigo-100 mb-4">{shop.tagline}</p> : <p className="text-indigo-100 mb-4">Quality food & drinks, powered by Smart QR</p>}
-        {shop.contact_number && <p className="text-indigo-200">📞 {shop.contact_number}</p>}
+        {shop.contact_number && <p className="text-indigo-200 mb-4">📞 {shop.contact_number}</p>}
+        
+        {shop.google_maps_url && (
+            <a href={shop.google_maps_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white px-5 py-2.5 rounded-full font-bold transition shadow-sm border border-white/20">
+               📍 Get Directions
+            </a>
+        )}
       </div>
 
       {/* Public Menu Preview */}

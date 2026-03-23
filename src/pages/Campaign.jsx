@@ -2,6 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getQrSession } from "../utils/qr-session";
 import { getCampaignById } from "../services/campaign-service";
+import { supabase } from "../services/supabase-client";
 import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function Campaign() {
@@ -17,17 +18,24 @@ export default function Campaign() {
   useEffect(() => {
     async function fetchCampaign() {
       if (!campaignId) {
-        setError("No active campaign found for this location.");
-        setLoading(false);
+        navigate("/menu", { replace: true });
         return;
       }
       const data = await getCampaignById(campaignId);
       if (data && data.is_active) {
+        if (session?.shop_id) {
+          const { data: shop } = await supabase.from('shops').select('plan').eq('id', session.shop_id).single();
+          const plan = shop?.plan || 'free';
+          if (!['pro', 'business', 'enterprise'].includes(plan)) {
+            navigate("/menu", { replace: true });
+            return;
+          }
+        }
         setCampaign(data);
+        setLoading(false);
       } else {
-        setError("This campaign has ended or is currently inactive.");
+        navigate("/menu", { replace: true });
       }
-      setLoading(false);
     }
     
     // Analytics: In a real app we'd log the campaign impression here

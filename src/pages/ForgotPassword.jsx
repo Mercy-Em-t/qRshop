@@ -14,10 +14,12 @@ export default function ForgotPassword() {
     setError(null);
     setMessage(null);
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const authOptions = isLocal ? {} : {
       // In production, configure the callback URL in Supabase Dashboard -> Auth -> URL Configuration
       redirectTo: `${window.location.origin}/reset-password`, 
-    });
+    };
+    const { error } = await supabase.auth.resetPasswordForEmail(email, authOptions);
 
     if (error) {
        setError(error.message);

@@ -79,7 +79,7 @@ export default function Plans() {
                   <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">Most Popular</div>
                )}
                <h3 className="text-xl font-bold text-white mb-2">Basic</h3>
-               <p className="text-3xl font-black text-white mb-1">1,200 <span className="text-sm font-medium text-gray-400">KSh/mo</span></p>
+               <p className="text-3xl font-black text-white mb-1">500 <span className="text-sm font-medium text-gray-400">KSh/mo</span></p>
                <p className="text-sm text-gray-400 mb-6 pb-6 border-b border-gray-800">Clean orders, ready to act on.</p>
                <ul className="space-y-4 mb-8 flex-1">
                   <li className="flex gap-3 text-sm text-gray-300"><span className="text-green-400">✓</span> <strong>Auto-checkout routing</strong></li>
@@ -97,7 +97,7 @@ export default function Plans() {
                {currentPlan === 'pro' && <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">Current Plan</div>}
                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-50 rounded-bl-full -z-10 opacity-50"></div>
                <h3 className="text-xl font-bold text-gray-900 mb-2">Pro</h3>
-               <p className="text-3xl font-black text-gray-900 mb-1">3,000 <span className="text-sm font-medium text-gray-500">KSh/mo</span></p>
+               <p className="text-3xl font-black text-gray-900 mb-1">1,500 <span className="text-sm font-medium text-gray-500">KSh/mo</span></p>
                <p className="text-sm text-gray-500 mb-6 pb-6 border-b border-gray-100">Analytics & Tracking.</p>
                <ul className="space-y-4 mb-8 flex-1">
                   <li className="flex gap-3 text-sm text-gray-600"><span className="text-blue-500">✓</span> Everything in Basic</li>
@@ -114,7 +114,7 @@ export default function Plans() {
             <div className={`bg-white rounded-3xl p-8 shadow-sm flex flex-col ${currentPlan === 'business' || currentPlan === 'enterprise' ? 'border-4 border-purple-500 scale-105 relative z-10' : 'border border-gray-100'}`}>
                {(currentPlan === 'business' || currentPlan === 'enterprise') && <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm">Current Plan</div>}
                <h3 className="text-xl font-bold text-gray-900 mb-2">Business</h3>
-               <p className="text-3xl font-black text-gray-900 mb-1">7,000+ <span className="text-sm font-medium text-gray-500">KSh/mo</span></p>
+               <p className="text-3xl font-black text-gray-900 mb-1">3,000 <span className="text-sm font-medium text-gray-500">KSh/mo</span></p>
                <p className="text-sm text-gray-500 mb-6 pb-6 border-b border-gray-100">For scaling operations.</p>
                <ul className="space-y-4 mb-8 flex-1">
                   <li className="flex gap-3 text-sm text-gray-600"><span className="text-purple-500">✓</span> Everything in Pro</li>

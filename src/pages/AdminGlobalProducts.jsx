@@ -15,7 +15,8 @@ export default function AdminGlobalProducts() {
       return;
     }
     fetchGlobalProducts();
-  }, [user, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate]);
 
   const fetchGlobalProducts = async () => {
     try {

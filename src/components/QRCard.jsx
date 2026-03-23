@@ -132,13 +132,21 @@ export default function QRCard({ qr, campaigns = [], updateQR, deleteQR }) {
       <div className="flex gap-2 mt-auto">
          <button
            onClick={() => navigate(`/dashboard/qrs/${qr.id}`)}
-           className="flex-1 px-4 py-2 bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-200 hover:bg-white hover:border-blue-300 hover:text-blue-600 transition-colors"
+           className="flex-1 px-3 py-2 bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-200 hover:bg-white hover:border-blue-300 hover:text-blue-600 transition-colors text-sm"
+           title="View Analytics Output"
          >
-           View Output
+           Output
+         </button>
+         <button
+           onClick={() => navigate(`/dashboard/qrs/${qr.id}/settings`)}
+           className="flex-1 px-3 py-2 bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-200 hover:bg-white hover:border-gray-300 hover:text-gray-900 transition-colors text-sm"
+           title="Configure Dynamic Routing"
+         >
+           ⚙️ Settings
          </button>
          <button
            onClick={handleDelete}
-           className="px-3 py-2 bg-red-50 text-red-600 font-medium rounded-lg border border-red-100 hover:bg-red-100 transition-colors"
+           className="px-3 py-2 bg-red-50 text-red-600 font-medium rounded-lg border border-red-100 hover:bg-red-100 transition-colors text-sm"
          >
            Delete
          </button>

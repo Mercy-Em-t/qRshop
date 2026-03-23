@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Scanner } from '@yudiel/react-qr-scanner';
 import PublicShopProfile from "./PublicShopProfile";
 import { getShopBySubdomain } from "../services/shop-service";
 
@@ -9,6 +10,8 @@ const RESERVED_DOMAINS = ["localhost", "127.0.0.1", "www", "tmsavannah.com", "tm
 export default function Home() {
   const [subdomainShopId, setSubdomainShopId] = useState(null);
   const [isVerifyingSubdomain, setIsVerifyingSubdomain] = useState(true);
+  const [showScanner, setShowScanner] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Intercept wildcard subdomains natively on the client
@@ -201,6 +204,51 @@ export default function Home() {
            <p className="text-sm text-gray-400">© 2026 Savannah Platform. All rights reserved.</p>
         </div>
       </footer>
+
+      {/* Floating QR Scanner Button */}
+      {!subdomainShopId && (
+         <button 
+           onClick={() => setShowScanner(true)}
+           className="fixed bottom-6 right-6 w-16 h-16 bg-green-600 text-white rounded-full shadow-[0_10px_25px_rgba(34,197,94,0.4)] flex items-center justify-center hover:bg-green-700 hover:scale-105 transition-transform z-50 cursor-pointer border-4 border-white"
+         >
+           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
+             <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+             <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+           </svg>
+         </button>
+      )}
+
+      {/* Scanner Modal Modal */}
+      {showScanner && (
+        <div className="fixed inset-0 z-[60] bg-black bg-opacity-90 flex flex-col items-center justify-center p-4">
+           <div className="w-full max-w-sm relative">
+              <button 
+                onClick={() => setShowScanner(false)}
+                className="absolute -top-12 right-0 text-white hover:text-gray-300 p-2 cursor-pointer z-50 bg-white/20 rounded-full"
+              >
+                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+              
+              <div className="bg-white p-2 rounded-2xl shadow-2xl overflow-hidden aspect-square border-4 border-gray-800">
+                <Scanner 
+                   onScan={(result) => {
+                      if (result && result.length > 0) {
+                         setShowScanner(false);
+                         const decodedText = result[0].rawValue;
+                         // Native redirect
+                         if (decodedText.startsWith("http")) {
+                            window.location.href = decodedText;
+                         } else {
+                            alert("Invalid payload: " + decodedText);
+                         }
+                      }
+                   }} 
+                />
+              </div>
+              <p className="mt-6 text-center text-white/70 font-medium tracking-wide">Align QR Code within the frame to scan seamlessly.</p>
+           </div>
+        </div>
+      )}
     </div>
   );
 }
