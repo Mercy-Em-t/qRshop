@@ -241,10 +241,20 @@ export default function Order() {
       if (shopPhone) {
          const unstructuredMsg = buildUnstructuredMessage(shopName, session?.table, items, identity, deliveryFee);
          const link = buildWhatsAppLink(shopPhone, unstructuredMsg);
-         window.open(link, "_blank", "noopener,noreferrer");
+         
+         // Clean up cart so returning to the browser shows an empty state
+         clearCart();
+         
+         // Brand the transition
+         setTransferringToWhatsApp(true);
+         setTimeout(() => {
+            setTransferringToWhatsApp(false);
+            window.location.href = link;
+         }, 2500);
+      } else {
+         clearCart();
+         navigate("/menu");
       }
-      clearCart();
-      navigate("/menu");
   };
 
   const handleMpesaCheckout = async () => {

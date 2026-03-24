@@ -30,10 +30,12 @@ export const PLANS = [
       merchantExperience: "Dashboard activates. Incoming Kanban board unlocks. Customer names/phones actively captured into your CRM.",
       consumerExperience: "Seamless in-browser Direct Checkout and live pulsing Order Tracker interface. No external apps.",
       features: [
+         { text: "Click-to-chat orders", active: true },
+         { text: "Digital Menu", active: true },
          { text: "Auto-checkout routing", active: true, strong: true },
          { text: "Structured thermal receipts", active: true, strong: true },
          { text: "Customer Identity Capture", active: true, strong: true },
-         { text: "Active Order Dashboard", active: true, strong: false }
+         { text: "Active Order Dashboard", active: true }
       ],
       buttonLabel: "Upgrade to Basic",
       buttonLink: "/request-access"
@@ -49,10 +51,15 @@ export const PLANS = [
       merchantExperience: "Stop manually replying. The server natively texts customers automatically. Analytics and Community Directory unlocked.",
       consumerExperience: "In-browser tracker plus instant, highly professional WhatsApp API push receipts. They see your food in their Social Feed.",
       features: [
-         { text: "Everything in Basic", active: true, strong: false },
+         { text: "Click-to-chat orders", active: true },
+         { text: "Digital Menu", active: true },
+         { text: "Auto-checkout routing", active: true },
+         { text: "Structured thermal receipts", active: true },
+         { text: "Customer Identity Capture", active: true },
+         { text: "Active Order Dashboard", active: true },
          { text: "Automated WhatsApp Bot", active: true, strong: true },
          { text: "Historical Analytics Tracking", active: true, strong: true },
-         { text: "Community Feed Tagging", active: true, strong: false }
+         { text: "Community Feed Tagging", active: true }
       ],
       buttonLabel: "Get Pro",
       buttonLink: "/request-access"
@@ -68,10 +75,18 @@ export const PLANS = [
       merchantExperience: "Issue locked-down login accounts to waiters & cashiers. Automatically settle incoming cash to the till via M-Pesa.",
       consumerExperience: "Checkout triggers an instant green M-Pesa PIN prompt (STK Push) directly on their mobile screen.",
       features: [
-         { text: "Everything in Pro", active: true, strong: false },
-         { text: "Automated STK Pushes (Soon)", active: true, strong: true },
-         { text: "Multi-User Seat Access", active: true, strong: false },
-         { text: "Native POS API Hooks", active: true, strong: false }
+         { text: "Click-to-chat orders", active: true },
+         { text: "Digital Menu", active: true },
+         { text: "Auto-checkout routing", active: true },
+         { text: "Structured thermal receipts", active: true },
+         { text: "Customer Identity Capture", active: true },
+         { text: "Active Order Dashboard", active: true },
+         { text: "Automated WhatsApp Bot", active: true },
+         { text: "Historical Analytics Tracking", active: true },
+         { text: "Community Feed Tagging", active: true },
+         { text: "Automated STK Pushes", active: true, strong: true },
+         { text: "Multi-User Seat Access", active: true, strong: true },
+         { text: "Native POS API Hooks", active: true }
       ],
       buttonLabel: "Contact Sales",
       buttonLink: "/request-access"
