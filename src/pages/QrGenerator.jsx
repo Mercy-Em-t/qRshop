@@ -52,7 +52,9 @@ export default function QrGenerator() {
   const qrLink = createdQr ? (
      shopSubdomain 
         ? `https://${shopSubdomain}.tmsavannah.com/q/${createdQr.id}`
-        : `${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${shopSlug || 'shop'}?n=${createdQr.id}`
+        : isFree
+           ? `${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${createdQr.id}`
+           : `${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${shopSlug || 'shop'}?n=${createdQr.id}`
   ) : "";
 
   const handleSubmit = async (e) => {

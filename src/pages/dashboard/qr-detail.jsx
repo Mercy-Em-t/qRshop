@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import AnalyticsChart from '../../components/AnalyticsChart';
 import { supabase } from '../../services/supabase-client';
 import { useState, useEffect } from 'react';
+import usePlanAccess from '../../hooks/usePlanAccess';
 
 export default function QRAnalytics() {
   const { qrId } = useParams();
@@ -23,7 +24,9 @@ export default function QRAnalytics() {
   
   // Allow env override for QR destinations so you can generate real-world codes even while developing on localhost
   const gatewayBase = import.meta.env.VITE_GATEWAY_URL || window.location.origin;
-  const url = `${gatewayBase}/q/${shopSlug}?n=${qrId}`;
+  const url = isFree 
+     ? `${gatewayBase}/q/${qrId}` 
+     : `${gatewayBase}/q/${shopSlug}?n=${qrId}`;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
