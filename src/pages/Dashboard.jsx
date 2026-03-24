@@ -184,9 +184,9 @@ export default function Dashboard() {
           </Link>
 
           {planAccess.isPro ? (
-             <Link
-               to="/dashboard/analytics"
-               className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-100 relative overflow-hidden"
+             <a
+               href="#analytics"
+               className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-100 relative overflow-hidden block cursor-pointer"
              >
                <div className="absolute top-0 right-0 bg-blue-500 w-16 h-16 rounded-bl-full opacity-10"></div>
                <h2 className="text-lg font-semibold text-gray-800 mb-2">
@@ -195,7 +195,7 @@ export default function Dashboard() {
                <p className="text-gray-500 text-sm">
                  Historical data, popular items, and upsell tracking.
                </p>
-             </Link>
+             </a>
           ) : (
              <div 
                onClick={() => setLockedFeatureFocus("Advanced Analytics")}
@@ -315,7 +315,7 @@ export default function Dashboard() {
         </div>
 
         {/* Analytics Section */}
-        <h2 className="text-lg font-bold text-gray-800 mb-4">📊 Analytics</h2>
+        <h2 id="analytics" className="text-lg font-bold text-gray-800 mb-4 pt-4">📊 Analytics</h2>
 
         {loading ? (
           <div className="text-center py-8">

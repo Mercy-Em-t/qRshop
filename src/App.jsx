@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import QrAccessGuard from "./components/QrAccessGuard";
 import OfflineMenuWrapper from "./components/OfflineMenuWrapper";
 import OnboardingGate from "./components/OnboardingGate";
@@ -151,6 +151,7 @@ export default function App() {
             <OnboardingGate>
                <Routes>
                   <Route path="/" element={<Dashboard />} />
+                  <Route path="analytics" element={<Navigate to="/dashboard#analytics" replace />} />
                   <Route path="orders" element={<OrderManager />} />
                   <Route path="qrs" element={<QrDashboard />} />
                   <Route path="qrs/:qrId" element={<QRAnalytics />} />

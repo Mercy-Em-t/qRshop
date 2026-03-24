@@ -438,7 +438,7 @@ export default function OrderManager() {
                           <>
                             <div className="grid grid-cols-2 gap-2 mb-2">
                                <button
-                                 onClick={() => updateOrderStatus(order.id, "preparing")}
+                                 onClick={() => updateOrderStatus(order.id, "pending_payment")}
                                  className="bg-green-600 text-white border border-green-700 font-bold py-2.5 rounded-lg hover:bg-green-700 shadow-sm transition text-xs flex items-center justify-center gap-1"
                                >
                                  ✅ Accept
