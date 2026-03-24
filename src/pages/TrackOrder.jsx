@@ -122,11 +122,17 @@ export default function TrackOrder() {
       title: "Completed",
       description: `Your ${terms.order.toLowerCase()} is completed. Thank you!`
     },
+    requires_edit: {
+      color: "bg-yellow-50 text-yellow-800 border-yellow-200",
+      icon: "⚠️",
+      title: "Action Required",
+      description: `The shop requested an update to your ${terms.order.toLowerCase()}. Please review their message below.`
+    },
     archived: {
-      color: "bg-green-100 text-green-800 border-green-200",
-      icon: "✅",
-      title: "Completed",
-      description: `Your ${terms.order.toLowerCase()} is completed. Thank you for visiting!`
+      color: "bg-gray-100 text-gray-800 border-gray-200",
+      icon: "📦",
+      title: "Archived / Cancelled",
+      description: `Your ${terms.order.toLowerCase()} is no longer active.`
     }
   };
 
@@ -192,6 +198,37 @@ export default function TrackOrder() {
               <span className="text-xl font-bold text-gray-900">KSh {order.total_price}</span>
            </div>
         </section>
+
+        {/* Action Blocks */}
+        {order.status === 'requires_edit' && (
+           <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl shadow-sm">
+             <h3 className="font-bold text-yellow-800 mb-2 flex items-center gap-2">
+                <span>💬</span> Message from Shop
+             </h3>
+             <p className="text-yellow-900 bg-white p-4 rounded-lg border border-yellow-200 italic mb-4 font-medium">
+                "{order.edit_reason || 'Please modify your order.'}"
+             </p>
+             <p className="text-yellow-700 text-sm mb-4 leading-relaxed">
+                You can review your items, remove unavailable ones, and easily resubmit.
+             </p>
+             <div className="flex gap-3">
+                 <Link to={`/edit-order/${order.id}`} className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-2 rounded-lg shadow-sm transition text-center text-sm">
+                    ✏️ Edit Order
+                 </Link>
+                 <button 
+                    onClick={async () => {
+                       if(confirm("Are you sure you want to cancel this order permanently?")) {
+                          await supabase.from('orders').update({ status: 'archived' }).eq('id', order.id);
+                          window.location.reload();
+                       }
+                    }}
+                    className="flex-1 bg-white border border-yellow-300 hover:bg-yellow-100 text-yellow-800 font-bold py-3 px-2 rounded-lg shadow-sm transition text-center text-sm"
+                 >
+                    ❌ Cancel Order
+                 </button>
+             </div>
+           </div>
+        )}
         
         {order.status === 'rejected' && (
            <div className="bg-red-50 border border-red-200 p-6 rounded-xl text-center shadow-sm">
@@ -203,7 +240,7 @@ export default function TrackOrder() {
            </div>
         )}
         
-        <p className="text-center text-xs text-gray-400 mt-8">
+        <p className="text-center text-xs text-gray-400 mt-8 mb-4">
            This page updates automatically.
         </p>
       </main>
