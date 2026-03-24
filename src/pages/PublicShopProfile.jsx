@@ -30,7 +30,24 @@ export default function PublicShopProfile({ directShopId }) {
         document.title = `${shopData.name} - Menu & Ordering`;
 
         const menuData = await getMenuItemsByCategory(shopId);
-        setMenuCategories(menuData);
+        
+        // GRACEFUL TIER DEGRADATION: Cap display items to 50 if Free tier or expired
+        const isFreeTier = shopData.plan === 'free' || (shopData.subscription_expires_at && new Date(shopData.subscription_expires_at) < new Date());
+        let displayCategories = menuData;
+        
+        if (isFreeTier && menuData) {
+          let count = 0;
+          displayCategories = {};
+          for (const cat of Object.keys(menuData)) {
+            const remaining = 50 - count;
+            if (remaining <= 0) break;
+            displayCategories[cat] = menuData[cat].slice(0, remaining);
+            count += displayCategories[cat].length;
+            if (displayCategories[cat].length >= remaining) break;
+          }
+        }
+        
+        setMenuCategories(displayCategories);
       } catch (err) {
         setError("Failed to load shop profile.");
       } finally {

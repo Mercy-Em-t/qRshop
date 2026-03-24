@@ -2,7 +2,7 @@ export const PLANS = [
    {
       id: "free",
       name: "Free",
-      price: "0",
+      priceLabel: "0",
       theme: "light",
       colorTag: "green",
       popular: false,
@@ -22,7 +22,7 @@ export const PLANS = [
    {
       id: "basic",
       name: "Basic",
-      price: "999",
+      priceLabel: "999",
       theme: "dark",
       colorTag: "green",
       popular: true,
@@ -41,7 +41,7 @@ export const PLANS = [
    {
       id: "pro",
       name: "Pro",
-      price: "2,499",
+      priceLabel: "2,499",
       theme: "light_accent",
       colorTag: "blue",
       popular: false,
@@ -60,7 +60,7 @@ export const PLANS = [
    {
       id: "business",
       name: "Business",
-      price: "4,999",
+      priceLabel: "4,999",
       theme: "light",
       colorTag: "purple",
       popular: false,

@@ -67,7 +67,23 @@ export default function Menu() {
   const isLoading = shopLoading || menuLoading;
   if (isLoading) return <LoadingSpinner message="Loading menu..." />;
 
-  const categoryNames = Object.keys(categories);
+  // GRACEFUL TIER DEGRADATION: Cap display items to 50 if Free tier or expired
+  const isFreeTier = shop?.plan === 'free' || (shop?.subscription_expires_at && new Date(shop.subscription_expires_at) < new Date());
+  let displayCategories = categories;
+  
+  if (isFreeTier && categories) {
+    let count = 0;
+    displayCategories = {};
+    for (const cat of Object.keys(categories)) {
+      const remaining = 50 - count;
+      if (remaining <= 0) break;
+      displayCategories[cat] = categories[cat].slice(0, remaining);
+      count += displayCategories[cat].length;
+      if (displayCategories[cat].length >= remaining) break;
+    }
+  }
+
+  const categoryNames = Object.keys(displayCategories);
   const activeCat = activeCategory || categoryNames[0];
 
   return (

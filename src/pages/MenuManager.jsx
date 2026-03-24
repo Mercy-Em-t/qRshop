@@ -730,20 +730,32 @@ export default function MenuManager() {
           ) : (
             <>
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden overflow-x-auto">
-                {currentItems.map((item) => (
-                  <div key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${item.is_active === false ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}`}>
+                {currentItems.map((item, absoluteIdx) => {
+                  const globalIndex = indexOfFirstItem + absoluteIdx;
+                  // If plan is strictly Free (or expired to free), cap at 50
+                  const isFrozen = planAccess.isFree && !planAccess.isBasic && globalIndex >= 50;
+                  
+                  return (
+                  <div key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${item.is_active === false || isFrozen ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}`}>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className={`font-semibold ${item.is_active === false ? 'text-gray-500 line-through' : 'text-gray-800'}`}>{item.name}</h3>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.is_active === false ? 'bg-gray-200 text-gray-500' : 'bg-green-100 text-green-800'}`}>
+                        <h3 className={`font-semibold ${item.is_active === false || isFrozen ? 'text-gray-500' : 'text-gray-800'}`}>
+                          {item.name}
+                        </h3>
+                        {isFrozen && (
+                           <span className="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold shadow-sm border border-slate-300 flex items-center gap-1">
+                             ❄️ Frozen (Max 50)
+                           </span>
+                        )}
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.is_active === false || isFrozen ? 'bg-gray-200 text-gray-500' : 'bg-green-100 text-green-800'}`}>
                           {item.category}
                         </span>
-                        {item.is_active === false && (
+                        {item.is_active === false && !isFrozen && (
                            <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium shadow-sm border border-red-200">Offline</span>
                         )}
                       </div>
                       {item.description && <p className="text-sm text-gray-500 mt-1 truncate">{item.description}</p>}
-                      <p className={`text-sm font-medium mt-1 ${item.is_active === false ? 'text-gray-400' : 'text-gray-700'}`}>KSh {item.price}</p>
+                      <p className={`text-sm font-medium mt-1 ${item.is_active === false || isFrozen ? 'text-gray-400' : 'text-gray-700'}`}>KSh {item.price}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                       <button
@@ -752,8 +764,8 @@ export default function MenuManager() {
                            const btn = e.currentTarget;
                            generateAdLink(item).finally(() => btn.disabled = false);
                         }}
-                        disabled={item.is_active === false}
-                        className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-gray-300 cursor-not-allowed' : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50'}`}
+                        disabled={item.is_active === false || isFrozen}
+                        className={`p-2 rounded-lg transition-colors ${item.is_active === false || isFrozen ? 'text-gray-300 cursor-not-allowed' : 'text-blue-500 hover:text-blue-700 hover:bg-blue-50'}`}
                         title="Generate & Copy Semantic Link"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -761,10 +773,16 @@ export default function MenuManager() {
                         </svg>
                       </button>
                       <button
-                        onClick={() => startEdit(item)}
+                        onClick={() => {
+                           if (isFrozen) {
+                               setLockedFeatureFocus("Access to Frozen Items (Upgrade to Basic to unlock all)");
+                           } else {
+                               startEdit(item);
+                           }
+                        }}
                         disabled={item.is_active === false}
-                        className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-gray-300 cursor-not-allowed' : 'text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'}`}
-                        title="Edit Item"
+                        className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-gray-300 cursor-not-allowed' : isFrozen ? 'text-slate-400 hover:text-slate-600' : 'text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50'}`}
+                        title={isFrozen ? "Item Frozen - Upgrade Required" : "Edit Item"}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -787,7 +805,8 @@ export default function MenuManager() {
                       </button>
                     </div>
                   </div>
-                ))}
+                 );
+                })}
               </div>
               
               {/* Pagination Controls */}
