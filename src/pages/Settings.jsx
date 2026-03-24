@@ -117,11 +117,8 @@ export default function Settings() {
       const { error } = await supabase.from("shops").update(updatePayload).eq("id", shopId);
       
       if (error) {
-         // If error is about missing columns (e.g. subdomain, offers_dine_in)
          if (error.code === '42703') {
              delete updatePayload.subdomain;
-             delete updatePayload.offers_dine_in;
-             delete updatePayload.offers_digital;
              const { error: fallbackError } = await supabase.from("shops").update(updatePayload).eq("id", shopId);
              if (fallbackError) throw fallbackError;
          } else {
@@ -146,6 +143,23 @@ export default function Settings() {
       setFormData(prev => ({ ...prev, is_online: newStatus }));
     } catch (err) {
       alert("Failed to toggle status: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleInstantToggle = async (field) => {
+    setSaving(true);
+    const newStatus = !formData[field];
+    try {
+      const { error } = await supabase.from("shops").update({ [field]: newStatus }).eq("id", shopId);
+      if (error) {
+         // Gracefully handle missing columns in older schemas without crashing
+         if (error.code !== '42703') throw error;
+      }
+      setFormData(prev => ({ ...prev, [field]: newStatus }));
+    } catch (err) {
+      alert(`Failed to save ${field}: ` + err.message);
     } finally {
       setSaving(false);
     }
@@ -493,8 +507,9 @@ export default function Settings() {
                      </div>
                      <button
                        type="button"
-                       onClick={() => setFormData(p => ({...p, offers_dine_in: !p.offers_dine_in}))}
-                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_dine_in ? 'bg-green-500' : 'bg-gray-300'}`}
+                       disabled={saving}
+                       onClick={() => handleInstantToggle("offers_dine_in")}
+                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_dine_in ? 'bg-green-500' : 'bg-gray-300'} ${saving ? 'opacity-50' : ''}`}
                      >
                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.offers_dine_in ? 'translate-x-6' : 'translate-x-1'}`} />
                      </button>
@@ -510,8 +525,9 @@ export default function Settings() {
                        </div>
                        <button
                          type="button"
-                         onClick={() => setFormData(p => ({...p, offers_pickup: !p.offers_pickup}))}
-                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_pickup ? 'bg-green-500' : 'bg-gray-300'}`}
+                         disabled={saving}
+                         onClick={() => handleInstantToggle("offers_pickup")}
+                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_pickup ? 'bg-green-500' : 'bg-gray-300'} ${saving ? 'opacity-50' : ''}`}
                        >
                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.offers_pickup ? 'translate-x-6' : 'translate-x-1'}`} />
                        </button>
@@ -524,8 +540,9 @@ export default function Settings() {
                        </div>
                        <button
                          type="button"
-                         onClick={() => setFormData(p => ({...p, offers_delivery: !p.offers_delivery}))}
-                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_delivery ? 'bg-green-500' : 'bg-gray-300'}`}
+                         disabled={saving}
+                         onClick={() => handleInstantToggle("offers_delivery")}
+                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${formData.offers_delivery ? 'bg-green-500' : 'bg-gray-300'} ${saving ? 'opacity-50' : ''}`}
                        >
                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.offers_delivery ? 'translate-x-6' : 'translate-x-1'}`} />
                        </button>
