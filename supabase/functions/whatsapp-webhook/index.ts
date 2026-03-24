@@ -44,6 +44,7 @@ serve(async (req) => {
           let newStatus = 'pending'
           if (action === 'accept') newStatus = 'pending_payment' // Ready to pay STK
           if (action === 'reject') newStatus = 'rejected' // Inform customer
+          if (action === 'edit') newStatus = 'requires_edit' // Inform customer to modify order
 
           console.log(`Order ${orderId} marked as ${newStatus} by shop owner via WhatsApp.`)
 

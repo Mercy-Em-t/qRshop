@@ -62,6 +62,13 @@ serve(async (req) => {
                 id: `reject_${order_id}`,
                 title: "❌ Reject (Sold Out)"
               }
+            },
+            {
+              type: "reply",
+              reply: {
+                id: `edit_${order_id}`,
+                title: "📝 Request Edit"
+              }
             }
           ]
         }

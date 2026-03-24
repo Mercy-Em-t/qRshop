@@ -4,6 +4,7 @@ import { getQrSession } from "../utils/qr-session";
 import { useShop } from "../hooks/use-shop";
 import { useCart } from "../hooks/use-cart";
 import { createOrder } from "../services/order-service";
+import { supabase } from "../lib/supabase";
 import { logEvent } from "../services/telemetry-service";
 import {
   buildWhatsAppMessage,
