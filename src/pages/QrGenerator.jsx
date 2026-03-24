@@ -16,6 +16,7 @@ export default function QrGenerator() {
   const [generating, setGenerating] = useState(false);
   const [createdQr, setCreatedQr] = useState(null);
   const [shopSubdomain, setShopSubdomain] = useState("");
+  const [shopSlug, setShopSlug] = useState("");
   const navigate = useNavigate();
 
   const user = getCurrentUser();
@@ -38,9 +39,12 @@ export default function QrGenerator() {
     }
     
     if (shopId) {
-       supabase.from("shops").select("subdomain").eq("id", shopId).single()
+       supabase.from("shops").select("subdomain, name").eq("id", shopId).single()
          .then(({ data }) => {
             if (data?.subdomain) setShopSubdomain(data.subdomain);
+            if (data?.name) {
+                setShopSlug(data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+            }
          });
     }
   }, [user, navigate, shopId]);
@@ -48,7 +52,7 @@ export default function QrGenerator() {
   const qrLink = createdQr ? (
      shopSubdomain 
         ? `https://${shopSubdomain}.tmsavannah.com/q/${createdQr.id}`
-        : `${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${createdQr.id}`
+        : `${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${shopSlug || 'shop'}?n=${createdQr.id}`
   ) : "";
 
   const handleSubmit = async (e) => {

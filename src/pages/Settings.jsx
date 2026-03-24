@@ -389,8 +389,19 @@ export default function Settings() {
           <form onSubmit={handleUpdate} className="space-y-5">
             <div className="grid md:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5">Shop Name</label>
-                <input type="text" required className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center justify-between">
+                   Shop Name
+                   <span className="text-[10px] uppercase font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">Locked</span>
+                </label>
+                <input 
+                   type="text" 
+                   required 
+                   disabled
+                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-400 cursor-not-allowed text-sm" 
+                   value={formData.name} 
+                   onChange={e => setFormData({...formData, name: e.target.value})} 
+                />
+                <p className="text-xs text-gray-400 mt-1.5">Shop names are physically bound to your QR links and cannot be altered.</p>
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">Tagline</label>

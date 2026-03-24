@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { getQrNode } from "../services/qr-node-service";
 import { logEvent } from "../services/telemetry-service";
 import { logVisit } from "../services/visit-service";
@@ -10,6 +10,8 @@ export default function ScanGateway() {
   const { qrId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const nodeId = searchParams.get('n');
   const [error, setError] = useState(null);
   
   // Privacy Consent State
@@ -20,9 +22,14 @@ export default function ScanGateway() {
   useEffect(() => {
     async function initScan() {
       try {
-        if (!qrId) throw new Error("Invalid QR Code");
+        let activeNodeId = qrId;
+        if (nodeId) {
+            activeNodeId = nodeId;
+        }
 
-        const node = await getQrNode(qrId);
+        if (!activeNodeId) throw new Error("Invalid QR Code");
+
+        const node = await getQrNode(activeNodeId);
 
         if (!node) {
           navigate("/invalid-access", { replace: true });
@@ -53,19 +60,21 @@ export default function ScanGateway() {
     if (!isProcessing) {
       initScan();
     }
-  }, [qrId, navigate]);
+  }, [qrId, nodeId, navigate]);
 
   const processAction = async (node) => {
      setIsProcessing(true);
      
+     const activeNodeId = nodeId || qrId;
+
      // 1. Log Visit Record
-     const visit = await logVisit(qrId, node.shop_id).catch((err) => {
+     const visit = await logVisit(activeNodeId, node.shop_id).catch((err) => {
         console.error("Visit logging failed:", err);
         return null;
      });
 
      // 2. Log Telemetry Event (Fire and Forget)
-     logEvent("qr_scanned", qrId, node.shop_id, navigator.userAgent, {
+     logEvent("qr_scanned", activeNodeId, node.shop_id, navigator.userAgent, {
         visit_id: visit?.visit_id || null,
         campaign_id: node.campaign_id || null,
      }).catch((err) => console.error("Telemetry failed:", err));
