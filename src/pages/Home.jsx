@@ -231,6 +231,7 @@ export default function Home() {
               
               <div className="bg-white p-2 rounded-2xl shadow-2xl overflow-hidden aspect-square border-4 border-gray-800">
                 <Scanner 
+                   formats={["qr_code"]}
                    onScan={(result) => {
                       if (result && result.length > 0) {
                          setShowScanner(false);
