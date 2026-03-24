@@ -47,6 +47,7 @@ import RequestAccess from "./pages/RequestAccess";
 import AutoCart from "./pages/AutoCart";
 // Social & Community Integration
 import CommunityFeed from "./pages/social/CommunityFeed";
+import Directory from "./pages/social/Directory";
 // Generic Legal Pages (Public)
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
@@ -69,6 +70,7 @@ export default function App() {
       
       {/* Social Sub-Platform */}
       <Route path="/community" element={<CommunityFeed />} />
+      <Route path="/explore" element={<Directory />} />
       
       {/* Legal Pages */}
       <Route path="/terms" element={<Terms />} />

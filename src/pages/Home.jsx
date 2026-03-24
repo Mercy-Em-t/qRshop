@@ -83,8 +83,8 @@ export default function Home() {
           Turn your tables and catalogs into instant, structured WhatsApp orders. Stop manually decoding messages. Capture customer data automatically.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-           <Link to="/request-access" className="w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-green-700 transition shadow-lg hover:shadow-green-200 transform hover:-translate-y-1">Launch Your Shop for Free</Link>
-           <a href="#pricing" className="w-full sm:w-auto text-gray-600 font-bold px-8 py-4 rounded-full border border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition">View Pricing</a>
+           <Link to="/explore" className="w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-green-700 transition shadow-lg hover:shadow-green-200 transform hover:-translate-y-1">Enter the Marketplace</Link>
+           <Link to="/request-access" className="w-full sm:w-auto text-gray-700 font-bold px-8 py-4 rounded-full border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition">Create a Smart Shop</Link>
         </div>
       </section>
 

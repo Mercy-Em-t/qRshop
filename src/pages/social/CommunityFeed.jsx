@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase-client";
+import EcosystemNav from "../../components/EcosystemNav";
 
 export default function CommunityFeed() {
   const [posts, setPosts] = useState([]);
@@ -142,14 +143,16 @@ export default function CommunityFeed() {
           </nav>
        </div>
 
-       {/* Main Feed */}
-       <div className="w-full max-w-2xl bg-white min-h-screen border-r border-gray-200">
-          <header className="p-4 border-b border-gray-100 sticky top-0 bg-white/80 backdrop-blur z-10 flex items-center justify-between">
-             <h1 className="text-xl font-bold">Discovery Feed</h1>
-             <Link to="/" className="md:hidden text-indigo-600 font-bold text-sm">Savannah</Link>
-          </header>
+        {/* Main Feed */}
+        <div className="w-full max-w-2xl bg-white min-h-screen border-r border-gray-200">
+           <header className="p-4 border-b border-gray-100 bg-white flex items-center justify-between">
+              <h1 className="text-xl font-bold">Global Social Feed</h1>
+              <Link to="/" className="md:hidden text-indigo-600 font-bold text-sm">Savannah</Link>
+           </header>
+           
+           <EcosystemNav />
 
-          {/* Create Post Interface */}
+           {/* Create Post Interface */}
           <div className="p-4 border-b-8 border-gray-50 flex gap-4 relative">
              <div className="w-12 h-12 bg-gray-200 rounded-full flex-shrink-0 border-2 border-indigo-100 flex items-center justify-center text-xl">👤</div>
              <div className="flex-1">
