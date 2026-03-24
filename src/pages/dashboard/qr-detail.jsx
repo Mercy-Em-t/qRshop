@@ -9,6 +9,21 @@ import usePlanAccess from '../../hooks/usePlanAccess';
 export default function QRAnalytics() {
   const { qrId } = useParams();
   const { events, loading, conversionRate } = useEvents(qrId);
+  const { isFree } = usePlanAccess();
+  const [shopSlug, setShopSlug] = useState('shop');
+
+  useEffect(() => {
+     async function fetchSlug() {
+        if (!events || events.length === 0) return;
+        const shopId = events[0]?.shop_id;
+        if (!shopId) return;
+        const { data } = await supabase.from('shops').select('name').eq('id', shopId).single();
+        if (data?.name) {
+           setShopSlug(data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
+        }
+     }
+     fetchSlug();
+  }, [events]);
 
   if (loading) {
     return (
