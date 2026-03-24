@@ -46,16 +46,16 @@ export default function Admin() {
         }
 
         // 2. Financial & Order Data
-        const { data: orders } = await supabase.from("orders").select("total, status");
+        const { data: orders } = await supabase.from("orders").select("total_price, status");
         let lifetimeGMV = 0, pendingGMV = 0, staleCount = 0, activeOrdersCount = 0;
         
         if (orders) {
            orders.forEach(o => {
               if (o.status.includes('paid') || o.status.includes('completed')) {
-                 lifetimeGMV += Number(o.total || 0);
+                 lifetimeGMV += Number(o.total_price || 0);
               } else if (o.status !== 'archived' && o.status !== 'cancelled') {
                  activeOrdersCount++;
-                 pendingGMV += Number(o.total || 0);
+                 pendingGMV += Number(o.total_price || 0);
                  if (['pending_payment', 'stk_pushed'].includes(o.status)) staleCount++;
               }
            });

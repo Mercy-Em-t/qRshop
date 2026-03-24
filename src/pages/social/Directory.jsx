@@ -5,10 +5,12 @@ import EcosystemNav from "../../components/EcosystemNav";
 
 export default function Directory() {
   const [shops, setShops] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeIndustry, setActiveIndustry] = useState("all");
   const [industryTypes, setIndustryTypes] = useState([]);
+  const [viewMode, setViewMode] = useState("products"); // 'products' | 'shops'
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,12 +23,29 @@ export default function Directory() {
     // Fetch live shops actively operating on the platform (is_online = true)
     const { data: shopsData, error: shopsErr } = await supabase
       .from("shops")
-      .select("id, name, subdomain, industry_type, is_online, offers_pickup, offers_delivery, offers_digital")
+      .select("id, name, subdomain, industry_type, is_online, offers_pickup, offers_delivery, offers_digital, list_in_global_marketplace")
       .eq("is_online", true)
+      .eq("list_in_global_marketplace", true)
       .order("created_at", { ascending: false });
 
     if (!shopsErr && shopsData) {
       setShops(shopsData);
+    }
+
+    // Fetch live products pooling from active marketplace shops
+    const { data: productsData, error: prodErr } = await supabase
+      .from("menu_items")
+      .select(`
+         id, name, price, category, image_url, description, shop_id,
+         shops!inner(id, name, subdomain, is_online, list_in_global_marketplace, industry_type)
+      `)
+      .eq("shops.is_online", true)
+      .eq("shops.list_in_global_marketplace", true)
+      .order("created_at", { ascending: false })
+      .limit(300);
+
+    if (!prodErr && productsData) {
+       setProducts(productsData);
     }
 
     // Fetch dynamic master taxonomy for filter bubbles
@@ -49,6 +68,14 @@ export default function Directory() {
   const filteredShops = shops.filter(shop => {
       const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesIndustry = activeIndustry === "all" || shop.industry_type === activeIndustry;
+      return matchesSearch && matchesIndustry;
+  });
+
+  const filteredProducts = products.filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            product.shops.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            (product.category || "").toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesIndustry = activeIndustry === "all" || product.shops.industry_type === activeIndustry;
       return matchesSearch && matchesIndustry;
   });
 
@@ -106,18 +133,37 @@ export default function Directory() {
            </div>
         </div>
 
+        {/* View Toggles */}
+        <div className="flex justify-center mb-8">
+           <div className="inline-flex bg-gray-200 rounded-xl p-1 shadow-inner">
+              <button 
+                onClick={() => setViewMode("products")}
+                className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${viewMode === 'products' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                 🛒 Products & Services
+              </button>
+              <button 
+                onClick={() => setViewMode("shops")}
+                className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${viewMode === 'shops' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+              >
+                 🏪 Shops & Merchants
+              </button>
+           </div>
+        </div>
+
         {/* Directory Grid */}
         {loading ? (
              <div className="flex justify-center items-center py-20">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
              </div>
-        ) : filteredShops.length === 0 ? (
+        ) : viewMode === "shops" ? (
+           filteredShops.length === 0 ? (
              <div className="bg-white border text-center py-20 rounded-3xl shadow-sm">
                 <span className="text-4xl text-gray-300 mb-4 block">🏜️</span>
                 <h3 className="text-xl font-bold text-gray-700 mb-1">No Shops Found</h3>
                 <p className="text-gray-500">We couldn't find any operational merchants matching your criteria.</p>
              </div>
-        ) : (
+           ) : (
              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                  {filteredShops.map((shop) => (
                     <div key={shop.id} className="bg-white rounded-3xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group">
@@ -157,6 +203,56 @@ export default function Directory() {
                     </div>
                  ))}
              </div>
+           )
+        ) : (
+           filteredProducts.length === 0 ? (
+             <div className="bg-white border text-center py-20 rounded-3xl shadow-sm">
+                <span className="text-4xl text-gray-300 mb-4 block">🛍️</span>
+                <h3 className="text-xl font-bold text-gray-700 mb-1">No Products Found</h3>
+                <p className="text-gray-500">No products or services match your current search.</p>
+             </div>
+           ) : (
+             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                 {filteredProducts.map((p) => (
+                    <Link 
+                       key={p.id} 
+                       to={p.shops?.subdomain ? `http://${p.shops.subdomain}.${window.location.host.split('.').slice(-2).join('.')}/buy/${encodeURIComponent(p.name)}` : `/buy/${encodeURIComponent(p.name)}?shop=${p.shop_id}`}
+                       className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col group cursor-pointer"
+                    >
+                        {p.image_url ? (
+                           <div className="h-32 sm:h-48 w-full bg-gray-100">
+                              <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                           </div>
+                        ) : (
+                           <div className={`h-32 sm:h-48 w-full flex flex-col items-center justify-center p-4 bg-gradient-to-tr ${p.shops?.industry_type === 'digital' ? 'from-indigo-100 to-purple-50 text-indigo-300' : 'from-gray-100 to-gray-50 text-gray-300'}`}>
+                              <span className="text-4xl sm:text-5xl mb-2">{p.shops?.industry_type === 'digital' ? '💻' : p.shops?.industry_type === 'retail' ? '🛍️' : '🍽️'}</span>
+                           </div>
+                        )}
+
+                        <div className="p-4 flex-1 flex flex-col">
+                           <div className="mb-1">
+                              <h3 className="font-bold text-gray-900 text-sm sm:text-base leading-tight line-clamp-2 group-hover:text-green-600 transition">{p.name}</h3>
+                           </div>
+                           
+                           <div className="text-xs text-gray-500 line-clamp-1 mb-2 font-medium flex items-center gap-1">
+                              <span className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-[8px]">🏬</span>
+                              {p.shops?.name}
+                           </div>
+                           
+                           <div className="mt-auto pt-3 border-t border-gray-50 flex items-end justify-between">
+                              <div>
+                                 <p className="text-xs text-gray-400 font-medium">Price</p>
+                                 <p className="font-black text-gray-900 text-sm sm:text-base tracking-tight">KSh {p.price?.toLocaleString()}</p>
+                              </div>
+                              <span className="bg-gray-900 text-white rounded-lg w-8 h-8 flex items-center justify-center group-hover:bg-green-600 transition">
+                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                              </span>
+                           </div>
+                        </div>
+                    </Link>
+                 ))}
+             </div>
+           )
         )}
       </main>
     </div>

@@ -23,7 +23,8 @@ export default function Settings() {
     phone: "", whatsapp_number: "", is_online: true, subdomain: "",
     mpesa_shortcode: "", mpesa_passkey: "",
     offers_pickup: true, offers_delivery: false, delivery_fee: 0,
-    industry_type: "restaurant", offers_dine_in: true, offers_digital: false
+    industry_type: "restaurant", offers_dine_in: true, offers_digital: false,
+    list_in_global_marketplace: true
   });
 
   // KYC States
@@ -76,7 +77,8 @@ export default function Settings() {
           delivery_fee: data.delivery_fee || 0,
           industry_type: data.industry_type || "restaurant",
           offers_dine_in: data.offers_dine_in ?? true,
-          offers_digital: data.offers_digital ?? false
+          offers_digital: data.offers_digital ?? false,
+          list_in_global_marketplace: data.list_in_global_marketplace ?? true
         });
         if (data.logo_url) setLogoPreview(data.logo_url);
         
@@ -317,20 +319,52 @@ export default function Settings() {
         </div>
 
         {/* Storefront Status */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-bold text-gray-900">Storefront Status</h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {formData.is_online ? "🟢 Open — accepting live orders" : "🔴 Closed — shop is paused"}
-            </p>
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-bold text-gray-900">Storefront Status</h2>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {formData.is_online ? "🟢 Open — accepting live orders" : "🔴 Closed — shop is paused"}
+              </p>
+            </div>
+            <button
+              onClick={handleToggleOnline}
+              disabled={saving}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${formData.is_online ? 'bg-green-500' : 'bg-gray-300'}`}
+            >
+              <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow ${formData.is_online ? 'translate-x-7' : 'translate-x-1'}`} />
+            </button>
           </div>
-          <button
-            onClick={handleToggleOnline}
-            disabled={saving}
-            className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${formData.is_online ? 'bg-green-500' : 'bg-gray-300'}`}
-          >
-            <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow ${formData.is_online ? 'translate-x-7' : 'translate-x-1'}`} />
-          </button>
+
+          <div className="flex items-center justify-between pt-6 border-t border-gray-100">
+            <div>
+               <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+                  🌍 Global Marketplace
+               </h2>
+               <p className="text-sm text-gray-500 mt-0.5 max-w-sm">
+                  Allow your products and shop to be discovered by thousands of customers on the Savannah public Discover feed.
+               </p>
+            </div>
+            <button
+               onClick={async () => {
+                  const newStatus = !formData.list_in_global_marketplace;
+                  setSaving(true);
+                  try {
+                     const { error } = await supabase.from("shops").update({ list_in_global_marketplace: newStatus }).eq("id", shopId);
+                     if (error) throw error;
+                     setFormData(prev => ({ ...prev, list_in_global_marketplace: newStatus }));
+                  } catch (err) {
+                     alert("Failed to toggle marketplace visibility: " + err.message);
+                  } finally {
+                     setSaving(false);
+                  }
+               }}
+               disabled={saving}
+               className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none ${formData.list_in_global_marketplace ? 'bg-blue-500' : 'bg-gray-300'}`}
+            >
+               <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform shadow ${formData.list_in_global_marketplace ? 'translate-x-7' : 'translate-x-1'}`} />
+            </button>
+          </div>
         </div>
 
         {/* Shop Logo */}
