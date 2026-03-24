@@ -212,7 +212,7 @@ export default function TrackOrder() {
                 You can review your items, remove unavailable ones, and easily resubmit.
              </p>
              <div className="flex gap-3">
-                 <Link to={`/edit-order/${order.id}`} className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-2 rounded-lg shadow-sm transition text-center text-sm">
+                 <Link to={`/edit/${order.id}`} className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-2 rounded-lg shadow-sm transition text-center text-sm">
                     ✏️ Edit Order
                  </Link>
                  <button 
@@ -234,7 +234,7 @@ export default function TrackOrder() {
            <div className="bg-red-50 border border-red-200 p-6 rounded-xl text-center shadow-sm">
              <h3 className="font-bold text-red-800 mb-2">Want to change your order?</h3>
              <p className="text-red-600 text-sm mb-4 leading-relaxed">You can review your items, remove unavailable ones, and easily resubmit without checking out from scratch.</p>
-             <Link to={`/edit-order/${order.id}`} className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm transition inline-block w-full">
+             <Link to={`/edit/${order.id}`} className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-sm transition inline-block w-full">
                 Review & Edit Cart
              </Link>
            </div>

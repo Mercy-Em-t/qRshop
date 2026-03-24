@@ -7,6 +7,9 @@
 -- =============================================================
 
 -- 1. Safely drop foreign key constraints targeting the old UUID structure
+--    AND purge the legacy JSON function to prevent PostgREST overloading crashes!
+DROP FUNCTION IF EXISTS public.checkout_cart(json);
+
 DO $$
 DECLARE constraint_name text;
 BEGIN
