@@ -221,6 +221,25 @@ export default function Order() {
                localStorage.setItem('customer_history', JSON.stringify(history));
             }
 
+            // Phase 15: Save identity globally so recurring checkouts are faster
+            localStorage.setItem('qr_customer_name', identity.name);
+            localStorage.setItem('qr_customer_phone', identity.phone);
+
+            // Phase 44/15: Automated WhatsApp API Dispatch for Pro/Business Teams
+            if ((shopPlanAccess.isPro || shopPlanAccess.isBusiness) && isOnline && shopPhone) {
+               console.log("Dispatching automated Meta WhatsApp template silently...");
+               // Fire and forget so we don't delay the native React tracking redirect!
+               supabase.functions.invoke('whatsapp-dispatch', {
+                   body: { 
+                       order_id: order.id,
+                       shop_phone: shopPhone,
+                       customer_name: identity.name,
+                       total: finalPayableTotal,
+                       summary: items.map(i => `${i.quantity}x ${i.name}`).join(", ")
+                   }
+               }).catch(e => console.error("Silent WA Dispatch Error:", e));
+            }
+
             clearCart();
             navigate(`/track/${order.id}`);
          }
@@ -296,90 +315,6 @@ export default function Order() {
     } catch (err) {
       console.error("M-Pesa Checkout failed:", err);
       alert(err.message || "Checkout failed. Please try again.");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  const handleWhatsAppCheckout = async () => {
-    setSending(true);
-    try {
-      const order = await generateDatabaseOrder();
-
-      if (order && !queued) {
-         const history = JSON.parse(localStorage.getItem('customer_history') || '[]');
-         if (!history.includes(order.id)) {
-            history.push(order.id);
-            localStorage.setItem('customer_history', JSON.stringify(history));
-         }
-
-         setGeneratedOrder(order);
-         
-         // Save identity for next time
-         localStorage.setItem('qr_customer_name', identity.name);
-         localStorage.setItem('qr_customer_phone', identity.phone);
-         
-         // Phase 44: Automated WhatsApp API Dispatch for Pro/Business Teams
-         if ((shopPlanAccess.isPro || shopPlanAccess.isBusiness) && isOnline && shopPhone) {
-             console.log("Dispatching automated Meta WhatsApp template...");
-             const { error: dispatchErr } = await supabase.functions.invoke('whatsapp-dispatch', {
-                 body: { 
-                     order_id: order.id,
-                     shop_phone: shopPhone,
-                     customer_name: identity.name,
-                     total: finalPayableTotal,
-                     summary: items.map(i => `${i.quantity}x ${i.name}`).join(", ")
-                 }
-             });
-
-             if (!dispatchErr) {
-                 clearCart();
-                 navigate(`/track/${order.id}`);
-                 return; // Stop execution, system automated the prompt successfully!
-             }
-             console.warn("Automated WA dispatch failed, falling back to manual wa.me", dispatchErr);
-         }
-
-         // For Basic users (or if automated dispatch failed fallback), we construct the manual message here
-         if (shopPhone) {
-             const finalMessage = buildWhatsAppMessage(
-                shopName, session?.table, items, order.id, total, discountAmount, 
-                activeCoupon?.code, !isOnline, identity.name, identity.phone, 
-                identity.fulfillment_type, identity.address, deliveryFee
-             );
-             const finalLink = buildWhatsAppLink(shopPhone, finalMessage);
-             // Graceful WA transition
-             setTransferringToWhatsApp(true);
-             setTimeout(() => {
-               setTransferringToWhatsApp(false);
-               window.location.href = finalLink;
-             }, 1800);
-         }
-      }
-    } catch (err) {
-      console.error("WhatsApp Checkout failed:", err);
-      
-      // If the backend actively rejected the transaction due to boundary constraints (like stock limits), STOP.
-      if (err.message && (err.message.includes("Insufficient") || err.message.includes("Invalid"))) {
-          alert(err.message);
-          return; 
-      }
-      
-      // Fallback for actual connection or server unavailability
-      if (shopPhone && (!shopPlanAccess.isFree || !isOnline)) {
-        const fallbackMessage = buildWhatsAppMessage(
-           shopName, session?.table, items, "OFFLINE", total, discountAmount, 
-           activeCoupon?.code, !isOnline, identity.name, identity.phone,
-           identity.fulfillment_type, identity.address, deliveryFee
-        );
-        const fallbackLink = buildWhatsAppLink(shopPhone, fallbackMessage);
-        setTransferringToWhatsApp(true);
-        setTimeout(() => {
-          setTransferringToWhatsApp(false);
-          window.location.href = fallbackLink;
-        }, 1800);
-      }
-      clearCart();
     } finally {
       setSending(false);
     }
@@ -560,7 +495,7 @@ export default function Order() {
                  ? "📥 Queue via WhatsApp" 
                  : !shopPlanAccess.isBasic 
                     ? `💬 Place ${terms.order} via WhatsApp` 
-                    : `💬 Place ${terms.order} (Direct Checkout)`}
+                    : `🛒 Place ${terms.order} (Direct Checkout)`}
             </button>
             
             <a
@@ -710,16 +645,14 @@ export default function Order() {
                        setCapturingIdentity(false);
                        if (!shopPlanAccess.isBasic && isOnline) {
                           handeFreeTierCheckout();
-                       } else if (shopPlanAccess.isBasic && !shopPlanAccess.isPro) {
-                          handleDirectCheckout();
                        } else {
-                          handleWhatsAppCheckout();
+                          handleDirectCheckout();
                        }
                     }}
                     disabled={!identity.name || sending}
                     className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer shadow-md"
                  >
-                    {sending ? "Processing..." : shopPlanAccess.isBasic && !shopPlanAccess.isPro ? `🛒 Place ${terms.order} (Direct Checkout)` : `💬 Place ${terms.order} via WhatsApp`}
+                    {sending ? "Processing..." : !shopPlanAccess.isBasic ? `💬 Place ${terms.order} via WhatsApp` : `🛒 Place ${terms.order} (Direct Checkout)`}
                  </button>
                )}
             </div>
