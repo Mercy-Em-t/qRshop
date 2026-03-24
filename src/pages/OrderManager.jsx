@@ -451,10 +451,11 @@ export default function OrderManager() {
                                </button>
                             </div>
                             <button
-                              onClick={() => handleMpesaPush(order)}
+                              disabled={true}
+                              title="M-Pesa integration pending"
                               className="w-full bg-green-100 text-green-800 border border-green-300 font-bold py-2.5 rounded-lg hover:bg-green-200 transition text-xs flex items-center justify-center gap-2 mb-2"
                             >
-                              📲 Push M-Pesa PIN
+                              📲 Push M-Pesa PIN (Soon)
                             </button>
                             <button
                               onClick={() => {
@@ -473,10 +474,11 @@ export default function OrderManager() {
                         ) : order.status === "pending_payment" ? (
                           <>
                             <button
-                              onClick={() => handleMpesaPush(order)}
+                              disabled={true}
+                              title="M-Pesa integration pending"
                               className="w-full bg-green-100 text-green-800 border border-green-300 font-bold py-3 rounded-lg hover:bg-green-200 transition shadow-sm mb-2 text-sm flex items-center justify-center gap-2"
                             >
-                              📲 Push M-Pesa PIN
+                              📲 Push M-Pesa PIN (Soon)
                             </button>
                             <button
                               onClick={() => updateOrderStatus(order.id, "paid")}
@@ -487,20 +489,36 @@ export default function OrderManager() {
                             </button>
                           </>
                         ) : order.status === "stk_pushed" ? (
-                          <button
-                            onClick={() => updateOrderStatus(order.id, "paid")}
-                            className="w-full bg-indigo-600 text-white font-medium py-3 rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center justify-center gap-2"
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                            Confirm Pay Received
-                          </button>
+                           <>
+                             <button
+                               onClick={() => updateOrderStatus(order.id, "paid")}
+                               className="w-full bg-indigo-600 text-white font-medium py-3 rounded-lg hover:bg-indigo-700 transition shadow-sm flex items-center justify-center gap-2 mb-2"
+                             >
+                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                               Confirm Pay Received
+                             </button>
+                             <button
+                               onClick={() => updateOrderStatus(order.id, "rejected")}
+                               className="w-full bg-red-50 text-red-600 font-bold py-2.5 rounded-lg hover:bg-red-100 transition text-sm flex items-center justify-center gap-2"
+                             >
+                               ❌ Cancel Order
+                             </button>
+                           </>
                         ) : ["paid", "preparing"].includes(order.status) ? (
-                          <button
-                            onClick={() => updateOrderStatus(order.id, "completed")}
-                            className="w-full bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700 transition shadow-sm"
-                          >
-                            📦 Mark Completed
-                          </button>
+                          <>
+                             <button
+                               onClick={() => updateOrderStatus(order.id, "completed")}
+                               className="w-full bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700 transition shadow-sm mb-2"
+                             >
+                               📦 Mark Completed
+                             </button>
+                             <button
+                               onClick={() => updateOrderStatus(order.id, "rejected")}
+                               className="w-full bg-red-50 text-red-600 font-bold py-2.5 rounded-lg hover:bg-red-100 transition text-sm flex items-center justify-center gap-2"
+                             >
+                               ❌ Cancel Order
+                             </button>
+                           </>
                         ) : ["ready", "completed"].includes(order.status) ? (
                           <button
                             onClick={() => updateOrderStatus(order.id, "archived")}
