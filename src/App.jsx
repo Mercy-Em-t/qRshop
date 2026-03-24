@@ -182,6 +182,16 @@ export default function App() {
       <Route path="/admin/booklet" element={<AdminBooklet />} />
       <Route path="/admin/payouts" element={<AdminPayouts />} />
       <Route path="/admin/industries" element={<AdminIndustries />} />
+
+      {/* Fallback 404 to explicitly prevent blank white screens on invalid paths */}
+      <Route path="*" element={
+         <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-center p-4">
+            <h1 className="text-4xl mb-4">🧭</h1>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Page Not Found</h2>
+            <p className="text-gray-500 mb-6">The link you followed may be broken or the page may have been removed.</p>
+            <a href="/" className="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition">Return Home</a>
+         </div>
+      } />
     </Routes>
   );
 }

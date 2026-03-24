@@ -120,7 +120,14 @@ export function useCart() {
 
   const loadRevision = useCallback((orderToRevise, itemsToLoad) => {
     setItems(itemsToLoad);
-    setParentOrderId(orderToRevise.parent_order_id || orderToRevise.id);
+    const pId = orderToRevise.parent_order_id || orderToRevise.id;
+    setParentOrderId(pId);
+    
+    // Imperative persistence to avoid race conditions with React Router navigation
+    const currentSession = getQrSession();
+    const sid = currentSession?.shop_id || "global";
+    localStorage.setItem(`qr_cart_${sid}`, JSON.stringify(itemsToLoad));
+    localStorage.setItem(`qr_parent_order_${sid}`, pId);
   }, []);
 
   // Calculate Base Cost
