@@ -7,6 +7,7 @@ export default function AdminShops() {
   const [shops, setShops] = useState([]);
   const [upgradeRequests, setUpgradeRequests] = useState([]);
   const [kycRequests, setKycRequests] = useState([]);
+  const [marketplacePending, setMarketplacePending] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [newShopName, setNewShopName] = useState("");
@@ -83,6 +84,14 @@ export default function AdminShops() {
        if (indData.length > 0 && !newShopIndustry) setNewShopIndustry(indData[0].slug);
     }
 
+    // Fetch shops awaiting marketplace approval
+    const { data: mktData } = await supabase
+      .from('shops')
+      .select('id, name, subdomain, industry_type, plan, created_at, shop_users(email)')
+      .eq('marketplace_status', 'pending_review')
+      .order('created_at', { ascending: false });
+    if (mktData) setMarketplacePending(mktData);
+
     setLoading(false);
   };
 
@@ -149,6 +158,20 @@ export default function AdminShops() {
      } catch (err) {
         alert("Failed to process KYC: " + err.message);
      }
+  };
+
+  const handleMarketplaceApproval = async (shopId, action) => {
+    // action: 'approved' | 'rejected' | 'suspended'
+    try {
+      const { error } = await supabase.from('shops')
+        .update({ marketplace_status: action })
+        .eq('id', shopId);
+      if (error) throw error;
+      alert(`Marketplace status set to ${action.toUpperCase()}`);
+      fetchShops();
+    } catch (err) {
+      alert('Failed to update marketplace status: ' + err.message);
+    }
   };
 
   const handleSetPlan = async (shopId, newPlan) => {
@@ -304,6 +327,51 @@ export default function AdminShops() {
                              {req.director_id_url && <a href={req.director_id_url} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline border border-blue-100 bg-blue-50 px-2 py-1 rounded">📄 View Director ID</a>}
                              {req.business_permit_url && <a href={req.business_permit_url} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline border border-blue-100 bg-blue-50 px-2 py-1 rounded">📄 View Business Reg</a>}
                              {req.kra_cert_url && <a href={req.kra_cert_url} target="_blank" rel="noreferrer" className="text-blue-600 font-bold hover:underline border border-blue-100 bg-blue-50 px-2 py-1 rounded">📄 View KRA Cert</a>}
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </section>
+           )}
+
+           {/* Marketplace Approval Inbox */}
+           {marketplacePending.length > 0 && (
+              <section className="bg-teal-50 rounded-xl p-6 border border-teal-200">
+                 <h2 className="text-lg font-bold text-teal-800 mb-1 flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
+                    </span>
+                    Marketplace Discovery Requests
+                 </h2>
+                 <p className="text-xs text-teal-600 mb-4">Approve shops to publish their products on the public Discover page.</p>
+                 <div className="space-y-3">
+                    {marketplacePending.map(shop => (
+                       <div key={shop.id} className="bg-white rounded-lg p-4 shadow-sm border border-teal-100">
+                          <div className="flex justify-between items-start">
+                             <div>
+                                <p className="font-bold text-gray-800">{shop.name}</p>
+                                <p className="text-xs text-gray-500 mt-0.5">
+                                   {shop.industry_type?.toUpperCase()} · {shop.plan?.toUpperCase()} ·{' '}
+                                   {shop.shop_users?.map(u => u.email).join(', ')}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-0.5">Requested {new Date(shop.created_at).toLocaleDateString()}</p>
+                             </div>
+                             <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-bold">Pending</span>
+                          </div>
+                          <div className="flex gap-2 mt-3">
+                             <button
+                                onClick={() => handleMarketplaceApproval(shop.id, 'rejected')}
+                                className="flex-1 px-3 py-2 bg-red-50 text-red-600 font-bold text-xs rounded-lg hover:bg-red-100 transition"
+                             >
+                                ✕ Reject
+                             </button>
+                             <button
+                                onClick={() => handleMarketplaceApproval(shop.id, 'approved')}
+                                className="flex-1 px-3 py-2 bg-teal-500 text-white font-bold text-xs rounded-lg hover:bg-teal-600 transition shadow-sm"
+                             >
+                                ✓ Approve & Publish
+                             </button>
                           </div>
                        </div>
                     ))}

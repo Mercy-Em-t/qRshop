@@ -35,27 +35,25 @@ export default function Directory() {
   const fetchDirectory = async () => {
     setLoading(true);
     
-    // Fetch live shops actively operating on the platform (is_online = true)
+    // Fetch admin-approved shops only
     const { data: shopsData, error: shopsErr } = await supabase
       .from("shops")
-      .select("id, name, subdomain, industry_type, is_online, offers_pickup, offers_delivery, offers_digital, list_in_global_marketplace")
-      .eq("is_online", true)
-      .eq("list_in_global_marketplace", true)
+      .select("id, name, subdomain, industry_type, is_online, offers_pickup, offers_delivery, offers_digital, marketplace_status")
+      .eq("marketplace_status", "approved")
       .order("created_at", { ascending: false });
 
     if (!shopsErr && shopsData) {
       setShops(shopsData);
     }
 
-    // Fetch live products pooling from active marketplace shops
+    // Fetch products from admin-approved shops only
     const { data: productsData, error: prodErr } = await supabase
       .from("menu_items")
       .select(`
          id, name, price, category, image_url, description, shop_id,
-         shops!inner(id, name, subdomain, is_online, list_in_global_marketplace, industry_type)
+         shops!inner(id, name, subdomain, marketplace_status, industry_type)
       `)
-      .eq("shops.is_online", true)
-      .eq("shops.list_in_global_marketplace", true)
+      .eq("shops.marketplace_status", "approved")
       .order("created_at", { ascending: false })
       .limit(300);
 

@@ -24,7 +24,8 @@ export default function Settings() {
     mpesa_shortcode: "", mpesa_passkey: "",
     offers_pickup: true, offers_delivery: false, delivery_fee: 0,
     industry_type: "restaurant", offers_dine_in: true, offers_digital: false,
-    list_in_global_marketplace: true
+    list_in_global_marketplace: true,
+    marketplace_status: 'not_listed'
   });
 
   // KYC States
@@ -83,7 +84,8 @@ export default function Settings() {
           industry_type: data.industry_type || "restaurant",
           offers_dine_in: data.offers_dine_in ?? true,
           offers_digital: data.offers_digital ?? false,
-          list_in_global_marketplace: data.list_in_global_marketplace ?? true
+          list_in_global_marketplace: data.list_in_global_marketplace ?? true,
+          marketplace_status: data.marketplace_status || 'not_listed'
         });
         if (data.logo_url) setLogoPreview(data.logo_url);
         
@@ -622,7 +624,45 @@ export default function Settings() {
                    <span className="text-xs bg-gray-200 text-gray-600 px-3 py-1 rounded-full font-bold shadow-sm">🔒 Basic+</span>
                  )}
                </div>
-               <div className="mt-4 space-y-3">
+
+               {/* Marketplace Listing Status */}
+               {planAccess.isBasic && (
+                 <div className="mt-3 mb-4 p-3 rounded-lg border flex items-center justify-between"
+                   style={{ background: formData.marketplace_status === 'approved' ? '#f0fdf4' : formData.marketplace_status === 'pending_review' ? '#fefce8' : formData.marketplace_status === 'rejected' ? '#fef2f2' : '#f9fafb', borderColor: formData.marketplace_status === 'approved' ? '#bbf7d0' : formData.marketplace_status === 'pending_review' ? '#fde68a' : formData.marketplace_status === 'rejected' ? '#fecaca' : '#e5e7eb' }}
+                 >
+                   <div>
+                     <p className="text-sm font-bold text-gray-800">
+                       {formData.marketplace_status === 'approved' && '✅ Listed on Discover'}
+                       {formData.marketplace_status === 'pending_review' && '⏳ Awaiting Admin Review'}
+                       {formData.marketplace_status === 'rejected' && '❌ Listing Rejected'}
+                       {(formData.marketplace_status === 'not_listed' || !formData.marketplace_status) && '🔍 Not Listed on Discover'}
+                     </p>
+                     <p className="text-xs text-gray-500 mt-0.5">
+                       {formData.marketplace_status === 'approved' && 'Your shop and products are publicly discoverable.'}
+                       {formData.marketplace_status === 'pending_review' && 'An admin is reviewing your listing request.'}
+                       {formData.marketplace_status === 'rejected' && 'Contact admin for details on why the listing was rejected.'}
+                       {(formData.marketplace_status === 'not_listed' || !formData.marketplace_status) && 'Request a listing to appear on the public marketplace.'}
+                     </p>
+                   </div>
+                   {(formData.marketplace_status === 'not_listed' || formData.marketplace_status === 'rejected' || !formData.marketplace_status) && (
+                     <button
+                       type="button"
+                       onClick={async () => {
+                         setSaving(true);
+                         const { error } = await supabase.from('shops').update({ marketplace_status: 'pending_review', list_in_global_marketplace: true }).eq('id', shopId);
+                         if (!error) setFormData(prev => ({ ...prev, marketplace_status: 'pending_review' }));
+                         else alert('Failed to submit listing request: ' + error.message);
+                         setSaving(false);
+                       }}
+                       className="ml-3 px-3 py-2 bg-teal-600 text-white font-bold text-xs rounded-lg hover:bg-teal-700 transition whitespace-nowrap"
+                     >
+                       Request Listing
+                     </button>
+                   )}
+                 </div>
+               )}
+
+               <div className="mt-2 space-y-3">
                  {allCommunities.length === 0 && (
                    <p className="text-xs text-gray-400 italic">No communities available yet.</p>
                  )}
