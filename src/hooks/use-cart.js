@@ -137,9 +137,30 @@ export function useCart() {
   );
 
   // Calculate Discount
-  const discountAmount = activeCoupon 
-    ? (subtotal * activeCoupon.discountPercentage) / 100 
-    : 0;
+  let discountAmount = 0;
+  if (activeCoupon) {
+    const { discount_type, discount_value, bundle_price, min_items, promotion_items } = activeCoupon;
+    const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
+    
+    // Check if minimum items condition is met
+    const meetsMinItems = totalItems >= (min_items || 1);
+    
+    // Check if specific products are required
+    const requiredProductIds = new Set(promotion_items?.map(pi => pi.menu_item_id) || []);
+    const hasRequiredProducts = requiredProductIds.size === 0 || 
+      items.some(item => requiredProductIds.has(item.id));
+
+    if (meetsMinItems && hasRequiredProducts) {
+      if (discount_type === 'percent') {
+        discountAmount = (subtotal * (discount_value || 0)) / 100;
+      } else if (discount_type === 'flat') {
+        discountAmount = Math.min(subtotal, discount_value || 0);
+      } else if (discount_type === 'bundle_price') {
+        // Only apply if subtotal > bundle_price
+        discountAmount = Math.max(0, subtotal - (bundle_price || subtotal));
+      }
+    }
+  }
 
   // Final Cost
   const total = Math.max(0, subtotal - discountAmount);

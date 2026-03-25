@@ -57,6 +57,9 @@ export default function Order() {
       fulfillment_type: "dine_in",
       address: ""
   });
+  const [couponInput, setCouponInput] = useState("");
+  const [couponError, setCouponError] = useState("");
+  const [applyingCoupon, setApplyingCoupon] = useState(false);
   
   const terms = useNomenclature(session?.shop_id);
   
@@ -300,7 +303,8 @@ export default function Order() {
                  order_id: order.id,
                  phone: identity.phone,
                  amount: finalPayableTotal,
-                 shop_id: shop?.id
+                 shop_id: shop?.id,
+                 is_b2b: false
              }
          });
 
@@ -428,7 +432,56 @@ export default function Order() {
             ))}
           </div>
 
-          <div className="border-t border-gray-300 mt-4 pt-4 space-y-2">
+          <div className="border-t border-gray-300 mt-4 pt-4 space-y-4">
+            
+            {/* Promo Code Input */}
+            {!activeCoupon && (
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={couponInput}
+                    onChange={(e) => {
+                      setCouponInput(e.target.value.toUpperCase());
+                      setCouponError("");
+                    }}
+                    placeholder="Have a promo code?"
+                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none text-sm font-bold uppercase"
+                  />
+                  <button 
+                    onClick={async () => {
+                      if (!couponInput) return;
+                      setApplyingCoupon(true);
+                      setCouponError("");
+                      try {
+                        const { data, error } = await supabase
+                          .from('promotions')
+                          .select('*, promotion_items(menu_item_id)')
+                          .eq('shop_id', session?.shop_id)
+                          .eq('coupon_code', couponInput)
+                          .eq('is_active', true)
+                          .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+                          .single();
+
+                        if (error || !data) throw new Error("Invalid or expired code");
+                        
+                        applyCoupon(data);
+                        setCouponInput("");
+                      } catch (err) {
+                        setCouponError(err.message);
+                      } finally {
+                        setApplyingCoupon(false);
+                      }
+                    }}
+                    disabled={applyingCoupon || !couponInput}
+                    className="bg-gray-900 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-800 transition disabled:opacity-50"
+                  >
+                    {applyingCoupon ? '...' : 'Apply'}
+                  </button>
+                </div>
+                {couponError && <p className="text-[10px] text-red-500 font-bold ml-1 uppercase tracking-tight">{couponError}</p>}
+              </div>
+            )}
             
             {!activeCoupon && savedCoupon && (
               <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4 flex justify-between items-center animate-fade-in">
@@ -447,12 +500,15 @@ export default function Order() {
 
             {activeCoupon && (
               <>
-                <div className="flex justify-between text-gray-500">
+                <div className="flex justify-between text-gray-500 text-sm">
                   <span>Subtotal</span>
                   <span>KSh {subtotal}</span>
                 </div>
-                <div className="flex justify-between text-green-600 font-medium">
-                  <span>Discount ({activeCoupon.discountPercentage}%)</span>
+                <div className="flex justify-between text-teal-600 font-bold text-sm animate-fade-in items-center">
+                  <div className="flex items-center gap-1">
+                    <span>🎁 {activeCoupon.name}</span>
+                    <button onClick={() => applyCoupon(null)} className="text-[10px] bg-teal-50 px-1.5 py-0.5 rounded text-teal-400 hover:text-red-400 cursor-pointer">Remove</button>
+                  </div>
                   <span>- KSh {discountAmount}</span>
                 </div>
               </>

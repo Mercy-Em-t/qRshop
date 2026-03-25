@@ -17,7 +17,7 @@ export async function authenticateUser(email, password) {
     }
 
     const sessionUser = {
-      id: shopUser.id, // Using the db id as a mock Auth UUID
+      id: shopUser.id,
       email: shopUser.email,
       role: shopUser.role,
       shop_id: shopUser.shop_id,
@@ -27,6 +27,7 @@ export async function authenticateUser(email, password) {
     localStorage.setItem("qrshop_session", JSON.stringify(sessionUser));
     return { user: sessionUser };
   }
+
 
   // Phase 10: Authenticate natively against Supabase Auth to receive a secure JWT
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({

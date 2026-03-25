@@ -28,6 +28,8 @@ import AdminEngineering from "./pages/AdminEngineering";
 import AdminGlobalOrders from "./pages/AdminGlobalOrders";
 import AdminGlobalProducts from "./pages/AdminGlobalProducts";
 import AdminMonitoring from "./pages/AdminMonitoring";
+import SupplierSignup from "./pages/SupplierSignup";
+import AdminSuppliers from "./pages/AdminSuppliers";
 import AdminAnalytics from "./pages/AdminAnalytics";
 import AdminTodo from "./pages/AdminTodo";
 import AdminBooklet from "./pages/AdminBooklet";
@@ -48,6 +50,8 @@ import AutoCart from "./pages/AutoCart";
 // Social & Community Integration
 import CommunityFeed from "./pages/social/CommunityFeed";
 import Directory from "./pages/social/Directory";
+import SupplierPortal from "./pages/SupplierPortal";
+import SupplierDirectory from "./pages/SupplierDirectory";
 // Generic Legal Pages (Public)
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
@@ -158,6 +162,8 @@ export default function App() {
                   <Route path="qrs/:qrId/settings" element={<DynamicQrSettings />} />
                   <Route path="campaigns" element={<CampaignManager />} />
                   <Route path="marketing" element={<MarketingStudio />} />
+                  <Route path="suppliers" element={<SupplierPortal />} />
+                  <Route path="supplier-directory" element={<SupplierDirectory />} />
                   <Route path="settings" element={<Settings />} />
                </Routes>
             </OnboardingGate>
@@ -177,7 +183,9 @@ export default function App() {
       <Route path="/admin/engineering" element={<AdminEngineering />} />
       <Route path="/admin/global-orders" element={<AdminGlobalOrders />} />
       <Route path="/admin/global-products" element={<AdminGlobalProducts />} />
-      <Route path="/admin/monitoring" element={<AdminMonitoring />} />
+      <Route path="/monitoring" element={<AdminMonitoring />} />
+      <Route path="/supplier-signup" element={<SupplierSignup />} />
+      <Route path="/admin/suppliers" element={<AdminSuppliers />} />
       <Route path="/admin/analytics" element={<AdminAnalytics />} />
       <Route path="/admin/todo" element={<AdminTodo />} />
       <Route path="/admin/booklet" element={<AdminBooklet />} />

@@ -276,15 +276,15 @@ export default function Dashboard() {
              >
                <div className="absolute top-0 right-0 bg-indigo-500 w-16 h-16 rounded-bl-full opacity-10"></div>
                <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                 🎨 Ad Generator
+                 🎨 Marketing Studio
                </h2>
                <p className="text-gray-500 text-sm">
-                 Create and download high-converting WhatsApp & Instagram Stories targeting your QR nodes.
+                 Create ads, manage promo bundles, and generate QR-specific discounts.
                </p>
              </Link>
           ) : (
              <div
-               onClick={() => setLockedFeatureFocus("Ad Generator Studio")}
+               onClick={() => setLockedFeatureFocus("Marketing Studio")}
                className="bg-gray-50 rounded-xl border border-gray-200 p-6 relative overflow-hidden cursor-pointer group"
              >
                <div className="absolute top-4 right-4 text-gray-400 group-hover:text-indigo-500 transition-colors">
@@ -293,13 +293,51 @@ export default function Dashboard() {
                   </svg>
                </div>
                <h2 className="text-lg font-semibold text-gray-500 mb-2 transition-colors group-hover:text-gray-800">
-                 🎨 Ad Generator
+                 🎨 Marketing Studio
                </h2>
                <p className="text-gray-400 text-sm">
-                 Create and download high-converting WhatsApp & Instagram Stories targeting your QR nodes.
+                 Create ads, manage promo bundles, and generate QR-specific discounts.
                </p>
              </div>
           )}
+
+          <Link
+            to="/dashboard/supplier-directory"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-100 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-indigo-600 w-16 h-16 rounded-bl-full opacity-10"></div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              📦 Supplier Hub
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Discover verified wholesalers and order stock in bulk for your shop.
+            </p>
+          </Link>
+
+          <Link
+            to="/supplier-signup"
+            className="bg-indigo-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-200 relative overflow-hidden"
+          >
+             <h2 className="text-lg font-semibold text-indigo-900 mb-2">
+               🤝 Become a Wholesaler
+             </h2>
+             <p className="text-indigo-600/70 text-sm">
+               Join the B2B network and sell your products in bulk to other Savannah shops.
+             </p>
+          </Link>
+
+          <Link
+            to="/dashboard/supplier-portal"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-slate-500 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-slate-900 w-16 h-16 rounded-bl-full opacity-10"></div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              🚚 Supplier Portal
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Wholesale distribution: List your products for other shops to buy.
+            </p>
+          </Link>
 
           <Link
             to="/plans"

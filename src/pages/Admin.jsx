@@ -271,6 +271,11 @@ export default function Admin() {
                     <h3 className="font-bold text-gray-800 group-hover:text-blue-800">📖 Sales Booklet</h3>
                     <p className="text-xs text-gray-500 mt-2">Client onboarding and feature explanations.</p>
                  </Link>
+                 <Link to="/admin/suppliers" className="p-4 rounded-xl border border-indigo-500 bg-indigo-50 shadow-sm hover:shadow transition group sm:col-span-2 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-200/50 rounded-bl-full z-0 transition-transform group-hover:scale-125"></div>
+                    <h3 className="font-bold text-indigo-900 relative z-10 flex items-center gap-2">🚚 Suppliers Lab (B2B)</h3>
+                    <p className="text-xs text-indigo-800/80 mt-2 max-w-[80%] relative z-10">Vet new wholesalers, manage the B2B supply chain, and verify M-Pesa credentials.</p>
+                 </Link>
               </div>
            </section>
 

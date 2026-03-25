@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { getShop } from "../services/shop-service";
 import { getMenuItemsByCategory } from "../services/menu-service";
 import { useNomenclature } from "../hooks/use-nomenclature";
+import MetaTags from "../components/MetaTags";
 
 export default function PublicShopProfile({ directShopId }) {
   const params = useParams();
@@ -26,9 +27,6 @@ export default function PublicShopProfile({ directShopId }) {
         }
         setShop(shopData);
         
-        // Update Title dynamically for SEO
-        document.title = `${shopData.name} - Menu & Ordering`;
-
         const menuData = await getMenuItemsByCategory(shopId);
         
         // GRACEFUL TIER DEGRADATION: Cap display items to 50 if Free tier or expired
@@ -91,6 +89,10 @@ export default function PublicShopProfile({ directShopId }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <MetaTags 
+        title={`${shop.name} | Savannah Digital Menu`}
+        description={shop.tagline || `Browse the latest menu and order directly from ${shop.name} using Savannah Smart QR.`}
+      />
       {/* Insert JSON-LD Context */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 

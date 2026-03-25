@@ -95,7 +95,7 @@ export default function Settings() {
            setKycData(kyc);
         } else {
            // Insert a placeholder to prevent upsert conflicts
-           await supabase.from("shop_kyc").insert({ shop_id: shopId, legal_business_name: "Pending", kra_pin: "Pending", verification_status: "tier1" }).select().single();
+            await supabase.from("shop_kyc").insert({ shop_id: shopId, legal_business_name: "", kra_pin: "", verification_status: "tier1" }).select().single();
         }
       }
       setLoading(false);
@@ -439,20 +439,24 @@ export default function Settings() {
           <h2 className="text-base font-bold text-gray-900 mb-6">Shop Information</h2>
           <form onSubmit={handleUpdate} className="space-y-5">
             <div className="grid md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5 flex items-center justify-between">
-                   Shop Name
-                   <span className="text-[10px] uppercase font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">Locked</span>
+              <div className="group relative">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-2 px-1 flex items-center justify-between">
+                   Shop Identity
+                   <span className="text-[9px] bg-red-100 text-red-600 px-2 py-0.5 rounded-full border border-red-200 shadow-sm">QR-Locked</span>
                 </label>
-                <input 
-                   type="text" 
-                   required 
-                   disabled
-                   className="w-full px-4 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-gray-400 cursor-not-allowed text-sm" 
-                   value={formData.name} 
-                   onChange={e => setFormData({...formData, name: e.target.value})} 
-                />
-                <p className="text-xs text-gray-400 mt-1.5">Shop names are physically bound to your QR links and cannot be altered.</p>
+                <div className="relative">
+                  <input 
+                     type="text" 
+                     required 
+                     disabled
+                     className="w-full px-5 py-4 border-2 border-gray-100 rounded-2xl bg-gray-50/50 backdrop-blur-sm text-gray-400 cursor-not-allowed text-sm font-bold shadow-inner" 
+                     value={formData.name} 
+                  />
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-[10px] text-gray-400 bg-white px-2 py-1 rounded-lg border border-gray-100 shadow-sm">Contact admin to rename</span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2 px-1">Your shop name is cryptographically bound to your printed QR nodes.</p>
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1.5">Tagline</label>
@@ -482,34 +486,53 @@ export default function Settings() {
               <input type="url" className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500 outline-none text-sm" value={formData.google_maps_url} onChange={e => setFormData({...formData, google_maps_url: e.target.value})} placeholder="https://maps.app.goo.gl/..." />
             </div>
             {/* Subdomain — Pro+ only */}
-            <div className={`rounded-xl border p-4 ${planAccess.isPro ? 'border-blue-100 bg-blue-50/30' : 'border-gray-100 bg-gray-50 opacity-70'}`}>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-bold text-gray-700">Custom Subdomain</label>
-                {!planAccess.isPro && (
-                  <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-bold">🔒 Pro+</span>
+            <div className={`rounded-3xl border-2 p-6 transition-all ${planAccess.isPro ? 'border-blue-100 bg-white shadow-xl shadow-blue-50' : 'border-gray-100 bg-gray-50/50 grayscale-[0.5]'}`}>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <label className="block text-xs font-black text-gray-900 uppercase tracking-widest">Global Subdomain</label>
+                  <p className="text-[10px] text-gray-400 mt-0.5">Your unique shop link on the tmsavannah.com network.</p>
+                </div>
+                {!planAccess.isPro ? (
+                  <span className="text-[10px] bg-gray-900 text-white px-3 py-1 rounded-full font-black shadow-lg shadow-gray-200">PRO UNLOCK</span>
+                ) : (
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      const slug = formData.name.toLowerCase().trim().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-');
+                      setFormData(prev => ({ ...prev, subdomain: slug }));
+                    }}
+                    className="text-[10px] font-black text-blue-600 hover:text-blue-800 transition uppercase tracking-tighter flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Sync Name
+                  </button>
                 )}
               </div>
+              
               {planAccess.isPro ? (
                 <>
-                  <div className="flex items-center gap-0 rounded-xl border border-gray-200 overflow-hidden bg-white">
+                  <div className="flex items-center gap-0 rounded-2xl border-2 border-gray-100 overflow-hidden bg-gray-50/50 hover:border-blue-400 focus-within:border-blue-500 transition-all shadow-inner">
                     <input
                       type="text"
-                      value={formData.subdomain}
+                      value={formData.subdomain || ""}
                       onChange={e => setFormData({...formData, subdomain: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g,'')})}
                       placeholder="yourshop"
-                      className="flex-1 px-4 py-2.5 outline-none text-sm"
+                      className="flex-1 px-5 py-4 outline-none text-sm font-black bg-transparent"
                     />
-                    <span className="px-3 py-2.5 text-sm text-gray-400 bg-gray-50 border-l border-gray-200">.tmsavannah.com</span>
+                    <span className="px-5 py-4 text-xs font-black text-blue-600 bg-white border-l-2 border-gray-100">.tmsavannah.com</span>
                   </div>
-                  <p className="text-xs text-blue-600 mt-1.5">Customers can access your shop at <strong>{formData.subdomain || 'yourshop'}.tmsavannah.com</strong></p>
+                  <p className="text-[10px] text-blue-500 mt-3 font-bold flex items-center gap-1.5 px-1 uppercase tracking-tight">
+                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></span>
+                    Live at: {formData.subdomain || '...'}.tmsavannah.com
+                  </p>
                 </>
               ) : (
                 <div className="flex items-center gap-3">
-                  <div className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm text-gray-400">
+                  <div className="flex-1 px-5 py-4 border-2 border-gray-100 rounded-2xl bg-gray-100/50 text-sm text-gray-400 font-bold italic line-through decoration-gray-300">
                     {shop?.subdomain ? `${shop.subdomain}.tmsavannah.com` : "e.g. myshop.tmsavannah.com"}
                   </div>
-                  <button type="button" onClick={() => setShowUpgrade(true)} className="text-xs text-blue-600 font-bold hover:underline whitespace-nowrap">
-                    Unlock →
+                  <button type="button" onClick={() => setShowUpgrade(true)} className="px-5 py-4 bg-gray-900 text-white rounded-2xl text-xs font-black hover:scale-105 active:scale-95 transition">
+                    ENABLE
                   </button>
                 </div>
               )}
@@ -586,19 +609,22 @@ export default function Settings() {
                      </div>
 
                      {formData.offers_delivery && (
-                       <div className="pl-3 mt-2 border-l-2 border-green-200">
-                         <label className="block text-sm font-bold text-gray-700 mb-1.5">Flat Delivery Fee (KSh)</label>
-                         <input
-                           type="number"
-                           min="0"
-                           value={formData.delivery_fee}
-                           onChange={e => setFormData({...formData, delivery_fee: parseInt(e.target.value) || 0})}
-                           placeholder="e.g. 150"
-                           className="w-full md:w-1/2 px-4 py-2 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white"
-                         />
-                         <p className="text-xs text-gray-400 mt-1">This amount will be added to the customer's total.</p>
-                       </div>
-                     )}
+                        <div className="pl-6 mt-4 border-l-4 border-green-500/30 py-1 bg-green-50/30 rounded-r-2xl">
+                          <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1.5 px-1">Flat Delivery Fee (KSh)</label>
+                          <div className="relative w-full md:w-1/2">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">KES</span>
+                            <input
+                              type="number"
+                              min="0"
+                              value={formData.delivery_fee}
+                              onChange={e => setFormData({...formData, delivery_fee: parseInt(e.target.value) || 0})}
+                              placeholder="e.g. 150"
+                              className="w-full pl-12 pr-4 py-3 border-2 border-green-100 rounded-xl focus:border-green-500 focus:ring-0 outline-none text-sm font-black bg-white shadow-sm"
+                            />
+                          </div>
+                          <p className="text-[10px] text-green-600 mt-2 px-1 font-medium italic">This fee is automatically appended to customer checkout totals.</p>
+                        </div>
+                      )}
                    </>
                  )}
 
@@ -706,25 +732,26 @@ export default function Settings() {
               </div>
               
               {!planAccess.isFree ? (
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Till or Paybill Shortcode</label>
+                <div className="grid md:grid-cols-2 gap-5">
+                  <div className="group">
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 px-1">Till / Paybill Number</label>
                     <input
                       type="text"
+                      inputMode="numeric"
                       value={formData.mpesa_shortcode}
                       onChange={e => setFormData({...formData, mpesa_shortcode: e.target.value.replace(/[^0-9]/g, '')})}
                       placeholder="e.g. 174379"
-                      className="w-full px-4 py-2.5 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white"
+                      className="w-full px-5 py-4 border-2 border-green-100 rounded-2xl focus:border-green-500 outline-none text-sm font-black bg-white shadow-sm transition-all"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-1.5">Daraja API Passkey</label>
+                  <div className="group">
+                    <label className="block text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2 px-1">LNM Passkey</label>
                     <input
                       type="password"
                       value={formData.mpesa_passkey}
                       onChange={e => setFormData({...formData, mpesa_passkey: e.target.value})}
-                      placeholder="bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-                      className="w-full px-4 py-2.5 border border-green-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm bg-white font-mono"
+                      placeholder="Enter Daraja Passkey"
+                      className="w-full px-5 py-4 border-2 border-green-100 rounded-2xl focus:border-green-500 outline-none text-sm font-mono bg-white shadow-sm transition-all"
                     />
                   </div>
                 </div>
@@ -773,25 +800,58 @@ export default function Settings() {
              <div className="pt-2 border-t border-gray-100">
                 <h3 className="text-sm font-bold text-gray-800 mb-4">Tier 2: Business & Operations Profile</h3>
                 <div className="grid md:grid-cols-2 gap-5">
-                   <div>
-                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Legal Business Name</label>
-                     <input type="text" required value={kycData.legal_business_name} onChange={e => setKycData({...kycData, legal_business_name: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50" />
-                   </div>
-                   <div>
-                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Business Structure</label>
-                     <select value={kycData.business_type} onChange={e => setKycData({...kycData, business_type: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50">
-                        <option value="individual">Individual / Sole Proprietor</option>
-                        <option value="partnership">Partnership</option>
-                        <option value="company">Registered Company</option>
-                     </select>
-                   </div>
+                   <div className="md:col-span-2">
+                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 px-1">Legal Business Entity</label>
+                       <input 
+                         type="text" 
+                         required 
+                         value={kycData.legal_business_name} 
+                         onChange={e => setKycData({...kycData, legal_business_name: e.target.value})} 
+                         disabled={kycData.verification_status === 'tier3'} 
+                         placeholder="e.g. Acme Kenya Ltd"
+                         className={`w-full px-5 py-4 border-2 rounded-2xl outline-none text-sm font-bold transition-all shadow-sm ${
+                           kycData.verification_status === 'tier3' 
+                           ? 'bg-gray-50/50 border-gray-100 text-gray-400 backdrop-blur-sm cursor-not-allowed' 
+                           : 'bg-white border-blue-100 focus:border-blue-500'
+                         }`} 
+                       />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 px-1">Structure</label>
+                      <select 
+                        value={kycData.business_type} 
+                        onChange={e => setKycData({...kycData, business_type: e.target.value})} 
+                        disabled={kycData.verification_status === 'tier3'} 
+                        className={`w-full px-5 py-4 border-2 rounded-2xl outline-none text-sm font-bold transition-all shadow-sm ${
+                          kycData.verification_status === 'tier3' 
+                          ? 'bg-gray-50/50 border-gray-100 text-gray-400 backdrop-blur-sm cursor-not-allowed' 
+                          : 'bg-white border-blue-100 focus:border-blue-500'
+                        }`}
+                      >
+                         <option value="individual">Individual / Sole Proprietor</option>
+                         <option value="partnership">Partnership</option>
+                         <option value="company">Registered Company</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 px-1">KRA PIN</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={kycData.kra_pin} 
+                        onChange={e => setKycData({...kycData, kra_pin: e.target.value})} 
+                        disabled={kycData.verification_status === 'tier3'} 
+                        placeholder="A00..."
+                        className={`w-full px-5 py-4 border-2 rounded-2xl outline-none text-sm font-black transition-all shadow-sm uppercase ${
+                          kycData.verification_status === 'tier3' 
+                          ? 'bg-gray-50/50 border-gray-100 text-gray-400 backdrop-blur-sm font-mono cursor-not-allowed' 
+                          : 'bg-white border-blue-100 focus:border-blue-500 font-mono'
+                        }`} 
+                      />
+                    </div>
                    <div>
                      <label className="block text-sm font-bold text-gray-700 mb-1.5">Registration No. / Certificate No.</label>
                      <input type="text" value={kycData.business_reg_number} onChange={e => setKycData({...kycData, business_reg_number: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm disabled:opacity-50" />
-                   </div>
-                   <div>
-                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Tax Details (KRA PIN)</label>
-                     <input type="text" required value={kycData.kra_pin} onChange={e => setKycData({...kycData, kra_pin: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-blue-200 bg-blue-50/20 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-mono uppercase disabled:opacity-50" />
                    </div>
                    <div>
                      <label className="block text-sm font-bold text-gray-700 mb-1.5">County/City</label>
@@ -813,24 +873,74 @@ export default function Settings() {
                 <h3 className="text-sm font-bold text-gray-800 mb-4">Tier 3: Identity & Financials (Payout Unlock)</h3>
                 <div className="grid md:grid-cols-3 gap-5">
                    <div>
-                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Owner Full Name</label>
-                     <input type="text" value={kycData.owner_full_name} onChange={e => setKycData({...kycData, owner_full_name: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm disabled:opacity-50" />
+                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 px-1">Owner Full Name</label>
+                     <input 
+                       type="text" 
+                       value={kycData.owner_full_name} 
+                       onChange={e => setKycData({...kycData, owner_full_name: e.target.value})} 
+                       disabled={kycData.verification_status === 'tier3'} 
+                       className={`w-full px-5 py-3 border-2 rounded-2xl outline-none text-sm font-bold transition-all shadow-sm ${
+                         kycData.verification_status === 'tier3' 
+                         ? 'bg-gray-50/50 border-gray-100 text-gray-400 backdrop-blur-sm cursor-not-allowed' 
+                         : 'bg-white border-indigo-100 focus:border-indigo-500'
+                       }`} 
+                     />
                    </div>
                    <div>
-                     <label className="block text-sm font-bold text-gray-700 mb-1.5">National ID Number</label>
-                     <input type="text" value={kycData.owner_national_id} onChange={e => setKycData({...kycData, owner_national_id: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm disabled:opacity-50" />
+                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 px-1">National ID</label>
+                     <input 
+                       type="text" 
+                       value={kycData.owner_national_id} 
+                       onChange={e => setKycData({...kycData, owner_national_id: e.target.value})} 
+                       disabled={kycData.verification_status === 'tier3'} 
+                       className={`w-full px-5 py-3 border-2 rounded-2xl outline-none text-sm font-bold transition-all shadow-sm ${
+                         kycData.verification_status === 'tier3' 
+                         ? 'bg-gray-50/50 border-gray-100 text-gray-400 backdrop-blur-sm cursor-not-allowed' 
+                         : 'bg-white border-indigo-100 focus:border-indigo-500'
+                       }`} 
+                     />
                    </div>
                    <div>
-                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Personal Phone</label>
-                     <input type="text" value={kycData.owner_phone} onChange={e => setKycData({...kycData, owner_phone: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm disabled:opacity-50" />
+                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 px-1">Private Contact</label>
+                     <input 
+                       type="text" 
+                       value={kycData.owner_phone} 
+                       onChange={e => setKycData({...kycData, owner_phone: e.target.value})} 
+                       disabled={kycData.verification_status === 'tier3'} 
+                       className={`w-full px-5 py-3 border-2 rounded-2xl outline-none text-sm font-bold transition-all shadow-sm ${
+                         kycData.verification_status === 'tier3' 
+                         ? 'bg-gray-50/50 border-gray-100 text-gray-400 backdrop-blur-sm cursor-not-allowed' 
+                         : 'bg-white border-indigo-100 focus:border-indigo-500'
+                       }`} 
+                     />
                    </div>
                    <div className="md:col-span-1">
-                     <label className="block text-sm font-bold text-gray-700 mb-1.5">Payout M-Pesa Phone</label>
-                     <input type="text" value={kycData.mpesa_phone} onChange={e => setKycData({...kycData, mpesa_phone: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-mono disabled:opacity-50" />
+                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 px-1">Payout M-Pesa Phone</label>
+                     <input 
+                       type="text" 
+                       value={kycData.mpesa_phone} 
+                       onChange={e => setKycData({...kycData, mpesa_phone: e.target.value})} 
+                       disabled={kycData.verification_status === 'tier3'} 
+                       className={`w-full px-5 py-3 border-2 rounded-2xl outline-none text-sm font-black transition-all shadow-sm ${
+                         kycData.verification_status === 'tier3' 
+                         ? 'bg-gray-50/50 border-gray-100 text-gray-400 backdrop-blur-sm font-mono cursor-not-allowed' 
+                         : 'bg-white border-indigo-100 focus:border-indigo-500 font-mono'
+                       }`} 
+                     />
                    </div>
                    <div className="md:col-span-2">
-                     <label className="block text-sm font-bold text-gray-700 mb-1.5">M-Pesa Registered Name</label>
-                     <input type="text" value={kycData.mpesa_account_name} onChange={e => setKycData({...kycData, mpesa_account_name: e.target.value})} disabled={kycData.verification_status === 'tier3'} className="w-full px-4 py-2 border border-indigo-200 bg-indigo-50/20 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm disabled:opacity-50" />
+                     <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1.5 px-1">M-Pesa Account Holder Name</label>
+                     <input 
+                       type="text" 
+                       value={kycData.mpesa_account_name} 
+                       onChange={e => setKycData({...kycData, mpesa_account_name: e.target.value})} 
+                       disabled={kycData.verification_status === 'tier3'} 
+                       className={`w-full px-5 py-3 border-2 rounded-2xl outline-none text-sm font-bold transition-all shadow-sm ${
+                         kycData.verification_status === 'tier3' 
+                         ? 'bg-gray-50/50 border-gray-100 text-gray-400 backdrop-blur-sm cursor-not-allowed' 
+                         : 'bg-white border-indigo-100 focus:border-indigo-500'
+                       }`} 
+                     />
                    </div>
                 </div>
              </div>

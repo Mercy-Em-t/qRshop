@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { order_id, phone, amount, shop_id } = await req.json()
+    const { order_id, phone, amount, shop_id, is_b2b } = await req.json()
 
     if (!order_id || !phone || !amount || !shop_id) {
       throw new Error("Missing required parameters")
@@ -23,26 +23,24 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    // 2. Fetch Shop M-Pesa Credentials
-    const { data: shop, error: shopErr } = await supabase
-      .from('shops')
+    // 2. Fetch Credentials from the appropriate table
+    const targetTable = is_b2b ? 'suppliers' : 'shops'
+    const { data: recipient, error: recErr } = await supabase
+      .from(targetTable)
       .select('mpesa_shortcode, mpesa_passkey')
       .eq('id', shop_id)
       .single()
 
-    if (shopErr || !shop?.mpesa_shortcode || !shop?.mpesa_passkey) {
-      throw new Error("Shop M-Pesa credentials not configured.")
+    if (recErr || !recipient?.mpesa_shortcode || !recipient?.mpesa_passkey) {
+      throw new Error(`${is_b2b ? 'Supplier' : 'Shop'} M-Pesa credentials not configured.`)
     }
 
-    const shortcode = shop.mpesa_shortcode
-    const passkey = shop.mpesa_passkey
+    const shortcode = recipient.mpesa_shortcode
+    const passkey = recipient.mpesa_passkey
 
-    // 3. Platform Credentials
-    // We assume the Platform owner has registered an App on Safaricom Developer portal
-    // and injected these keys into their Supabase Environment Secrets.
+    // 3. Platform Credentials for OAuth
     const consumerKey = Deno.env.get('MPESA_CONSUMER_KEY')
     const consumerSecret = Deno.env.get('MPESA_CONSUMER_SECRET')
-    // Sandbox or Live URL toggle
     const envString = Deno.env.get('MPESA_ENVIRONMENT') || "sandbox"
     const baseUrl = envString === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke"
 
@@ -56,19 +54,18 @@ serve(async (req) => {
       headers: { Authorization: `Basic ${authString}` },
     })
     
-    if (!authRes.ok) {
-       throw new Error(`Failed to generate M-Pesa token: ${await authRes.text()}`)
-    }
+    if (!authRes.ok) throw new Error(`Failed to generate M-Pesa token`)
     const authData = await authRes.json()
     const accessToken = authData.access_token
 
     // 5. Generate Password and Timestamp
-    const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3) // Format: YYYYMMDDHHmmss
+    const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3)
     const password = btoa(`${shortcode}${passkey}${timestamp}`)
 
     // Clean phone (must be 254...)
     let safePhone = phone.replace(/[^0-9]/g, '')
     if (safePhone.startsWith('0')) safePhone = '254' + safePhone.substring(1)
+    if (safePhone.startsWith('+')) safePhone = safePhone.substring(1)
 
     // 6. Push to STK
     const webhookSecret = Deno.env.get('MPESA_WEBHOOK_SECRET')
@@ -80,14 +77,14 @@ serve(async (req) => {
       BusinessShortCode: shortcode,
       Password: password,
       Timestamp: timestamp,
-      TransactionType: "CustomerPayBillOnline", // Or CustomerBuyGoodsOnline depending on till type
+      TransactionType: "CustomerPayBillOnline", 
       Amount: Math.ceil(Number(amount)),
       PartyA: safePhone,
       PartyB: shortcode,
       PhoneNumber: safePhone,
       CallBackURL: callbackUrl,
-      AccountReference: `Order ${order_id.split('-')[0].toUpperCase()}`,
-      TransactionDesc: "ShopQR Payment"
+      AccountReference: `${is_b2b ? 'S' : 'O'}${order_id.split('-')[0].toUpperCase()}`,
+      TransactionDesc: is_b2b ? "Wholesale Order" : "Retail Order"
     }
 
     const stkRes = await fetch(`${baseUrl}/mpesa/stkpush/v1/processrequest`, {
@@ -100,14 +97,22 @@ serve(async (req) => {
     })
 
     const stkData = await stkRes.json()
+    if (!stkRes.ok || stkData.errorCode) throw new Error(`STK Push Failed: ${JSON.stringify(stkData)}`)
 
-    if (!stkRes.ok || stkData.errorCode) {
-       throw new Error(`STK Push Failed: ${JSON.stringify(stkData)}`)
-    }
-
-    // 7. Log CheckoutRequestID so the Webhook can trace it back to the exact Order ID
+    // 7. Log to payment_audit_log for the webhook to find
     await supabase
-      .from('orders')
+      .from('payment_audit_log')
+      .insert({
+         checkout_request_id: stkData.CheckoutRequestID,
+         target_table: is_b2b ? 'supplier_orders' : 'orders',
+         target_id: order_id,
+         amount: amount,
+         status: 'pending'
+      });
+
+    // 8. Update the original order status
+    await supabase
+      .from(is_b2b ? 'supplier_orders' : 'orders')
       .update({ 
          status: 'stk_pushed',
          mpesa_checkout_request_id: stkData.CheckoutRequestID 

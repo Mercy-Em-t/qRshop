@@ -15,6 +15,85 @@ export default function AdminReport() {
 
   const reports = [
     {
+      id: "daily_mar25",
+      title: "Daily Briefing — March 25, 2026",
+      date: "Today · Mar 25",
+      author: "Platform Architect",
+      icon: "📋",
+      content: (
+        <div className="space-y-6">
+          <div className="flex gap-2 text-sm font-medium mb-4 flex-wrap">
+            <span className="bg-green-100 text-green-800 px-2 py-1 rounded">Status: Build Complete</span>
+            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">Features Shipped: 6</span>
+            <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">Security: Hardened</span>
+          </div>
+
+          <p className="text-gray-600 leading-relaxed">
+            A productive session focused on expanding the platform's ecosystem, locking down security before deployment, and laying the foundation for the Savannah B2B economy.
+          </p>
+
+          <div className="space-y-5">
+            <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
+              <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">🌐 Shop Discovery & Marketplace Approval</h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                <strong>What is it:</strong> Before any shop appears on the public Discover page, it now goes through an Admin review first. Think of it like a quality gate — you look at the shop, optimise its description for search engines (SEO), then click "Approve" to make it visible to the world. Shops that aren't approved stay hidden from public listings.
+              </p>
+              <p className="text-sm text-indigo-700 mt-2 font-medium">Where to use it: Admin → Shops → Marketplace Status column.</p>
+            </div>
+
+            <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
+              <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">🚀 Ecosystem Launcher (Admin Shop, Community & Supplier Creation)</h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                <strong>What is it:</strong> You can now create three types of entities from inside the Admin panel — Shops (for merchants), Communities (for discovery groups like "Nairobi Foodies"), and Suppliers (wholesalers who sell bulk stock to shops). Each has its own creation tab in a single sidebar. Creating a shop sends the owner an email invite automatically.
+              </p>
+              <p className="text-sm text-indigo-700 mt-2 font-medium">Where to use it: Admin → Global Infrastructure → Launch tab.</p>
+            </div>
+
+            <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
+              <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">🤝 Supplier Portal & B2B Order Flow</h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                <strong>What is it:</strong> Wholesale suppliers can now apply to join the platform via a public signup form. Once approved by you, their products appear in the Supplier Hub, where shop owners can browse, add items to a wholesale cart, and place a bulk order. Shop owners can pay the supplier directly via M-Pesa STK Push or just log the order.
+              </p>
+              <p className="text-sm text-indigo-700 mt-2 font-medium">Supplier public form: /supplier-signup · Shop owner view: Dashboard → Supplier Hub.</p>
+            </div>
+
+            <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
+              <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">🏘️ Community & Social Feed</h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                <strong>What is it:</strong> The platform now has a social layer where users can post about products, tag items from any shop, and interact in interest-based communities (like "Tech & Hobbies" or "Savannah Crafters"). When a post tags a product, the product card appears inline with a direct "Add to Cart" button. Think: a social media feed that's also a marketplace.
+              </p>
+              <p className="text-sm text-indigo-700 mt-2 font-medium">Public URL: /community · Shop Settings → Communities tab to join groups.</p>
+            </div>
+
+            <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
+              <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">🎯 Marketing Studio — Promo Bundles</h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                <strong>What is it:</strong> Shop owners can now create promotional deals — like "Buy any 2 items and get 15% off" or "Weekend Combo for KSh 800". They pick which products are included, set the discount type and value, add an optional coupon code, and set an expiry date. These promos apply automatically when a customer's cart qualifies.
+              </p>
+              <p className="text-sm text-indigo-700 mt-2 font-medium">Where to use it: Dashboard → Marketing Studio → Promo Bundles tab.</p>
+            </div>
+
+            <div className="bg-white border border-gray-200 p-5 rounded-2xl shadow-sm">
+              <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">🛡️ Shop Settings — Identity Lock & Smart Subdomain</h4>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                <strong>What is it:</strong> The Shop Settings page was redesigned. Fields that form the shop's legal identity (name, domain) are now visually "locked" with a premium glass effect, so owners understand they need to contact Admin to change them. A "Sync Name" button was also added — it automatically generates a clean web-friendly subdomain from the shop's name (e.g. "Fresh Produce Ltd" → "fresh-produce-ltd").
+              </p>
+              <p className="text-sm text-indigo-700 mt-2 font-medium">Where to use it: Dashboard → Settings → Shop Identity section.</p>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl mt-6">
+            <h4 className="font-bold text-amber-900 mb-2">⚡ Action Required Before Deploying</h4>
+            <ol className="text-sm text-amber-800 space-y-1 list-decimal list-inside">
+              <li>Run <code className="bg-amber-100 px-1 rounded">supabase_repair_v4.sql</code> in Supabase SQL Editor</li>
+              <li>Run <code className="bg-amber-100 px-1 rounded">supabase_hardening_patch.sql</code> in Supabase SQL Editor</li>
+              <li>Confirm <code className="bg-amber-100 px-1 rounded">SUPABASE_SERVICE_ROLE_KEY</code> is set in Vercel env vars</li>
+            </ol>
+          </div>
+        </div>
+      )
+    },
+    {
       id: "health",
       title: "Platform Health & Diagnostics",
       date: "Today",

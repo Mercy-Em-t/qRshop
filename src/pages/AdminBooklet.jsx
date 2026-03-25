@@ -255,6 +255,205 @@ SYSTEM REPORT
 
 YOUR TODO LIST
   • A step-by-step guide for every integration that still needs to be activated (M-Pesa, WhatsApp API, Subscription Cron)`
+  },
+  {
+    id: "ecosystem-launcher",
+    icon: "🚀",
+    title: "Chapter 10 — Ecosystem Launcher",
+    tagline: "Create shops, communities and suppliers from one admin panel",
+    content: `Added: March 25, 2026
+
+The Ecosystem Launcher is a unified sidebar inside the Admin panel that lets you create three types of entities with a single form each. Previously, creating a shop required manual database work. Now it takes under a minute.
+
+──────────────────────
+🏪 LAUNCHING A SHOP
+──────────────────────
+Fill in the shop name, owner email, phone number, and industry type.
+The system:
+  1. Creates the shop record in the database
+  2. Sends an email invite to the owner
+  3. When the owner clicks the link, they set their own password
+  4. They are guided through a one-time setup (tagline, address, first QR code)
+
+The owner never sees a raw password — everything goes through official email invites.
+
+──────────────────────
+🏘️ CREATING A COMMUNITY
+──────────────────────
+Communities are interest groups that shops can join (e.g. "Nairobi Foodies", "Savannah Crafters").
+
+When you create a community:
+  • You give it a name and a short web-friendly slug (e.g. "nairobi-foodies")
+  • Shops can then join it from their Settings panel
+  • Community posts appear in the public social feed at /community
+
+Only admins can create communities — this prevents spam groups from forming.
+
+──────────────────────
+🤝 ONBOARDING A SUPPLIER
+──────────────────────
+Suppliers are wholesale businesses that sell bulk products to shops on the platform.
+
+Admin-launched suppliers are auto-verified (you're vouching for them).
+Public applicants via /supplier-signup require you to manually verify them here.
+
+Once verified, their catalog appears in the Supplier Hub available to all shop owners.`
+  },
+  {
+    id: "supplier-portal",
+    icon: "🏭",
+    title: "Chapter 11 — Supplier Portal & B2B Orders",
+    tagline: "Wholesale ordering built into the platform",
+    content: `Added: March 25, 2026
+
+ShopQR now supports Business-to-Business (B2B) commerce — meaning one shop can order products in bulk from a supplier who is also on the platform.
+
+──────────────────────
+FOR SUPPLIERS
+──────────────────────
+A supplier logs into their Supplier Portal (Dashboard → Wholesale Portal) where they can:
+  • Create and manage their product catalog (with wholesale prices and minimum order quantities)
+  • View all incoming bulk orders from shops
+  • See order status (Pending → Confirmed → Shipped → Delivered)
+
+New suppliers start as "Pending Verification". The Admin must approve them before their catalog is visible.
+
+──────────────────────
+FOR SHOP OWNERS (BUYERS)
+──────────────────────
+Shop owners visit their Supplier Hub (Dashboard → Supplier Hub) where they can:
+  • Browse all verified supplier catalogs
+  • Add items to a wholesale cart
+  • Place a bulk order
+
+PAYMENT OPTIONS
+  • Pay via M-Pesa STK Push (supplier gets paid instantly)
+  • Or place the order without payment (supplier will invoice separately)
+
+──────────────────────
+SECURITY NOTES
+──────────────────────
+  • Unauthenticated visitors can browse suppliers but CANNOT place orders
+  • Supplier's private Daraja Passkey is collected AFTER admin vetting, never via the public signup form
+  • All order records are protected by Row-Level Security — suppliers only see their own orders`
+  },
+  {
+    id: "community-social",
+    icon: "🏘️",
+    title: "Chapter 12 — Community & Social Feed",
+    tagline: "A social media layer that sells products",
+    content: `Added: March 25, 2026
+
+The Community Feed is a public social wall at /community — like a local Twitter/Instagram feed, but built specifically for commerce.
+
+──────────────────────
+HOW POSTING WORKS
+──────────────────────
+Anyone with a Community Profile can write a post. While writing, they can also search for and tag a product from any shop on the platform.
+
+When a post is published:
+  • The text content appears in the feed
+  • If a product was tagged, its photo, name, and price appear as a card inside the post
+  • Readers can tap the product card and go directly to that shop's ordering page
+
+This creates organic product discovery — shop owners don't need to advertise. When customers post about their favourite items, they are automatically driving traffic.
+
+──────────────────────
+COMMUNITIES (CHANNELS)
+──────────────────────
+Posts are organized into communities. Think of these as hashtag channels:
+  • "Nairobi Foodies" — restaurant and street food posts
+  • "Savannah Crafters" — art, craft, and handmade goods
+  • "Tech & Hobbies" — electronics, gadgets, and geek culture
+
+Shops can join communities from their Settings page. This helps their products appear in the right community's feed.
+
+──────────────────────
+FOR ADMINS
+──────────────────────
+  • You control which communities exist (Ecosystem Launcher → Community tab)
+  • Spam posts are identifiable by community — you can remove communities if abused
+  • All posts require the author to have a verified Community Profile (linked to auth.users)`
+  },
+  {
+    id: "marketing-promos",
+    icon: "🎯",
+    title: "Chapter 13 — Marketing Studio: Promo Bundles",
+    tagline: "Build deals that sell themselves",
+    content: `Added: March 25, 2026
+
+Shop owners can now create promotions — special deals that automatically apply discounts when a customer's cart qualifies.
+
+──────────────────────
+TYPES OF PROMOTIONS
+──────────────────────
+
+PERCENTAGE DISCOUNT
+"Get 15% off when you order any 2 items"
+Best for: Encouraging larger orders
+
+FLAT DISCOUNT
+"Get KSh 100 off any order above KSh 500"
+Best for: Rewarding loyal customers
+
+BUNDLE PRICE
+"Burger + Fries + Drink for just KSh 750" (instead of KSh 950 individually)
+Best for: Set meals, combo packages
+
+──────────────────────
+COUPON CODES
+──────────────────────
+Each promo can have an optional coupon code (e.g. "LUNCH20").
+If a code is set, the discount ONLY applies when the customer types the code at checkout.
+If no code is set, the discount applies automatically when the cart qualifies.
+
+──────────────────────
+EXPIRY DATES
+──────────────────────
+Every promo can have a start date and an end date. After the end date passes, the promo deactivates automatically. No need to remember to turn it off.
+
+──────────────────────
+WHERE TO FIND IT
+──────────────────────
+Dashboard → Marketing Studio → "Promo Bundles" tab
+
+Shop owners select which products belong to the promo, set the discount rules, and hit Save. The system handles the rest.`
+  },
+  {
+    id: "marketplace-approval",
+    icon: "✅",
+    title: "Chapter 14 — Marketplace Approval & SEO",
+    tagline: "You control what the world sees",
+    content: `Added: March 25, 2026
+
+The Discover page (/explore) is ShopQR's public marketplace — a directory of all shops on the platform. But not every new shop appears there automatically.
+
+──────────────────────
+THE APPROVAL FLOW
+──────────────────────
+When a new shop is created, its marketplace status is "Not Listed" by default.
+
+As Admin, you can:
+  1. Review the shop's profile (name, description, logo, industry)
+  2. Edit or improve their description for better search engine visibility (SEO)
+  3. Set the status to "Approved" — the shop immediately appears in the directory
+  4. Or set it to "Rejected" — with a reason, so the shop owner can fix their profile and reapply
+
+──────────────────────
+WHY THIS MATTERS
+──────────────────────
+This gate protects the marketplace from:
+  • Incomplete or empty shop profiles
+  • Shops with inappropriate names or content
+  • Duplicate or fake registrations
+
+It also gives you the opportunity to polish how each shop appears to the public — making the directory look curated and high quality, not like a raw database dump.
+
+──────────────────────
+WHERE TO FIND IT
+──────────────────────
+Admin → Global Infrastructure → Shops tab → Marketplace Status column
+Each shop has a status badge. Click to change it inline.`
   }
 ];
 

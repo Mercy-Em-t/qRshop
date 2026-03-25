@@ -44,7 +44,7 @@ USING (
   EXISTS (
     SELECT 1 FROM public.menu_items
     JOIN public.shops ON public.shops.id = public.menu_items.shop_id
-    WHERE public.menu_items.id = public.product_images.menu_item_id
+    WHERE public.menu_items.id = public.product_images.product_id
       AND public.shops.marketplace_status = 'approved'
   )
   OR auth.uid() IS NOT NULL

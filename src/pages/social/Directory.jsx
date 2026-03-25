@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase-client";
 import EcosystemNav from "../../components/EcosystemNav";
+import MetaTags from "../../components/MetaTags";
 
 export default function Directory() {
   const [shops, setShops] = useState([]);
@@ -104,6 +105,11 @@ export default function Directory() {
       </header>
       
       <EcosystemNav />
+
+      <MetaTags 
+        title="Savannah Marketplace | Discover Local Gems"
+        description="Explore the best local shops, products, and services in your community. Order groceries, food, and digital services natively through Savannah."
+      />
 
       <main className="flex-1 max-w-4xl w-full mx-auto px-4 py-8 relative">
         {/* Discovery Layout */}
