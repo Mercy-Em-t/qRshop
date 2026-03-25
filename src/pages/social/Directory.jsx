@@ -9,13 +9,28 @@ export default function Directory() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeIndustry, setActiveIndustry] = useState("all");
+  const [activeCommunity, setActiveCommunity] = useState("all"); // community id or 'all'
   const [industryTypes, setIndustryTypes] = useState([]);
+  const [communities, setCommunities] = useState([]);
+  const [communityShopIds, setCommunityShopIds] = useState(new Set()); // shops in selected community
   const [viewMode, setViewMode] = useState("products"); // 'products' | 'shops'
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchDirectory();
   }, []);
+
+  // When community selection changes, reload the community shop ID set
+  useEffect(() => {
+    if (activeCommunity === 'all') {
+      setCommunityShopIds(new Set());
+      return;
+    }
+    supabase.from('shop_communities').select('shop_id').eq('community_id', activeCommunity)
+      .then(({ data }) => {
+        if (data) setCommunityShopIds(new Set(data.map(r => r.shop_id)));
+      });
+  }, [activeCommunity]);
 
   const fetchDirectory = async () => {
     setLoading(true);
@@ -49,13 +64,12 @@ export default function Directory() {
     }
 
     // Fetch dynamic master taxonomy for filter bubbles
-    const { data: indData } = await supabase
-      .from("industry_types")
-      .select("slug, name");
-      
-    if (indData) {
-      setIndustryTypes(indData);
-    }
+    const { data: indData } = await supabase.from("industry_types").select("slug, name");
+    if (indData) setIndustryTypes(indData);
+
+    // Fetch all communities for the tab row
+    const { data: commData } = await supabase.from('communities').select('id, name, slug').order('name');
+    if (commData) setCommunities(commData);
 
     setLoading(false);
   };
@@ -68,7 +82,8 @@ export default function Directory() {
   const filteredShops = shops.filter(shop => {
       const matchesSearch = shop.name.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesIndustry = activeIndustry === "all" || shop.industry_type === activeIndustry;
-      return matchesSearch && matchesIndustry;
+      const matchesCommunity = activeCommunity === "all" || communityShopIds.has(shop.id);
+      return matchesSearch && matchesIndustry && matchesCommunity;
   });
 
   const filteredProducts = products.filter(product => {
@@ -76,7 +91,8 @@ export default function Directory() {
                             product.shops.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             (product.category || "").toLowerCase().includes(searchQuery.toLowerCase());
       const matchesIndustry = activeIndustry === "all" || product.shops.industry_type === activeIndustry;
-      return matchesSearch && matchesIndustry;
+      const matchesCommunity = activeCommunity === "all" || communityShopIds.has(product.shop_id);
+      return matchesSearch && matchesIndustry && matchesCommunity;
   });
 
   return (
@@ -132,6 +148,37 @@ export default function Directory() {
               ))}
            </div>
         </div>
+
+        {/* Community Filter Tabs */}
+        {communities.length > 0 && (
+          <div className="mb-6">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Browse by Community</p>
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1">
+              <button
+                onClick={() => setActiveCommunity("all")}
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold border transition-colors ${activeCommunity === 'all' ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-teal-700 border-teal-200 hover:bg-teal-50'}`}
+              >
+                🌍 All Communities
+              </button>
+              {communities.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => setActiveCommunity(c.id)}
+                  className={`shrink-0 px-4 py-2 rounded-full text-sm font-bold border transition-colors ${activeCommunity === c.id ? 'bg-teal-600 text-white border-teal-600' : 'bg-white text-teal-700 border-teal-200 hover:bg-teal-50'}`}
+                >
+                  {c.name}
+                </button>
+              ))}
+            </div>
+            {activeCommunity !== 'all' && (
+              <p className="text-xs text-teal-600 font-bold mt-2">
+                Showing {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} from shops in this community.
+              </p>
+            )}
+          </div>
+        )}
+
+
 
         {/* View Toggles */}
         <div className="flex justify-center mb-8">

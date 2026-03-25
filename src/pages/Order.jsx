@@ -604,30 +604,32 @@ export default function Order() {
                         className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
                      />
                   </div>
-                  <div>
-                     <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
-                     <input 
-                        type="tel" 
-                        value={identity.phone}
-                        onChange={(e) => {
-                          let val = e.target.value.replace(/[^0-9+]/g, '');
-                          setIdentity({...identity, phone: val});
-                        }}
-                        onBlur={(e) => {
-                          // Basic KE formatting on blur
-                          let val = e.target.value;
-                          if (val.startsWith('0')) val = '+254' + val.substring(1);
-                          else if (val.startsWith('254')) val = '+' + val;
-                          else if (val.startsWith('7') || val.startsWith('1')) val = '+254' + val;
-                          setIdentity({...identity, phone: val});
-                        }}
-                        placeholder="07..."
-                        className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
-                     />
-                     {identity.phone && identity.phone.replace(/[^0-9]/g, '').length < 9 && (
-                        <p className="text-xs text-red-500 mt-1.5 font-bold">Please enter a valid complete phone number.</p>
-                     )}
-                  </div>
+                  {shopPlanAccess.isBasic && (
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Number</label>
+                        <input 
+                           type="tel" 
+                           value={identity.phone}
+                           onChange={(e) => {
+                             let val = e.target.value.replace(/[^0-9+]/g, '');
+                             setIdentity({...identity, phone: val});
+                           }}
+                           onBlur={(e) => {
+                             // Basic KE formatting on blur
+                             let val = e.target.value;
+                             if (val.startsWith('0')) val = '+254' + val.substring(1);
+                             else if (val.startsWith('254')) val = '+' + val;
+                             else if (val.startsWith('7') || val.startsWith('1')) val = '+254' + val;
+                             setIdentity({...identity, phone: val});
+                           }}
+                           placeholder="07..."
+                           className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
+                        />
+                        {identity.phone && identity.phone.replace(/[^0-9]/g, '').length < 9 && (
+                           <p className="text-xs text-red-500 mt-1.5 font-bold">Please enter a valid complete phone number.</p>
+                        )}
+                     </div>
+                  )}
                </div>
 
                {shop?.mpesa_shortcode && shopPlanAccess.isBasic ? (
@@ -651,7 +653,12 @@ export default function Order() {
                           handleDirectCheckout();
                        }
                     }}
-                    disabled={!identity.name || !identity.phone || identity.phone.replace(/[^0-9]/g, '').length < 9 || sending || (identity.fulfillment_type === 'delivery' && !identity.address)}
+                    disabled={
+                       !identity.name || 
+                       sending || 
+                       (identity.fulfillment_type === 'delivery' && !identity.address) || 
+                       (shopPlanAccess.isBasic && (!identity.phone || identity.phone.replace(/[^0-9]/g, '').length < 9))
+                    }
                     className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer shadow-md"
                  >
                     {sending ? "Processing..." : !shopPlanAccess.isBasic ? `💬 Place ${terms.order} via WhatsApp` : `🛒 Place ${terms.order} (Direct Checkout)`}

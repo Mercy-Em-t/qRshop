@@ -54,6 +54,11 @@ export default function Settings() {
 
   const [showUpgrade, setShowUpgrade] = useState(false);
 
+  // Community membership state
+  const [allCommunities, setAllCommunities] = useState([]);
+  const [joinedCommunityIds, setJoinedCommunityIds] = useState(new Set());
+  const [communityToggling, setCommunityToggling] = useState(null); // id of community being toggled
+
   const navigate = useNavigate();
   const user = getCurrentUser();
   const shopId = user?.shop_id;
@@ -92,6 +97,13 @@ export default function Settings() {
         }
       }
       setLoading(false);
+
+      // Fetch all communities and current shop memberships
+      const { data: commData } = await supabase.from('communities').select('id, name, slug, description').order('name');
+      if (commData) setAllCommunities(commData);
+
+      const { data: memberData } = await supabase.from('shop_communities').select('community_id').eq('shop_id', shopId);
+      if (memberData) setJoinedCommunityIds(new Set(memberData.map(m => m.community_id)));
     }
     fetchShop();
   }, [shopId, navigate, user]);
@@ -162,6 +174,29 @@ export default function Settings() {
       alert(`Failed to save ${field}: ` + err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCommunityToggle = async (communityId) => {
+    if (!planAccess.isBasic) { setShowUpgrade(true); return; }
+    setCommunityToggling(communityId);
+    const isJoined = joinedCommunityIds.has(communityId);
+    try {
+      if (isJoined) {
+        const { error } = await supabase.from('shop_communities')
+          .delete().eq('shop_id', shopId).eq('community_id', communityId);
+        if (error) throw error;
+        setJoinedCommunityIds(prev => { const next = new Set(prev); next.delete(communityId); return next; });
+      } else {
+        const { error } = await supabase.from('shop_communities')
+          .insert({ shop_id: shopId, community_id: communityId });
+        if (error) throw error;
+        setJoinedCommunityIds(prev => new Set([...prev, communityId]));
+      }
+    } catch (err) {
+      alert('Failed to update community membership: ' + err.message);
+    } finally {
+      setCommunityToggling(null);
     }
   };
 
@@ -576,7 +611,49 @@ export default function Settings() {
                </div>
             </div>
 
+            {/* Community Discovery — Basic+ */}
+            <div className={`mt-6 rounded-xl border p-5 ${planAccess.isBasic ? 'border-teal-100 bg-teal-50/20' : 'border-gray-100 bg-gray-50 opacity-70'}`}>
+               <div className="flex items-center justify-between mb-1">
+                 <div>
+                   <label className="block text-base font-bold text-gray-900">🌍 Community Discovery</label>
+                   <p className="text-xs text-gray-500 mt-0.5">Join communities so your shop and products appear in their curated discover feeds.</p>
+                 </div>
+                 {!planAccess.isBasic && (
+                   <span className="text-xs bg-gray-200 text-gray-600 px-3 py-1 rounded-full font-bold shadow-sm">🔒 Basic+</span>
+                 )}
+               </div>
+               <div className="mt-4 space-y-3">
+                 {allCommunities.length === 0 && (
+                   <p className="text-xs text-gray-400 italic">No communities available yet.</p>
+                 )}
+                 {allCommunities.map(community => {
+                   const isJoined = joinedCommunityIds.has(community.id);
+                   const isToggling = communityToggling === community.id;
+                   return (
+                     <div key={community.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-100">
+                       <div>
+                         <p className="text-sm font-bold text-gray-800">{community.name}</p>
+                         {community.description && <p className="text-xs text-gray-500 mt-0.5">{community.description}</p>}
+                       </div>
+                       <button
+                         type="button"
+                         disabled={isToggling || !planAccess.isBasic}
+                         onClick={() => handleCommunityToggle(community.id)}
+                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${isJoined ? 'bg-teal-500' : 'bg-gray-300'} ${(isToggling || !planAccess.isBasic) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                       >
+                         <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isJoined ? 'translate-x-6' : 'translate-x-1'}`} />
+                       </button>
+                     </div>
+                   );
+                 })}
+               </div>
+               {planAccess.isBasic && joinedCommunityIds.size > 0 && (
+                 <p className="text-xs text-teal-600 font-bold mt-3">✓ Your shop is discoverable in {joinedCommunityIds.size} community feed{joinedCommunityIds.size > 1 ? 's' : ''}.</p>
+               )}
+            </div>
+
             {/* M-Pesa Automatic Checkout — Basic+ */}
+
             <div className={`mt-6 rounded-xl border p-5 ${!planAccess.isFree ? 'border-green-100 bg-green-50/20' : 'border-gray-100 bg-gray-50 opacity-70'}`}>
               <div className="flex items-center justify-between mb-4">
                 <div>
