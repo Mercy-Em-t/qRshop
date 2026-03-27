@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import QrAccessGuard from "./components/QrAccessGuard";
 import OfflineMenuWrapper from "./components/OfflineMenuWrapper";
