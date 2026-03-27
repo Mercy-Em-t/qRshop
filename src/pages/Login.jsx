@@ -32,8 +32,8 @@ export default function Login() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <div className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full">
-        <h1 className="text-2xl font-bold text-gray-800 text-center mb-6">
-          Shop Login
+        <h1 className="text-2xl font-black text-gray-900 text-center mb-6 tracking-tight">
+          Savannah Portal Login
         </h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
