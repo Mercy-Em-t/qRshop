@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getCurrentUser, logout } from "../services/auth-service";
+import Logo from "../components/Logo";
 import { supabase } from "../services/supabase-client";
 
 export default function Admin() {
@@ -68,16 +69,14 @@ export default function Admin() {
            });
         }
 
-        // --- CRITICAL SECURITY TODOS ---
-        newAlerts.push({
-            type: "warning", title: "M-Pesa Webhook Vulnerable",
-            desc: "ACTION REQUIRED: Add MPESA_WEBHOOK_SECRET to Supabase Edge Functions to prevent DDoS STK Spam.", link: "#"
-        });
-
-        newAlerts.push({
-            type: "error", title: "Admin Account Hijack Risk",
-            desc: "ACTION REQUIRED: Enable Mandatory MFA (2-Factor Authentication) in your Supabase Auth Settings immediately.", link: "#"
-        });
+        // --- OPERATIONS ALERTS ---
+        const { data: pendingReports } = await supabase.from("shop_reports").select("id").eq("status", "pending");
+        if (pendingReports?.length > 0) {
+           newAlerts.push({
+               type: "error", title: `${pendingReports.length} Unassigned Consumer Reports`,
+               desc: "These reports need routing to regional agents for investigation.", link: "/admin/agency"
+           });
+        }
 
         setMetrics({
            totalShops, premiumShops, orphanedShops: emptyShops.length,
@@ -96,7 +95,8 @@ export default function Admin() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800">Admin Panel</h1>
+          <Logo textClassName="font-black text-xl italic tracking-tight" />
+          <span className="text-savannah-ochre tracking-tighter uppercase font-bold text-sm ml-1">Command</span>
           <button
              onClick={() => { logout(); navigate("/login"); }}
              className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
@@ -234,88 +234,60 @@ export default function Admin() {
                  </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                 <Link to="/admin/global-orders" className="p-4 rounded-xl border border-gray-100 hover:border-amber-300 hover:bg-amber-50 transition group">
+                 <Link to="/dashboard/delivery/manager" className="p-4 bg-slate-900 rounded-xl shadow-lg border-2 border-transparent hover:border-slate-500 transition-all hover:scale-[1.02] active:scale-95 group sm:col-span-2">
+                    <div className="flex items-center justify-between">
+                       <h3 className="font-bold text-white flex items-center gap-2">🚚 Logistics Hub (Super-Admin)</h3>
+                       <span className="bg-green-500 text-[10px] px-1.5 py-0.5 rounded text-white font-black animate-pulse uppercase">Control</span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-1">Manage hubs, riders, and platform-wide distribution nodes.</p>
+                 </Link>
+                 <Link to="/admin/global-orders" className="p-4 rounded-xl border border-amber-300 hover:border-amber-500 hover:bg-amber-50 transition group">
                     <div className="flex items-center justify-between">
                        <h3 className="font-bold text-gray-800 group-hover:text-amber-800">🌍 Order Stream</h3>
                        <span className="relative flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span></span>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">God-mode live feed of every transaction on the platform.</p>
                  </Link>
-                 <Link to="/admin/global-products" className="p-4 rounded-xl border border-gray-100 hover:border-amber-300 hover:bg-amber-50 transition group">
-                    <h3 className="font-bold text-gray-800 group-hover:text-amber-800">📦 Catalog QA</h3>
-                    <p className="text-xs text-gray-500 mt-2">Monitor all user-generated items for compliance/quality.</p>
+                 <Link to="/admin/agency" className="p-4 rounded-xl border border-indigo-300 hover:border-indigo-500 hover:bg-indigo-50 transition group">
+                    <div className="flex items-center justify-between">
+                       <h3 className="font-bold text-gray-800 group-hover:text-indigo-800">🛡️ Agency Hub</h3>
+                       <span className="bg-indigo-100 text-indigo-600 text-[10px] px-2 py-0.5 rounded font-black uppercase">Ops</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Appoint regional agents and jurisdictions.</p>
                  </Link>
               </div>
            </section>
 
-           {/* Section 3: Tenant Success (Growth) */}
-           <section className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm">
+           {/* Section 3: Ecosystem Health */}
+           <section className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm xl:col-span-2">
               <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
-                 <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-2xl">🏪</div>
+                 <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-2xl">🌱</div>
                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">Tenant Ecosystem</h2>
-                    <p className="text-sm text-gray-500">Manage client environments and platform presence.</p>
+                    <h2 className="text-xl font-bold text-gray-900">Ecosystem Health</h2>
+                    <p className="text-sm text-gray-500">Merchant success, Catalog QA, and Platform Growth.</p>
                  </div>
               </div>
-              <div className="grid sm:grid-cols-2 gap-4">
-                 <Link to="/admin/shops" className="p-4 rounded-xl border border-blue-500 bg-blue-50 shadow-sm hover:shadow transition group sm:col-span-2 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-blue-200/50 rounded-bl-full z-0 transition-transform group-hover:scale-125"></div>
-                    <h3 className="font-bold text-blue-900 relative z-10 flex items-center gap-2">🚀 Space Launcher & Ecosystem</h3>
-                    <p className="text-xs text-blue-800/80 mt-2 max-w-[80%] relative z-10">Deploy parallel shop environments, handle manual upgrades, and monitor the active registry.</p>
+              <div className="grid sm:grid-cols-3 gap-4">
+                 <Link to="/admin/shops" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
+                    <h3 className="font-bold text-gray-800 group-hover:text-blue-800">🏪 Shop Roster</h3>
+                    <p className="text-xs text-gray-500 mt-2">Review all shops, verify marketplace status, manage subdomains.</p>
                  </Link>
-                 <Link to="/admin/seo" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
-                    <h3 className="font-bold text-gray-800 group-hover:text-blue-800">🔍 Search Engine (SEO)</h3>
-                    <p className="text-xs text-gray-500 mt-2">Google JSON-LD listing optimizations.</p>
+                 <Link to="/admin/communities" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
+                    <h3 className="font-bold text-gray-800 group-hover:text-blue-800">🏙️ Communities</h3>
+                    <p className="text-xs text-gray-500 mt-2">Organize shops by town, neighborhood, or hub jurisdiction.</p>
                  </Link>
-                 <Link to="/admin/booklet" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
-                    <h3 className="font-bold text-gray-800 group-hover:text-blue-800">📖 Sales Booklet</h3>
-                    <p className="text-xs text-gray-500 mt-2">Client onboarding and feature explanations.</p>
-                 </Link>
-                 <Link to="/admin/suppliers" className="p-4 rounded-xl border border-indigo-500 bg-indigo-50 shadow-sm hover:shadow transition group sm:col-span-2 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-indigo-200/50 rounded-bl-full z-0 transition-transform group-hover:scale-125"></div>
-                    <h3 className="font-bold text-indigo-900 relative z-10 flex items-center gap-2">🚚 Suppliers Lab (B2B)</h3>
-                    <p className="text-xs text-indigo-800/80 mt-2 max-w-[80%] relative z-10">Vet new wholesalers, manage the B2B supply chain, and verify M-Pesa credentials.</p>
+                 <Link to="/admin/global-products" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
+                    <h3 className="font-bold text-gray-800 group-hover:text-blue-800">📦 Catalog QA</h3>
+                    <p className="text-xs text-gray-500 mt-2">Monitor all user-generated items for compliance and quality.</p>
                  </Link>
               </div>
            </section>
+        </div>
 
-           {/* Section 4: Engineering & Architecture */}
-           <section className="bg-gray-900 rounded-3xl p-8 shadow-xl border border-gray-800 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-bl-full pointer-events-none"></div>
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-800">
-                 <div className="w-12 h-12 bg-indigo-900/50 text-indigo-400 rounded-xl border border-indigo-700/50 flex items-center justify-center text-2xl">⚙️</div>
-                 <div>
-                    <h2 className="text-xl font-bold text-white">Platform Engineering</h2>
-                    <p className="text-sm text-gray-400">Low-level overrides, system telemetry, schemas.</p>
-                 </div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-4 relative z-10">
-                 <Link to="/admin/engineering" className="p-4 bg-black/40 rounded-xl border border-gray-800 hover:border-indigo-500/50 hover:bg-black/60 transition group font-mono">
-                    <h3 className="font-bold text-indigo-400 group-hover:text-indigo-300 text-sm">God-Mode Access</h3>
-                    <p className="text-[10px] text-gray-500 mt-2">Simulate environments and trigger structural hooks.</p>
-                 </Link>
-                 <Link to="/admin/monitoring" className="p-4 bg-black/40 rounded-xl border border-gray-800 hover:border-indigo-500/50 hover:bg-black/60 transition group font-mono">
-                    <h3 className="font-bold text-red-400 group-hover:text-red-300 text-sm flex items-center gap-2">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                      Live Packets
-                    </h3>
-                    <p className="text-[10px] text-gray-500 mt-2">Raw API telemetry, webhook status, memory sensors.</p>
-                 </Link>
-                 
-                 <div className="sm:col-span-2 grid grid-cols-3 gap-2 mt-2">
-                    <a href="/system_architecture.md" download="V3_Architecture.md" className="p-2 bg-gray-800 rounded text-center hover:bg-gray-700 transition">
-                       <p className="text-xs text-gray-300 font-bold">📚 Arch Specs</p>
-                    </a>
-                    <a href="/super_manager_guide.md" download="V3_SuperAdmin.md" className="p-2 bg-gray-800 rounded text-center hover:bg-gray-700 transition">
-                       <p className="text-xs text-gray-300 font-bold">👑 Admin Rules</p>
-                    </a>
-                    <Link to="/admin/report" className="p-2 bg-indigo-900/50 text-indigo-200 border border-indigo-700/50 rounded text-center hover:bg-indigo-900 transition">
-                       <p className="text-xs font-bold">📊 Cohesion Repo</p>
-                    </Link>
-                 </div>
-              </div>
-           </section>
-
+        <div className="mt-12 text-center text-gray-300 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-4">
+            <span>Savannah Core v3.0</span>
+            <span className="w-1 h-1 rounded-full bg-gray-200"></span>
+            <Link to="/booklet" className="hover:text-indigo-500 transition">Reference Systems Manual</Link>
         </div>
       </main>
     </div>

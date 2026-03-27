@@ -4,56 +4,43 @@ import { supabase } from "./supabase-client";
 export async function authenticateUser(email, password) {
   if (!supabase) return { error: "Supabase not connected." };
 
-  // System Admin Gateway Bypass (admin@qrshop.com is a dummy email that cannot receive confirmation links)
-  if (email === 'admin@qrshop.com' && password === 'admin123') {
-    const { data: shopUser, error: suError } = await supabase
-      .from("shop_users")
-      .select("*, shops(*)")
-      .eq("email", email)
-      .single();
-
-    if (suError || !shopUser) {
-      return { error: "System Admin profile missing from system bounds." };
-    }
-
-    const sessionUser = {
-      id: shopUser.id,
-      email: shopUser.email,
-      role: shopUser.role,
-      shop_id: shopUser.shop_id,
-      shops: shopUser.shops
-    };
-
-    localStorage.setItem("qrshop_session", JSON.stringify(sessionUser));
-    return { user: sessionUser };
-  }
-
-
-  // Phase 10: Authenticate natively against Supabase Auth to receive a secure JWT
+  // Phase 1: Authenticate natively against Supabase Auth
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email: email,
     password: password,
   });
 
   if (authError || !authData.user) {
-    return { error: authError?.message || "Invalid email or credentials." };
+    return { error: authError?.message || "Invalid credentials." };
   }
 
-  // Fetch shop metadata to ensure role/shop_id is available, bridging the gap
-  // between the new Auth provider and existing relational data.
+  // Phase 2: Fetch minimal metadata in a single fast query
+  // We specify only the necessary fields to reduce payload size and speed up the join.
   const { data: shopUser, error: suError } = await supabase
     .from("shop_users")
-    .select("*, shops(*)")
+    .select(`
+      email, 
+      role, 
+      shop_id, 
+      shops (
+        id, 
+        name, 
+        logo_url, 
+        plan, 
+        platform_commission_rate
+      )
+    `)
     .eq("email", email)
     .single();
 
   if (suError || !shopUser) {
-    return { error: "User profile missing from system bounds." };
+    // If the record is missing, we must sign out to prevent orphan sessions
+    await supabase.auth.signOut();
+    return { error: "User profile missing or access denied." };
   }
 
-  // Persist the session locally to keep existing synchronous hooks perfectly functioning
   const sessionUser = {
-    id: authData.user.id, // using genuine Auth UID
+    id: authData.user.id,
     email: shopUser.email,
     role: shopUser.role,
     shop_id: shopUser.shop_id,

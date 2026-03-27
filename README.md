@@ -13,6 +13,8 @@ The platform has evolved from a basic static menu viewer into a secure, tiered, 
 *   **WhatsApp Cloud API:** Edge Functions deliver Interactive Checkout Cards directly to the shop operator’s WhatsApp, fully bypassing manual `wa.me` links for premium tiers.
 *   **Multi-Tier SaaS Gating:** A 4-tier model (Free, Basic, Pro, Business) enforced at both the React Router layer and the Database RLS layer.
 *   **God-Mode System Administration:** A master dashboard offering total visibility into platform economics, 3rd-party API costs, global product graphs, and an automated threat-model scanner.
+*   **Last-Mile Logistics Hub:** Integrated regional distribution nodes and rider fleet management with multi-order batching logic.
+*   **Global Search Engine:** Postgres GIN-indexed Full-Text Search (FTS) for O(log n) product discovery across all shop tenants.
 
 ## 🛠 Tech Stack
 

@@ -113,9 +113,29 @@ Responsibilities
 
 Responsibilities
 
-* shop management
-* subscription management
 * analytics
+* platform-wide oversight
+
+---
+
+## Logistics Hub Module (NEW)
+
+Responsibilities:
+
+* **Regional Hubs**: Management of physical distribution nodes for multi-city pickups.
+* **Rider Dashboard**: Task-focused interface for last-mile delivery agents.
+* **Order Batching**: Grouping multiple orders into single routes to maximize efficiency.
+* **Dispatch System**: One-click shop-to-courier handoff protocol.
+
+---
+
+## Global Search & Discovery (NEW)
+
+Responsibilities:
+
+* **Full-Text Search (FTS)**: O(log n) product discovery using Postgres GIN indexes.
+* **Cross-Tenant Cataloging**: Scalable searching across multiple shop instances.
+* **Weighted Matching**: Prioritizing product titles over descriptions for high-relevancy results.
 
 ---
 
@@ -143,8 +163,6 @@ Initial deployment supports:
 100–500 shops
 ```
 
-Future scaling options include:
-
-* API layer
-* caching
-* microservices
+* **GIN Indexing**: Real-time Full-Text Search for thousands of items.
+* **Hierarchical Routing**: Distributed pickup nodes to reduce bottlenecking.
+* **Domain Trust Boundary**: Hardened QR redirection to prevent open-relay attacks.

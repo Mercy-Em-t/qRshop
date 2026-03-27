@@ -46,6 +46,7 @@ DECLARE
     p_fulfillment text := COALESCE(payload->>'fulfillment_type', 'dine_in');
     p_address text := payload->>'delivery_address';
     p_fee numeric := COALESCE((payload->>'delivery_fee_charged')::numeric, 0);
+    p_email text := payload->>'customer_email'; -- New CRM field
     p_items jsonb := payload->'items';
 BEGIN
     -- Step A: Calculate secure total directly from the raw menu_items to prevent frontend payload manipulation
@@ -64,12 +65,12 @@ BEGIN
     -- Step C: Insert Master Order using TEXT references
     INSERT INTO public.orders (
         shop_id, table_id, total_price, status, 
-        client_name, client_phone, fulfillment_type, 
+        client_name, client_phone, customer_email, fulfillment_type, 
         delivery_address, delivery_fee_charged, discount_amount, coupon_code, parent_order_id
     )
     VALUES (
         p_shop_id, p_table_id, calculated_total, 'pending',
-        p_client_name, p_client_phone, p_fulfillment,
+        p_client_name, p_client_phone, p_email, p_fulfillment,
         p_address, p_fee, p_discount, p_coupon, NULLIF(p_parent, '')::uuid
     )
     RETURNING id INTO new_order_id;

@@ -89,7 +89,7 @@ export default function QrGenerator() {
      const img = new Image();
 
      // Brand details
-     const brandText = shopSubdomain ? `${shopSubdomain}.tmsavannah.com` : "ShopQR Gateway";
+     const brandText = shopSubdomain ? `${shopSubdomain}.tmsavannah.com` : "Modern Savannah Gateway";
 
      img.onload = () => {
         // Dimensions
@@ -122,7 +122,7 @@ export default function QrGenerator() {
         // Trigger download
         const pngFile = canvas.toDataURL("image/png");
         const downloadLink = document.createElement("a");
-        downloadLink.download = `ShopQR_${shopSubdomain || 'Node'}_${createdQr?.id.substring(0,8)}.png`;
+        downloadLink.download = `Savannah_${shopSubdomain || 'Node'}_${createdQr?.id.substring(0,8)}.png`;
         downloadLink.href = pngFile;
         downloadLink.click();
      };

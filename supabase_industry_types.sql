@@ -32,5 +32,6 @@ insert into public.industry_types (slug, name, description) values
 ('food', 'Food & Beverage', 'Restaurants, cafes, food stalls'),
 ('retail', 'Retail & Stores', 'Boutiques, convenience stores, pharmacies'),
 ('service', 'Services', 'Salons, spas, clinics, consulting'),
+('digital', 'Digital Products', 'Software, ebooks, courses, links'),
 ('other', 'Other', 'General classification')
 on conflict (slug) do nothing;

@@ -66,6 +66,40 @@ export default function CommunityFeed() {
     fetchPosts();
   }, []);
 
+  const [memberOf, setMemberOf] = useState(new Set());
+
+  const fetchMembership = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data } = await supabase.from('community_members').select('community_id').eq('user_id', user.id);
+      if (data) setMemberOf(new Set(data.map(m => m.community_id)));
+    }
+  };
+
+  useEffect(() => {
+    fetchMembership();
+  }, []);
+
+  const handleJoinCommunity = async (communityId) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      alert("Please log in to join communities.");
+      return;
+    }
+    
+    // Explicitly handle membership update
+    const { error } = await supabase.from('community_members').upsert({
+      user_id: user.id,
+      community_id: communityId
+    });
+    
+    if (error) {
+      alert("Failed to update community membership: " + error.message);
+    } else {
+      setMemberOf(prev => new Set([...prev, communityId]));
+    }
+  };
+
   const handlePostSubmit = async () => {
     if (!postContent.trim()) return;
     setIsPosting(true);
@@ -331,25 +365,31 @@ export default function CommunityFeed() {
           </div>
        </div>
 
-       {/* Right Sidebar */}
        <div className="hidden lg:block w-80 p-6 sticky top-0 h-screen">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
              <h3 className="font-bold text-gray-900 mb-4">Trending Communities</h3>
              <div className="space-y-4">
-                <div className="flex gap-3 items-center">
-                   <div className="w-10 h-10 bg-orange-100 text-orange-600 rounded-xl flex justify-center items-center font-bold text-xl">☕</div>
-                   <div>
-                     <p className="font-bold text-sm text-gray-800">Nairobi Coffee Snobs</p>
-                     <p className="text-xs text-gray-500">1.2k Members</p>
-                   </div>
-                </div>
-                <div className="flex gap-3 items-center">
-                   <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex justify-center items-center font-bold text-xl">💻</div>
-                   <div>
-                     <p className="font-bold text-sm text-gray-800">Savannah Devs</p>
-                     <p className="text-xs text-gray-500">845 Members</p>
-                   </div>
-                </div>
+                {[
+                  { id: 'nairobi-foodies', name: 'Nairobi Foodies', icon: '☕', members: '1.2k' },
+                  { id: 'savannah-crafters', name: 'Savannah Crafters', icon: '🎨', members: '845' },
+                  { id: 'tech-hobbies', name: 'Tech & Hobbies', icon: '💻', members: '2.1k' }
+                ].map(comm => (
+                  <div key={comm.id} className="flex gap-3 items-center justify-between">
+                    <div className="flex gap-3 items-center">
+                       <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex justify-center items-center font-bold text-xl">{comm.icon}</div>
+                       <div>
+                         <p className="font-bold text-sm text-gray-800">{comm.name}</p>
+                         <p className="text-xs text-gray-500">{comm.members} Members</p>
+                       </div>
+                    </div>
+                    <button 
+                       onClick={() => handleJoinCommunity(comm.id)}
+                       className={`text-[10px] font-black px-3 py-1.5 rounded-full transition ${memberOf.has(comm.id) ? 'bg-green-50 text-green-600' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}
+                    >
+                       {memberOf.has(comm.id) ? 'Joined' : 'Join'}
+                    </button>
+                  </div>
+                ))}
              </div>
           </div>
        </div>

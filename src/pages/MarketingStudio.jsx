@@ -32,42 +32,71 @@ export default function MarketingStudio() {
 
   const user = getCurrentUser();
   const shopId = user?.shop_id;
+  const [supplierId, setSupplierId] = useState(null);
 
   useEffect(() => {
     if (!user) {
       navigate("/login");
       return;
     }
-    fetchQRs();
-    fetchPromotions();
-    fetchMenuItems();
+    
+    const init = async () => {
+      setLoading(true);
+      // 1. If not a shop owner, check if they are a supplier
+      if (!shopId) {
+        const { data: supplier } = await supabase.from('suppliers').select('id').eq('owner_id', user.id).single();
+        if (supplier) setSupplierId(supplier.id);
+      }
+      
+      await Promise.all([
+        fetchQRs(),
+        fetchPromotions(),
+        fetchProductPool()
+      ]);
+      setLoading(false);
+    };
+    
+    init();
   }, [navigate]);
 
   const fetchQRs = async () => {
-    setLoading(true);
+    if (!shopId) return; // Suppliers don't have physical QR nodes usually
     const { data } = await supabase.from('qrs').select('*').eq('shop_id', shopId).eq('status', 'active');
     if (data && data.length > 0) {
       setQrs(data);
       setSelectedQr(data[0]);
     }
-    setLoading(false);
   };
 
   const fetchPromotions = async () => {
-    const { data } = await supabase.from('promotions').select('*, promotion_items(menu_item_id)').eq('shop_id', shopId).order('created_at', { ascending: false });
+    const query = supabase.from('promotions').select('*, promotion_items(*)');
+    if (shopId) query.eq('shop_id', shopId);
+    else if (supplierId) query.eq('supplier_id', supplierId);
+    else return;
+
+    const { data } = await query.order('created_at', { ascending: false });
     if (data) setPromotions(data);
   };
 
-  const fetchMenuItems = async () => {
-    const { data } = await supabase.from('menu_items').select('id, name, price, category').eq('shop_id', shopId);
-    if (data) setMenuItems(data);
+  const fetchProductPool = async () => {
+    if (shopId) {
+      const { data } = await supabase.from('menu_items').select('id, name, price, category').eq('shop_id', shopId);
+      if (data) setMenuItems(data);
+    } else if (supplierId) {
+      const { data } = await supabase.from('supplier_items').select('id, name, price, category').eq('supplier_id', supplierId);
+      if (data) setMenuItems(data); // Reusing menuItems state for simplicity in the UI
+    }
   };
 
   const handleCreatePromo = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const payload = { ...promoForm, shop_id: shopId };
+      const payload = { ...promoForm };
+      if (shopId) payload.shop_id = shopId;
+      else if (supplierId) payload.supplier_id = supplierId;
+      else throw new Error("No Shop or Supplier ID associated with your session.");
+
       if (!payload.coupon_code) delete payload.coupon_code;
       if (payload.expires_at === "") payload.expires_at = null;
 
@@ -75,10 +104,12 @@ export default function MarketingStudio() {
       if (error) throw error;
 
       if (selectedProductIds.size > 0) {
-        const itemInserts = Array.from(selectedProductIds).map(pid => ({
-          promotion_id: promo.id,
-          menu_item_id: pid
-        }));
+        const itemInserts = Array.from(selectedProductIds).map(pid => {
+          const item = { promotion_id: promo.id };
+          if (shopId) item.menu_item_id = pid;
+          else item.supplier_item_id = pid;
+          return item;
+        });
         const { error: itemErr } = await supabase.from('promotion_items').insert(itemInserts);
         if (itemErr) throw itemErr;
       }

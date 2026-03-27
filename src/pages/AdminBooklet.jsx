@@ -6,15 +6,15 @@ const CHAPTERS = [
   {
     id: "what-is",
     icon: "🌍",
-    title: "What is ShopQR?",
-    tagline: "The Smart Ordering Platform for Modern Kenyan Businesses",
-    content: `ShopQR is a digital business tool that lets any shop, restaurant, café, or market stall accept orders from customers using just a QR code.
-
+    title: "What is Modern Savannah?",
+    tagline: "The Expansive Commerce OS for the African Savannah",
+    content: `Modern Savannah is a digital business tool that lets any shop, restaurant, café, or market stall accept orders from customers natively and expansively.
+    
 Think of it this way: instead of shouting across a busy restaurant floor or keeping a handwritten order pad, a customer simply points their phone camera at a small printed square on the table. In seconds, they are browsing the shop's menu, adding items to their cart, and placing an order — all from their own phone.
 
-The shop owner, from their phone or laptop, sees the order arrive live, confirms it, and processes it. No app downloads needed. No special equipment. Just a printout and an internet connection.
+The shop owner, from their phone or laptop, sees the order arrive live, confirms it, and processes it. No app downloads needed. No special equipment. Just a digital node and an internet connection.
 
-ShopQR is designed specifically for the Kenyan business environment. It works on any phone browser, supports M-Pesa payments, and even operates when the internet is slow or spotty.`
+Modern Savannah is designed specifically for the expansive African business environment. It works on any phone browser, supports M-Pesa payments, and even operates when the internet is slow or spotty.`
   },
   {
     id: "customer-journey",
@@ -420,6 +420,30 @@ Dashboard → Marketing Studio → "Promo Bundles" tab
 Shop owners select which products belong to the promo, set the discount rules, and hit Save. The system handles the rest.`
   },
   {
+    id: "modern-savannah",
+    icon: "🌍",
+    title: "Chapter 1 — What is Modern Savannah?",
+    tagline: "Unpacking the Commerce OS for the African Savannah",
+    content: `Modern Savannah is the world’s first "Decentralized Commerce OS."
+
+Unlike traditional e-commerce platforms like Jumia or Shopify which are rigid and centralized, Modern Savannah is fluid. It is an expansive digital landscape designed to host thousands of individual "shop-nodes" that can be managed by local agents.
+
+──────────────────────
+1. THE OPERATING SYSTEM ANALOGY
+──────────────────────
+Think of Modern Savannah as the "Android" of commerce. You have created the core operating system, and each shop is like an "App" that runs on top of it. Some apps are restaurants, some are pharmacies, and others are digital freelancers.
+
+──────────────────────
+2. AFRICA TO THE WORLD
+──────────────────────
+Modern Savannah is rooted in the expansiveness of the African Savannah—boundless, adaptive, and native. It provides the technological infrastructure to digitize the physical marketplace, taking it from the ground to the cloud.
+
+──────────────────────
+3. DECENTRALIZED TRUST
+──────────────────────
+The platform doesn't need a massive headquarters. It uses a network of Regional Agents to enforce compliance, handle disputes, and verify merchants, ensuring a self-regulating ecosystem.`
+  },
+  {
     id: "marketplace-approval",
     icon: "✅",
     title: "Chapter 14 — Marketplace Approval & SEO",
@@ -454,6 +478,286 @@ WHERE TO FIND IT
 ──────────────────────
 Admin → Global Infrastructure → Shops tab → Marketplace Status column
 Each shop has a status badge. Click to change it inline.`
+  },
+  {
+    id: "last-mile-logistics",
+    icon: "🚚",
+    title: "Chapter 15 — Last-Mile Logistics (The Delivery Hub)",
+    tagline: "Total control over the final stretch to the customer",
+    content: `Added: March 27, 2026
+
+ShopQR now features a complete logistics ecosystem, allowing you to manage deliveries without burdening individual shop owners.
+
+──────────────────────
+1. THE DELIVERY PORTAL
+──────────────────────
+A specialized entry point (/dashboard/delivery) for your logistics team. It is split into two roles:
+  • Delivery Managers: Oversee the whole fleet, monitor financials, and create "Batches".
+  • Delivery Workers: A mobile-first view for riders to see their assigned tasks, contact shops, and update delivery status.
+
+──────────────────────
+2. REGIONAL HUBS (NODES)
+──────────────────────
+As you scale, you can register "Logistics Hubs"—physical distribution points in different neighborhoods or cities.
+  • Shops can "Dispatch" an order to a Hub.
+  • The order is stored at the Hub (Node) until a rider is ready for the final leg.
+  • This reduces individual rider trips and allows for localized distribution.
+
+──────────────────────
+3. ORDER BATCHING
+──────────────────────
+Managers can select multiple orders going in the same direction and group them into a "Batch". A rider then picks up the entire batch, drastically increasing efficiency and reducing cost per delivery.`
+  },
+  {
+    id: "search-discovery",
+    icon: "🔍",
+    title: "Chapter 16 — Discovery Engine (Marketplace Search)",
+    tagline: "Instant discovery across thousands of products",
+    content: `Added: March 27, 2026
+
+The platform now uses a professional-grade Search Engine to help customers find exactly what they need instantly.
+
+──────────────────────
+OS-LEVEL PERFORMANCE
+──────────────────────
+We've implemented Postgres Full-Text Search (FTS). Unlike a regular search that gets slower as you add more data, FTS uses "GIN Indexes" to find matches in tiny fractions of a second ($O(\log n)$ efficiency).
+
+──────────────────────
+FUZZY SEARCHING
+──────────────────────
+The search bar on the Home page doesn't just look for exact words. It understands:
+  • Weighted Results: A match in a Product Title is more important than a match in the Description.
+  • Plurals & Variants: Searching for "Burgers" will still find "Burger".
+
+──────────────────────
+MARKETPLACE TRAFFIC
+──────────────────────
+This search engine is the "Google" of your platform. It allows users to search across ALL approved shops simultaneously, creating a powerful marketplace experience where small shops get discovered by new customers every day.`
+  },
+  {
+    id: "platform-economics",
+    icon: "📊",
+    title: "Chapter 17 — Platform Economics & Scalability",
+    tagline: "How to manage costs while growing your business",
+    content: `Added: March 27, 2026
+
+Running a large-scale platform requires understanding your operational costs. Here is the strategy to keep ShopQR profitable.
+
+──────────────────────
+1. THE SUPABASE ENGINE
+──────────────────────
+• Up to 20 shops: You can likely stay on the Free Tier ($0/mo).
+• 20–500 shops: You must upgrade to the Pro Tier ($25/mo). This gives you daily backups and higher data limits.
+• Strategy: Your first 5 "Pro" shop subscriptions ($5/mo each) will pay for this entire platform overhead.
+
+──────────────────────
+2. WHATSAPP CONVERSATIONS
+──────────────────────
+WhatsApp charges per 24-hour window.
+• User-Initiated (Service): Approx. KSh 1.50 per day per active user.
+• Business-Initiated (Utility): Approx. KSh 4.00 per day.
+• Strategy: We use "wa.me" (Free) for low-tier shops. We only use the official "Auto-Dashboard" (Accept/Reject buttons) for high-paying tiers (Business) who can easily afford the cost.
+
+──────────────────────
+3. M-PESA MARGINS
+──────────────────────
+• C2B (STK Push): When a customer pays a shop.
+• B2C (Disbursements): When you pay the shop owner their share.
+• Advice: Disburse funds weekly or monthly (not daily) to minimize transfer fees. Maintain a small platform commission (e.g., 2%) to ensure the system is "self-funding".
+
+──────────────────────
+SCALING TIP
+──────────────────────
+Keep the "Free" tier limited to 20 products. This encourages successful shops to upgrade to "Pro," which funds the infrastructure for the entire community.`
+  },
+  {
+    id: "agency-ops",
+    icon: "🛡️",
+    title: "Chapter 18 — Agency Operations (Regional Governance)",
+    tagline: "Offloading management to local experts",
+    content: `Added: March 27, 2026
+
+As you scale to 100+ shops, you cannot manage every merchant yourself. The Agency Model allows you to appoint "Regional Agents."
+
+──────────────────────
+1. JURISDICTIONAL POWER
+──────────────────────
+Each Agent is assigned a specific area (e.g., "Nairobi West"). They are responsible for:
+  • Onboarding new shops in their territory.
+  • Verifying that shops are real and legitimate.
+  • Ensuring shops comply with platform standards.
+
+──────────────────────
+2. AGENT INCENTIVES
+──────────────────────
+Agents earn a "Commission Rate" (e.g., 10% of the platform fee). This turns them into local business partners who are motivated to grow the ecosystem in their area.
+
+──────────────────────
+3. COMPLIANCE ENFORCEMENT
+──────────────────────
+Agents have the power to "Promote" a shop (Bronze → Silver → Gold) or flag them for investigation if they fail to meet quality standards.`
+  },
+  {
+    id: "trust-accountability",
+    icon: "🤝",
+    title: "Chapter 19 — Trust & Accountability (Public Integrity)",
+    tagline: "Building a marketplace users can rely on",
+    content: `Added: March 27, 2026
+
+Since the platform doesn't "hold" the customer's money (direct-to-shop payments), trust is built through transparency and reporting.
+
+──────────────────────
+1. VERIFICATION BADGES
+──────────────────────
+The Marketplace displays badges on every shop card:
+  • Gold: Fully vetted, long history of successful deliveries.
+  • Silver: Active merchant with verified documents.
+  • Bronze: New merchant in probation.
+  • Unverified: High-risk, use caution.
+
+──────────────────────
+2. THE PEER-REPORTING PROTOCOL
+──────────────────────
+If a merchant doesn't deliver or scams a customer, the customer clicks the "Report" button on the shop card. 
+  • The report is ROUTED directly to the jurisdictional agent.
+  • The Agent investigates (calls the shop, checks logs).
+  • If guilty, the Agent can suspend the shop instantly.
+
+──────────────────────
+3. ACCOUNTABILITY WITHOUT BURDEN
+──────────────────────
+This system enforces "Accountability" through peer pressure and local management, without you (the platform owner) having to manually mediate every small dispute.`
+  },
+  {
+    id: "audit-accountability",
+    icon: "🕵️",
+    title: "Chapter 20 — Forensic Audit & Internal Controls",
+    tagline: "Total transparency for every system change",
+    content: `Added: March 27, 2026
+
+When you have 50 agents managing 5,000 shops, you need to know WHO did WHAT and WHEN.
+
+──────────────────────
+1. THE AUDIT TRAIL
+──────────────────────
+The system now automatically logs critical actions:
+  • Tier Promotion: When an agent moves a shop from Bronze to Gold.
+  • Payment Mode Swap: When a merchant is granted "Direct-to-Shop" payments.
+  • Dispute Resolution: Every investigation decision.
+
+──────────────────────
+2. INVESTIGATIVE POWER
+──────────────────────
+If a merchant complains they were unfairly downgraded, the System Admin can view the "Audit Log" to see which Agent made the change and read their reasoning.
+
+──────────────────────
+3. TAMPER-PROOFING
+──────────────────────
+Audit logs are "Insert-Only". They cannot be edited or deleted by Agents, ensuring a permanent forensic record of platform governance.`
+  },
+  {
+    id: "industry-adaptation",
+    icon: "🧬",
+    title: "Chapter 21 — Industry Adaptation (Commerce OS)",
+    tagline: "One platform, four specialized businesses",
+    content: `Added: March 27, 2026
+
+ShopQR is no longer just a "Menu" app. It is now a versatile Commerce OS that adapts its UI based on the shop's Industry Type.
+
+──────────────────────
+1. THE GASTRO MODE (Restaurants)
+──────────────────────
+• Key Feature: Table-Based Ordering.
+• Workflow: Customers scan a "Table QR," order via the Kitchen Display, and choose "Dine-In" or "Takeaway."
+
+──────────────────────
+2. THE RETAIL MODE (Stores)
+──────────────────────
+• Key Feature: Shelf-Discovery.
+• Workflow: Focuses on "In-Store Pickup" or "Home Delivery." Table numbers are hidden to keep the UI clean.
+
+──────────────────────
+3. THE SERVICE MODE (Salons/Clinics)
+──────────────────────
+• Key Feature: Session Booking.
+• Workflow: Primarily handles "In-Person" appointments and service lists.
+
+──────────────────────
+4. THE DIGITAL MODE (Software/E-Books)
+──────────────────────
+• Key Feature: Instant Fulfillment.
+• Workflow: Orders bypass logistics entirely; items are fulfilled via instant links or notification-based delivery.`
+  },
+  {
+    id: "monetization-ads",
+    icon: "💰",
+    title: "Chapter 22 — Monetization & Ad Network",
+    tagline: "Scalable revenue beyond subscriptions",
+    content: `Added: March 27, 2026
+
+The platform now features a Native Ad Network to help you monetize the public marketplace traffic.
+
+──────────────────────
+1. PLACEMENT TYPES
+──────────────────────
+• Header Banner: High-impact visibility at the top of the search directory.
+• In-Feed Cards: Native-looking ads interspersed between shop listings.
+• Sidebar/Spotlight: Featured brands in the discovery rail.
+
+──────────────────────
+2. DATA-DRIVEN REVENUE
+──────────────────────
+As you collect Customer Emails, you build a CRM that makes these ad placements more valuable to brands wanting to target specific demographics.
+
+──────────────────────
+3. MERCHANT PROMOTION
+──────────────────────
+• Merchants can pay a premium to have their shops "Boosted" to the top of the feed or featured in the header banner, creating a secondary revenue stream.`
+  },
+  {
+    id: "regional-privacy",
+    icon: "🗺️",
+    title: "Chapter 23 — Regional Binding & Privacy Guard",
+    tagline: "Local focus, global protection",
+    content: `Added: March 27, 2026
+
+Modern Savannah is built for "Regional Mastery." You can now bound shops to specific operational areas to ensure fulfillment is always realistic.
+
+──────────────────────
+1. THE REGIONAL BOUND
+──────────────────────
+• Operational Regions: Shops can be tagged with a specific city or neighborhood (e.g., "Kilimani" or "Nairobi").
+• Delivery Geofencing: Customers are notified if they try to place a delivery order outside the shop's operational range, reducing wasted effort and refund friction.
+
+──────────────────────
+2. THE PRIVACY GUARD
+──────────────────────
+To prevent customer spamming and protect merchant integrity, sensitive data (like phone numbers) is masked in the Order Overview by default.
+• Logic: Merchants see the customer's name and the masked number (e.g., "+254 ••• 123") until they need the full details for fulfillment.
+
+──────────────────────
+3. FRICTIONLESS CHECKOUT
+──────────────────────
+For "In-Store Pickup" or "Dine-In" orders, the platform automatically streamlines the identity form, making non-essential fields optional to ensure a high-velocity buying experience.`
+  },
+  {
+    id: "logistics-mastery",
+    icon: "🚚",
+    title: "Chapter 24 — Logistics Master Control",
+    tagline: "Centralized fees, regional visibility",
+    content: `Added: March 27, 2026
+
+The platform now features "Centralized Logistics Control," moving authority over delivery fees and visibility from individual shops to the Delivery Manager.
+
+──────────────────────
+1. THE REGION SELECTOR
+──────────────────────
+The Public Marketplace is now Region-Bound. Users select their region (e.g., Nairobi, Mombasa), and only shops native to that region are displayed.
+
+──────────────────────
+2. CENTRALIZED DELIVERY FEES
+──────────────────────
+The Delivery Manager sets "Flat Fees" per region in the System Settings. These are automatically "plugged" into the checkout flow based on the shop's location.`
   }
 ];
 
@@ -478,8 +782,8 @@ export default function AdminBooklet() {
             </svg>
           </Link>
           <div className="flex-1">
-            <h1 className="text-xl font-bold text-gray-800">📖 ShopQR Features Booklet</h1>
-            <p className="text-xs text-gray-400 mt-0.5">A complete guide to the platform — explained in plain language</p>
+            <h1 className="text-xl font-bold text-gray-800">📖 Modern Savannah Operating Manual</h1>
+            <p className="text-xs text-gray-400 mt-0.5">The engine of the African digital economy — explained in plain language</p>
           </div>
           <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">
             {CHAPTERS.length} Chapters

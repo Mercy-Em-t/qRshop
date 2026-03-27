@@ -70,7 +70,7 @@ export default function OnboardingWizard({ shopId, onComplete }) {
               <div className="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
                 <span className="text-4xl">👋</span>
               </div>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to ShopQR!</h2>
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome to Modern Savannah!</h2>
               <p className="text-gray-500 mb-8">
                 Let's get your digital storefront ready to capture customers. We will set up your first menu item and your first smart QR code in just 2 minutes.
               </p>

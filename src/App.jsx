@@ -52,13 +52,26 @@ import CommunityFeed from "./pages/social/CommunityFeed";
 import Directory from "./pages/social/Directory";
 import SupplierPortal from "./pages/SupplierPortal";
 import SupplierDirectory from "./pages/SupplierDirectory";
+import ShopFinances from "./pages/ShopFinances";
 // Generic Legal Pages (Public)
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Advertise from './pages/Advertise';
+
+// Delivery Hub
+import DeliveryPortal from "./pages/DeliveryPortal";
+import DeliveryWorker from "./pages/DeliveryWorker";
+import DeliveryDashboard from "./pages/DeliveryDashboard";
+
 import { useOfflineEventQueue } from "./hooks/useOfflineEventQueue";
 
 export default function App() {
   useOfflineEventQueue();
+  useEffect(() => {
+    document.title = "The Modern Savannah | African Commerce OS";
+  }, []);
   return (
     <Routes>
       {/* Public */}
@@ -79,6 +92,9 @@ export default function App() {
       {/* Legal Pages */}
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/advertise" element={<Advertise />} />
 
       {/* Platform Level QR Scanning Node */}
       <Route path="/q/:qrId" element={<ScanGateway />} />
@@ -162,10 +178,14 @@ export default function App() {
                   <Route path="qrs/:qrId/settings" element={<DynamicQrSettings />} />
                   <Route path="campaigns" element={<CampaignManager />} />
                   <Route path="marketing" element={<MarketingStudio />} />
-                  <Route path="suppliers" element={<SupplierPortal />} />
-                  <Route path="supplier-directory" element={<SupplierDirectory />} />
+                  <Route path="supply-mgmt" element={<SupplierPortal />} />
+                  <Route path="connect-distribution" element={<SupplierDirectory />} />
+                  <Route path="finances" element={<ShopFinances />} />
                   <Route path="settings" element={<Settings />} />
-               </Routes>
+                  <Route path="delivery" element={<DeliveryPortal />} />
+                  <Route path="delivery/worker" element={<DeliveryWorker />} />
+                  <Route path="delivery/manager" element={<DeliveryDashboard />} />
+                </Routes>
             </OnboardingGate>
          } 
       />
@@ -184,7 +204,7 @@ export default function App() {
       <Route path="/admin/global-orders" element={<AdminGlobalOrders />} />
       <Route path="/admin/global-products" element={<AdminGlobalProducts />} />
       <Route path="/monitoring" element={<AdminMonitoring />} />
-      <Route path="/supplier-signup" element={<SupplierSignup />} />
+      <Route path="/join/distribution-network" element={<SupplierSignup />} />
       <Route path="/admin/suppliers" element={<AdminSuppliers />} />
       <Route path="/admin/analytics" element={<AdminAnalytics />} />
       <Route path="/admin/todo" element={<AdminTodo />} />

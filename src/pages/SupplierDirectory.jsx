@@ -18,7 +18,16 @@ export default function SupplierDirectory() {
 
   const fetchSuppliers = async () => {
     setLoading(true);
-    const { data } = await supabase.from('suppliers').select('*').eq('is_verified', true);
+    // If admin, show all. If shop, only verified.
+    const query = supabase.from('suppliers').select('*');
+    if (user?.role !== 'system_admin') {
+      query.eq('is_verified', true);
+    }
+    
+    const { data, error } = await query;
+    if (error) {
+       console.error("Error fetching distributors:", error.message);
+    }
     if (data) setSuppliers(data);
     setLoading(false);
   };

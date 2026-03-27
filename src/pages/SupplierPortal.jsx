@@ -96,8 +96,8 @@ export default function SupplierPortal() {
       <header className="bg-white border-b border-gray-100 p-4 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-             <Link to="/dashboard" className="text-gray-400 hover:text-gray-600">←</Link>
-             <h1 className="text-xl font-black text-gray-900 tracking-tight uppercase">{supplier.name} <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded ml-2">Wholesale Portal</span></h1>
+              <Link to="/dashboard" className="text-gray-400 hover:text-gray-600">←</Link>
+              <h1 className="text-xl font-black text-gray-900 tracking-tight uppercase">{supplier.name} <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded ml-2">Distribution Hub</span></h1>
           </div>
           <div className="flex items-center gap-2">
              {supplier.is_verified ? <span className="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded font-bold">✓ Verified</span> : <span className="text-xs bg-yellow-50 text-yellow-600 px-2 py-1 rounded font-bold">Pending Verification</span>}

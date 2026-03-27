@@ -47,38 +47,38 @@ export default function SupplierSignup() {
       <Link to="/" className="text-gray-400 hover:text-gray-600 font-bold mb-8">← Back to Savannah</Link>
       
       <div className="max-w-md w-full bg-white rounded-3xl shadow-xl shadow-gray-200/50 p-8 border border-gray-100">
-        <h1 className="text-2xl font-black text-gray-900 mb-2">Become a Supplier</h1>
-        <p className="text-gray-500 mb-8 text-sm">Join our B2B network and start selling wholesale to hundreds of local shops.</p>
+        <h1 className="text-2xl font-black text-gray-900 mb-2">Partnership Gateway</h1>
+        <p className="text-gray-500 mb-8 text-sm">Apply to join our distribution network and supply products in bulk to the Savannah ecosystem.</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Company Name</label>
+            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Project/Entity Name</label>
             <input 
               required
               type="text" 
               value={formData.name}
               onChange={e => setFormData({...formData, name: e.target.value})}
-              placeholder="e.g. Acme Wholesale Ltd"
+              placeholder="e.g. Acme Distribution Ltd"
               className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Industry</label>
+            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Industry Vertical</label>
             <select 
               value={formData.industry}
               onChange={e => setFormData({...formData, industry: e.target.value})}
               className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition"
             >
-              <option value="retail">Retail & Fast Moving Goods</option>
-              <option value="electronics">Electronics & Tech</option>
-              <option value="food">Food & Beverage (Bulk)</option>
-              <option value="services">Professional Services</option>
+              <option value="retail">Supply & Logistics</option>
+              <option value="electronics">Technological Assets</option>
+              <option value="food">Consumables (Bulk)</option>
+              <option value="services">Professional Infrastructure</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Contact Phone</label>
+            <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Verification Phone</label>
             <input 
               required
               type="tel" 
@@ -90,17 +90,17 @@ export default function SupplierSignup() {
           </div>
 
           <div className="pt-4 border-t border-gray-50">
-            <h3 className="text-sm font-bold text-gray-800 mb-3">M-Pesa Payout Details (Optional)</h3>
+            <h3 className="text-sm font-bold text-gray-800 mb-3">Settlement Profile (Optional)</h3>
             <div className="grid grid-cols-1 gap-3">
               <input 
                 type="text" 
-                placeholder="Paybill/Till Number (optional)"
+                placeholder="Business Shortcode"
                 value={formData.mpesa_shortcode}
                 onChange={e => setFormData({...formData, mpesa_shortcode: e.target.value})}
                 className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-2 text-sm outline-none transition"
               />
             </div>
-            <p className="text-[10px] text-gray-400 mt-2 italic">Your Daraja Passkey will be collected securely after admin verification — never on a public form.</p>
+            <p className="text-[10px] text-gray-400 mt-2 italic">Infrastructure details are verified securely after application approval.</p>
           </div>
 
           <button 
@@ -108,7 +108,7 @@ export default function SupplierSignup() {
             disabled={loading}
             className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 mt-6"
           >
-            {loading ? "Submitting..." : "Apply to Join"}
+            {loading ? "Processing..." : "Submit Partnership Application"}
           </button>
         </form>
       </div>

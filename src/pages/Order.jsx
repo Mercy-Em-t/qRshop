@@ -54,13 +54,15 @@ export default function Order() {
   const [identity, setIdentity] = useState({
       name: localStorage.getItem('qr_customer_name') || "",
       phone: localStorage.getItem('qr_customer_phone') || "",
+      email: localStorage.getItem('qr_customer_email') || "",
       fulfillment_type: "dine_in",
       address: ""
   });
   const [couponInput, setCouponInput] = useState("");
   const [couponError, setCouponError] = useState("");
   const [applyingCoupon, setApplyingCoupon] = useState(false);
-  
+  const [systemDeliveryFee, setSystemDeliveryFee] = useState(null);
+   
   const terms = useNomenclature(session?.shop_id);
   
   const shopPlan = shop?.plan?.toLowerCase() || 'free';
@@ -94,22 +96,31 @@ export default function Order() {
   // Update default fulfillment based on shop industry type once loaded
   useEffect(() => {
      if (shop) {
+        const type = shop.industry_type?.toLowerCase() || 'retail';
         setIdentity(prev => {
-           // Don't override if they already selected something valid
-           if (prev.fulfillment_type === 'digital' && shop.industry_type === 'digital') return prev;
-           if (['pickup', 'delivery'].includes(prev.fulfillment_type) && shop.industry_type === 'retail') return prev;
-           
-           if (shop.industry_type === 'digital') {
-               return { ...prev, fulfillment_type: 'digital' };
-           } else if (shop.industry_type === 'retail') {
-               return { ...prev, fulfillment_type: shop.offers_pickup ? 'pickup' : 'delivery' };
-           } else {
-               // Restaurant
-               return { ...prev, fulfillment_type: shop.offers_dine_in !== false ? 'dine_in' : (shop.offers_pickup ? 'pickup' : 'delivery') };
+           if (type === 'digital') return { ...prev, fulfillment_type: 'digital' };
+           if (type === 'service') return { ...prev, fulfillment_type: 'pickup' }; // "In-Person"
+           if (type === 'food' || type === 'restaurant') {
+               return { ...prev, fulfillment_type: session?.table ? 'dine_in' : 'pickup' };
            }
+           // Default Retail
+           return { ...prev, fulfillment_type: shop.offers_pickup ? 'pickup' : 'delivery' };
         });
-     }
-  }, [shop]);
+
+        // 🏆 NEW: Fetch Centralized Delivery Fee
+        if (shop.operational_region) {
+           supabase
+             .from('system_logistics_config')
+             .select('flat_delivery_fee')
+             .eq('region_name', shop.operational_region)
+             .eq('is_active', true)
+             .maybeSingle()
+             .then(({ data }) => {
+                if (data) setSystemDeliveryFee(data.flat_delivery_fee);
+             });
+        }
+      }
+  }, [shop, session?.table]);
 
   if (queued) {
     return (
@@ -154,8 +165,10 @@ export default function Order() {
   const shopName = shop?.name || "Shop";
   const shopPhone = import.meta.env.VITE_SHOP_PHONE || shop?.whatsapp_number || shop?.phone || "";
 
-  const deliveryFee = identity.fulfillment_type === 'delivery' ? (shop?.delivery_fee || 0) : 0;
-  const finalPayableTotal = Number(total) + Number(deliveryFee);
+  const deliveryFee = identity.fulfillment_type === 'delivery' 
+    ? (systemDeliveryFee ?? shop?.delivery_fee ?? 0) 
+    : 0;
+  const finalTotal = Math.max(0, subtotal - (discountAmount || 0) + deliveryFee);
 
   const generateDatabaseOrder = async () => {
      if (sending) return null; // Synchronous re-entry guard
@@ -200,10 +213,12 @@ export default function Order() {
         activeCoupon?.code || null,
         identity.name,
         identity.phone,
+        identity.phone,
         parentOrderId,
         identity.fulfillment_type,
         identity.address,
-        deliveryFee
+        deliveryFee,
+        identity.email
       );
   };
 
@@ -228,6 +243,7 @@ export default function Order() {
             // Phase 15: Save identity globally so recurring checkouts are faster
             localStorage.setItem('qr_customer_name', identity.name);
             localStorage.setItem('qr_customer_phone', identity.phone);
+            localStorage.setItem('qr_customer_email', identity.email);
 
             // Phase 44/15: Automated WhatsApp API Dispatch for Pro/Business Teams
             if ((shopPlanAccess.isPro || shopPlanAccess.isBusiness) && isOnline && shopPhone) {
@@ -604,12 +620,18 @@ export default function Order() {
                      </button>
                    )}
                    {shop?.offers_delivery && (
-                     <button 
-                        onClick={() => setIdentity({...identity, fulfillment_type: 'delivery'})}
-                        className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'delivery' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
-                     >
-                       🚗 Delivery
-                     </button>
+                      <button 
+                         onClick={() => {
+                           setIdentity({...identity, fulfillment_type: 'delivery'});
+                           if (shop?.operational_region && !localStorage.getItem('qr_regional_ack')) {
+                              alert(`Note: This shop primarily serves ${shop.operational_region}. Please ensure your delivery address is within range.`);
+                              localStorage.setItem('qr_regional_ack', 'true');
+                           }
+                         }}
+                         className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'delivery' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
+                      >
+                        🚗 Delivery
+                      </button>
                    )}
                  </div>
                )}
@@ -646,6 +668,23 @@ export default function Order() {
                            onChange={(e) => setIdentity({...identity, address: e.target.value})}
                            placeholder="youremail@example.com"
                            className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                        />
+                     </div>
+                  )}
+
+                  {/* Email input for Pickup and other non-digital types */}
+                  {identity.fulfillment_type !== 'digital' && (
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                           Email 
+                           {identity.fulfillment_type === 'pickup' && <span className="text-gray-400 font-normal italic text-[10px] ml-1 uppercase">(Optional)</span>}
+                        </label>
+                        <input 
+                           type="email" 
+                           value={identity.email}
+                           onChange={(e) => setIdentity({...identity, email: e.target.value})}
+                           placeholder="you@example.com"
+                           className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500"
                         />
                      </div>
                   )}

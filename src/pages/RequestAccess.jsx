@@ -43,7 +43,7 @@ export default function RequestAccess() {
            </div>
            <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Received</h2>
            <p className="text-gray-500 mb-8">
-             Thank you for your interest in ShopQR! Our team will review your details and be in touch on WhatsApp shortly to get you set up.
+             Thank you for your interest in Modern Savannah! Our team will review your details and be in touch on WhatsApp shortly to get you set up.
            </p>
            <Link to="/" className="inline-block bg-gray-900 text-white font-bold px-8 py-3 rounded-xl hover:bg-gray-800 transition">
               Return Home

@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Scanner } from '@yudiel/react-qr-scanner';
 import PublicShopProfile from "./PublicShopProfile";
+import Footer from "../components/Footer";
+import Logo from "../components/Logo";
 import { getShopBySubdomain } from "../services/shop-service";
 import { PLANS } from "../config/plans";
 
@@ -12,6 +14,10 @@ export default function Home() {
   const [subdomainShopId, setSubdomainShopId] = useState(null);
   const [isVerifyingSubdomain, setIsVerifyingSubdomain] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeout = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,6 +49,32 @@ export default function Home() {
     checkSubdomain();
   }, []);
 
+  const handleSearch = async (query) => {
+    setSearchQuery(query);
+    if (!query || query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    searchTimeout.current = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const { data, error } = await supabase
+          .from("menu_items")
+          .select("*, shops(name, id)")
+          .textSearch("fts_vector", query, { config: 'english', type: 'plain' })
+          .limit(8);
+        
+        if (!error) setSearchResults(data);
+      } catch (e) {
+        console.error("Search failed", e);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 400);
+  };
+
   // Show a blank/loading screen while we ask Supabase if this subdomain is real
   if (isVerifyingSubdomain) {
     return <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -61,13 +93,9 @@ export default function Home() {
       {/* Navbar */}
       <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-             <svg xmlns="http://www.w3.org/2000/svg" className="h-7 w-7 text-green-600" viewBox="0 0 20 20" fill="currentColor">
-               <path fillRule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clipRule="evenodd" />
-               <path d="M11 4a1 1 0 10-2 0v1a1 1 0 002 0V4zM10 7a1 1 0 011 1v1h2a1 1 0 110 2h-3a1 1 0 01-1-1V8a1 1 0 011-1zM16 9a1 1 0 100 2 1 1 0 000-2zM9 13a1 1 0 011-1h1a1 1 0 110 2v2a1 1 0 11-2 0v-3zM7 11a1 1 0 100-2H4a1 1 0 100 2h3zM17 13a1 1 0 10-2 0v1h-1a1 1 0 100 2h2a1 1 0 001-1v-2z" />
-             </svg>
-             <span className="font-bold text-xl tracking-tight text-gray-900">Savannah</span>
-          </div>
+          <Link to="/" className="flex items-center">
+             <Logo className="h-7 w-7" />
+          </Link>
           <div className="flex items-center gap-4">
             <Link to="/login" className="text-gray-600 font-medium hover:text-green-600 transition">Log In</Link>
             <Link to="/request-access" className="bg-gray-900 text-white px-5 py-2 rounded-full font-medium hover:bg-gray-800 transition transform hover:scale-105">Get Started</Link>
@@ -77,15 +105,74 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center">
-        <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 tracking-tight leading-tight mb-6">
-          The <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-500">smartest way</span> to take orders on WhatsApp.
-        </h1>
-        <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
-          Turn your tables and catalogs into instant, structured WhatsApp orders. Stop manually decoding messages. Capture customer data automatically.
-        </p>
+               <h1 className="text-4xl sm:text-6xl font-black text-gray-900 mb-6 tracking-tighter leading-tight italic">
+                 Commerce for the <span className="text-safari-green">Modern</span> <span className="text-savannah-ochre not-italic">Savannah.</span>
+               </h1>
+               <p className="text-lg sm:text-xl text-gray-600 mb-10 max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed">
+                 The expansive ecosystem for digital shops, smart restaurants, and borderless commerce. Build your storefront in minutes, rooted in Africa and connected to the world.
+               </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
            <Link to="/explore" className="w-full sm:w-auto bg-green-600 text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-green-700 transition shadow-lg hover:shadow-green-200 transform hover:-translate-y-1">Enter the Marketplace</Link>
            <Link to="/request-access" className="w-full sm:w-auto text-gray-700 font-bold px-8 py-4 rounded-full border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition">Create a Smart Shop</Link>
+        </div>
+
+        {/* Global Product Search (O(log n) discovery) */}
+        <div className="mt-16 max-w-xl mx-auto relative px-4">
+           <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 flex items-center gap-2 group focus-within:ring-2 ring-green-500/20 transition-all">
+              <div className="pl-4 text-green-600">
+                 {isSearching ? <div className="w-5 h-5 border-2 border-green-600 border-t-transparent animate-spin rounded-full"></div> : <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>}
+              </div>
+              <input 
+                 type="text" 
+                 placeholder="Search products, meals, or shops..." 
+                 className="flex-1 py-3 text-lg font-medium outline-none text-gray-800 placeholder:text-gray-400"
+                 value={searchQuery}
+                 onChange={(e) => handleSearch(e.target.value)}
+              />
+           </div>
+
+           {/* Trending Discovery Tags */}
+           <div className="mt-4 flex flex-wrap items-center justify-center gap-3 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
+              <span className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Trending Now:</span>
+              {["Burgers", "Hardware", "Sneakers", "Pharmacy", "Electronics"].map(tag => (
+                 <button 
+                    key={tag}
+                    onClick={() => handleSearch(tag)}
+                    className="bg-white hover:bg-green-50 text-gray-600 hover:text-green-700 text-[11px] font-bold px-4 py-1.5 rounded-full border border-gray-100 hover:border-green-200 transition-all shadow-sm"
+                 >
+                    {tag}
+                 </button>
+              ))}
+           </div>
+
+           {/* Results Dropdown */}
+           {searchResults.length > 0 && searchQuery.length >= 2 && (
+              <div className="absolute top-full left-4 right-4 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-200">
+                 {searchResults.map(item => (
+                    <Link 
+                       key={item.id} 
+                       to={`/shops/${item.shops?.id}`}
+                       className="flex items-center gap-4 px-6 py-4 hover:bg-green-50 transition cursor-pointer group"
+                    >
+                       <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xl shadow-inner group-hover:bg-white transition-colors">
+                          {item.product_images?.[0] ? <img src={item.product_images[0].url} className="w-full h-full object-cover rounded-lg" alt="" /> : '📦'}
+                       </div>
+                       <div className="text-left flex-1 min-w-0">
+                          <h4 className="font-bold text-gray-900 truncate">{item.name}</h4>
+                          <p className="text-xs text-slate-500 flex items-center gap-1">
+                             <span className="text-green-600 font-bold">KSh {item.price}</span>
+                             <span>•</span>
+                             <span className="truncate">{item.shops?.name}</span>
+                          </p>
+                       </div>
+                       <svg className="w-5 h-5 text-gray-300 group-hover:text-green-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                    </Link>
+                 ))}
+                 <div className="bg-gray-50 px-6 py-2 border-t border-gray-100">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Powered by Savannah FTS Index</p>
+                 </div>
+              </div>
+           )}
         </div>
       </section>
 
@@ -208,26 +295,42 @@ export default function Home() {
               </button>
               
               <div className="bg-white p-2 rounded-2xl shadow-2xl overflow-hidden aspect-square border-4 border-gray-800">
-                <Scanner 
-                   formats={["qr_code"]}
-                   onScan={(result) => {
-                      if (result && result.length > 0) {
-                         setShowScanner(false);
-                         const decodedText = result[0].rawValue;
-                         // Native redirect
-                         if (decodedText.startsWith("http")) {
-                            window.location.href = decodedText;
-                         } else {
-                            alert("Invalid payload: " + decodedText);
-                         }
-                      }
-                   }} 
-                />
+                 <Scanner 
+                    formats={["qr_code"]}
+                    onScan={(result) => {
+                       if (result && result.length > 0) {
+                          const decodedText = result[0].rawValue;
+                          
+                          // Domain Validation for QR Security
+                          try {
+                             const url = new URL(decodedText);
+                             const isInternal = url.hostname.endsWith("tmsavannah.com") || 
+                                              url.hostname === "localhost" || 
+                                              url.hostname === "127.0.0.1";
+                             
+                             if (isInternal) {
+                                setShowScanner(false);
+                                // If same origin, use navigate for SPA performance
+                                if (url.origin === window.location.origin) {
+                                   navigate(url.pathname + url.search);
+                                } else {
+                                   window.location.href = decodedText;
+                                }
+                             } else {
+                                alert("🔒 Security Block: External QR codes are not allowed to redirect through this scanner.");
+                             }
+                          } catch (err) {
+                             alert("Invalid QR Payload: " + decodedText);
+                          }
+                       }
+                    }} 
+                 />
               </div>
               <p className="mt-6 text-center text-white/70 font-medium tracking-wide">Align QR Code within the frame to scan seamlessly.</p>
            </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 }

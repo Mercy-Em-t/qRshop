@@ -106,9 +106,14 @@ export default function Menu() {
             )}
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-bold truncate leading-tight">{shop?.name || "Shop"}</h1>
-              {shop?.tagline && (
-                <p className="text-xs text-green-200 truncate">{shop.tagline}</p>
-              )}
+              <div className="flex items-center gap-2 mt-0.5">
+                 <span className="text-[10px] font-black uppercase bg-white/20 px-1.5 py-0.5 rounded tracking-widest leading-none">
+                    {shop?.industry_type || 'Retail'}
+                 </span>
+                 {shop?.tagline && (
+                    <p className="text-xs text-green-200 truncate">{shop.tagline}</p>
+                 )}
+              </div>
             </div>
           </Link>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -118,9 +123,17 @@ export default function Menu() {
         </div>
         {/* Action Bar */}
         <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center justify-between">
-          <p className="text-xs text-gray-500 font-medium">
-            📍 {terms.table} {session?.table}
-          </p>
+          <div className="flex items-center gap-2">
+             {(shop?.industry_type === 'food' || shop?.industry_type === 'restaurant') ? (
+                <p className="text-xs text-gray-500 font-medium">
+                   📍 {terms.table} {session?.table || "Counter"}
+                </p>
+             ) : (
+                <p className="text-xs text-gray-500 font-medium">
+                   🛒 Online Store
+                </p>
+             )}
+          </div>
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate("/history")}
