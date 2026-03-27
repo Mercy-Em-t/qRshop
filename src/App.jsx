@@ -71,7 +71,7 @@ import { useOfflineEventQueue } from "./hooks/useOfflineEventQueue";
 export default function App() {
   useOfflineEventQueue();
   useEffect(() => {
-    document.title = "The Modern Savannah | African Commerce OS";
+    document.title = "ShopQR | Instant WhatsApp Menus & Ordering";
   }, []);
   return (
     <Routes>
