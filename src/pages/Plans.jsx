@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { getCurrentUser, logout } from "../services/auth-service";
+import { logout } from "../services/auth-service";
 import usePlanAccess from "../hooks/usePlanAccess";
 import { PLANS } from "../config/plans";
 
@@ -7,20 +7,10 @@ export default function Plans() {
   const navigate = useNavigate();
   const planAccess = usePlanAccess();
 
-  // Handle loading state
   if (planAccess.loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-         <header className="bg-white shadow-sm">
-           <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-             <Link to="/dashboard" className="text-green-600 font-medium hover:text-green-700 transition">← Dashboard</Link>
-             <h1 className="text-xl font-bold text-gray-800">Subscription Plans</h1>
-             <button onClick={() => { logout(); navigate("/login"); }} className="text-sm font-bold text-red-500 hover:text-red-700 cursor-pointer">Logout</button>
-           </div>
-         </header>
-         <div className="flex-1 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
-         </div>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
       </div>
     );
   }
@@ -31,29 +21,14 @@ export default function Plans() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link
-            to="/dashboard"
-            className="text-green-600 font-medium hover:text-green-700 transition-colors"
-          >
-            ← Dashboard
-          </Link>
+          <Link to="/dashboard" className="text-green-600 font-medium hover:text-green-700 transition">← Dashboard</Link>
           <h1 className="text-xl font-bold text-gray-800">Subscription Plans</h1>
-          <button
-            onClick={() => { logout(); navigate("/login"); }}
-            className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-          >
-            Logout
-          </button>
+          <button onClick={() => { logout(); navigate("/login"); }} className="text-sm font-bold text-red-500 hover:text-red-700 cursor-pointer">Logout</button>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-12 flex-1">
-        <div className="text-center mb-10">
-           <h2 className="text-2xl font-bold text-gray-900">Your Current Tier: <span className="uppercase text-green-600 bg-green-50 px-3 py-1 rounded-md border border-green-200">{currentPlan}</span></h2>
-           <p className="text-gray-500 mt-2">To upgrade your plan, please contact our support team on WhatsApp.</p>
-        </div>
-
-        <div className="grid md:grid-cols-4 gap-6">
+         <div className="grid md:grid-cols-4 gap-6">
             {PLANS.map((plan) => {
                const isActive = currentPlan === plan.id;
                const isDark = plan.theme === 'dark';
@@ -89,7 +64,6 @@ export default function Plans() {
                
                return (
                   <div key={plan.id} className={`${isDark ? 'bg-gray-900 shadow-xl' : 'bg-white shadow-sm'} rounded-3xl p-8 flex flex-col relative ${isAccent ? 'overflow-hidden' : ''} ${borderClass}`}>
-                     
                      {isActive ? (
                         <div className={`absolute -top-4 left-1/2 -translate-x-1/2 ${badgeClasses[plan.colorTag]} px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm`}>Current Plan</div>
                      ) : plan.popular ? (
@@ -111,7 +85,7 @@ export default function Plans() {
                         ))}
                      </ul>
                      
-                     <button disabled={isActive} className={`w-full text-center py-3 rounded-xl font-bold transition shadow-sm ${isActive ? (isDark ? 'bg-gray-700 text-white cursor-not-allowed' : disabledBtnClasses[plan.colorTag]) : (isDark ? 'bg-green-500 text-white hover:bg-green-600 cursor-pointer' : isAccent ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer border border-blue-200' : plan.id === 'free' ? 'border-2 border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 cursor-pointer')}`}>
+                     <button disabled={isActive} className={`w-full text-center py-3 rounded-xl font-bold transition shadow-sm ${isActive ? (isDark ? 'bg-gray-700 text-white cursor-not-allowed' : disabledBtnClasses[plan.colorTag]) : (isDark ? 'bg-green-500 text-white hover:bg-green-600 cursor-pointer' : isAccent ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 cursor-pointer border border-blue-200' : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 cursor-pointer')}`}>
                         {isActive ? 'Active' : (plan.id === 'business' ? 'Contact Sales' : (plan.id === 'free' ? 'Locked' : 'Request Upgrade'))}
                      </button>
                   </div>
@@ -120,9 +94,7 @@ export default function Plans() {
          </div>
 
         <div className="mt-12 bg-white rounded-xl shadow-sm p-6 text-center border border-gray-100">
-          <p className="text-gray-500 text-sm">
-            Self-service upgrades and payment processing will be available after M-Pesa integration is enabled. To change your plan now, message support via WhatsApp.
-          </p>
+          <p className="text-gray-500 text-sm">To change your plan now, message support via WhatsApp.</p>
         </div>
       </main>
     </div>
