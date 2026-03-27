@@ -53,7 +53,7 @@ export default function Plans() {
            <p className="text-gray-500 mt-2">To upgrade your plan, please contact our support team on WhatsApp.</p>
         </div>
 
-         <div className="grid md:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-4 gap-6">
             {PLANS.map((plan) => {
                const isActive = currentPlan === plan.id;
                const isDark = plan.theme === 'dark';
