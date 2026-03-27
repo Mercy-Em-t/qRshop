@@ -106,9 +106,9 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center">
-               <h1 className="text-4xl sm:text-6xl font-black text-gray-900 mb-6 tracking-tighter leading-tight italic">
-                 Commerce for the <span className="text-safari-green">Modern</span> <span className="text-savannah-ochre not-italic">Savannah.</span>
-               </h1>
+                <h1 className="text-4xl sm:text-6xl font-black text-gray-900 mb-6 tracking-tighter leading-tight italic">
+                  The <span className="text-safari-green">Modern</span> <span className="text-savannah-ochre not-italic">Savannah OS v2.3.</span>
+                </h1>
                <p className="text-lg sm:text-xl text-gray-600 mb-10 max-w-2xl mx-auto lg:mx-0 font-medium leading-relaxed">
                  The expansive ecosystem for digital shops, smart restaurants, and borderless commerce. Build your storefront in minutes, rooted in Africa and connected to the world.
                </p>
