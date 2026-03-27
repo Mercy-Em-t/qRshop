@@ -8,7 +8,7 @@ import { getShopBySubdomain } from "../services/shop-service";
 import { PLANS } from "../config/plans";
 
 // Define domains that should NEVER be treated as tenant subdomains
-const RESERVED_DOMAINS = ["localhost", "127.0.0.1", "www", "tmsavannah.com", "tmsavannah", "shopqrplatform", "shopqr"];
+const RESERVED_DOMAINS = ["localhost", "127.0.0.1", "www", "tmsavannah.com", "tmsavannah", "savannah", "modernsavannah"];
 
 export default function Home() {
   const [subdomainShopId, setSubdomainShopId] = useState(null);

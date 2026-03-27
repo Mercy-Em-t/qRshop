@@ -140,7 +140,7 @@ export default function PublicQrLanding() {
            </div>
            
            <div className="mt-6 text-gray-400 text-xs">
-              Powered by ShopQR Platform
+              Powered by Modern Savannah Platform
            </div>
         </div>
       </div>

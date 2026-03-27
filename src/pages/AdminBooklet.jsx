@@ -47,7 +47,7 @@ Modern Savannah is designed specifically for the expansive African business envi
     icon: "🏪",
     title: "The Shop Owner Experience",
     tagline: "Your business in your pocket",
-    content: `A shop owner registers on ShopQR once, sets up their menu, and gets a unique QR code they can print any time.
+    content: `A shop owner registers on Modern Savannah once, sets up their menu, and gets a unique QR code they can print any time.
 
 THE DASHBOARD
 The owner logs in to a management dashboard where they can:
@@ -78,7 +78,7 @@ The owner can generate branded QR codes — with the shop's name printed below t
     icon: "🚗",
     title: "Pickup, Delivery & Dine-In",
     tagline: "Flexible fulfillment for any business model",
-    content: `ShopQR supports three different ways a customer can receive their order:
+    content: `Modern Savannah supports three different ways a customer can receive their order:
 
 DINE IN
 The customer scans the QR code right at their table. The order is linked to that specific table number. The staff know exactly where to bring the food or items without needing to ask.
@@ -96,7 +96,7 @@ The shop owner controls which options their shop offers. If a shop only does din
     icon: "💳",
     title: "Payments (M-Pesa & WhatsApp)",
     tagline: "Get paid the Kenyan way — fast, familiar, and reliable",
-    content: `ShopQR is built around the two most dominant payment and communication tools in Kenya: M-Pesa and WhatsApp.
+    content: `Modern Savannah is built around the two most dominant payment and communication tools in Kenya: M-Pesa and WhatsApp.
 
 FREE PLAN — WHATSAPP ORDERING
 When a customer places an order, the system automatically composes a beautifully formatted order message and opens WhatsApp, pre-filled with all the order details. The customer sends it to the shop. The shop owner replies to confirm and arranges payment at the counter or via MPESA send money.
@@ -109,8 +109,8 @@ For shops on a paid plan who have connected their M-Pesa credentials:
   • The money moves instantly, and the order is automatically marked as Paid
 
 HOW MPESA WORKS FOR SHOPQR
-ShopQR operates as the single platform with ONE official Paybill/Till number. Individual shop owners do NOT need their own Daraja developer accounts. Instead:
-  • All payments go through the ShopQR Paybill
+Modern Savannah operates as the single platform with ONE official Paybill/Till number. Individual shop owners do NOT need their own Daraja developer accounts. Instead:
+  • All payments go through the Modern Savannah Paybill
   • The system records which shop the payment belongs to
   • The platform owner (you) can then transfer the shop's share of the money to them via M-Pesa B2C transfers or at the end of each month
 
@@ -129,7 +129,7 @@ Most small business owners do not sit at a computer all day. They are on the flo
 HOW IT WORKS
 When a customer places an order at a Pro/Business shop:
 1. The customer's browser stays on the confirmation/tracking page — they do NOT need to send anything on WhatsApp.
-2. Instead, the ShopQR platform AUTOMATICALLY sends a WhatsApp message to the shop owner's phone.
+2. Instead, the Modern Savannah platform AUTOMATICALLY sends a WhatsApp message to the shop owner's phone.
 3. This message contains the full order receipt: customer name, items, total, and delivery details.
 4. Below the receipt are two buttons:
    ✅ "Accept & Bill" — Clicking this confirms the order and can trigger the M-Pesa payment prompt to the customer.
@@ -144,7 +144,7 @@ The customer sees a fresh "Review & Edit Cart" button on their tracking page. Th
     icon: "📊",
     title: "Subscription Tiers — What Each Plan Includes",
     tagline: "Grow your features as your business grows",
-    content: `ShopQR offers 4 subscription tiers:
+    content: `Modern Savannah offers 4 subscription tiers:
 
 ──────────────────────
 🆓 FREE TIER
@@ -221,7 +221,7 @@ The system tracks every QR scan — how many times, from which device, at what t
     icon: "⚙️",
     title: "Platform Administration (Your Role)",
     tagline: "You are the operator of the whole ecosystem",
-    content: `As the ShopQR System Administrator, you have access to tools no shop owner can see:
+    content: `As the Modern Savannah System Administrator, you have access to tools no shop owner can see:
 
 SHOP MANAGEMENT
   • See all registered shops
@@ -306,7 +306,7 @@ Once verified, their catalog appears in the Supplier Hub available to all shop o
     tagline: "Wholesale ordering built into the platform",
     content: `Added: March 25, 2026
 
-ShopQR now supports Business-to-Business (B2B) commerce — meaning one shop can order products in bulk from a supplier who is also on the platform.
+Modern Savannah now supports Business-to-Business (B2B) commerce — meaning one shop can order products in bulk from a supplier who is also on the platform.
 
 ──────────────────────
 FOR SUPPLIERS
@@ -450,7 +450,7 @@ The platform doesn't need a massive headquarters. It uses a network of Regional 
     tagline: "You control what the world sees",
     content: `Added: March 25, 2026
 
-The Discover page (/explore) is ShopQR's public marketplace — a directory of all shops on the platform. But not every new shop appears there automatically.
+The Discover page (/explore) is Modern Savannah's public marketplace — a directory of all shops on the platform. But not every new shop appears there automatically.
 
 ──────────────────────
 THE APPROVAL FLOW
@@ -486,7 +486,7 @@ Each shop has a status badge. Click to change it inline.`
     tagline: "Total control over the final stretch to the customer",
     content: `Added: March 27, 2026
 
-ShopQR now features a complete logistics ecosystem, allowing you to manage deliveries without burdening individual shop owners.
+Modern Savannah now features a complete logistics ecosystem, allowing you to manage deliveries without burdening individual shop owners.
 
 ──────────────────────
 1. THE DELIVERY PORTAL
@@ -541,7 +541,7 @@ This search engine is the "Google" of your platform. It allows users to search a
     tagline: "How to manage costs while growing your business",
     content: `Added: March 27, 2026
 
-Running a large-scale platform requires understanding your operational costs. Here is the strategy to keep ShopQR profitable.
+Running a large-scale platform requires understanding your operational costs. Here is the strategy to keep Modern Savannah profitable.
 
 ──────────────────────
 1. THE SUPABASE ENGINE
@@ -662,7 +662,7 @@ Audit logs are "Insert-Only". They cannot be edited or deleted by Agents, ensuri
     tagline: "One platform, four specialized businesses",
     content: `Added: March 27, 2026
 
-ShopQR is no longer just a "Menu" app. It is now a versatile Commerce OS that adapts its UI based on the shop's Industry Type.
+Modern Savannah is no longer just a "Menu" app. It is now a versatile Commerce OS that adapts its UI based on the shop's Industry Type.
 
 ──────────────────────
 1. THE GASTRO MODE (Restaurants)

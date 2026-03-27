@@ -9,4 +9,4 @@ Disallow: /admin/
 Disallow: /menu-manager
 Disallow: /login
 
-Sitemap: https://www.shopqrplatform.com/sitemap.xml
+Sitemap: https://tmsavannah.com/sitemap.xml
