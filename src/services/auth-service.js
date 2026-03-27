@@ -25,9 +25,7 @@ export async function authenticateUser(email, password) {
       shops (
         id, 
         name, 
-        logo_url, 
-        plan, 
-        platform_commission_rate
+        plan
       )
     `)
     .eq("email", email)
