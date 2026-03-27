@@ -258,37 +258,75 @@ export default function Admin() {
               </div>
            </section>
 
-           {/* Section 3: Ecosystem Health */}
-           <section className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm xl:col-span-2">
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
-                 <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-2xl">🌱</div>
+            {/* Section 3: Ecosystem Health */}
+            <section className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm">
+               <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
+                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-2xl">🌱</div>
+                  <div>
+                     <h2 className="text-xl font-bold text-gray-900">Ecosystem Health</h2>
+                     <p className="text-sm text-gray-500">Merchant success, Catalog QA, and Platform Growth.</p>
+                  </div>
+               </div>
+               <div className="grid grid-cols-1 gap-4">
+                  <Link to="/admin/shops" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
+                     <h3 className="font-bold text-gray-800 group-hover:text-blue-800">🏪 Shop Roster</h3>
+                     <p className="text-xs text-gray-500 mt-1">Review all shops, verify marketplace status, manage subdomains.</p>
+                  </Link>
+                  <Link to="/admin/seo" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
+                    <h3 className="font-bold text-gray-800 group-hover:text-blue-800">🔍 Search Engine (SEO)</h3>
+                    <p className="text-xs text-gray-500 mt-1">Google JSON-LD listing optimizations and dynamic meta-tag injections.</p>
+                  </Link>
+                  <Link to="/admin/global-products" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
+                     <h3 className="font-bold text-gray-800 group-hover:text-blue-800">📦 Catalog QA</h3>
+                     <p className="text-xs text-gray-500 mt-1">Monitor all user-generated items for compliance and quality.</p>
+                  </Link>
+               </div>
+            </section>
+
+            {/* Section 4: Engineering & Architecture (Restored) */}
+            <section className="bg-slate-900 rounded-3xl p-8 shadow-xl border border-slate-800 relative overflow-hidden xl:col-span-2">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-bl-full pointer-events-none"></div>
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-800">
+                 <div className="w-12 h-12 bg-indigo-900/50 text-indigo-400 rounded-xl border border-indigo-700/50 flex items-center justify-center text-2xl">⚙️</div>
                  <div>
-                    <h2 className="text-xl font-bold text-gray-900">Ecosystem Health</h2>
-                    <p className="text-sm text-gray-500">Merchant success, Catalog QA, and Platform Growth.</p>
+                    <h2 className="text-xl font-bold text-white">Platform Engineering</h2>
+                    <p className="text-sm text-slate-400">Low-level overrides, system telemetry, and structural schemas.</p>
                  </div>
               </div>
-              <div className="grid sm:grid-cols-3 gap-4">
-                 <Link to="/admin/shops" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
-                    <h3 className="font-bold text-gray-800 group-hover:text-blue-800">🏪 Shop Roster</h3>
-                    <p className="text-xs text-gray-500 mt-2">Review all shops, verify marketplace status, manage subdomains.</p>
+              <div className="grid sm:grid-cols-3 gap-4 relative z-10">
+                 <Link to="/admin/engineering" className="p-4 bg-black/40 rounded-xl border border-slate-800 hover:border-indigo-500/50 hover:bg-black/60 transition group font-mono">
+                    <h3 className="font-bold text-indigo-400 group-hover:text-indigo-300 text-xs">God-Mode Access</h3>
+                    <p className="text-[10px] text-slate-500 mt-2">Simulate environments and trigger structural hooks for debugging.</p>
                  </Link>
-                 <Link to="/admin/communities" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
-                    <h3 className="font-bold text-gray-800 group-hover:text-blue-800">🏙️ Communities</h3>
-                    <p className="text-xs text-gray-500 mt-2">Organize shops by town, neighborhood, or hub jurisdiction.</p>
+                 <Link to="/admin/monitoring" className="p-4 bg-black/40 rounded-xl border border-slate-800 hover:border-indigo-500/50 hover:bg-black/60 transition group font-mono">
+                    <h3 className="font-bold text-red-400 group-hover:text-red-300 text-xs flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                      Live Packets
+                    </h3>
+                    <p className="text-[10px] text-slate-500 mt-2">Raw API telemetry, webhook status, and memory performance sensors.</p>
                  </Link>
-                 <Link to="/admin/global-products" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
-                    <h3 className="font-bold text-gray-800 group-hover:text-blue-800">📦 Catalog QA</h3>
-                    <p className="text-xs text-gray-500 mt-2">Monitor all user-generated items for compliance and quality.</p>
+                 <Link to="/admin/report" className="p-4 bg-indigo-900/40 rounded-xl border border-indigo-800/50 hover:border-indigo-500 hover:bg-indigo-900/60 transition group">
+                    <h3 className="font-bold text-indigo-200 group-hover:text-white text-xs">📊 Cohesion Repo</h3>
+                    <p className="text-[10px] text-indigo-400/80 mt-2">Generate cross-tenant reports and sync platform wide logs.</p>
                  </Link>
+                 
+                 <div className="sm:col-span-3 grid grid-cols-2 gap-3 mt-4">
+                    <a href="/system_architecture.md" download="Savannah_V3_Architecture.md" className="p-3 bg-slate-800 rounded-xl text-center hover:bg-slate-700 transition border border-slate-700 active:scale-95">
+                       <p className="text-xs text-slate-300 font-black uppercase tracking-widest">📚 Download Arch Specs</p>
+                    </a>
+                    <a href="/super_manager_guide.md" download="Savannah_V3_SuperAdmin.md" className="p-3 bg-slate-800 rounded-xl text-center hover:bg-slate-700 transition border border-slate-700 active:scale-95">
+                       <p className="text-xs text-slate-300 font-black uppercase tracking-widest">👑 Download Admin Rules</p>
+                    </a>
+                 </div>
               </div>
            </section>
-        </div>
+         </div>
 
-        <div className="mt-12 text-center text-gray-300 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-4">
-            <span>Savannah Core v3.0</span>
+         <div className="mt-12 text-center text-gray-300 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-4">
+            <span>Savannah Core v3.0 stable</span>
             <span className="w-1 h-1 rounded-full bg-gray-200"></span>
-            <Link to="/booklet" className="hover:text-indigo-500 transition">Reference Systems Manual</Link>
-        </div>
+            <Link to="/admin/booklet" className="hover:text-indigo-500 transition">Sales & Reference Booklet</Link>
+         </div>
       </main>
     </div>
   );
