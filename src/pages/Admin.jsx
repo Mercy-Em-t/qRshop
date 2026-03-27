@@ -90,8 +90,8 @@ export default function Admin() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-white border-b border-gray-100 px-6 py-4 sticky top-0 z-10 shadow-sm">
+    <div className="min-h-screen bg-slate-50 pb-20">
+      <header className="bg-white border-b border-slate-100 px-6 py-4 sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
            <Logo textClassName="font-black text-xl italic tracking-tighter" />
            <div className="flex items-center gap-6">
@@ -105,19 +105,19 @@ export default function Admin() {
         
         {/* Real-time Intel Bar */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Platform GMV</p>
               <p className="text-2xl font-black text-gray-900 mt-1">KSh {metrics.lifetimeGMV.toLocaleString()}</p>
            </div>
-           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Active Shops</p>
               <p className="text-2xl font-black text-gray-900 mt-1">{metrics.totalShops}</p>
            </div>
-           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Revenue at Risk</p>
               <p className="text-2xl font-black text-amber-500 mt-1">KSh {metrics.pendingGMV.toLocaleString()}</p>
            </div>
-           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+           <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5">
               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Dispatches</p>
               <p className="text-2xl font-black text-indigo-600 mt-1">{(metrics.totalOrders * 1.5).toFixed(0)}</p>
            </div>
@@ -142,8 +142,8 @@ export default function Admin() {
         <div className="grid lg:grid-cols-2 gap-8">
            
            {/* Section 1: Financial Directive */}
-           <section className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
+           <section className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-50">
                  <div className="w-12 h-12 bg-green-100 text-green-600 rounded-xl flex items-center justify-center text-2xl">💰</div>
                  <div>
                     <h2 className="text-xl font-bold text-gray-900">Financial Directive</h2>
@@ -151,15 +151,15 @@ export default function Admin() {
                  </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                 <Link to="/admin/analytics" className="p-4 rounded-xl border border-gray-100 hover:border-green-300 hover:bg-green-50 transition group">
+                 <Link to="/admin/analytics" className="p-4 rounded-xl border border-slate-100 hover:border-green-300 hover:bg-green-50 transition group">
                     <h3 className="font-bold text-gray-800 group-hover:text-green-800">📈 Macro Analytics</h3>
                     <p className="text-xs text-gray-500 mt-2">GMV graphs and API overhead costs.</p>
                  </Link>
-                 <Link to="/admin/payouts" className="p-4 rounded-xl border border-gray-100 hover:border-green-300 hover:bg-green-50 transition group">
+                 <Link to="/admin/payouts" className="p-4 rounded-xl border border-slate-100 hover:border-green-300 hover:bg-green-50 transition group">
                     <h3 className="font-bold text-gray-800 group-hover:text-green-800">🏦 Shop Payouts</h3>
                     <p className="text-xs text-gray-500 mt-2">Distribute funds, calculate platform splits.</p>
                  </Link>
-                 <Link to="/admin/plans" className="p-4 rounded-xl border border-gray-100 hover:border-green-300 hover:bg-green-50 transition sm:col-span-2 group">
+                 <Link to="/admin/plans" className="p-4 rounded-xl border border-slate-100 hover:border-green-300 hover:bg-green-50 transition sm:col-span-2 group">
                     <h3 className="font-bold text-gray-800 group-hover:text-green-800">💳 Subscription Matrix</h3>
                     <p className="text-xs text-gray-500 mt-1">Configure MRR pricing boundaries and feature locks.</p>
                  </Link>
@@ -167,8 +167,8 @@ export default function Admin() {
            </section>
 
            {/* Section 2: Global Operations (Merged) */}
-           <section className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
+           <section className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-50">
                  <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-2xl">🌍</div>
                  <div>
                     <h2 className="text-xl font-bold text-gray-900">Global Operations</h2>
@@ -176,21 +176,21 @@ export default function Admin() {
                  </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4">
-                 <Link to="/dashboard/delivery/manager" className="p-4 bg-gray-900 rounded-xl shadow-lg border-2 border-transparent hover:border-gray-500 transition-all group sm:col-span-2">
+                 <Link to="/dashboard/delivery/manager" className="p-4 bg-slate-900 rounded-xl shadow-lg border-2 border-transparent hover:border-slate-500 transition-all group sm:col-span-2">
                     <div className="flex items-center justify-between font-mono">
                        <h3 className="font-bold text-amber-400 flex items-center gap-2">🚚 Logistics Hub</h3>
                        <span className="bg-amber-500 text-[10px] px-1.5 py-0.5 rounded text-white font-black animate-pulse uppercase">Active Hubs</span>
                     </div>
-                    <p className="text-[10px] text-gray-500 mt-1 font-mono uppercase tracking-widest">Platform-wide distribution nodes</p>
+                    <p className="text-[10px] text-slate-500 mt-1 font-mono uppercase tracking-widest text-[9px]">Platform-wide distribution nodes</p>
                  </Link>
-                 <Link to="/admin/global-orders" className="p-4 rounded-xl border border-gray-100 hover:border-amber-300 hover:bg-amber-50 transition group">
+                 <Link to="/admin/global-orders" className="p-4 rounded-xl border border-slate-100 hover:border-amber-300 hover:bg-amber-50 transition group">
                     <div className="flex items-center justify-between">
                        <h3 className="font-bold text-gray-800 group-hover:text-amber-800">🌍 Order Stream</h3>
                        <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span></span>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">God-mode live feed of platform transactions.</p>
                  </Link>
-                 <Link to="/admin/global-products" className="p-4 rounded-xl border border-gray-100 hover:border-amber-300 hover:bg-amber-50 transition group">
+                 <Link to="/admin/global-products" className="p-4 rounded-xl border border-slate-100 hover:border-amber-300 hover:bg-amber-50 transition group">
                     <h3 className="font-bold text-gray-800 group-hover:text-amber-800">📦 Catalog QA</h3>
                     <p className="text-xs text-gray-500 mt-2">Monitor all items for compliance/quality.</p>
                  </Link>
@@ -198,8 +198,8 @@ export default function Admin() {
            </section>
 
            {/* Section 3: Tenant Ecosystem (Growth) */}
-           <section className="bg-white border border-gray-100 rounded-3xl p-8 shadow-sm">
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-100">
+           <section className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-50">
                  <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-2xl">🏪</div>
                  <div>
                     <h2 className="text-xl font-bold text-gray-900">Tenant Ecosystem</h2>
@@ -212,11 +212,11 @@ export default function Admin() {
                     <h3 className="font-bold text-blue-900 relative z-10 flex items-center gap-2 text-sm uppercase black">🚀 Shop Launcher & Registry</h3>
                     <p className="text-[10px] text-blue-800/80 mt-1 max-w-[80%] relative z-10">Deploy parallel environments and monitor the active registry.</p>
                  </Link>
-                 <Link to="/admin/seo" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
+                 <Link to="/admin/seo" className="p-4 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50 transition group">
                     <h3 className="font-bold text-gray-800 group-hover:text-blue-800">🔍 Search Engine (SEO)</h3>
                     <p className="text-xs text-gray-500 mt-2">JSON-LD optimizations.</p>
                  </Link>
-                 <Link to="/admin/booklet" className="p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:bg-blue-50 transition group">
+                 <Link to="/admin/booklet" className="p-4 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50 transition group">
                     <h3 className="font-bold text-gray-800 group-hover:text-blue-800">📖 Sales Booklet</h3>
                     <p className="text-xs text-gray-500 mt-2">Client onboarding reference.</p>
                  </Link>
@@ -229,34 +229,34 @@ export default function Admin() {
            </section>
 
            {/* Section 4: Engineering & Architecture */}
-           <section className="bg-gray-900 rounded-3xl p-8 shadow-xl border border-gray-800 relative overflow-hidden">
+           <section className="bg-slate-900 rounded-3xl p-8 shadow-xl border border-slate-800 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-bl-full pointer-events-none"></div>
-              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-800">
+              <div className="flex items-center gap-3 mb-6 pb-6 border-b border-slate-800">
                  <div className="w-12 h-12 bg-indigo-900/50 text-indigo-400 rounded-xl border border-indigo-700/50 flex items-center justify-center text-2xl">⚙️</div>
                  <div>
                     <h2 className="text-xl font-bold text-white">Platform Engineering</h2>
-                    <p className="text-sm text-gray-400">Telemetry, sensors, and structural hooks.</p>
+                    <p className="text-sm text-slate-400">Telemetry, sensors, and structural hooks.</p>
                  </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-4 relative z-10">
-                 <Link to="/admin/engineering" className="p-4 bg-black/40 rounded-xl border border-gray-800 hover:border-indigo-500/50 hover:bg-black/60 transition group font-mono">
+                 <Link to="/admin/engineering" className="p-4 bg-black/40 rounded-xl border border-slate-800 hover:border-indigo-500/50 hover:bg-black/60 transition group font-mono">
                     <h3 className="font-bold text-indigo-400 group-hover:text-indigo-300 text-sm">God-Mode Access</h3>
-                    <p className="text-[10px] text-gray-500 mt-2">Simulate environments and hooks.</p>
+                    <p className="text-[10px] text-slate-500 mt-2">Simulate environments and hooks.</p>
                  </Link>
-                 <Link to="/admin/monitoring" className="p-4 bg-black/40 rounded-xl border border-gray-800 hover:border-indigo-500/50 hover:bg-black/60 transition group font-mono">
+                 <Link to="/admin/monitoring" className="p-4 bg-black/40 rounded-xl border border-slate-800 hover:border-indigo-500/50 hover:bg-black/60 transition group font-mono">
                     <h3 className="font-bold text-red-400 group-hover:text-red-300 text-sm flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                       Live Packets
                     </h3>
-                    <p className="text-[10px] text-gray-500 mt-2">Raw API telemetry, sensors.</p>
+                    <p className="text-[10px] text-slate-500 mt-2">Raw API telemetry, sensors.</p>
                  </Link>
                  
                  <div className="sm:col-span-2 grid grid-cols-3 gap-2 mt-2 font-mono">
-                    <a href="/system_architecture.md" download="Arch_Specs.md" className="p-2 bg-gray-800 rounded text-center hover:bg-gray-700 transition">
-                       <p className="text-[10px] text-gray-300 font-bold uppercase">Arch Specs</p>
+                    <a href="/system_architecture.md" download="Arch_Specs.md" className="p-2 bg-slate-800 rounded text-center hover:bg-slate-700 transition">
+                       <p className="text-[10px] text-slate-300 font-bold uppercase">Arch Specs</p>
                     </a>
-                    <a href="/super_manager_guide.md" download="Admin_Manual.md" className="p-2 bg-gray-800 rounded text-center hover:bg-gray-700 transition">
-                       <p className="text-[10px] text-gray-300 font-bold uppercase">Admin Rules</p>
+                    <a href="/super_manager_guide.md" download="Admin_Manual.md" className="p-2 bg-slate-800 rounded text-center hover:bg-slate-700 transition">
+                       <p className="text-[10px] text-slate-300 font-bold uppercase">Admin Rules</p>
                     </a>
                     <Link to="/admin/report" className="p-2 bg-indigo-900/50 text-indigo-200 border border-indigo-700/50 rounded text-center hover:bg-indigo-900 transition">
                        <p className="text-[10px] text-indigo-200 font-bold uppercase">Report Hub</p>

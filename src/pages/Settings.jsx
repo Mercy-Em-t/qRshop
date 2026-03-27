@@ -44,7 +44,7 @@ export default function Settings() {
     setTimeout(() => setMessage(null), 3000);
   };
 
-  if (loading) return <div className="p-10 text-center animate-pulse">Syncing Savannah...</div>;
+  if (loading) return <div className="p-10 text-center animate-pulse">Syncing...</div>;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -67,7 +67,7 @@ export default function Settings() {
                     <input 
                        type="text" value={shop.name} 
                        onChange={e => setShop({...shop, name: e.target.value})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition"
+                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
                     />
                  </div>
                  <div>
@@ -75,7 +75,7 @@ export default function Settings() {
                     <input 
                        type="text" value={shop.whatsapp_number} 
                        onChange={e => setShop({...shop, whatsapp_number: e.target.value})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition"
+                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
                     />
                  </div>
                  <div className="md:col-span-2">
@@ -83,7 +83,7 @@ export default function Settings() {
                     <textarea 
                        value={shop.description} 
                        onChange={e => setShop({...shop, description: e.target.value})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition h-24"
+                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition h-24 font-medium"
                     />
                  </div>
               </div>
@@ -92,13 +92,13 @@ export default function Settings() {
            {/* KYC & Verification (NEW FEATURE) */}
            <div className="bg-indigo-50 rounded-2xl p-8 border border-indigo-100 shadow-sm">
               <div className="flex items-center justify-between mb-6 border-b border-indigo-100 pb-4">
-                 <h2 className="text-sm font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2">
+                 <h2 className="text-sm font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2 font-mono">
                     🛡️ Merchant Verification
                     <span className="text-[10px] bg-white text-indigo-600 px-2 py-0.5 rounded font-black tracking-tighter uppercase whitespace-nowrap">Tier 1</span>
                  </h2>
               </div>
-              <p className="text-xs text-indigo-700/70 mb-6 leading-relaxed">Verification unlocks premium features like M-Pesa STK Push and Global Discovery. Complete your profile to build trust with customers.</p>
-              <button disabled className="bg-white text-indigo-400 font-bold py-3 px-6 rounded-xl border border-indigo-200 text-xs uppercase tracking-widest opacity-60">Verified Credentials</button>
+              <p className="text-xs text-indigo-700/70 mb-6 leading-relaxed font-bold">Verification unlocks premium features like M-Pesa STK Push and Global Discovery.</p>
+              <button disabled className="bg-white text-indigo-400 font-bold py-3 px-6 rounded-xl border border-indigo-200 text-[10px] uppercase tracking-widest opacity-60">Verified Credentials</button>
            </div>
 
            {/* Operational Logistics */}
@@ -110,7 +110,7 @@ export default function Settings() {
                     <select 
                        value={shop.industry_type} 
                        onChange={e => setShop({...shop, industry_type: e.target.value})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition"
+                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
                     >
                        <option value="retail">Retail/Merchandise</option>
                        <option value="food">Gastro/Kitchen</option>
@@ -122,7 +122,7 @@ export default function Settings() {
                     <select 
                        value={shop.payment_mode} 
                        onChange={e => setShop({...shop, payment_mode: e.target.value})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition"
+                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
                     >
                        <option value="manual">Manual Checkout</option>
                        <option value="stk">M-Pesa STK Push</option>
@@ -133,7 +133,7 @@ export default function Settings() {
                     <input 
                        type="number" value={shop.delivery_fee_fixed} 
                        onChange={e => setShop({...shop, delivery_fee_fixed: Number(e.target.value)})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition"
+                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
                     />
                  </div>
                  <div>
@@ -141,7 +141,7 @@ export default function Settings() {
                     <input 
                        type="number" value={shop.min_order_value} 
                        onChange={e => setShop({...shop, min_order_value: Number(e.target.value)})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition"
+                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
                     />
                  </div>
               </div>
@@ -151,27 +151,20 @@ export default function Settings() {
            <div className="grid md:grid-cols-2 gap-6">
               <div className="bg-slate-900 rounded-2xl p-8 border border-slate-800 shadow-xl group">
                  <h3 className="text-xs font-black text-amber-500 uppercase tracking-[0.2em] mb-4">Logistics Hub</h3>
-                 <p className="text-[10px] text-slate-500 mb-6 leading-relaxed">Connect to the regional Savannah dispatch network to outsource your delivery fulfillment.</p>
+                 <p className="text-[10px] text-slate-500 mb-6 leading-relaxed">Connect to the regional dispatch network to outsource your delivery fulfillment.</p>
                  <button disabled className="w-full bg-slate-800 text-slate-500 py-3 rounded-xl border border-slate-700 text-[10px] font-black uppercase tracking-widest">Connect Hub (Soon)</button>
               </div>
               <div className="bg-slate-900 rounded-2xl p-8 border border-slate-800 shadow-xl group">
                  <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] mb-4">Market Discovery</h3>
-                 <p className="text-[10px] text-slate-500 mb-6 leading-relaxed">Your shop is visible in the global Savannah directory. Join localized neighborhood hubs.</p>
+                 <p className="text-[10px] text-slate-500 mb-6 leading-relaxed">Your shop is visible in the directory. Join localized neighborhood hubs.</p>
                  <button disabled className="w-full bg-slate-800 text-slate-500 py-3 rounded-xl border border-slate-700 text-[10px] font-black uppercase tracking-widest">Join Neighborhood</button>
               </div>
            </div>
 
-           {/* Financial Architecture (NEW FEATURE) */}
-           {shop.platform_commission_rate !== undefined && (
-              <div className="bg-amber-50 rounded-2xl p-8 border border-amber-100 italic font-medium shadow-inner">
-                 <p className="text-amber-900 text-xs">Platform Governance: Standard Commission Rate is locked at <span className="font-bold underline">{shop.platform_commission_rate}%</span> for your current plan tier.</p>
-              </div>
-           )}
-
            <div className="flex items-center justify-between gap-4 sticky bottom-4 z-10 bg-white/80 backdrop-blur p-4 rounded-3xl shadow-2xl border border-slate-100">
               <div className="flex items-center gap-3">
                  <div className={`w-3 h-3 rounded-full ${shop.is_open ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
-                 <span className="text-xs font-black uppercase tracking-widest text-gray-500">{shop.is_open ? 'Shop is Live' : 'Shop is Closed'}</span>
+                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{shop.is_open ? 'Shop is Live' : 'Shop is Closed'}</span>
                  <input 
                     type="checkbox" checked={shop.is_open} 
                     onChange={e => setShop({...shop, is_open: e.target.checked})}
