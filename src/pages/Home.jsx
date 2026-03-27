@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Scanner } from '@yudiel/react-qr-scanner';
+import { supabase } from "../services/supabase-client";
 import PublicShopProfile from "./PublicShopProfile";
 import Footer from "../components/Footer";
 import Logo from "../components/Logo";
