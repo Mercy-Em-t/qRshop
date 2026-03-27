@@ -7,6 +7,7 @@ import Logo from "../components/Logo";
 import { getShopBySubdomain } from "../services/shop-service";
 import { PLANS } from "../config/plans";
 
+// Modern Savannah Launch v2.3b
 // Define domains that should NEVER be treated as tenant subdomains
 const RESERVED_DOMAINS = ["localhost", "127.0.0.1", "www", "tmsavannah.com", "tmsavannah", "savannah", "modernsavannah"];
 
