@@ -1,7 +1,11 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://ocsuqfabqsyrbsewcaez.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9jc3VxZmFicXN5cmJzZXdjYWV6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MjI4MjAsImV4cCI6MjA4OTA5ODgyMH0.ZxDwD3TIYg9dL2pvJPaTInLmlQu95Xv7BVB_PAezt9Q';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://ocsuqfabqsyrbsewcaez.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
+
+if (!SUPABASE_KEY) {
+  throw new Error('Missing SUPABASE_ANON_KEY environment variable');
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
