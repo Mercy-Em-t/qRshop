@@ -41,12 +41,18 @@ export default async function handler(req, res) {
        return res.status(403).json({ error: "Unauthorized. Critical Security Exception Protocol Initiated." });
     }
 
-    // 3. Native Supabase User Provision & Email Dispatch (The "Option A" Invite Architecture)
-    // We send an official branded onboarding email instantly via Supabase Native SMTP pointing to the Reset Password redirect.
-    const { data: inviteData, error: inviteErr } = await adminDb.auth.admin.inviteUserByEmail(ownerEmail);
-    if (inviteErr) throw new Error(`Auth Generation Failed: ${inviteErr.message}`);
+    // 3. Native Supabase User Provision (Bypassing Email Rate Limits)
+    // We create the user directly with a temporary password and auto-confirm the email.
+    const tempPassword = `ShopQR_${Math.random().toString(36).slice(-6)}!`;
+    const { data: userData, error: createErr } = await adminDb.auth.admin.createUser({
+       email: ownerEmail,
+       password: tempPassword,
+       email_confirm: true
+    });
 
-    const newSystemUser = inviteData.user;
+    if (createErr) throw new Error(`Auth Generation Failed: ${createErr.message}`);
+
+    const newSystemUser = userData.user;
 
     // 4. Provision the Isolated Shop Architecture Data Structure
     const cleanSubdomain = subdomain ? subdomain.toLowerCase().replace(/[^a-z0-9-]/g, "") : null;
@@ -56,7 +62,8 @@ export default async function handler(req, res) {
        phone: phone, 
        whatsapp_number: whatsapp || phone, 
        plan: "free",
-       industry_type: industry
+       industry_type: industry,
+       needs_password_change: true // Force them to set a real password on first login
     };
 
     let shopRes, shopErr;
@@ -84,8 +91,9 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ 
        success: true, 
-       message: "Sandbox Generated securely. Owner has been emailed verification configurations.",
-       shop: shopRes
+       message: "Sandbox Generated securely. Owner must use temporary password to initialize account.",
+       shop: shopRes,
+       tempPassword: tempPassword
     });
   } catch (err) {
     console.error("Vercel Admin API Fail:", err);

@@ -162,7 +162,7 @@ export default function AdminShops() {
       if (industryTypes.length > 0) setNewShopIndustry(industryTypes[0].slug);
       setNewAdminEmail("");
       
-      alert(`✅ Success! Sandbox Space Deployed.\n\nAn official setup email has been dispatched via Supabase to:\n${newAdminEmail}\n\nThe user can now click the link inside their email to securely construct their password and dock with the platform.`);
+      alert(`✅ Success! Sandbox Space Deployed.\n\nTemporary Credentials for ${newAdminEmail}:\n\nPassword: ${resData.tempPassword}\n\nShare these credentials with the owner. They will be forced to set their own private password on their first login.`);
       fetchShops();
     } catch (err) {
       alert("Deployment failed. Error: " + err.message);
