@@ -42,9 +42,15 @@ export default async function handler(req, res) {
     }
 
     // 3. Native Supabase User Provision (Bypassing Email Rate Limits)
-    // We create the user directly with a temporary password and auto-confirm the email.
-    const tempPassword = `ShopQR_${Math.random().toString(36).slice(-6)}!`;
+    // Generating a secure 8-character temporary password (alphanumeric)
+    const charset = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    let tempPassword = "";
+    for (let i = 0; i < 8; i++) {
+        tempPassword += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+
     const { data: userData, error: createErr } = await adminDb.auth.admin.createUser({
+
        email: ownerEmail,
        password: tempPassword,
        email_confirm: true

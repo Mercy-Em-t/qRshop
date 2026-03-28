@@ -59,18 +59,25 @@ export default function OnboardingGate({ children }) {
     e.preventDefault();
     setPwdError("");
     
-    if (newPassword !== confirmPassword) {
-      setPwdError("New passwords do not match.");
-      return;
-    }
-    if (newPassword.length < 8) {
-      setPwdError("Password must be at least 8 characters long.");
-      return;
-    }
-
     setPwdLoading(true);
 
+    if (newPassword !== confirmPassword) {
+       setPwdError("New passwords do not match.");
+       setPwdLoading(false);
+       return;
+    }
+    
+    // Complexity Requirement: 8+ chars, 1 uppercase, 1 digit, 1 special char
+
+    const complexityRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+    if (!complexityRegex.test(newPassword)) {
+       setPwdError("Security Policy: Password must be at least 8 characters long, include an uppercase letter, a number, and a special character.");
+       setPwdLoading(false);
+       return;
+    }
+
     try {
+
        // 1. Update the password via Native Auth (user is already authenticated)
        const { error: updateError } = await supabase.auth.updateUser({
           password: newPassword
