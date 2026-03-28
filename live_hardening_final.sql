@@ -13,6 +13,7 @@ END $$;
 -- 2. TIGHTEN RLS: SHOPS
 ALTER TABLE public.shops ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow public read access on shops" ON public.shops;
+DROP POLICY IF EXISTS "Public can view shops" ON public.shops;
 CREATE POLICY "Public can view shops" ON public.shops FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Owners can update their own shop" ON public.shops;
@@ -24,6 +25,7 @@ FOR UPDATE USING (
 -- 3. TIGHTEN RLS: MENU ITEMS
 ALTER TABLE public.menu_items ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow public read access on menu items" ON public.menu_items;
+DROP POLICY IF EXISTS "Public can view menu items" ON public.menu_items;
 CREATE POLICY "Public can view menu items" ON public.menu_items FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Owners can manage menu items" ON public.menu_items;
@@ -35,6 +37,7 @@ FOR ALL USING (
 -- 4. TIGHTEN RLS: ORDERS
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Allow public insert on orders" ON public.orders;
+DROP POLICY IF EXISTS "Anyone can place an order" ON public.orders;
 CREATE POLICY "Anyone can place an order" ON public.orders FOR INSERT WITH CHECK (true);
 
 DROP POLICY IF EXISTS "Owners can see their shop orders" ON public.orders;
