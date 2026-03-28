@@ -4,6 +4,18 @@ import { supabase } from "./supabase-client";
 export async function authenticateUser(email, password) {
   if (!supabase) return { error: "Supabase not connected." };
 
+  // Phase 0: Check Rate Limit (Max 3 attempts in 15 mins)
+  const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const { count: failedCount, error: countError } = await supabase
+    .from("login_attempts")
+    .select("*", { count: 'exact', head: true })
+    .eq("email", email)
+    .gt("created_at", fifteenMinsAgo);
+
+  if (!countError && failedCount >= 3) {
+    return { error: "Too many failed attempts. Access locked for 15 minutes for this email." };
+  }
+
   // Phase 1: Authenticate natively against Supabase Auth
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email: email,
@@ -11,8 +23,14 @@ export async function authenticateUser(email, password) {
   });
 
   if (authError || !authData.user) {
+    // Log failed attempt
+    await supabase.from("login_attempts").insert([{ email: email }]);
     return { error: authError?.message || "Invalid credentials." };
   }
+
+  // Clear failed attempts on success
+  await supabase.from("login_attempts").delete().eq("email", email);
+
 
   // Phase 2: Fetch minimal metadata in a single fast query
   // We specify only the necessary fields to reduce payload size and speed up the join.

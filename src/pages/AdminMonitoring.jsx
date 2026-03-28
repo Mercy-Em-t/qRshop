@@ -7,6 +7,8 @@ export default function AdminMonitoring() {
   const navigate = useNavigate();
   const user = getCurrentUser();
   const [logs, setLogs] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [activeTab, setActiveTab] = useState("intercept"); // "intercept" or "audit"
   const [loading, setLoading] = useState(true);
 
   // We'll simulate some of the "Live Performance" and "Suspicious Behavior" 
@@ -18,8 +20,28 @@ export default function AdminMonitoring() {
       navigate("/login");
       return;
     }
-    fetchLiveLogs();
+    fetchAllData();
   }, [user, navigate]);
+
+  const fetchAllData = async () => {
+     setLoading(true);
+     await Promise.all([fetchLiveLogs(), fetchAuditLogs()]);
+     setLoading(false);
+  };
+
+  const fetchAuditLogs = async () => {
+     try {
+        const { data, error } = await supabase
+           .from("system_audit_logs")
+           .select("*")
+           .order("created_at", { ascending: false })
+           .limit(50);
+        if (error) throw error;
+        setAuditLogs(data || []);
+     } catch (err) {
+        console.error("Audit Fetch Failed:", err);
+     }
+  };
 
   const fetchLiveLogs = async () => {
     try {
@@ -44,8 +66,6 @@ export default function AdminMonitoring() {
       setLogs(data || []);
     } catch (err) {
       console.error("Failed to fetch logs:", err);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -62,9 +82,9 @@ export default function AdminMonitoring() {
                 Operations Console
              </h1>
           </div>
-          <button onClick={fetchLiveLogs} className="text-xs bg-green-900/20 hover:bg-green-900/40 text-green-400 px-3 py-1.5 rounded border border-green-800 transition flex items-center gap-2 uppercase">
+          <button onClick={fetchAllData} className="text-xs bg-green-900/20 hover:bg-green-900/40 text-green-400 px-3 py-1.5 rounded border border-green-800 transition flex items-center gap-2 uppercase">
              <svg className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-             Poll Sensors
+             Sync Nodes
           </button>
         </div>
       </header>
@@ -141,35 +161,68 @@ export default function AdminMonitoring() {
            </div>
         </div>
 
-        {/* Panel C: System Logs (qr_events) */}
+        {/* Panel C: System Logs Controller */}
         <div className="border border-blue-900/30 bg-gray-900/50 rounded flex flex-col overflow-hidden relative group">
            <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 blur-3xl group-hover:bg-blue-500/10 transition-all"></div>
-           <div className="bg-blue-900/20 px-4 py-2 border-b border-blue-900/30 font-bold uppercase text-xs tracking-wider text-blue-400 flex justify-between items-center">
-              Live Intercept Log
-              <span className="text-blue-400 text-[10px] animate-pulse">TAILING...</span>
+           
+           <div className="flex border-b border-blue-900/30 bg-blue-900/10">
+              <button 
+                onClick={() => setActiveTab("intercept")}
+                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition ${activeTab === "intercept" ? "bg-blue-900/40 text-blue-400" : "text-gray-600 hover:text-blue-500"}`}
+              >
+                Traffic Intercept
+              </button>
+              <button 
+                onClick={() => setActiveTab("audit")}
+                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest transition ${activeTab === "audit" ? "bg-blue-900/40 text-blue-400" : "text-gray-600 hover:text-blue-500"}`}
+              >
+                Security Audit
+              </button>
            </div>
+
            <div className="p-4 flex-1 overflow-y-auto max-h-[60vh] text-[11px] space-y-1.5">
-             {loading && logs.length === 0 ? (
+             {loading && (logs.length === 0 && auditLogs.length === 0) ? (
                 <div className="text-blue-900">Waiting for packet stream...</div>
-             ) : logs.length === 0 ? (
-                <div className="text-gray-600">No recent activity detected on the edge network.</div>
+             ) : activeTab === "intercept" ? (
+                logs.length === 0 ? (
+                   <div className="text-gray-600">No recent activity detected on the edge network.</div>
+                ) : (
+                   logs.map((log) => (
+                      <div key={log.id} className="flex gap-2">
+                          <span className="text-gray-600 shrink-0">
+                             {log.timestamp ? new Date(log.timestamp).toLocaleTimeString('en-GB') : ''}
+                          </span>
+                          <span className="text-blue-500 shrink-0">[{log.event_type?.toUpperCase()}]</span>
+                          <span className="text-gray-400 truncate">
+                             {log.qrs?.shops?.name ? `[${log.qrs.shops.name}]` : '[Unknown Shop]'} 
+                             {' '}
+                             {log.device_info?.context === 'menu' ? 'Menu Scanned' : 
+                              log.device_info?.context === 'order' ? 'Pre-checkout Session' : 
+                              log.device_info?.context === 'campaign' ? 'Ad Campaign Click' : 
+                              'Node Resolving'}
+                          </span>
+                      </div>
+                   ))
+                )
              ) : (
-                logs.map((log) => (
-                   <div key={log.id} className="flex gap-2">
-                       <span className="text-gray-600 shrink-0">
-                          {log.timestamp ? new Date(log.timestamp).toLocaleTimeString('en-GB') : ''}
-                       </span>
-                       <span className="text-blue-500 shrink-0">[{log.event_type?.toUpperCase()}]</span>
-                       <span className="text-gray-400 truncate">
-                          {log.qrs?.shops?.name ? `[${log.qrs.shops.name}]` : '[Unknown Shop]'} 
-                          {' '}
-                          {log.device_info?.context === 'menu' ? 'Menu Scanned' : 
-                           log.device_info?.context === 'order' ? 'Pre-checkout Session' : 
-                           log.device_info?.context === 'campaign' ? 'Ad Campaign Click' : 
-                           'Node Resolving'}
-                       </span>
-                   </div>
-                ))
+                auditLogs.length === 0 ? (
+                   <div className="text-gray-600">Secure record is empty.</div>
+                ) : (
+                   auditLogs.map((log) => (
+                      <div key={log.id} className="flex flex-col gap-0.5 pb-2 border-b border-blue-900/10 last:border-0 mb-2">
+                          <div className="flex justify-between text-gray-400">
+                             <span className="text-blue-400 font-bold uppercase">{log.action || 'SYSTEM_ACTION'}</span>
+                             <span>{new Date(log.created_at).toLocaleTimeString('en-GB')}</span>
+                          </div>
+                          <div className="text-gray-500">
+                             <span className="text-gray-600">Subject:</span> {log.performed_by_email || 'System'} | <span className="text-gray-600">Target:</span> {log.target_email || 'N/A'}
+                          </div>
+                          {log.details && (
+                             <div className="text-gray-400 text-[10px] italic truncate">{JSON.stringify(log.details)}</div>
+                          )}
+                      </div>
+                   ))
+                )
              )}
            </div>
         </div>
