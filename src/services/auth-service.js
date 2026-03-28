@@ -28,7 +28,7 @@ export async function authenticateUser(email, password) {
         plan
       )
     `)
-    .eq("email", email)
+    .eq("id", authData.user.id)
     .single();
 
   if (suError || !shopUser) {

@@ -21,7 +21,7 @@ export default function AdminAnalytics() {
       return;
     }
     fetchGlobalStats();
-  }, [user, navigate]);
+  }, [user?.email, navigate]);
 
   const fetchGlobalStats = async () => {
     try {

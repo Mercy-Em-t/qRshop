@@ -7,6 +7,7 @@ export default function AdminShops() {
   const [shops, setShops] = useState([]);
   const [upgradeRequests, setUpgradeRequests] = useState([]);
   const [kycRequests, setKycRequests] = useState([]);
+  const [onboardingRequests, setOnboardingRequests] = useState([]);
   const [marketplacePending, setMarketplacePending] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -86,6 +87,14 @@ export default function AdminShops() {
     if (!kycErr && kycData) {
        setKycRequests(kycData);
     }
+
+    // Fetch onboarding requests (homepage "Get Started" form)
+    const { data: onbData } = await supabase
+      .from("onboarding_requests")
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    if (onbData) setOnboardingRequests(onbData);
     
     // Fetch mapped global taxonomies
     const { data: indData } = await supabase
@@ -107,99 +116,6 @@ export default function AdminShops() {
     if (mktData) setMarketplacePending(mktData);
 
     setLoading(false);
-  };
-
-  const exportToCSV = () => {
-    if (!shops || shops.length === 0) return;
-    
-    const headers = ["Shop ID", "Shop Name", "Subdomain", "Industry", "Subscription Plan", "Phone", "Admin Emails", "Registration Date"];
-    
-    const rows = shops.map(s => {
-      const adminList = s.shop_users?.map(u => u.email).join("; ") || "No Admin";
-      return [
-        s.id,
-        s.name,
-        s.subdomain || "",
-        s.industry_type || "food",
-        s.plan,
-        s.phone || "",
-        adminList,
-        new Date(s.created_at).toLocaleString()
-      ];
-    });
-    
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-    ].join("\n");
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `ShopQR_Registry_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleProcessUpgrade = async (requestId, targetShopId, approved) => {
-     try {
-        if (approved) {
-           // update shop to pro
-           const { error: shopErr } = await supabase.from("shops").update({ plan: "pro" }).eq("id", targetShopId);
-           if (shopErr) throw shopErr;
-        }
-        // update request status
-        const { error: reqErr } = await supabase.from("upgrade_requests").update({ status: approved ? "approved" : "rejected" }).eq("id", requestId);
-        if (reqErr) throw reqErr;
-        
-        alert(`Request ${approved ? 'Approved' : 'Rejected'} successfully.`);
-        fetchShops(); // reload everything
-     } catch (err) {
-        alert("Failed to process request: " + err.message);
-     }
-  };
-
-  const handleProcessKYC = async (kycId, approved) => {
-     try {
-        const newStatus = approved ? "tier3" : "rejected";
-        const { error: reqErr } = await supabase.from("shop_kyc").update({ verification_status: newStatus }).eq("id", kycId);
-        if (reqErr) throw reqErr;
-        
-        alert(`KYC Profile marked as ${newStatus.toUpperCase()}`);
-        fetchShops(); // reload everything
-     } catch (err) {
-        alert("Failed to process KYC: " + err.message);
-     }
-  };
-
-  const handleMarketplaceApproval = async (shopId, action) => {
-    // action: 'approved' | 'rejected' | 'suspended'
-    try {
-      const { error } = await supabase.from('shops')
-        .update({ marketplace_status: action })
-        .eq('id', shopId);
-      if (error) throw error;
-      alert(`Marketplace status set to ${action.toUpperCase()}`);
-      fetchShops();
-    } catch (err) {
-      alert('Failed to update marketplace status: ' + err.message);
-    }
-  };
-
-  const handleSetPlan = async (shopId, newPlan) => {
-    if (!window.confirm(`Are you sure you want to change this shop's plan to ${newPlan.toUpperCase()}?`)) return;
-
-    try {
-       const { error } = await supabase.from('shops').update({ plan: newPlan }).eq('id', shopId);
-       if (error) throw error;
-       
-       alert(`Shop plan successfully updated to ${newPlan.toUpperCase()}`);
-       fetchShops(); // Refresh the list
-    } catch (err) {
-       alert("Failed to update plan: " + err.message);
-    }
   };
 
   const handleCreateShop = async (e) => {
@@ -255,52 +171,19 @@ export default function AdminShops() {
     }
   };
 
-  const handleCreateCommunity = async (e) => {
-    e.preventDefault();
-    setIsCreating(true);
-    try {
-      const { error } = await supabase.from('communities').insert([{
-        name: newCommunityName,
-        slug: newCommunitySlug || newCommunityName.toLowerCase().replace(/ /g, '-'),
-        description: newCommunityDesc
-      }]);
-      if (error) throw error;
-      alert("✅ Community Launched!");
-      setNewCommunityName("");
-      setNewCommunitySlug("");
-      setNewCommunityDesc("");
-      fetchShops();
-    } catch (err) {
-      alert("Creation failed: " + err.message);
-    } finally {
-      setIsCreating(false);
-    }
+  const handleArchiveOnboarding = async (id) => {
+     const { error } = await supabase.from("onboarding_requests").update({ status: "archived" }).eq("id", id);
+     if (error) alert("Failed to archive: " + error.message);
+     else fetchShops();
   };
 
-  const handleCreateSupplier = async (e) => {
-    e.preventDefault();
-    setIsCreating(true);
-    try {
-      const { error } = await supabase.from('suppliers').insert([{
-        name: newSupName,
-        industry: newSupIndustry,
-        contact_phone: newSupPhone,
-        mpesa_shortcode: newSupMpesa,
-        mpesa_passkey: newSupPasskey,
-        is_verified: true // Admin-launched suppliers are auto-verified
-      }]);
-      if (error) throw error;
-      alert("✅ Supplier Provisioned!");
-      setNewSupName("");
-      setNewSupPhone("");
-      setNewSupMpesa("");
-      setNewSupPasskey("");
-      fetchShops();
-    } catch (err) {
-      alert("Provisioning failed: " + err.message);
-    } finally {
-      setIsCreating(false);
-    }
+  const prefillFromOnboarding = (req) => {
+     setNewShopName(req.shop_name);
+     setNewShopPhone(req.phone);
+     setNewAdminEmail(req.email);
+     setNewShopIndustry(req.industry || "retail");
+     setActiveLauncherTab("shop");
+     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -329,6 +212,36 @@ export default function AdminShops() {
         
         {/* Network Operations Center */}
         <div className="flex flex-col gap-8">
+
+           {/* Onboarding Requests (NEW) */}
+           {onboardingRequests.length > 0 && (
+              <section className="bg-green-50 rounded-xl p-6 border border-green-200">
+                 <h2 className="text-lg font-bold text-green-800 mb-4 flex items-center gap-2">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                    Join Requests: Onboarding Feed
+                 </h2>
+                 <div className="space-y-3">
+                    {onboardingRequests.map(req => (
+                       <div key={req.id} className="bg-white rounded-lg p-4 shadow-sm border border-green-100 flex flex-col gap-3">
+                          <div className="flex justify-between items-start">
+                             <div>
+                                <p className="font-bold text-gray-900">{req.shop_name}</p>
+                                <p className="text-xs text-gray-500">{req.email} · {req.phone}</p>
+                                <p className="text-[10px] text-gray-400 uppercase mt-1">Requested {new Date(req.created_at).toLocaleDateString()}</p>
+                             </div>
+                             <div className="flex gap-2">
+                                <button onClick={() => handleArchiveOnboarding(req.id)} className="px-3 py-1.5 bg-gray-50 text-gray-400 font-bold text-xs rounded-md hover:bg-gray-100 transition">Archive</button>
+                                <button onClick={() => prefillFromOnboarding(req)} className="px-3 py-1.5 bg-green-600 text-white font-bold text-xs rounded-md hover:bg-green-700 transition shadow-sm">Load to Launcher</button>
+                             </div>
+                          </div>
+                       </div>
+                    ))}
+                 </div>
+              </section>
+           )}
 
            {/* Upgrade Requests Inbox */}
            {upgradeRequests.length > 0 && (
@@ -396,117 +309,54 @@ export default function AdminShops() {
               </section>
            )}
 
-           {/* Marketplace Approval Inbox */}
-           {marketplacePending.length > 0 && (
-              <section className="bg-teal-50 rounded-xl p-6 border border-teal-200">
-                 <h2 className="text-lg font-bold text-teal-800 mb-1 flex items-center gap-2">
-                    <span className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
-                    </span>
-                    Marketplace Discovery Requests
-                 </h2>
-                 <p className="text-xs text-teal-600 mb-4">Approve shops to publish their products on the public Discover page.</p>
-                 <div className="space-y-3">
-                    {marketplacePending.map(shop => (
-                       <div key={shop.id} className="bg-white rounded-lg p-4 shadow-sm border border-teal-100">
-                          <div className="flex justify-between items-start">
-                             <div>
-                                <p className="font-bold text-gray-800">{shop.name}</p>
-                                <p className="text-xs text-gray-500 mt-0.5">
-                                   {shop.industry_type?.toUpperCase()} · {shop.plan?.toUpperCase()} ·{' '}
-                                   {shop.shop_users?.map(u => u.email).join(', ')}
-                                </p>
-                                <p className="text-xs text-gray-400 mt-0.5">Requested {new Date(shop.created_at).toLocaleDateString()}</p>
-                             </div>
-                             <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full font-bold">Pending</span>
-                          </div>
-                          <div className="flex gap-2 mt-3">
-                             <button
-                                onClick={() => handleMarketplaceApproval(shop.id, 'rejected')}
-                                className="flex-1 px-3 py-2 bg-red-50 text-red-600 font-bold text-xs rounded-lg hover:bg-red-100 transition"
-                             >
-                                ✕ Reject
-                             </button>
-                             <button
-                                onClick={() => handleMarketplaceApproval(shop.id, 'approved')}
-                                className="flex-1 px-3 py-2 bg-teal-500 text-white font-bold text-xs rounded-lg hover:bg-teal-600 transition shadow-sm"
-                             >
-                                ✓ Approve & Publish
-                             </button>
-                          </div>
-                       </div>
-                    ))}
-                 </div>
-              </section>
-           )}
-
            <section>
               <div className="flex items-center justify-between mb-4">
                  <h2 className="text-lg font-bold text-gray-800">Active Shop Ecosystem</h2>
-                 <button onClick={exportToCSV} disabled={loading || shops.length === 0} className="text-xs bg-green-50 hover:bg-green-100 text-green-700 font-bold px-3 py-1.5 rounded-lg border border-green-200 transition flex items-center gap-2 cursor-pointer disabled:opacity-50">
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Export Registry (CSV)
-                 </button>
               </div>
-          
-          {loading ? (
-             <p className="text-gray-500 py-4">Polling regional nodes...</p>
-          ) : shops.length === 0 ? (
-             <p className="text-gray-500 py-4">No parallel shop spaces active.</p>
-          ) : (
-             <div className="space-y-4">
-               {shops.map((shop) => (
-                 <div key={shop.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col gap-3">
-                   <div className="flex justify-between items-start">
-                      <div>
-                         <h3 className="text-lg font-bold text-gray-900">{shop.name}</h3>
-                         <span className="font-mono text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded">{shop.id}</span>
-                         <span className="ml-1 font-mono text-xs text-purple-600 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded capitalize">{shop.industry_type || "Food"}</span>
-                         {shop.subdomain && (
-                            <span className="ml-2 font-bold text-xs text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">
-                               {shop.subdomain}.tmsavannah.com
+           
+           {loading ? (
+              <p className="text-gray-500 py-4">Polling regional nodes...</p>
+           ) : shops.length === 0 ? (
+              <p className="text-gray-500 py-4">No parallel shop spaces active.</p>
+           ) : (
+              <div className="space-y-4">
+                {shops.map((shop) => (
+                  <div key={shop.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col gap-3">
+                    <div className="flex justify-between items-start">
+                       <div>
+                          <h3 className="text-lg font-bold text-gray-900">{shop.name}</h3>
+                          <span className="font-mono text-xs text-gray-400 bg-gray-50 border border-gray-100 px-2 py-0.5 rounded">{shop.id}</span>
+                          <span className="ml-1 font-mono text-xs text-purple-600 bg-purple-50 border border-purple-100 px-2 py-0.5 rounded capitalize">{shop.industry_type || "Food"}</span>
+                          {shop.subdomain && (
+                             <span className="ml-2 font-bold text-xs text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded">
+                                {shop.subdomain}.tmsavannah.com
+                             </span>
+                          )}
+                       </div>
+                       <div className="flex flex-col items-end gap-1">
+                          <span className={`${['pro', 'business'].includes(shop.plan) ? 'bg-indigo-100 text-indigo-800' : shop.plan === 'basic' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} font-bold px-2 py-1 rounded-full text-xs uppercase`}>
+                             {shop.plan} Plan
+                          </span>
+                       </div>
+                    </div>
+                    
+                    <div className="bg-gray-50 rounded-lg p-3 text-sm mt-2 border border-blue-50">
+                       <p className="font-bold text-gray-800 mb-1">Administrative Seats:</p>
+                       {shop.shop_users?.map((su, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-gray-600">
+                            <span>{su.email}</span>
+                            <span className="bg-blue-100 text-blue-800 font-semibold px-2 rounded-full text-[10px] uppercase">
+                              {su.role}
                             </span>
-                         )}
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                         <span className={`${['pro', 'business'].includes(shop.plan) ? 'bg-indigo-100 text-indigo-800' : shop.plan === 'basic' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} font-bold px-2 py-1 rounded-full text-xs uppercase`}>
-                            {shop.plan} Plan
-                         </span>
-                         <select 
-                            value={shop.plan || 'free'}
-                            onChange={(e) => handleSetPlan(shop.id, e.target.value)}
-                            className="mt-1 text-[10px] font-bold text-indigo-700 bg-white border border-gray-200 rounded px-1 py-0.5 outline-none cursor-pointer hover:border-indigo-400"
-                         >
-                            <option value="free">Set: FREE</option>
-                            <option value="basic">Set: BASIC</option>
-                            <option value="pro">Set: PRO</option>
-                            <option value="business">Set: BUSINESS</option>
-                         </select>
-                      </div>
-                   </div>
-                   
-                   <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
-                      <span>📞 {shop.phone || "No phone"}</span>
-                   </div>
-
-                   <div className="bg-gray-50 rounded-lg p-3 text-sm mt-2 border border-blue-50">
-                      <p className="font-bold text-gray-800 mb-1">Administrative Seats:</p>
-                      {shop.shop_users?.map((su, idx) => (
-                         <div key={idx} className="flex items-center justify-between text-gray-600">
-                           <span>{su.email}</span>
-                           <span className="bg-blue-100 text-blue-800 font-semibold px-2 rounded-full text-[10px] uppercase">
-                             {su.role}
-                           </span>
-                         </div>
-                      ))}
-                      {(!shop.shop_users || shop.shop_users.length === 0) && (
-                         <span className="text-red-500">Unclaimed / No login bound</span>
-                      )}
-                   </div>
-                 </div>
-               ))}
-             </div>
+                          </div>
+                       ))}
+                       {(!shop.shop_users || shop.shop_users.length === 0) && (
+                          <span className="text-red-500">Unclaimed / No login bound</span>
+                       )}
+                    </div>
+                  </div>
+                ))}
+              </div>
            )}
         </section>
       </div>
@@ -514,222 +364,222 @@ export default function AdminShops() {
       {/* Ecosystem Launcher Sidebar */}
         <section>
            <div className="bg-white rounded-3xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden sticky top-24">
-             {/* Tab Switcher */}
-             <div className="flex border-b border-gray-100 bg-gray-50/50">
-               {['shop', 'community', 'supplier'].map(tab => (
-                 <button
-                    key={tab}
-                    onClick={() => setActiveLauncherTab(tab)}
-                    className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${
-                      activeLauncherTab === tab 
-                        ? 'bg-white text-indigo-600 border-b-2 border-indigo-600 shadow-sm' 
-                        : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
-                    }`}
-                 >
-                   {tab}
-                 </button>
-               ))}
-             </div>
+              {/* Tab Switcher */}
+              <div className="flex border-b border-gray-100 bg-gray-50/50">
+                {['shop', 'community', 'supplier'].map(tab => (
+                  <button
+                     key={tab}
+                     onClick={() => setActiveLauncherTab(tab)}
+                     className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${
+                       activeLauncherTab === tab 
+                         ? 'bg-white text-indigo-600 border-b-2 border-indigo-600 shadow-sm' 
+                         : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                     }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
 
-             <div className="p-6">
-                {activeLauncherTab === 'shop' && (
-                  <>
-                    <h2 className="text-xl font-black text-gray-900 mb-1">Launch Shop</h2>
-                    <p className="text-gray-500 text-xs mb-6">Provision an isolated commerce environment.</p>
+              <div className="p-6">
+                 {activeLauncherTab === 'shop' && (
+                   <>
+                     <h2 className="text-xl font-black text-gray-900 mb-1">Launch Shop</h2>
+                     <p className="text-gray-500 text-xs mb-6">Provision an isolated commerce environment.</p>
 
-                    <form onSubmit={handleCreateShop} className="space-y-4">
-                      <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Entity Name</label>
-                          <input
-                            required
-                            type="text"
-                            value={newShopName}
-                            onChange={(e) => setNewShopName(e.target.value)}
-                            placeholder="e.g. The Rustic Burger"
-                            className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
-                          />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Subdomain</label>
-                          <input
-                            type="text"
-                            value={newShopSubdomain}
-                            onChange={(e) => setNewShopSubdomain(e.target.value)}
-                            placeholder="rustic"
-                            className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm font-mono"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Industry</label>
-                          <select
-                             value={newShopIndustry}
-                             onChange={(e) => setNewShopIndustry(e.target.value)}
-                             className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
-                          >
-                             {industryTypes.map(ind => (
-                                <option key={ind.slug} value={ind.slug}>{ind.name}</option>
-                             ))}
-                          </select>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Phone</label>
-                          <input
-                            required
-                            type="tel"
-                            value={newShopPhone}
-                            onChange={(e) => setNewShopPhone(e.target.value)}
-                            placeholder="254..."
-                            className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
-                          />
-                        </div>
-                        <div>
-                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Owner Email</label>
+                     <form onSubmit={handleCreateShop} className="space-y-4">
+                       <div>
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Entity Name</label>
                            <input
                              required
-                             type="email"
-                             value={newAdminEmail}
-                             onChange={(e) => setNewAdminEmail(e.target.value)}
-                             placeholder="owner@shop.com"
+                             type="text"
+                             value={newShopName}
+                             onChange={(e) => setNewShopName(e.target.value)}
+                             placeholder="e.g. The Rustic Burger"
                              className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
                            />
-                        </div>
-                      </div>
-                      
-                      <button
-                        type="submit"
-                        disabled={isCreating}
-                        className="w-full mt-2 bg-indigo-600 text-white font-black py-4 rounded-2xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 disabled:opacity-50"
-                      >
-                        {isCreating ? "Provisioning..." : "⚡ Boot Environment"}
-                      </button>
-                    </form>
-                  </>
-                )}
+                       </div>
+                       <div className="grid grid-cols-2 gap-3">
+                         <div>
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Subdomain</label>
+                           <input
+                             type="text"
+                             value={newShopSubdomain}
+                             onChange={(e) => setNewShopSubdomain(e.target.value)}
+                             placeholder="rustic"
+                             className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm font-mono"
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Industry</label>
+                           <select
+                              value={newShopIndustry}
+                              onChange={(e) => setNewShopIndustry(e.target.value)}
+                              className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
+                           >
+                              {industryTypes.map(ind => (
+                                 <option key={ind.slug} value={ind.slug}>{ind.name}</option>
+                              ))}
+                           </select>
+                         </div>
+                       </div>
+                       
+                       <div className="grid grid-cols-2 gap-3">
+                         <div>
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Phone</label>
+                           <input
+                             required
+                             type="tel"
+                             value={newShopPhone}
+                             onChange={(e) => setNewShopPhone(e.target.value)}
+                             placeholder="254..."
+                             className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
+                           />
+                         </div>
+                         <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Owner Email</label>
+                            <input
+                              required
+                              type="email"
+                              value={newAdminEmail}
+                              onChange={(e) => setNewAdminEmail(e.target.value)}
+                              placeholder="owner@shop.com"
+                              className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
+                            />
+                         </div>
+                       </div>
+                       
+                       <button
+                         type="submit"
+                         disabled={isCreating}
+                         className="w-full mt-2 bg-indigo-600 text-white font-black py-4 rounded-2xl hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 disabled:opacity-50"
+                       >
+                         {isCreating ? "Provisioning..." : "⚡ Boot Environment"}
+                       </button>
+                     </form>
+                   </>
+                 )}
 
-                {activeLauncherTab === 'community' && (
-                  <>
-                    <h2 className="text-xl font-black text-gray-900 mb-1">Build Community</h2>
-                    <p className="text-gray-500 text-xs mb-6">Create a new hub for marketplace discovery.</p>
+                 {activeLauncherTab === 'community' && (
+                   <>
+                     <h2 className="text-xl font-black text-gray-900 mb-1">Build Community</h2>
+                     <p className="text-gray-500 text-xs mb-6">Create a new hub for marketplace discovery.</p>
 
-                    <form onSubmit={handleCreateCommunity} className="space-y-4">
-                      <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Community Name</label>
-                        <input
-                          required
-                          type="text"
-                          value={newCommunityName}
-                          onChange={(e) => setNewCommunityName(e.target.value)}
-                          placeholder="e.g. Garden Lovers"
-                          className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Slug (Link)</label>
-                        <input
-                          type="text"
-                          value={newCommunitySlug}
-                          onChange={(e) => setNewCommunitySlug(e.target.value)}
-                          placeholder="garden-lovers"
-                          className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Description</label>
-                        <textarea
-                          rows="3"
-                          value={newCommunityDesc}
-                          onChange={(e) => setNewCommunityDesc(e.target.value)}
-                          className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
-                        ></textarea>
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={isCreating}
-                        className="w-full bg-teal-600 text-white font-black py-4 rounded-2xl hover:bg-teal-700 transition shadow-lg shadow-teal-100 disabled:opacity-50"
-                      >
-                        {isCreating ? "Initializing..." : "🌱 Sprout Community"}
-                      </button>
-                    </form>
-                  </>
-                )}
+                     <form onSubmit={handleCreateCommunity} className="space-y-4">
+                       <div>
+                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Community Name</label>
+                         <input
+                           required
+                           type="text"
+                           value={newCommunityName}
+                           onChange={(e) => setNewCommunityName(e.target.value)}
+                           placeholder="e.g. Garden Lovers"
+                           className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
+                         />
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Slug (Link)</label>
+                         <input
+                           type="text"
+                           value={newCommunitySlug}
+                           onChange={(e) => setNewCommunitySlug(e.target.value)}
+                           placeholder="garden-lovers"
+                           className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm font-mono"
+                         />
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Description</label>
+                         <textarea
+                           rows="3"
+                           value={newCommunityDesc}
+                           onChange={(e) => setNewCommunityDesc(e.target.value)}
+                           className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
+                         ></textarea>
+                       </div>
+                       <button
+                         type="submit"
+                         disabled={isCreating}
+                         className="w-full bg-teal-600 text-white font-black py-4 rounded-2xl hover:bg-teal-700 transition shadow-lg shadow-teal-100 disabled:opacity-50"
+                       >
+                         {isCreating ? "Initializing..." : "🌱 Sprout Community"}
+                       </button>
+                     </form>
+                   </>
+                 )}
 
-                {activeLauncherTab === 'supplier' && (
-                  <>
-                    <h2 className="text-xl font-black text-gray-900 mb-1">Onboard Supplier</h2>
-                    <p className="text-gray-500 text-xs mb-6">Register a verified wholesaler natively.</p>
+                 {activeLauncherTab === 'supplier' && (
+                   <>
+                     <h2 className="text-xl font-black text-gray-900 mb-1">Onboard Supplier</h2>
+                     <p className="text-gray-500 text-xs mb-6">Register a verified wholesaler natively.</p>
 
-                    <form onSubmit={handleCreateSupplier} className="space-y-4">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Supplier Name</label>
-                          <input
-                            required
-                            type="text"
-                            value={newSupName}
-                            onChange={(e) => setNewSupName(e.target.value)}
-                            placeholder="Acme Inc"
-                            className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Industry</label>
-                          <select
-                            value={newSupIndustry}
-                            onChange={(e) => setNewSupIndustry(e.target.value)}
-                            className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
-                          >
-                            <option value="retail">Retail</option>
-                            <option value="food">Food</option>
-                            <option value="tech">Tech</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Contact Phone</label>
-                        <input
-                          required
-                          type="tel"
-                          value={newSupPhone}
-                          onChange={(e) => setNewSupPhone(e.target.value)}
-                          placeholder="254..."
-                          className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">M-Pesa Shortcode</label>
-                          <input
-                            type="text"
-                            value={newSupMpesa}
-                            onChange={(e) => setNewSupMpesa(e.target.value)}
-                            className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Passkey</label>
-                          <input
-                            type="password"
-                            value={newSupPasskey}
-                            onChange={(e) => setNewSupPasskey(e.target.value)}
-                            className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
-                          />
-                        </div>
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={isCreating}
-                        className="w-full bg-gray-900 text-white font-black py-4 rounded-2xl hover:bg-black transition shadow-lg shadow-gray-100 disabled:opacity-50"
-                      >
-                        {isCreating ? "Finalizing..." : "🚀 Provision Wholesaler"}
-                      </button>
-                    </form>
-                  </>
-                )}
-             </div>
+                     <form onSubmit={handleCreateSupplier} className="space-y-4">
+                       <div className="grid grid-cols-2 gap-3">
+                         <div>
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Supplier Name</label>
+                           <input
+                             required
+                             type="text"
+                             value={newSupName}
+                             onChange={(e) => setNewSupName(e.target.value)}
+                             placeholder="Acme Inc"
+                             className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Industry</label>
+                           <select
+                             value={newSupIndustry}
+                             onChange={(e) => setNewSupIndustry(e.target.value)}
+                             className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
+                           >
+                             <option value="retail">Retail</option>
+                             <option value="food">Food</option>
+                             <option value="tech">Tech</option>
+                           </select>
+                         </div>
+                       </div>
+                       <div>
+                         <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Contact Phone</label>
+                         <input
+                           required
+                           type="tel"
+                           value={newSupPhone}
+                           onChange={(e) => setNewSupPhone(e.target.value)}
+                           placeholder="254..."
+                           className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
+                         />
+                       </div>
+                       <div className="grid grid-cols-2 gap-3">
+                         <div>
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">M-Pesa Shortcode</label>
+                           <input
+                             type="text"
+                             value={newSupMpesa}
+                             onChange={(e) => setNewSupMpesa(e.target.value)}
+                             className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
+                           />
+                         </div>
+                         <div>
+                           <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Passkey</label>
+                           <input
+                             type="password"
+                             value={newSupPasskey}
+                             onChange={(e) => setNewSupPasskey(e.target.value)}
+                             className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none transition text-sm"
+                           />
+                         </div>
+                       </div>
+                       <button
+                         type="submit"
+                         disabled={isCreating}
+                         className="w-full bg-gray-900 text-white font-black py-4 rounded-2xl hover:bg-black transition shadow-lg shadow-gray-100 disabled:opacity-50"
+                       >
+                         {isCreating ? "Finalizing..." : "🚀 Provision Wholesaler"}
+                       </button>
+                     </form>
+                   </>
+                 )}
+              </div>
            </div>
         </section>
       </main>

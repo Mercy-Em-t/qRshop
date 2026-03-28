@@ -194,6 +194,10 @@ export default function Admin() {
                     <h3 className="font-bold text-gray-800 group-hover:text-amber-800">📦 Catalog QA</h3>
                     <p className="text-xs text-gray-500 mt-2">Monitor all items for compliance/quality.</p>
                  </Link>
+                 <Link to="/admin/suppliers" className="p-4 rounded-xl border border-slate-100 hover:border-amber-300 hover:bg-amber-50 transition group sm:col-span-2">
+                    <h3 className="font-bold text-gray-800 group-hover:text-amber-800">🏬 Suppliers Lab</h3>
+                    <p className="text-xs text-gray-500 mt-2">Vet and manage wholesalers in the ecosystem.</p>
+                 </Link>
               </div>
            </section>
 

@@ -252,7 +252,7 @@ export default function Directory() {
                  </button>
               ))}
            </div>
-        </div>
+         </div>
 
         {!searchQuery && featuredShops.length > 0 && (
            <div className="mb-10">

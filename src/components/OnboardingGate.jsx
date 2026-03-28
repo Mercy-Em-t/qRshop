@@ -152,6 +152,9 @@ export default function OnboardingGate({ children }) {
   const kycCompleted = shopStatus?.kyc_completed === true; 
   const hasNodes = (qrs || []).length > 0;
 
+  // Let through: system_admin (always)
+  if (user?.role === "system_admin") return children;
+
   // Let through: password done + kyc done (QR step comes after these)
   if (!needsPasswordChange && kycCompleted) {
      // If they've also got QRs or the QR fetch is still loading, just let them in

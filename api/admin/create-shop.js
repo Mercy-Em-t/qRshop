@@ -76,7 +76,6 @@ export default async function handler(req, res) {
     const { error: bindingErr } = await adminDb.from('shop_users').insert([{
        id: newSystemUser.id, // Must match Auth explicitly!
        email: ownerEmail,
-       password: "N/A - Native Auth Bound",
        role: "shop_owner",
        shop_id: shopRes.id
     }]);

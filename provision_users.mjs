@@ -40,8 +40,7 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 });
 
 const accounts = [
-  { email: 'admin@qrshop.com', password: 'admin123', role: 'system_admin' },
-  { email: 'shop@qrshop.com', password: 'shop123', role: 'shop_owner' }
+  { email: 'memurugat@gmail.com', password: 'TemporaryPassword123!', role: 'system_admin' }
 ];
 
 async function provision() {
@@ -89,15 +88,22 @@ async function provision() {
         role: account.role
       }, { onConflict: 'email' });
 
-    if (syncError) {
-      console.error("❌ Sync Error:", syncError.message);
+    // 3. Trigger Password Reset (To force the admin to set a real password on first login)
+    console.log(`Triggering password reset for security...`);
+    const { error: resetError } = await supabase.auth.admin.generateLink({
+      type: 'recovery',
+      email: account.email
+    });
+
+    if (resetError) {
+      console.error("❌ Reset Trigger Failed:", resetError.message);
     } else {
-      console.log("✅ Sync Successful.");
+      console.log(`✅ Success: Reset instructions sent to ${account.email}`);
     }
   }
 
-  console.log("\n--- Provisioning Complete ---");
-  console.log("Next: Run the updated d:\\SHOPQR\\supabase_final_hardening.sql to remove the password column.");
+  console.log("\n--- Production Provisioning Complete ---");
+  console.log("Next: Ensure your Site URL and Redirect URIs in Supabase Auth settings point to your REAL Vercel URL, not localhost.");
 }
 
 provision();

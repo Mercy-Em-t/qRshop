@@ -8,6 +8,7 @@ export default function OrderManager() {
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [editingOrder, setEditingOrder] = useState(null);
   const [editTotal, setEditTotal] = useState(0);
 
@@ -64,9 +65,15 @@ export default function OrderManager() {
 
   const isGastro = shop?.industry_type === 'food' || shop?.industry_type === 'restaurant';
   
-  const filteredOrders = orders.filter(o => 
-    activeTab === 'all' ? true : o.status === activeTab
-  );
+  const filteredOrders = orders.filter(o => {
+    const matchesTab = activeTab === 'all' ? true : o.status === activeTab;
+    const s = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm || 
+      (o.client_name?.toLowerCase().includes(s)) ||
+      (o.client_phone?.includes(s)) ||
+      (o.id.toLowerCase().includes(s));
+    return matchesTab && matchesSearch;
+  });
 
   const STATS = [
     { id: 'all', label: 'All' },
@@ -84,13 +91,28 @@ export default function OrderManager() {
     <div className="min-h-screen bg-slate-50 pb-20">
       <header className="bg-white border-b border-slate-100 px-6 py-4 sticky top-0 z-10 shadow-sm">
          <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-               <h1 className="text-xl font-bold text-gray-900">
-                  {isGastro ? '🍳 Kitchen Display' : '📦 Order Manager'}
-               </h1>
-               <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest mt-0.5">
-                  Command Center / {shop?.name}
-               </p>
+            <div className="flex items-center gap-4 w-full md:w-auto">
+               <div>
+                  <h1 className="text-xl font-bold text-gray-900">
+                     {isGastro ? '🍳 Kitchen Display' : '📦 Order Manager'}
+                  </h1>
+                  <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest mt-0.5">
+                     Command Center / {shop?.name}
+                  </p>
+               </div>
+               {/* Search Bar */}
+               <div className="relative flex-1 md:w-64">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                     <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                  </span>
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search Order, Name, Tel..."
+                    className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-xl leading-5 bg-slate-50 text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:ring-1 focus:ring-green-500 focus:border-green-500 transition sm:text-sm"
+                  />
+               </div>
             </div>
             
             <div className="flex bg-slate-100 p-1 rounded-xl overflow-x-auto max-w-full no-scrollbar">
@@ -172,6 +194,11 @@ export default function OrderManager() {
                   </div>
                </div>
             ))}
+            {filteredOrders.length === 0 && (
+               <div className="col-span-full py-20 text-center">
+                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No orders matching the current filter/search.</p>
+               </div>
+            )}
          </div>
       </main>
 

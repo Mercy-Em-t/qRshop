@@ -14,6 +14,8 @@ export default function MenuManager() {
   const [showImportMenu, setShowImportMenu] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -464,18 +466,33 @@ export default function MenuManager() {
     }
   };
 
+  // Filtering Logic
+  const filteredItems = items.filter(item => {
+    const s = searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm || 
+      item.name.toLowerCase().includes(s) || 
+      item.description?.toLowerCase().includes(s) ||
+      item.tags?.some(tag => tag.toLowerCase().includes(s));
+    
+    const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
+    
+    return matchesSearch && matchesCategory;
+  });
+
   // Pagination Logic
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = items.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
 
   const goToNextPage = () => setCurrentPage((p) => Math.min(p + 1, totalPages));
   const goToPrevPage = () => setCurrentPage((p) => Math.max(p - 1, 1));
 
+  const allCategories = ["all", ...new Set(items.map(i => i.category))];
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+      <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link
             to="/dashboard"
@@ -495,71 +512,100 @@ export default function MenuManager() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         {lockedFeatureFocus && (
           <UpgradeModal 
              featureName={lockedFeatureFocus} 
              onClose={() => setLockedFeatureFocus(null)} 
           />
         )}
+        
         {/* ACTION BAR */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-4">
-           <div>
-              <h2 className="text-lg font-bold text-gray-900">Live Menu Catalog ({items.length})</h2>
-           </div>
-           
-           <div className="flex flex-wrap gap-2 w-full sm:w-auto relative">
-             <button 
-               onClick={handleExportCSV}
-               className="bg-white text-gray-700 font-bold text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition shadow-sm whitespace-nowrap"
-             >
-                📥 Export
-             </button>
-             <div className="relative z-30">
-               <button 
-                 onClick={() => setShowImportMenu(!showImportMenu)}
-                 className="bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-lg hover:bg-indigo-100 transition whitespace-nowrap border border-indigo-100 flex items-center gap-1"
-               >
-                  📤 Import
-               </button>
-               {/* Dropdown Menu */}
-               {showImportMenu && (
-                 <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-56 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden transition-all duration-200 origin-top-left sm:origin-top-right z-40">
-                    <button 
-                      onClick={() => { handleDownloadTemplate(); setShowImportMenu(false); }} 
-                      className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium border-b border-gray-50 flex items-center gap-2"
-                    >
-                        📄 Download Template
-                    </button>
-                    <div className="relative hover:bg-gray-50 transition-colors">
-                       <button className="w-full text-left px-4 py-3 text-sm text-gray-700 font-medium flex items-center gap-2">
-                           ☁️ Upload Filled CSV
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
+           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                 <h2 className="text-lg font-bold text-gray-900">Live Menu Catalog ({items.length})</h2>
+              </div>
+              
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto relative">
+                <button 
+                  onClick={handleExportCSV}
+                  className="bg-white text-gray-700 font-bold text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition shadow-sm whitespace-nowrap"
+                >
+                   📥 Export
+                </button>
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowImportMenu(!showImportMenu)}
+                    className="bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-lg hover:bg-indigo-100 transition whitespace-nowrap border border-indigo-100 flex items-center gap-1"
+                  >
+                     📤 Import
+                  </button>
+                  {showImportMenu && (
+                    <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-56 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden transition-all duration-200 origin-top-left sm:origin-top-right z-50">
+                       <button 
+                         onClick={() => { handleDownloadTemplate(); setShowImportMenu(false); }} 
+                         className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 hover:text-indigo-600 font-medium border-b border-gray-50 flex items-center gap-2"
+                       >
+                           📄 Download Template
                        </button>
-                       <input 
-                           type="file" 
-                           accept=".csv"
-                           onChange={(e) => { handleBulkUpload(e); setShowImportMenu(false); }}
-                           className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer"
-                       />
+                       <div className="relative hover:bg-gray-50 transition-colors">
+                          <button className="w-full text-left px-4 py-3 text-sm text-gray-700 font-medium flex items-center gap-2">
+                              ☁️ Upload Filled CSV
+                          </button>
+                          <input 
+                              type="file" 
+                              accept=".csv"
+                              onChange={(e) => { handleBulkUpload(e); setShowImportMenu(false); }}
+                              className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer"
+                          />
+                       </div>
                     </div>
-                 </div>
-               )}
-             </div>
-             <button 
-               onClick={() => {
-                  handleCancelEdit(); // clears states
-                  setShowAddForm(!showAddForm);
-               }}
-               className="bg-green-600 text-white font-bold text-sm px-5 py-2 rounded-lg shadow-sm hover:bg-green-700 transition"
-             >
-                {showAddForm ? "− Cancel" : "+ Add Item"}
-             </button>
+                  )}
+                </div>
+                <button 
+                  onClick={() => {
+                     handleCancelEdit();
+                     setShowAddForm(!showAddForm);
+                  }}
+                  className="bg-green-600 text-white font-bold text-sm px-5 py-2 rounded-lg shadow-sm hover:bg-green-700 transition"
+                >
+                   {showAddForm ? "− Cancel" : "+ Add Item"}
+                </button>
+              </div>
            </div>
+
+           {/* Search & Filter Inputs */}
+           {!showAddForm && (
+           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-50">
+              <div className="sm:col-span-2 relative">
+                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                 </span>
+                 <input
+                   type="text"
+                   placeholder="Search products, descriptions, tags..."
+                   value={searchTerm}
+                   onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                   className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-green-500 focus:border-green-500 transition"
+                 />
+              </div>
+              <select
+                value={categoryFilter}
+                onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
+                className="bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-sm font-medium text-gray-700 focus:ring-green-500 focus:border-green-500 outline-none capitalize"
+              >
+                 {allCategories.map(cat => (
+                   <option key={cat} value={cat}>{cat}</option>
+                 ))}
+              </select>
+           </div>
+           )}
         </div>
 
-        {/* ADD / EDIT ITEM FORM (COLLAPSIBLE) */}
+        {/* ADD / EDIT ITEM FORM */}
         {showAddForm && (
-        <section className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 mb-8 overflow-hidden transition-all">
+        <section className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 overflow-hidden transition-all animate-in fade-in slide-in-from-top-4">
           <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
              <h2 className="text-lg font-bold text-gray-800">{editingId ? "Edit Item" : "Create New Item"}</h2>
           </div>
@@ -719,43 +765,49 @@ export default function MenuManager() {
         {/* LIST ITEMS (PAGINATED) */}
         <section>
           {loading ? (
-            <p className="text-center text-gray-500 py-8">Loading catalog...</p>
-          ) : items.length === 0 ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => <div key={i} className="bg-white h-24 rounded-xl animate-pulse"></div>)}
+            </div>
+          ) : filteredItems.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100 flex flex-col items-center">
               <span className="text-4xl mb-4">🍽️</span>
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Your menu is empty</h3>
-              <p className="text-gray-500 mb-6">Click the '+ Add Item' button above to build your catalog.</p>
-              <button onClick={() => setShowAddForm(true)} className="bg-green-600 text-white font-bold px-6 py-2 rounded-lg hover:bg-green-700 transition">Add First Item</button>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">No products found</h3>
+              <p className="text-gray-500 mb-6">Try adjusting your filters or search terms.</p>
+              <button 
+                onClick={() => { setSearchTerm(""); setCategoryFilter("all"); }} 
+                className="text-green-600 font-bold hover:underline"
+              >
+                Clear all filters
+              </button>
             </div>
           ) : (
             <>
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden overflow-x-auto">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden">
                 {currentItems.map((item, absoluteIdx) => {
                   const globalIndex = indexOfFirstItem + absoluteIdx;
-                  // If plan is strictly Free (or expired to free), cap at 50
-                  const isFrozen = planAccess.isFree && !planAccess.isBasic && globalIndex >= 50;
+                  const isFrozen = planAccess.isFree && !planAccess.isBasic && globalIndex >= 100;
                   
                   return (
-                  <div key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${item.is_active === false || isFrozen ? 'bg-gray-50 opacity-60' : 'hover:bg-gray-50'}`}>
+                  <div key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${item.is_active === false || isFrozen ? 'bg-gray-50/50 opacity-60' : 'hover:bg-gray-50/30'}`}>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className={`font-semibold ${item.is_active === false || isFrozen ? 'text-gray-500' : 'text-gray-800'}`}>
                           {item.name}
                         </h3>
                         {isFrozen && (
-                           <span className="bg-slate-200 text-slate-700 text-xs px-2 py-0.5 rounded-full font-bold shadow-sm border border-slate-300 flex items-center gap-1">
-                             ❄️ Frozen (Max 50)
+                           <span className="bg-slate-200 text-slate-700 text-[10px] px-2 py-0.5 rounded-full font-bold shadow-sm border border-slate-300">
+                             ❄️ Frozen
                            </span>
                         )}
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${item.is_active === false || isFrozen ? 'bg-gray-200 text-gray-500' : 'bg-green-100 text-green-800'}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${item.is_active === false || isFrozen ? 'bg-gray-200 text-gray-500' : 'bg-green-100 text-green-700'}`}>
                           {item.category}
                         </span>
                         {item.is_active === false && !isFrozen && (
-                           <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full font-medium shadow-sm border border-red-200">Offline</span>
+                           <span className="bg-red-50 text-red-600 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-red-100">Offline</span>
                         )}
                       </div>
-                      {item.description && <p className="text-sm text-gray-500 mt-1 truncate">{item.description}</p>}
-                      <p className={`text-sm font-medium mt-1 ${item.is_active === false || isFrozen ? 'text-gray-400' : 'text-gray-700'}`}>KSh {item.price}</p>
+                      {item.description && <p className="text-xs text-gray-500 mt-1 truncate">{item.description}</p>}
+                      <p className={`text-sm font-bold mt-1 ${item.is_active === false || isFrozen ? 'text-gray-400' : 'text-gray-900'}`}>KSh {item.price}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                       <button
@@ -775,9 +827,9 @@ export default function MenuManager() {
                       <button
                         onClick={() => {
                            if (isFrozen) {
-                               setLockedFeatureFocus("Access to Frozen Items (Upgrade to Basic to unlock all)");
+                                setLockedFeatureFocus("Access to Frozen Items (Upgrade Required)");
                            } else {
-                               startEdit(item);
+                                startEdit(item);
                            }
                         }}
                         disabled={item.is_active === false}
@@ -790,7 +842,7 @@ export default function MenuManager() {
                       </button>
                       <button
                         onClick={() => handleToggleActive(item.id, item.is_active)}
-                        className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-green-500 hover:text-green-700 hover:bg-green-50' : 'text-gray-400 hover:text-red-600 hover:bg-red-50'}`}
+                        className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-green-500 hover:text-green-700 hover:bg-green-50' : 'text-gray-400 hover:text-red-700 hover:bg-red-50'}`}
                         title={item.is_active === false ? "Reactivate Item" : "Deactivate Item"}
                       >
                         {item.is_active === false ? (
@@ -805,26 +857,26 @@ export default function MenuManager() {
                       </button>
                     </div>
                   </div>
-                 );
+                  );
                 })}
               </div>
               
               {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between mt-6 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                   <p className="text-sm text-gray-500 font-medium">Showing {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, items.length)} of {items.length}</p>
+                   <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">Page {currentPage} of {totalPages}</p>
                    <div className="flex gap-2">
                      <button 
                        onClick={goToPrevPage}
                        disabled={currentPage === 1}
-                       className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-100 transition disabled:opacity-50"
+                       className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition disabled:opacity-50"
                      >
                         Previous
                      </button>
                      <button 
                        onClick={goToNextPage}
                        disabled={currentPage === totalPages}
-                       className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-bold text-gray-700 hover:bg-gray-100 transition disabled:opacity-50"
+                       className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 hover:bg-slate-100 transition disabled:opacity-50"
                      >
                         Next
                      </button>

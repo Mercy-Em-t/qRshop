@@ -44,7 +44,7 @@ export default function Settings() {
     setTimeout(() => setMessage(null), 3000);
   };
 
-  if (loading) return <div className="p-10 text-center animate-pulse">Syncing...</div>;
+  if (loading) return <div className="p-10 text-center animate-pulse text-green-600 font-bold">Syncing Profile...</div>;
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -60,14 +60,14 @@ export default function Settings() {
            
            {/* Basic Identity */}
            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
-              <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Classic Profile</h2>
+              <h2 className="text-sm font-black text-green-600 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Classic Profile</h2>
               <div className="grid md:grid-cols-2 gap-6">
                  <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Shop Name</label>
                     <input 
                        type="text" value={shop.name} 
                        onChange={e => setShop({...shop, name: e.target.value})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium text-gray-900"
                     />
                  </div>
                  <div>
@@ -75,7 +75,7 @@ export default function Settings() {
                     <input 
                        type="text" value={shop.whatsapp_number} 
                        onChange={e => setShop({...shop, whatsapp_number: e.target.value})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium text-gray-900"
                     />
                  </div>
                  <div className="md:col-span-2">
@@ -83,34 +83,22 @@ export default function Settings() {
                     <textarea 
                        value={shop.description} 
                        onChange={e => setShop({...shop, description: e.target.value})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition h-24 font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition h-24 font-medium text-gray-900"
                     />
                  </div>
               </div>
            </div>
 
-           {/* KYC & Verification (NEW FEATURE) */}
-           <div className="bg-indigo-50 rounded-2xl p-8 border border-indigo-100 shadow-sm">
-              <div className="flex items-center justify-between mb-6 border-b border-indigo-100 pb-4">
-                 <h2 className="text-sm font-black text-indigo-900 uppercase tracking-widest flex items-center gap-2 font-mono">
-                    🛡️ Merchant Verification
-                    <span className="text-[10px] bg-white text-indigo-600 px-2 py-0.5 rounded font-black tracking-tighter uppercase whitespace-nowrap">Tier 1</span>
-                 </h2>
-              </div>
-              <p className="text-xs text-indigo-700/70 mb-6 leading-relaxed font-bold">Verification unlocks premium features like M-Pesa STK Push and Global Discovery.</p>
-              <button disabled className="bg-white text-indigo-400 font-bold py-3 px-6 rounded-xl border border-indigo-200 text-[10px] uppercase tracking-widest opacity-60">Verified Credentials</button>
-           </div>
-
            {/* Operational Logistics */}
            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
-              <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Logistics & Payments</h2>
+              <h2 className="text-sm font-black text-green-600 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Logistics & Payments</h2>
               <div className="grid md:grid-cols-2 gap-6">
                  <div>
                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Industry Type</label>
                     <select 
                        value={shop.industry_type} 
                        onChange={e => setShop({...shop, industry_type: e.target.value})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium text-gray-900"
                     >
                        <option value="retail">Retail/Merchandise</option>
                        <option value="food">Gastro/Kitchen</option>
@@ -122,7 +110,7 @@ export default function Settings() {
                     <select 
                        value={shop.payment_mode} 
                        onChange={e => setShop({...shop, payment_mode: e.target.value})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium text-gray-900"
                     >
                        <option value="manual">Manual Checkout</option>
                        <option value="stk">M-Pesa STK Push</option>
@@ -133,7 +121,7 @@ export default function Settings() {
                     <input 
                        type="number" value={shop.delivery_fee_fixed} 
                        onChange={e => setShop({...shop, delivery_fee_fixed: Number(e.target.value)})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium text-gray-900"
                     />
                  </div>
                  <div>
@@ -141,23 +129,9 @@ export default function Settings() {
                     <input 
                        type="number" value={shop.min_order_value} 
                        onChange={e => setShop({...shop, min_order_value: Number(e.target.value)})}
-                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium text-gray-900"
                     />
                  </div>
-              </div>
-           </div>
-
-           {/* Logistics Hub & Communities (NEW FEATURES) */}
-           <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-slate-900 rounded-2xl p-8 border border-slate-800 shadow-xl group">
-                 <h3 className="text-xs font-black text-amber-500 uppercase tracking-[0.2em] mb-4">Logistics Hub</h3>
-                 <p className="text-[10px] text-slate-500 mb-6 leading-relaxed">Connect to the regional dispatch network to outsource your delivery fulfillment.</p>
-                 <button disabled className="w-full bg-slate-800 text-slate-500 py-3 rounded-xl border border-slate-700 text-[10px] font-black uppercase tracking-widest">Connect Hub (Soon)</button>
-              </div>
-              <div className="bg-slate-900 rounded-2xl p-8 border border-slate-800 shadow-xl group">
-                 <h3 className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] mb-4">Market Discovery</h3>
-                 <p className="text-[10px] text-slate-500 mb-6 leading-relaxed">Your shop is visible in the directory. Join localized neighborhood hubs.</p>
-                 <button disabled className="w-full bg-slate-800 text-slate-500 py-3 rounded-xl border border-slate-700 text-[10px] font-black uppercase tracking-widest">Join Neighborhood</button>
               </div>
            </div>
 
