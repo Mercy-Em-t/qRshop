@@ -4,19 +4,8 @@ import { supabase } from "./supabase-client";
 export async function authenticateUser(email, password) {
   if (!supabase) return { error: "Supabase not connected." };
 
-  // Phase 0: Check Rate Limit (Max 3 attempts in 15 mins)
-  const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-  const { count: failedCount, error: countError } = await supabase
-    .from("login_attempts")
-    .select("*", { count: 'exact', head: true })
-    .eq("email", email)
-    .gt("created_at", fifteenMinsAgo);
-
-  if (!countError && failedCount >= 3) {
-    return { error: "Too many failed attempts. Access locked for 15 minutes for this email." };
-  }
-
   // Phase 1: Authenticate natively against Supabase Auth
+  // Note: Manual rate-limiting (Phase 0) removed to reduce round-trips.
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email: email,
     password: password,
