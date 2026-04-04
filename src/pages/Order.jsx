@@ -169,7 +169,8 @@ export default function Order() {
   const deliveryFee = identity.fulfillment_type === 'delivery' 
     ? (systemDeliveryFee ?? shop?.delivery_fee ?? 0) 
     : 0;
-  const finalTotal = Math.max(0, subtotal - (discountAmount || 0) + deliveryFee);
+  const finalPayableTotal = Math.max(0, subtotal - (discountAmount || 0) + deliveryFee);
+  const total = finalPayableTotal; // Back-compat for UI display
 
   const generateDatabaseOrder = async () => {
      if (sending) return null; // Synchronous re-entry guard
@@ -211,7 +212,7 @@ export default function Order() {
         items,
         finalPayableTotal,
         discountAmount,
-        activeCoupon?.code || null,
+        activeCoupon?.code || activeCoupon?.coupon_code || null,
         identity.name,
         identity.phone,
         identity.phone,
@@ -219,7 +220,8 @@ export default function Order() {
         identity.fulfillment_type,
         identity.address,
         deliveryFee,
-        identity.email
+        identity.email,
+        activeCoupon // 🛰️ PASS PROMO OBJECT FOR SYSTEM B BUNDLE AWARENESS
       );
   };
 
@@ -562,7 +564,7 @@ export default function Order() {
             <div className="flex justify-between pt-2 border-t border-gray-100">
               <span className="text-lg font-semibold text-gray-800">Final Total</span>
               <span className="text-xl font-bold text-green-700">
-                KSh {total}
+                KSh {finalPayableTotal}
               </span>
             </div>
             

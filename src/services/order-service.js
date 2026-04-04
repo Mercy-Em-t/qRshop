@@ -5,7 +5,7 @@ import { OrderGatewaySDK } from "../lib/gateway-sdk";
  * Create an order record in the database before sending via WhatsApp.
  * This prevents spam and enables analytics tracking.
  */
-export async function createOrder(shopId, tableId, items, totalPrice, discountAmount = 0, couponCode = null, clientName = null, clientPhone = null, parentOrderId = null, fulfillmentType = 'dine_in', deliveryAddress = null, deliveryFeeCharged = 0, clientEmail = null) {
+export async function createOrder(shopId, tableId, items, totalPrice, discountAmount = 0, couponCode = null, clientName = null, clientPhone = null, parentOrderId = null, fulfillmentType = 'dine_in', deliveryAddress = null, deliveryFeeCharged = 0, clientEmail = null, appliedPromotion = null) {
   if (!supabase) {
     // Return a mock order when Supabase is not configured
     return {
@@ -40,14 +40,14 @@ export async function createOrder(shopId, tableId, items, totalPrice, discountAm
     fulfillment_type: fulfillmentType,
     delivery_address: deliveryAddress,
     delivery_fee_charged: deliveryFeeCharged,
-    items: items.map(i => ({ id: i.id, quantity: i.quantity }))
+    items: items.map(i => ({ id: i.id, quantity: i.quantity, is_bundled: i.is_bundled || false })),
+    applied_promotion_id: appliedPromotion?.id || null
   };
 
   const { data: orderId, error: rpcError } = await supabase.rpc('checkout_cart', { payload });
 
   if (rpcError) {
     console.error("Secure Checkout Error:", rpcError);
-    // Suppress general cryptic errors but pass through readable ones like "Insufficient stock"
     if (rpcError.message.includes("Insufficient") || rpcError.message.includes("Invalid")) {
       throw new Error(rpcError.message);
     }
@@ -57,77 +57,70 @@ export async function createOrder(shopId, tableId, items, totalPrice, discountAm
   // Track in analytics
   await trackOrder(shopId, tableId, items, totalPrice);
 
-  // Phase 47: SaaS Master Order Gateway Integration
-  // This pings the official SaaS platform to notify about the new order.
+  // Phase 47: System A -> System B Synchronization
   try {
     pingExternalOrderGateway({
+      orderId: orderId,
       clientName: clientName || "Anonymous",
+      clientEmail: clientEmail || "",
       clientPhone: clientPhone || "N/A",
       shopId: shopId,
-      fulfillmentType: (fulfillmentType === 'delivery') ? 'delivery' : 'pickup',
+      fulfillmentType: fulfillmentType,
       items: items.map(i => ({ productId: i.id, qty: i.quantity, name: i.name, price: i.price })),
+      total: totalPrice,
       deliveryAddress: deliveryAddress || "",
-      notes: tableId ? `Table ${tableId}` : ""
-    }).catch(e => console.warn("External Gateway Background Sync Pending:", e));
+      notes: tableId ? `Table ${tableId}` : "",
+      appliedPromotion: appliedPromotion // PASSING PROMO INFO FOR BUNDLE AWARENESS
+    }).catch(e => console.warn("System B Background Sync Pending:", e));
   } catch (e) {
-    console.error("External Gateway Trigger Failed:", e);
+    console.error("System B Trigger Failed:", e);
   }
 
-  // Return a shell mimicking the old return object for frontend compatibility
   return { id: orderId };
 }
 
 /**
- * Pings the Master Order Gateway (SaaS Platform) to synchronize the order.
+ * Pings System B (Master Order Gateway) to synchronize the new order.
+ * Ensures System B is aware of Bundles and Pricing.
  */
 export async function pingExternalOrderGateway(payload) {
-  const GATEWAY_URL = import.meta.env.VITE_MASTER_ORDER_GATEWAY_URL || "https://your-master-gateway.vercel.app/api/external";
-  const API_KEY = import.meta.env.VITE_MASTER_ORDER_GATEWAY_API_KEY;
+  const SYSTEM_B_URL = import.meta.env.VITE_SYSTEM_B_URL || "https://your-master-gateway.vercel.app/api";
+  const API_KEY = import.meta.env.VITE_SYSTEM_B_API_KEY;
 
   if (!API_KEY) {
-    console.warn("Master Order Gateway API Key missing. Skipping external notification.");
+    console.warn("System B API Key missing. Skipping external notification.");
     return;
   }
 
-  const sdk = new OrderGatewaySDK(API_KEY, GATEWAY_URL);
-
-  // Phase 48: Standardize Phone Format (+COUNTRYCODE 9Digits OR 10Digits Local)
-  let rawPhone = (payload.clientPhone || "").replace(/[^0-9+]/g, '');
-  let formattedPhone = rawPhone;
-
-  if (!rawPhone.startsWith('+') && rawPhone.startsWith('0') && rawPhone.length === 10) {
-      formattedPhone = rawPhone;
-  } else if (!rawPhone.startsWith('+') && rawPhone.length === 9) {
-      formattedPhone = rawPhone;
-  }
-
-  const SHOP_ID = import.meta.env.VITE_MASTER_ORDER_GATEWAY_SHOP_ID;
+  const sdk = new OrderGatewaySDK(API_KEY, SYSTEM_B_URL);
 
   const gatewayOrder = {
-    customerName: payload.clientName || "Anonymous",
-    phone: formattedPhone,
-    shopId: SHOP_ID || payload.shopId,
-    deliveryType: payload.fulfillmentType === 'delivery' ? 'delivery' : 'pickup',
+    order_id: payload.orderId || "PENDING-" + Date.now(),
+    customer: {
+      name: payload.clientName || "Anonymous",
+      email: payload.clientEmail || "",
+      address: payload.deliveryAddress || payload.notes || "N/A"
+    },
     items: payload.items.map(i => ({
-      productId: i.productId,
-      qty: i.qty,
-      name: i.name,
-      price: i.price,
-      subtotal: i.subtotal || (i.price ? i.price * i.qty : undefined)
+      product_id: i.productId,
+      quantity: i.qty
     })),
-    location: payload.deliveryAddress || "",
-    notes: payload.notes || ""
+    total: payload.total || 0,
+    payment_status: 'pending',
+    // --- System B Bundle Attribution ---
+    applied_promotion_id: payload.appliedPromotion?.id || null,
+    promotion_name: payload.appliedPromotion?.name || null
   };
 
-  console.log("Pinging Master Order Gateway for shop:", payload.shopId);
+  console.log("System A -> System B: Syncing order with bundle info:", gatewayOrder.applied_promotion_id || "None");
 
   const result = await sdk.placeOrder(gatewayOrder);
 
   if (!result.success) {
-    throw new Error(`Gateway Error: ${result.error} - ${result.message}`);
+    throw new Error(`System B Communication Error: ${result.error} - ${result.message}`);
   }
 
-  console.log("Master Order Gateway - Tracking Link:", result.trackingUrl);
+  console.log("System B Acceptance Received.");
   return result;
 }
 

@@ -86,6 +86,26 @@ export function useCart() {
     }
   }, []);
 
+  /**
+   * Add multiple items as a Bundle/Combo.
+   * Clears existing items to ensure the bundle pricing matches perfectly.
+   */
+  const addBundle = useCallback((promo, bundleItems) => {
+    // 1. Clear cart to avoid mixing bundle pricing with individual items
+    setItems(bundleItems.map(item => ({ ...item, quantity: 1, is_bundled: true })));
+    
+    // 2. Apply the promotion automatically
+    setActiveCoupon(promo);
+
+    const currentSession = getQrSession();
+    if (currentSession) {
+      logEvent("bundle_claimed", "N/A", currentSession.shop_id, navigator.userAgent, {
+        bundle_id: promo.id,
+        bundle_name: promo.name
+      });
+    }
+  }, []);
+
   const removeItem = useCallback((itemId) => {
     setItems((prev) => {
       const existing = prev.find((i) => i.id === itemId);
@@ -110,7 +130,6 @@ export function useCart() {
     setActiveCoupon(null);
     setParentOrderId(null);
     
-    // Deletions using dynamic latest keys
     const currentSession = getQrSession();
     const sid = currentSession?.shop_id || "global";
     localStorage.removeItem(`qr_cart_${sid}`);
@@ -123,7 +142,6 @@ export function useCart() {
     const pId = orderToRevise.parent_order_id || orderToRevise.id;
     setParentOrderId(pId);
     
-    // Imperative persistence to avoid race conditions with React Router navigation
     const currentSession = getQrSession();
     const sid = currentSession?.shop_id || "global";
     localStorage.setItem(`qr_cart_${sid}`, JSON.stringify(itemsToLoad));
@@ -148,6 +166,7 @@ export function useCart() {
     // Check if specific products are required
     const requiredProductIds = new Set(promotion_items?.map(pi => pi.menu_item_id) || []);
     const hasRequiredProducts = requiredProductIds.size === 0 || 
+      requiredProductIds.has('ALL') || // Wildcard for all items
       items.some(item => requiredProductIds.has(item.id));
 
     if (meetsMinItems && hasRequiredProducts) {
@@ -156,7 +175,7 @@ export function useCart() {
       } else if (discount_type === 'flat') {
         discountAmount = Math.min(subtotal, discount_value || 0);
       } else if (discount_type === 'bundle_price') {
-        // Only apply if subtotal > bundle_price
+        // Only apply if bundle items are actually in the cart
         discountAmount = Math.max(0, subtotal - (bundle_price || subtotal));
       }
     }
@@ -169,6 +188,7 @@ export function useCart() {
   return { 
     items, 
     addItem, 
+    addBundle,
     removeItem, 
     clearCart, 
     subtotal,

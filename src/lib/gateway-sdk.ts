@@ -1,20 +1,28 @@
 /**
- * MASTER ORDER GATEWAY SDK — ZERO DEPENDENCY
+ * SYSTEM A <-> SYSTEM B INTERCONNECTION SDK
+ * Zero-dependency client for the defined JSON Communication Protocol.
  */
-export interface GatewayOrderInput {
-  customerName: string;
-  phone: string;
-  shopId: string;
-  deliveryType: 'pickup' | 'delivery';
-  items: Array<{ 
-    productId: string; 
-    qty: number; 
-    name?: string; 
-    price?: number; 
-    subtotal?: number 
-  }>;
-  location?: string;
-  notes?: string;
+
+export interface SystemBCustomer {
+  name: string;
+  email: string;
+  address: string;
+}
+
+export interface SystemBItem {
+  product_id: string;
+  quantity: number;
+}
+
+export interface SystemBOrderInput {
+  order_id: string;
+  customer: SystemBCustomer;
+  items: SystemBItem[];
+  total: number;
+  payment_status: 'paid' | 'pending';
+  // --- Bundle Attribution ---
+  applied_promotion_id?: string;
+  promotion_name?: string;
 }
 
 export interface GatewayResponse {
@@ -35,11 +43,12 @@ export class OrderGatewaySDK {
   }
 
   /**
-   * Submit an order to the gateway.
+   * Submit a New Order from System A to System B.
+   * Target endpoint: POST /orders/new
    */
-  async placeOrder(order: GatewayOrderInput): Promise<GatewayResponse> {
+  async placeOrder(order: SystemBOrderInput): Promise<GatewayResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/orders`, {
+      const response = await fetch(`${this.baseUrl}/orders/new`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -47,11 +56,13 @@ export class OrderGatewaySDK {
         },
         body: JSON.stringify(order)
       });
+      
       const result = await response.json();
+      
       return {
         success: response.ok,
-        orderId: result.orderId,
-        trackingUrl: result.trackingUrl,
+        orderId: result.order_id,
+        trackingUrl: result.tracking_url,
         error: result.error,
         message: result.message
       };
@@ -61,16 +72,22 @@ export class OrderGatewaySDK {
   }
 
   /**
-   * Fetch the current live status of an order.
+   * Cancel an existing order.
+   * Target endpoint: POST /orders/cancel
    */
-  async getStatus(orderId: string): Promise<any> {
+  async cancelOrder(orderId: string, reason: string): Promise<any> {
     try {
-      const response = await fetch(`${this.baseUrl}/orders/status?orderId=${orderId}`, {
-        headers: { 'x-api-key': this.apiKey }
+      const response = await fetch(`${this.baseUrl}/orders/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': this.apiKey
+        },
+        body: JSON.stringify({ order_id: orderId, reason })
       });
       return await response.json();
     } catch (err: any) {
-      return { error: 'FETCH_ERROR', message: err.message };
+      return { error: 'CANCEL_ERROR', message: err.message };
     }
   }
 }

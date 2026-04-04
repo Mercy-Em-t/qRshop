@@ -2,6 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 
 const MAX_PAYLOAD_SIZE = 50 * 1024; // 50KB limit to prevent Payload DDoS
 
+// Reserved words that cannot be used as shop subdomains (Platform-Level Security)
+const RESERVED_SUBDOMAINS = [
+  'admin', 'api', 'auth', 'www', 'mail', 'ftp', 'portal', 
+  'billing', 'support', 'assets', 'static', 'dashboard',
+  'login', 'signup', 'register', 'status', 'help'
+];
+
 /**
  * Validates the incoming admin request for security standards.
  * Includes: 
@@ -42,7 +49,6 @@ export async function validateAdminRequest(req, res) {
   // 3. Admin Authentication & Role Verification
   let caller;
   if (adminToken === 'mock-admin-token-for-admin@qrshop.com') {
-    // Mock admin for local dev
     const { data: mockUser } = await adminDb.from('shop_users').select('*').eq('role', 'system_admin').limit(1).single();
     caller = mockUser;
   } else {
@@ -61,7 +67,6 @@ export async function validateAdminRequest(req, res) {
   }
 
   // 4. Burst Protection (Rate Limiting)
-  // Enforce 3-second cooldown for the same admin user
   const currentTime = new Date();
   const lastCall = new Date(caller.last_api_call_at || 0);
   const diff = (currentTime - lastCall) / 1000;
@@ -82,8 +87,17 @@ export async function validateAdminRequest(req, res) {
 
 /**
  * Sanitizes strings for use in slugs or subdomains (Inertia against injection)
+ * Also prevents hijacking of Platform Reserved Subdomains.
  */
 export function sanitizeSlug(str) {
   if (!str) return null;
-  return str.toLowerCase().trim().replace(/[^a-z0-9-]/g, "");
+  const clean = str.toLowerCase().trim().replace(/[^a-z0-9-]/g, "");
+  
+  // Security Guard: Prevent platform takeover via reserved keywords
+  if (RESERVED_SUBDOMAINS.includes(clean)) {
+     console.error(`Security Incident: Attempt to register reserved subdomain detected: ${clean}`);
+     return null;
+  }
+  
+  return clean;
 }

@@ -122,6 +122,31 @@ export default function TrackOrder() {
       title: "Completed",
       description: `Your ${terms.order.toLowerCase()} is completed. Thank you!`
     },
+    // --- System B Extended Lifecycle ---
+    confirmed: {
+      color: "bg-blue-50 text-blue-800 border-blue-200",
+      icon: "📋",
+      title: "Order Confirmed",
+      description: "System B has accepted and confirmed your order. Preparation is underway."
+    },
+    shipped: {
+      color: "bg-purple-50 text-purple-800 border-purple-200",
+      icon: "🚚",
+      title: "Order Shipped",
+      description: "Your order is on the way! You can track it using the ID below."
+    },
+    delivered: {
+      color: "bg-green-50 text-green-800 border-green-200",
+      icon: "🏠",
+      title: "Delivered",
+      description: "Your order has been successfully delivered. Enjoy!"
+    },
+    failed: {
+      color: "bg-red-50 text-red-800 border-red-200",
+      icon: "❌",
+      title: "Order Issue",
+      description: "There was a problem processing your order with System B. Please contact support."
+    },
     requires_edit: {
       color: "bg-yellow-50 text-yellow-800 border-yellow-200",
       icon: "⚠️",
@@ -158,6 +183,13 @@ export default function TrackOrder() {
            <div className="text-4xl mb-3">{currentStatus.icon}</div>
            <h2 className="text-2xl font-bold mb-1">{currentStatus.title}</h2>
            <p className="text-sm opacity-90">{currentStatus.description}</p>
+           
+           {order.system_b_tracking_id && (
+              <div className="mt-4 pt-4 border-t border-black/10">
+                 <p className="text-[10px] uppercase font-black tracking-widest opacity-60">System B Tracking ID</p>
+                 <p className="font-mono font-bold text-lg">{order.system_b_tracking_id}</p>
+              </div>
+           )}
         </section>
 
         {/* Live Digital Receipt */}

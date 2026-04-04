@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { getShopBySubdomain } from "./services/shop-service";
 import { Routes, Route, Navigate } from "react-router-dom";
 import QrAccessGuard from "./components/QrAccessGuard";
 import OfflineMenuWrapper from "./components/OfflineMenuWrapper";
@@ -69,10 +70,71 @@ import DeliveryDashboard from "./pages/DeliveryDashboard";
 import { useOfflineEventQueue } from "./hooks/useOfflineEventQueue";
 
 export default function App() {
+  const [subdomainShopId, setSubdomainShopId] = useState(null);
+  const [resolving, setResolving] = useState(true);
+
   useOfflineEventQueue();
+
   useEffect(() => {
     document.title = "ShopQR | Instant WhatsApp Menus & Ordering";
+
+    async function resolveSubdomain() {
+      const hostname = window.location.hostname;
+      const parts = hostname.split('.');
+      
+      // Logic: If on a subdomain (e.g., shop123.shopqr.com or shop123.localhost)
+      // but NOT the main domain (e.g. tmsavannah.com)
+      const isLocal = hostname === 'localhost' || hostname.includes('127.0.0.1');
+      const isVercel = hostname.includes('vercel.app');
+      
+      // Basic extraction: if there are 3 parts (shop.tmsavannah.com) or 2 parts on localhost (shop.localhost)
+      let subdomain = null;
+      if (!isLocal && !isVercel && parts.length >= 3) {
+         subdomain = parts[0];
+      } else if (isLocal && parts.length >= 2) {
+         subdomain = parts[0];
+      }
+
+      if (subdomain && subdomain !== 'www') {
+         // Security Layer: Resolution Cache (sessionStorage)
+         const cachedId = sessionStorage.getItem(`subdomain_cache_${subdomain}`);
+         if (cachedId) {
+            setSubdomainShopId(cachedId);
+            setResolving(false);
+            return;
+         }
+
+         try {
+            const shop = await getShopBySubdomain(subdomain);
+            if (shop) {
+               // Strict Security Validation: Ensure shop.id is a valid UUID v4
+               const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+               if (uuidRegex.test(shop.id)) {
+                  setSubdomainShopId(shop.id);
+                  sessionStorage.setItem(`subdomain_cache_${subdomain}`, shop.id);
+               } else {
+                  console.error("Security Incident: Malformed Shop ID received from resolution.");
+               }
+            } else {
+               // UNKNOWN SUBDOMAIN: Ensure the resolver falls back to the main homepage
+               // by leaving subdomainShopId as null.
+               console.warn(`Routing Notice: Subdomain "${subdomain}" not recognized. Redirecting internal resolution to main platform Home.`);
+            }
+         } catch (e) {
+            console.error("Subdomain Resolution Failed:", e);
+         }
+      }
+      setResolving(false);
+    }
+    resolveSubdomain();
   }, []);
+
+  if (resolving) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="animate-spin h-8 w-8 border-b-2 border-green-600 rounded-full"></div></div>;
+
+  if (subdomainShopId && window.location.pathname === "/") {
+     return <PublicShopProfile directShopId={subdomainShopId} />;
+  }
+
   return (
     <Routes>
       {/* Public */}

@@ -85,14 +85,19 @@ const PLANS = [
 
 export default function Home() {
   const [showScanner, setShowScanner] = useState(false);
-  const [subdomainShopId, setSubdomainShopId] = useState(null);
+  const [isUnknownSubdomain, setIsUnknownSubdomain] = useState(false);
 
   useEffect(() => {
-    // Basic hijacking logic for subdomains if needed
-    const host = window.location.hostname;
-    if (host !== 'localhost' && !host.includes('vercel.app')) {
-       // logic here
-    }
+     // SEO Security: If we've landed on Home via an unknown subdomain (wildcard fallback)
+     // we must tell robots not to index it as duplicate content.
+     const hostname = window.location.hostname;
+     const parts = hostname.split('.');
+     const isLocal = hostname === 'localhost' || hostname.includes('127.0.0.1');
+     const isVercel = hostname.includes('vercel.app');
+     
+     if (!isLocal && !isVercel && parts.length >= 3 && parts[0] !== 'www') {
+        setIsUnknownSubdomain(true);
+     }
   }, []);
 
   return (

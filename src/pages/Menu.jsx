@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { getQrSession } from "../utils/qr-session";
 import { getUpsellItems } from "../services/menu-service";
@@ -11,23 +11,47 @@ import UpsellModal from "../components/UpsellModal";
 import LoadingSpinner from "../components/LoadingSpinner";
 import OfflineAlert from "../components/OfflineAlert";
 import CouponWidget from "../components/CouponWidget";
+import BundleCard from "../components/BundleCard";
 import { useNomenclature } from "../hooks/use-nomenclature";
 import { useCampaigns } from "../hooks/useCampaigns";
+import { supabase } from "../services/supabase-client";
 
 export default function Menu() {
   const session = getQrSession();
   const navigate = useNavigate();
   const { shop, loading: shopLoading } = useShop(session?.shop_id);
-  const { addItem, itemCount } = useCart();
+  const { addItem, addBundle, itemCount } = useCart();
   const { categories, loading: menuLoading, isOffline } = useOfflineMenu();
   const [upsellItems, setUpsellItems] = useState([]);
   const [lastAddedItemId, setLastAddedItemId] = useState(null);
   const [showUpsell, setShowUpsell] = useState(false);
   const [activeCategory, setActiveCategory] = useState(null);
+  const [bundles, setBundles] = useState([]);
 
   const terms = useNomenclature(session?.shop_id);
   const { campaigns } = useCampaigns(session?.shop_id);
   const activeCampaign = campaigns?.find(c => c.is_active);
+
+  useEffect(() => {
+     if (session?.shop_id) {
+        fetchActiveBundles();
+     }
+  }, [session?.shop_id]);
+
+  const fetchActiveBundles = async () => {
+     try {
+        const { data } = await supabase
+          .from('promotions')
+          .select('*, promotion_items(*)')
+          .eq('shop_id', session.shop_id)
+          .eq('is_active', true)
+          .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+        
+        if (data) setBundles(data);
+     } catch (err) {
+        console.error("Failed to fetch bundles:", err);
+     }
+  };
 
   const handleAddItem = async (item) => {
     addItem(item);
@@ -45,6 +69,11 @@ export default function Menu() {
     } catch {
       // Silently ignore upsell errors
     }
+  };
+
+  const handleClaimBundle = (bundle, items) => {
+     addBundle(bundle, items);
+     navigate("/cart"); // Direct to cart to see savings!
   };
 
   const handleUpsellAccept = (item) => {
@@ -66,6 +95,9 @@ export default function Menu() {
 
   const isLoading = shopLoading || menuLoading;
   if (isLoading) return <LoadingSpinner message="Loading menu..." />;
+
+  // Flatten items for BundleCard retrieval
+  const allMenuItems = categories ? Object.values(categories).flat() : [];
 
   // GRACEFUL TIER DEGRADATION: Cap display items to 50 if Free tier or expired
   const isFreeTier = shop?.plan === 'free' || (shop?.subscription_expires_at && new Date(shop.subscription_expires_at) < new Date());
@@ -188,6 +220,27 @@ export default function Menu() {
 
       {isOffline && (
         <OfflineAlert message={`Showing cached ${terms.menu.toLowerCase()} — you appear to be offline`} />
+      )}
+
+      {/* ── Deals & Bundles Section ── */}
+      {bundles.length > 0 && (
+         <div className="bg-white border-b border-gray-100 pb-8 pt-4">
+            <div className="max-w-lg mx-auto px-4">
+               <h2 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
+                 <span>🔥</span> Featured {terms.menu} Deals
+               </h2>
+               <div className="flex overflow-x-auto gap-4 snap-x pb-4 -mx-4 px-4 no-scrollbar">
+                  {bundles.map(bundle => (
+                    <BundleCard 
+                      key={bundle.id} 
+                      bundle={bundle} 
+                      menuItems={allMenuItems} 
+                      onClaim={handleClaimBundle}
+                    />
+                  ))}
+               </div>
+            </div>
+         </div>
       )}
 
       {/* ── Menu Items ── */}
