@@ -1,4 +1,4 @@
-import { validateAdminRequest, sanitizeSlug } from '../middleware/security';
+import { validateAdminRequest, sanitizeSlug } from '../middleware/security.js';
 
 export default async function handler(req, res) {
   const security = await validateAdminRequest(req, res);
@@ -37,8 +37,6 @@ export default async function handler(req, res) {
     const newSystemUser = userData.user;
 
     // Hardening: Enforce Subdomain Restriction (Pro+ only)
-    // Since all new shops start as 'free', we strictly block subdomains at launch
-    // to encourage subsequent "Level Up" actions.
     const shopInsertPayload = {
        name: shopName.trim(), 
        subdomain: null, // Strictly NULL for Free Tier launch

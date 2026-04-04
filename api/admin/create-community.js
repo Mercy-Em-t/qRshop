@@ -1,4 +1,4 @@
-import { validateAdminRequest, sanitizeSlug } from '../middleware/security';
+import { validateAdminRequest, sanitizeSlug } from '../middleware/security.js';
 
 export default async function handler(req, res) {
   const security = await validateAdminRequest(req, res);

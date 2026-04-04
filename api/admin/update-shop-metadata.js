@@ -1,4 +1,4 @@
-import { validateAdminRequest, sanitizeSlug } from '../middleware/security';
+import { validateAdminRequest, sanitizeSlug } from '../middleware/security.js';
 
 export default async function handler(req, res) {
   const security = await validateAdminRequest(req, res);
@@ -42,15 +42,10 @@ export default async function handler(req, res) {
     }
 
     // 2. Enforce Subdomain Tiering
-    // Only Pro, Business, and Enterprise (system_admin) can have subdomains.
-    // If the plan is provided in the request, we use it. Otherwise, we'd need to fetch current shop plan.
-    // However, for Simplicity in this API, we trust the Admin UI which hides the field for Lower Tiers.
-    // If a subdomain is passed, we check the effective plan.
     if (subdomain !== undefined) {
        const cleanSub = sanitizeSlug(subdomain);
        const targetPlan = (plan || "unknown").toLowerCase();
        
-       // If no plan change is requested, we fetch the current plan to be safe
        let effectivePlan = targetPlan;
        if (targetPlan === "unknown") {
           const { data: currentShop } = await adminDb.from('shops').select('plan').eq('id', shopId).single();
@@ -62,7 +57,7 @@ export default async function handler(req, res) {
        if (canHaveSubdomain) {
           updatePayload.subdomain = cleanSub;
        } else {
-          updatePayload.subdomain = null; // Auto-strip subdomain for lower tiers
+          updatePayload.subdomain = null; 
        }
     }
 
