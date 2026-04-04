@@ -86,11 +86,16 @@ export default async function handler(req, res) {
     if (shopErr) throw new Error(`Failed to isolate database structural bounds: ${shopErr.message}`);
 
     // 5. Connect User to physical shop inside the SQL cross-reference table using the real Auth UUID
+    // Supporting both 'id' and 'shop_id' schemas for the shop ID
+    const targetShopId = shopRes.shop_id || shopRes.id;
+    
+    if (!targetShopId) throw new Error("Shop ID was not retrieved from the database after insertion.");
+
     const { error: bindingErr } = await adminDb.from('shop_users').insert([{
        id: newSystemUser.id, // Must match Auth explicitly!
        email: ownerEmail,
        role: "shop_owner",
-       shop_id: shopRes.id
+       shop_id: targetShopId
     }]);
 
     if (bindingErr) throw new Error(`Shop provisioning succeeded but Admin Binding failed: ${bindingErr.message}`);
