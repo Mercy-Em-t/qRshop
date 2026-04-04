@@ -287,7 +287,7 @@ export default function Order() {
                 clientPhone: identity.phone || "N/A",
                 shopId: session?.shop_id,
                 fulfillmentType: (identity.fulfillment_type === 'delivery') ? 'delivery' : 'pickup',
-                items: items.map(i => ({ productId: i.id, qty: i.quantity })),
+                items: items.map(i => ({ productId: i.id, qty: i.quantity, name: i.name, price: i.price, subtotal: i.price * i.quantity })),
                 deliveryAddress: (identity.fulfillment_type === 'delivery') ? identity.address : "",
                 notes: (session?.table) ? `Table ${session.table}` : ""
              });

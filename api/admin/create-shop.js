@@ -61,12 +61,19 @@ export default async function handler(req, res) {
     const newSystemUser = userData.user;
 
     // 4. Provision the Isolated Shop Architecture Data Structure
-    const cleanSubdomain = subdomain ? subdomain.toLowerCase().replace(/[^a-z0-9-]/g, "") : null;
+    // Hardening: Ensure subdomain is strictly alphanumeric and lowercase
+    const cleanSubdomain = subdomain 
+        ? subdomain.toLowerCase().trim().replace(/[^a-z0-9]/g, "") 
+        : null;
+
+    if (subdomain && !cleanSubdomain) {
+        return res.status(400).json({ error: "Invalid subdomain format. Must be alphanumeric." });
+    }
     const shopInsertPayload = {
-       name: shopName, 
+       name: shopName.trim(), 
        subdomain: cleanSubdomain,
-       phone: phone, 
-       whatsapp_number: whatsapp || phone, 
+       phone: phone.trim(), 
+       whatsapp_number: (whatsapp || phone).trim(), 
        plan: "free",
        industry_type: industry,
        needs_password_change: true // Force them to set a real password on first login

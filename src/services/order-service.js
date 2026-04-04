@@ -1,4 +1,5 @@
 import { supabase } from "./supabase-client";
+import { OrderGatewaySDK } from "../lib/gateway-sdk";
 
 /**
  * Create an order record in the database before sending via WhatsApp.
@@ -64,7 +65,7 @@ export async function createOrder(shopId, tableId, items, totalPrice, discountAm
       clientPhone: clientPhone || "N/A",
       shopId: shopId,
       fulfillmentType: (fulfillmentType === 'delivery') ? 'delivery' : 'pickup',
-      items: items.map(i => ({ productId: i.id, qty: i.quantity })),
+      items: items.map(i => ({ productId: i.id, qty: i.quantity, name: i.name, price: i.price })),
       deliveryAddress: deliveryAddress || "",
       notes: tableId ? `Table ${tableId}` : ""
     }).catch(e => console.warn("External Gateway Background Sync Pending:", e));
@@ -80,7 +81,7 @@ export async function createOrder(shopId, tableId, items, totalPrice, discountAm
  * Pings the Master Order Gateway (SaaS Platform) to synchronize the order.
  */
 export async function pingExternalOrderGateway(payload) {
-  const GATEWAY_URL = "https://v2-ruby-sigma.vercel.app/api/external/orders";
+  const GATEWAY_URL = import.meta.env.VITE_MASTER_ORDER_GATEWAY_URL || "https://your-master-gateway.vercel.app/api/external";
   const API_KEY = import.meta.env.VITE_MASTER_ORDER_GATEWAY_API_KEY;
 
   if (!API_KEY) {
@@ -88,45 +89,46 @@ export async function pingExternalOrderGateway(payload) {
     return;
   }
 
+  const sdk = new OrderGatewaySDK(API_KEY, GATEWAY_URL);
+
   // Phase 48: Standardize Phone Format (+COUNTRYCODE 9Digits OR 10Digits Local)
   let rawPhone = (payload.clientPhone || "").replace(/[^0-9+]/g, '');
   let formattedPhone = rawPhone;
 
-  // Logic: +COUNTRYCODE 9 DIGITS or 10 DIGITS IF NOT USING COUNTRY CODE
   if (!rawPhone.startsWith('+') && rawPhone.startsWith('0') && rawPhone.length === 10) {
-      // Standard 10-digit local number
       formattedPhone = rawPhone;
   } else if (!rawPhone.startsWith('+') && rawPhone.length === 9) {
-      // Possible missing country code but matches the 9-digit rule? 
-      // We'll leave it or you can add a default country code if needed.
-      // For now, we strip and keep.
       formattedPhone = rawPhone;
   }
 
-  const cleanPayload = {
-    ...payload,
-    clientPhone: formattedPhone
+  const SHOP_ID = import.meta.env.VITE_MASTER_ORDER_GATEWAY_SHOP_ID;
+
+  const gatewayOrder = {
+    customerName: payload.clientName || "Anonymous",
+    phone: formattedPhone,
+    shopId: SHOP_ID || payload.shopId,
+    deliveryType: payload.fulfillmentType === 'delivery' ? 'delivery' : 'pickup',
+    items: payload.items.map(i => ({
+      productId: i.productId,
+      qty: i.qty,
+      name: i.name,
+      price: i.price,
+      subtotal: i.subtotal || (i.price ? i.price * i.qty : undefined)
+    })),
+    location: payload.deliveryAddress || "",
+    notes: payload.notes || ""
   };
 
   console.log("Pinging Master Order Gateway for shop:", payload.shopId);
 
-  const response = await fetch(GATEWAY_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY
-    },
-    body: JSON.stringify(cleanPayload)
-  });
+  const result = await sdk.placeOrder(gatewayOrder);
 
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(`Gateway Error (${response.status}): ${errorData.message || response.statusText}`);
+  if (!result.success) {
+    throw new Error(`Gateway Error: ${result.error} - ${result.message}`);
   }
 
-  const data = await response.json();
-  console.log("Master Order Gateway - Tracking Link:", data.trackingUrl);
-  return data;
+  console.log("Master Order Gateway - Tracking Link:", result.trackingUrl);
+  return result;
 }
 
 /**
