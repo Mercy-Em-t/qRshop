@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getQrSession } from "../utils/qr-session";
 import { useShop } from "../hooks/use-shop";
 import { useCart } from "../hooks/use-cart";
-import { createOrder } from "../services/order-service";
+import { createOrder, pingExternalOrderGateway } from "../services/order-service";
 import { supabase } from "../lib/supabase";
 import { logEvent } from "../services/telemetry-service";
 import {
@@ -283,6 +283,18 @@ export default function Order() {
          
          // Clean up cart so returning to the browser shows an empty state
          clearCart();
+
+         // Phase 47: Master Order Gateway Sync (Even for Free Tier)
+         // This ensures the order is tracked in the SaaS platform dashboard.
+         pingExternalOrderGateway({
+            clientName: identity.name || "Anonymous",
+            clientPhone: identity.phone || "N/A",
+            shopId: session?.shop_id,
+            fulfillmentType: (identity.fulfillment_type === 'delivery') ? 'delivery' : 'pickup',
+            items: items.map(i => ({ productId: i.id, qty: i.quantity })),
+            deliveryAddress: (identity.fulfillment_type === 'delivery') ? identity.address : "",
+            notes: (session?.table) ? `Table ${session.table}` : ""
+         }).catch(e => console.warn("External Gateway Sync Pending:", e));
          
          // Brand the transition
          setTransferringToWhatsApp(true);
