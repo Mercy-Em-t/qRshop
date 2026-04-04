@@ -21,9 +21,10 @@ import SmartReceiptModal from "../components/SmartReceiptModal";
 import { useNomenclature } from "../hooks/use-nomenclature";
 import UpgradeModal from "../components/UpgradeModal";
 
-const buildUnstructuredMessage = (shopName, table, items, identity, deliveryFee = 0) => {
+const buildUnstructuredMessage = (shopName, table, items, identity, deliveryFee = 0, orderNumber = null) => {
    const itemList = items.map(i => `${i.quantity}x ${i.name}`).join(", ");
    const contactStr = identity?.name ? `\n\nName: ${identity.name}` : ''; 
+   const orderTag = orderNumber ? `\n🏷️ Order ID: #${orderNumber}` : '';
    
    let fulfillStr = `Table ${table}`;
    if (identity?.fulfillment_type === 'delivery') {
@@ -34,7 +35,7 @@ const buildUnstructuredMessage = (shopName, table, items, identity, deliveryFee 
       fulfillStr = `Digital Delivery to ${identity.address}`;
    }
    
-   return `Hi ${shopName}, I'd like to place an order for ${fulfillStr}.${contactStr}\n\nItems: ${itemList}\n\nPlease confirm.`;
+   return `Hi ${shopName}, I'd like to place an order for ${fulfillStr}.${contactStr}${orderTag}\n\nItems: ${itemList}\n\nPlease confirm.`;
 };
 
 export default function Order() {
@@ -271,38 +272,54 @@ export default function Order() {
       }
   };
 
-  const handeFreeTierCheckout = () => {
-      setSending(true);
-      // Save identity before redirecting so it's always persisted
-      localStorage.setItem('qr_customer_name', identity.name);
-      if (identity.phone) localStorage.setItem('qr_customer_phone', identity.phone);
+  const handeFreeTierCheckout = async () => {
+      setTransferringToWhatsApp(true); // Show overlay while syncing
       
-      if (shopPhone) {
-         const unstructuredMsg = buildUnstructuredMessage(shopName, session?.table, items, identity, deliveryFee);
-         const link = buildWhatsAppLink(shopPhone, unstructuredMsg);
-         
-         // Clean up cart so returning to the browser shows an empty state
-         clearCart();
+      let externalOrderNumber = null;
 
-         // Phase 47: Master Order Gateway Sync (Even for Free Tier)
-         // This ensures the order is tracked in the SaaS platform dashboard.
-         pingExternalOrderGateway({
-            clientName: identity.name || "Anonymous",
-            clientPhone: identity.phone || "N/A",
-            shopId: session?.shop_id,
-            fulfillmentType: (identity.fulfillment_type === 'delivery') ? 'delivery' : 'pickup',
-            items: items.map(i => ({ productId: i.id, qty: i.quantity })),
-            deliveryAddress: (identity.fulfillment_type === 'delivery') ? identity.address : "",
-            notes: (session?.table) ? `Table ${session.table}` : ""
-         }).catch(e => console.warn("External Gateway Sync Pending:", e));
-         
-         // Brand the transition
-         setTransferringToWhatsApp(true);
-         setTimeout(() => {
-            setTransferringToWhatsApp(false);
-            window.location.href = link;
-         }, 2500);
-      } else {
+       if (shopPhone) {
+          // Phase 47: Master Order Gateway Sync (Even for Free Tier)
+          // This ensures the order is tracked in the SaaS platform dashboard.
+          try {
+             // We await the response so we can extract the real Order ID from the SaaS platform
+             const gatewayResponse = await pingExternalOrderGateway({
+                clientName: identity.name || "Anonymous",
+                clientPhone: identity.phone || "N/A",
+                shopId: session?.shop_id,
+                fulfillmentType: (identity.fulfillment_type === 'delivery') ? 'delivery' : 'pickup',
+                items: items.map(i => ({ productId: i.id, qty: i.quantity })),
+                deliveryAddress: (identity.fulfillment_type === 'delivery') ? identity.address : "",
+                notes: (session?.table) ? `Table ${session.table}` : ""
+             });
+
+             if (gatewayResponse) {
+                // Support for multiple common order number field names from Ruby-Sigma
+                externalOrderNumber = gatewayResponse.orderNumber || gatewayResponse.id || gatewayResponse.order_id;
+             }
+          } catch (e) {
+             console.warn("External Gateway Sync Delayed/Offline:", e);
+             // We continue anyway so the customer can still place the order via WhatsApp
+          }
+
+          const unstructuredMsg = buildUnstructuredMessage(
+             shopName, 
+             session?.table, 
+             items, 
+             identity, 
+             deliveryFee,
+             externalOrderNumber
+          );
+          const link = buildWhatsAppLink(shopPhone, unstructuredMsg);
+          
+          // Clean up cart so returning to the browser shows an empty state
+          clearCart();
+
+          // Wait just long enough for the UI branding to settle
+          setTimeout(() => {
+             setTransferringToWhatsApp(false);
+             window.location.href = link;
+          }, 1500);
+       } else {
          clearCart();
          navigate("/menu");
       }
