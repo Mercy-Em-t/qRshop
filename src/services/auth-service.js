@@ -5,41 +5,24 @@ export async function authenticateUser(email, password) {
   if (!supabase) return { error: "Supabase not connected." };
 
   // Phase 1: Authenticate natively against Supabase Auth
-  // Note: Manual rate-limiting (Phase 0) removed to reduce round-trips.
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email: email,
     password: password,
   });
 
   if (authError || !authData.user) {
-    // Log failed attempt
-    await supabase.from("login_attempts").insert([{ email: email }]);
     return { error: authError?.message || "Invalid credentials." };
   }
 
-  // Clear failed attempts on success
-  await supabase.from("login_attempts").delete().eq("email", email);
-
-
-  // Phase 2: Fetch minimal metadata in a single fast query
-  // We specify only the necessary fields to reduce payload size and speed up the join.
+  // Phase 2: Fetch minimal metadata (No Joins)
+  // Loading the specific shop details happens on the dashboard to speed up login.
   const { data: shopUser, error: suError } = await supabase
     .from("shop_users")
-    .select(`
-      email, 
-      role, 
-      shop_id, 
-      shops (
-        id, 
-        name, 
-        plan
-      )
-    `)
+    .select("email, role, shop_id")
     .eq("id", authData.user.id)
     .single();
 
   if (suError || !shopUser) {
-    // If the record is missing, we must sign out to prevent orphan sessions
     await supabase.auth.signOut();
     return { error: "User profile missing or access denied." };
   }
@@ -48,8 +31,7 @@ export async function authenticateUser(email, password) {
     id: authData.user.id,
     email: shopUser.email,
     role: shopUser.role,
-    shop_id: shopUser.shop_id,
-    shops: shopUser.shops
+    shop_id: shopUser.shop_id
   };
 
   localStorage.setItem("qrshop_session", JSON.stringify(sessionUser));
