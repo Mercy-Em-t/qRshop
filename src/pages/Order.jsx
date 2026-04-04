@@ -42,7 +42,7 @@ export default function Order() {
   const session = getQrSession();
   const navigate = useNavigate();
   const { shop, loading: shopLoading } = useShop(session?.shop_id);
-  const { items, total, subtotal, discountAmount, activeCoupon, applyCoupon, clearCart, parentOrderId } = useCart();
+  const { items, subtotal, discountAmount, activeCoupon, applyCoupon, clearCart, parentOrderId } = useCart();
   const [sending, setSending] = useState(false);
   const [queued, setQueued] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
