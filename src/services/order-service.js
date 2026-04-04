@@ -84,18 +84,18 @@ export async function createOrder(shopId, tableId, items, totalPrice, discountAm
  * Ensures System B is aware of Bundles and Pricing.
  */
 export async function pingExternalOrderGateway(payload) {
-  const SYSTEM_B_URL = import.meta.env.VITE_SYSTEM_B_URL || "https://your-master-gateway.vercel.app/api";
+  const SYSTEM_B_URL = import.meta.env.VITE_SYSTEM_B_URL;
   const API_KEY = import.meta.env.VITE_SYSTEM_B_API_KEY;
 
-  if (!API_KEY) {
-    console.warn("System B API Key missing. Skipping external notification.");
+  if (!API_KEY || !SYSTEM_B_URL) {
+    console.warn("System B Integration Incomplete: Missing URL or API Key.");
     return;
   }
 
   const sdk = new OrderGatewaySDK(API_KEY, SYSTEM_B_URL);
 
   const gatewayOrder = {
-    order_id: payload.orderId || "PENDING-" + Date.now(),
+    order_id: payload.orderId,
     customer: {
       name: payload.clientName || "Anonymous",
       email: payload.clientEmail || "",
@@ -107,12 +107,13 @@ export async function pingExternalOrderGateway(payload) {
     })),
     total: payload.total || 0,
     payment_status: 'pending',
-    // --- System B Bundle Attribution ---
+    // --- System B Metadata ---
     applied_promotion_id: payload.appliedPromotion?.id || null,
-    promotion_name: payload.appliedPromotion?.name || null
+    promotion_name: payload.appliedPromotion?.name || null,
+    source_system: "SAVANNAH_STOREFRONT_SYSTEM_A"
   };
 
-  console.log("System A -> System B: Syncing order with bundle info:", gatewayOrder.applied_promotion_id || "None");
+  console.log(`[SYNC] System A -> System B: Order ${gatewayOrder.order_id}`);
 
   const result = await sdk.placeOrder(gatewayOrder);
 

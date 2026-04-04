@@ -31,15 +31,25 @@ export default async function handler(req, res) {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // 3. Update Order Status in System A
-    // We map System B status to System A's 'status' column or a new 'system_b_status' column
+    // System B is the official authority on payment (paid) and tracking.
+    const statusMap = {
+      'paid': 'paid',
+      'confirmed': 'processing',
+      'shipped': 'shipped',
+      'delivered': 'completed',
+      'failed': 'failed',
+      'cancelled': 'archived'
+    };
+
+    const mappedStatus = statusMap[status] || 'pending';
+
     const { data, error } = await supabase
       .from('orders')
       .update({ 
         system_b_status: status, 
         system_b_tracking_id: tracking_id || null,
         system_b_updated_at: timestamp || new Date().toISOString(),
-        // Mirror the processing status to the primary status
-        status: status === 'confirmed' ? 'processing' : status === 'shipped' ? 'shipped' : status === 'delivered' ? 'completed' : status === 'failed' ? 'failed' : 'pending'
+        status: mappedStatus
       })
       .eq('id', order_id)
       .select()

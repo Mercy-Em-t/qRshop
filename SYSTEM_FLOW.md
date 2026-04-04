@@ -379,28 +379,43 @@ Kitchen display systems
 Analytics dashboards
 ```
 
+
 ---
 
-## 16. Flow Summary
+## 17. Interconnected Systems (Handshake Flow)
 
-Full customer journey:
+The platform supports a bidirectional **Order Handshake** with external processing systems (System B).
+
+### 17.1 The Standard Handshake Sequence
+1. **Sync**: System A sends the order to System B's Gateway via `pingExternalOrderGateway`.
+2. **Accept**: System B generates a unique **Master Order Number** (e.g., `ORD-260404`).
+3. **Feedback**: System B triggers a webhook to System A (`/api/order/status`).
+4. **Link**: System A stores the Master ID in `system_b_tracking_id`, creating a permanent link.
+
+### 17.2 Status Mappings
+- **System B: `inception`** -> **System A: `paid`** (Order unlocked).
+- **System B: `accepted`** -> **System A: `processing`**.
+- **System B: `ready`** -> **System A: `shipped`**.
+- **System B: `completed`** -> **System A: `completed`**.
+
+---
+
+## 18. Flow Summary
+
+Full customer journey (Interconnected):
 
 ```
 Scan QR
 ↓
-Enter page validates QR
+Menu Selection
 ↓
-Session created
+Order Sync (System A -> B)
 ↓
-Menu displayed
+Master ID Handshake (System B -> A)
 ↓
-Customer selects items
+Live Tracking Updated (with Master Order Number)
 ↓
-Upsell suggestions
+Shop Preparation
 ↓
-Order summary generated
-↓
-WhatsApp order sent
-↓
-Shop prepares order
+Fulfillment Complete
 ```

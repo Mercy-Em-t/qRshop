@@ -178,19 +178,23 @@ export default function TrackOrder() {
 
       <main className="max-w-md mx-auto px-4 py-8 space-y-6">
         
-        {/* Dynamic Status Module */}
-        <section className={`rounded-xl p-6 text-center border shadow-sm transition-colors duration-500 ${currentStatus.color}`}>
-           <div className="text-4xl mb-3">{currentStatus.icon}</div>
-           <h2 className="text-2xl font-bold mb-1">{currentStatus.title}</h2>
-           <p className="text-sm opacity-90">{currentStatus.description}</p>
-           
-           {order.system_b_tracking_id && (
-              <div className="mt-4 pt-4 border-t border-black/10">
-                 <p className="text-[10px] uppercase font-black tracking-widest opacity-60">System B Tracking ID</p>
-                 <p className="font-mono font-bold text-lg">{order.system_b_tracking_id}</p>
-              </div>
-           )}
-        </section>
+         {/* Dynamic Status Module */}
+         <section className={`rounded-xl p-6 text-center border shadow-sm transition-colors duration-500 ${currentStatus.color}`}>
+            <div className="text-4xl mb-3">{currentStatus.icon}</div>
+            <h2 className="text-2xl font-bold mb-1">{currentStatus.title}</h2>
+            <p className="text-sm opacity-90">{currentStatus.description}</p>
+            
+            {order.system_b_tracking_id && (
+               <div className="mt-4 pt-4 border-t border-black/10">
+                  <p className="text-[10px] uppercase font-black tracking-widest opacity-60">Master Order Reference (System B)</p>
+                  <div className="flex items-center justify-center gap-2 mt-1">
+                     <span className="bg-white/50 px-3 py-1 rounded-md font-mono font-bold text-lg border border-black/5 shadow-inner">
+                        {order.system_b_tracking_id}
+                     </span>
+                  </div>
+               </div>
+            )}
+         </section>
 
         {/* Live Digital Receipt */}
         <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
