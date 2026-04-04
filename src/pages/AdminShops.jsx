@@ -30,6 +30,7 @@ export default function AdminShops() {
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editSubdomain, setEditSubdomain] = useState("");
+  const [editPlan, setEditPlan] = useState("");
 
   // Community State
   const [newCommunityName, setNewCommunityName] = useState("");
@@ -233,22 +234,66 @@ export default function AdminShops() {
     setEditName(shop.name);
     setEditPhone(shop.phone || "");
     setEditSubdomain(shop.subdomain || "");
+    setEditPlan(shop.plan || "free");
     setShowEditModal(true);
   };
 
   const handleUpdateMetadata = async (e) => {
-    e.preventDefault(); setIsUpdating(true);
+    if (e) e.preventDefault(); 
+    if (isUpdating) return; // Debounce
+    setIsUpdating(true);
     try {
+      if (editPhone && editPhone.length < 9) {
+        alert("Please enter a valid contact phone number.");
+        setIsUpdating(false);
+        return;
+      }
+
       const { data: authData } = await supabase.auth.getSession();
       const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
       const response = await fetch("/api/admin/update-shop-metadata", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminToken, shopId: selectedShop.id, name: editName, phone: editPhone, subdomain: editSubdomain })
+        body: JSON.stringify({ 
+          adminToken, 
+          shopId: selectedShop?.id || e, // Overloaded for quick change
+          name: editName || undefined, 
+          phone: editPhone || undefined, 
+          subdomain: editSubdomain || undefined,
+          plan: editPlan 
+        })
       });
       const resData = await response.json();
       if (!response.ok) throw new Error(resData.error);
-      alert(resData.message); setShowEditModal(false); fetchShops();
+      alert(resData.message); 
+      setShowEditModal(false); 
+      fetchShops();
     } catch (err) { alert("Error: " + err.message); } finally { setIsUpdating(false); }
+  };
+
+  const handleQuickPlanChange = async (shopId, newPlan) => {
+     if (!window.confirm(`Are you sure you want to change this shop to the ${newPlan.toUpperCase()} tier?`)) return;
+     
+     setIsUpdating(true);
+     try {
+        const { data: authData } = await supabase.auth.getSession();
+        const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
+        const response = await fetch("/api/admin/update-shop-metadata", {
+           method: "POST", 
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({ 
+             adminToken, 
+             shopId, 
+             plan: newPlan,
+             // Explicitly passing undefined for others so they aren't cleared
+             name: undefined,
+             subdomain: undefined,
+             phone: undefined
+           })
+        });
+        const resData = await response.json();
+        if (!response.ok) throw new Error(resData.error);
+        fetchShops();
+     } catch (err) { alert("Plan Change Failed: " + err.message); } finally { setIsUpdating(false); }
   };
 
   const handleArchiveOnboarding = async (id) => {
@@ -355,7 +400,19 @@ export default function AdminShops() {
                                 <p className="text-xs text-gray-400 font-mono">{shop.subdomain}.tmsavannah.com</p>
                                 {shop.is_suspended && <span className="bg-red-100 text-red-800 font-black px-2 py-0.5 rounded text-[10px] uppercase">FROZEN</span>}
                              </div>
-                             <span className="bg-indigo-100 text-indigo-800 font-bold px-2 py-1 rounded-full text-xs uppercase">{shop.plan} Plan</span>
+                             <div className="flex flex-col items-end gap-1">
+                                <select 
+                                   defaultValue={shop.plan} 
+                                   onChange={(e) => handleQuickPlanChange(shop.id, e.target.value)}
+                                   disabled={isUpdating}
+                                   className="bg-indigo-50 text-indigo-800 font-black px-3 py-1.5 rounded-full text-[10px] uppercase border-none outline-none cursor-pointer hover:bg-indigo-100 transition-colors appearance-none text-center"
+                                >
+                                   <option value="free">FREE Tier</option>
+                                   <option value="basic">BASIC Tier</option>
+                                   <option value="pro">PRO Tier</option>
+                                   <option value="business">BUSINESS Tier</option>
+                                </select>
+                             </div>
                           </div>
                           <div className="bg-gray-50 rounded-lg p-3 text-sm border border-blue-50">
                              <div className="flex justify-between items-start mb-2">
@@ -387,8 +444,11 @@ export default function AdminShops() {
                        <h2 className="text-xl font-black">Launch Shop</h2>
                        <div><label className="text-[10px] font-black text-gray-400 uppercase">Entity Name</label><input required value={newShopName} onChange={(e) => setNewShopName(e.target.value)} className="w-full bg-gray-50 rounded-xl px-4 py-3 outline-none text-sm" /></div>
                        <div className="grid grid-cols-2 gap-3">
-                          <div><label className="text-[10px] font-black text-gray-400 uppercase">Subdomain</label><input value={newShopSubdomain} onChange={(e) => setNewShopSubdomain(e.target.value)} className="w-full bg-gray-50 rounded-xl px-4 py-3 outline-none text-sm font-mono" /></div>
                           <div><label className="text-[10px] font-black text-gray-400 uppercase">Industry</label><select value={newShopIndustry} onChange={(e) => setNewShopIndustry(e.target.value)} className="w-full bg-gray-50 rounded-xl px-4 py-3 outline-none text-sm">{industryTypes.map(ind => <option key={ind.slug} value={ind.slug}>{ind.name}</option>)}</select></div>
+                          <div className="flex flex-col justify-center">
+                             <span className="text-[8px] font-black text-gray-300 uppercase">Subdomain Status:</span>
+                             <span className="text-[10px] text-gray-400 italic">Locked (Free Tier)</span>
+                          </div>
                        </div>
                        <div><label className="text-[10px] font-black text-gray-400 uppercase">Owner Email</label><input required type="email" value={newAdminEmail} onChange={(e) => setNewAdminEmail(e.target.value)} className="w-full bg-gray-50 rounded-xl px-4 py-3 outline-none text-sm" /></div>
                        <button type="submit" disabled={isCreating} className="w-full bg-indigo-600 text-white font-black py-4 rounded-2xl disabled:opacity-50">{isCreating ? "Booting..." : "⚡ Boot Environment"}</button>
@@ -428,9 +488,28 @@ export default function AdminShops() {
                      <input required value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none text-sm transition" />
                   </div>
                   <div>
-                     <label className="block text-[10px] font-black text-gray-400 uppercase mb-1">Subdomain</label>
-                     <input required value={editSubdomain} onChange={(e) => setEditSubdomain(e.target.value)} className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none text-sm font-mono transition" />
+                     <label className="block text-[10px] font-black text-gray-400 uppercase mb-1">Subscription Tier (Level Up)</label>
+                     <select value={editPlan} onChange={(e) => setEditPlan(e.target.value)} className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none text-sm transition">
+                        <option value="free">Free - Entry Level</option>
+                        <option value="basic">Basic - Growing Store</option>
+                        <option value="pro">Pro - Scaling High Volume</option>
+                        <option value="business">Business - Enterprise Network</option>
+                     </select>
                   </div>
+                  {(editPlan === 'pro' || editPlan === 'business' || editPlan === 'enterprise') ? (
+                    <div>
+                        <label className="block text-[10px] font-black text-indigo-400 uppercase mb-1">Premium Subdomain</label>
+                        <input required value={editSubdomain} onChange={(e) => setEditSubdomain(e.target.value)} className="w-full bg-indigo-50 border-2 border-indigo-200 focus:border-indigo-400 rounded-xl px-4 py-3 outline-none text-sm font-mono transition" />
+                        <p className="text-[10px] text-indigo-400 mt-1">✓ Premium subdomain unlocked for this tier.</p>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-100 p-4 rounded-xl border border-dashed border-gray-300">
+                        <p className="text-[10px] font-black text-gray-500 uppercase flex items-center gap-2">
+                           🔒 Subdomain Locked
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-1 italic italic">Free and Basic levels use generic URLs. Upgrade to Pro to enable subdomains.</p>
+                    </div>
+                  )}
                   <div>
                      <label className="block text-[10px] font-black text-gray-400 uppercase mb-1">Contact Phone</label>
                      <input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none text-sm transition" />
