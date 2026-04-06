@@ -22,6 +22,7 @@ import DynamicQrSettings from "./pages/dashboard/DynamicQrSettings";
 import ScanGateway from "./pages/ScanGateway";
 import Plans from "./pages/Plans";
 import Admin from "./pages/Admin";
+import MasterAdmin from "./pages/MasterAdmin";
 import AdminShops from "./pages/AdminShops";
 import AdminPlans from "./pages/AdminPlans";
 import AdminSEO from "./pages/AdminSEO";
@@ -258,7 +259,8 @@ export default function App() {
       <Route path="/plans" element={<OnboardingGate><Plans /></OnboardingGate>} />
 
       {/* Superuser Admin Routes */}
-      <Route path="/admin" element={<Admin />} />
+      <Route path="/admin" element={<MasterAdmin />} />
+      <Route path="/admin/ops" element={<Admin />} />
       <Route path="/admin/shops" element={<AdminShops />} />
       <Route path="/admin/plans" element={<AdminPlans />} />
       <Route path="/admin/seo" element={<AdminSEO />} />

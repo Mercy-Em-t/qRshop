@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCurrentUser } from "../services/auth-service";
 import { supabase } from "../services/supabase-client";
+import AdminHeader from "../components/AdminHeader";
 
 export default function AdminSuppliers() {
   const [suppliers, setSuppliers] = useState([]);
@@ -31,14 +32,7 @@ export default function AdminSuppliers() {
 
   return (
     <div className="min-h-screen bg-white">
-      <header className="px-6 py-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-md z-10">
-         <div className="flex items-center gap-4">
-            <Link to="/admin" className="text-gray-400 hover:text-gray-600">
-               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            </Link>
-            <h1 className="text-2xl font-black text-gray-900 tracking-tight">Suppliers Lab</h1>
-         </div>
-      </header>
+      <AdminHeader title="Suppliers Lab" user={user} backLink="/admin/ops" />
 
       <main className="max-w-5xl mx-auto px-6 py-10">
         <div className="mb-10">

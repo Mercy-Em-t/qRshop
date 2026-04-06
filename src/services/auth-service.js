@@ -4,6 +4,20 @@ import { supabase } from "./supabase-client";
 export async function authenticateUser(email, password) {
   if (!supabase) return { error: "Supabase not connected." };
 
+  // --- DEVELOPER MODE BYPASS (FOR ECOSYSTEM TESTING) ---
+  if (email === "admin@qrshop.com" && password === "admin123") {
+    console.log("Ecosystem: Developer Bypass Active.");
+    const sessionUser = {
+      id: "00000000-0000-0000-0000-000000000000",
+      email: "admin@qrshop.com",
+      role: "system_admin",
+      shop_id: "main_hub"
+    };
+    localStorage.setItem("qrshop_session", JSON.stringify(sessionUser));
+    return { user: sessionUser };
+  }
+  // -----------------------------------------------------
+
   // Phase 1: Authenticate natively against Supabase Auth
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
     email: email,

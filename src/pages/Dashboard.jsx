@@ -8,6 +8,7 @@ import AnalyticsChart from "../components/AnalyticsChart";
 import SubscriptionStatus from "../components/SubscriptionStatus";
 import OnboardingWizard from "../components/OnboardingWizard";
 import UpgradeModal from "../components/UpgradeModal";
+import AppLauncher from "../components/AppLauncher";
 import usePlanAccess from "../hooks/usePlanAccess";
 
 export default function Dashboard() {
@@ -98,16 +99,24 @@ export default function Dashboard() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800">Shop Dashboard</h1>
-          <button
-            onClick={() => {
-              logout();
-              navigate("/login");
-            }}
-            className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-          >
-            Logout
-          </button>
+          <div className="flex items-center gap-4">
+            <h1 className="text-xl font-bold text-gray-800">Shop Dashboard</h1>
+            {user?.role === 'system_admin' && (
+              <span className="bg-slate-900 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">Admin View</span>
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            {user?.role === 'system_admin' && <AppLauncher />}
+            <button
+              onClick={() => {
+                logout();
+                navigate("/login");
+              }}
+              className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 

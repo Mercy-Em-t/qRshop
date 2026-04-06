@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser, logout } from "../services/auth-service";
+import AdminHeader from "../components/AdminHeader";
 
 export default function AdminShops() {
   const [shops, setShops] = useState([]);
@@ -310,13 +311,7 @@ export default function AdminShops() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/admin" className="text-indigo-600 font-medium hover:text-indigo-700 transition-colors">← System Admin</Link>
-          <h1 className="text-xl font-bold text-gray-800">Global Infrastructure</h1>
-          <button onClick={() => { logout(); navigate("/login"); }} className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer">Logout</button>
-        </div>
-      </header>
+      <AdminHeader title="Global Infrastructure" user={user} backLink="/admin/ops" />
 
       <main className="max-w-5xl mx-auto px-4 py-8 grid md:grid-cols-[3fr_2fr] gap-8">
         <div className="flex flex-col gap-8">

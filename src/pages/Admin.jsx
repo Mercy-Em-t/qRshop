@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getCurrentUser, logout } from "../services/auth-service";
-import Logo from "../components/Logo";
+import AdminHeader from "../components/AdminHeader";
 import { supabase } from "../services/supabase-client";
 
 export default function Admin() {
@@ -91,15 +91,7 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
-      <header className="bg-white border-b border-slate-100 px-6 py-4 sticky top-0 z-10 shadow-sm">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-           <Logo textClassName="font-black text-xl italic tracking-tighter" />
-           <div className="flex items-center gap-6">
-              <span className="hidden md:block text-[10px] font-black text-gray-400 uppercase tracking-widest">System Overlord / {user?.email}</span>
-              <button onClick={() => { logout(); navigate("/login"); }} className="text-red-500 font-bold text-sm bg-red-50 px-4 py-2 rounded-xl hover:bg-red-100 transition tracking-tight">Logout</button>
-           </div>
-        </div>
-      </header>
+      <AdminHeader title="Registry Ops" user={user} backLink="/admin" />
 
       <main className="max-w-7xl mx-auto p-6">
         
