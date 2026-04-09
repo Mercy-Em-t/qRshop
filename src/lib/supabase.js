@@ -1,12 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "../services/supabase-client";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-export const supabase =
-  supabaseUrl && supabaseKey
-    ? createClient(supabaseUrl, supabaseKey)
-    : null;
+// Re-export the existing singleton to ensure only ONE GoTrueClient exists
+export { supabase };
 
 /**
  * Log a telemetry event to the events table.

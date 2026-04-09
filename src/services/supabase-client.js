@@ -10,5 +10,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: true,
+        detectSessionInUrl: false,
+        lock: null // Disable navigator.locks to prevent cross-tab deadlocks
+      }
+    })
   : null;

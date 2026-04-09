@@ -36,8 +36,18 @@ export function useOfflineEventQueue() {
       for (const event of currentQueue) {
         if (!supabase) continue;
         
-        const { error } = await supabase.from('events').insert(event);
-        if (!error) {
+        const { error, status } = await supabase.from('events').insert(event);
+        
+        // Error handling strategy:
+        // - No error: Success, remove from queue.
+        // - 409 Conflict: Event already exists, remove from queue.
+        // - 400 Bad Request: Malformed event, remove from queue (it will never succeed).
+        // - 403/401: Unauthorized, remove from queue (permission issue).
+        // - Other (5xx or network drop): Keep in queue and try again later.
+        
+        const isClientError = (status >= 400 && status < 500) || error?.status === 409 || error?.code === '23505';
+
+        if (!error || isClientError) {
           pendingQueue = pendingQueue.filter((e) => e.id !== event.id);
         }
       }

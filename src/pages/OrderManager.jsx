@@ -49,18 +49,45 @@ export default function OrderManager() {
   };
 
   const updateOrderStatus = async (id, status) => {
-    await supabase.from("orders").update({ status }).eq("id", id);
-    fetchOrders();
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status })
+        .eq("id", id);
+      
+      if (error) {
+        console.error("Order Update Failure:", error);
+        alert(`Failed to update order: ${error.message}`);
+        return;
+      }
+
+      fetchOrders();
+    } catch (err) {
+      console.error("Unexpected Order Management Error:", err);
+      alert("An unexpected error occurred while updating the order.");
+    }
   };
 
   const handleSaveEdit = async () => {
     if (!editingOrder) return;
-    await supabase.from("orders").update({ 
-       total_price: editTotal,
-       status: 'pending_payment'
-    }).eq("id", editingOrder.id);
-    setEditingOrder(null);
-    fetchOrders();
+    try {
+      const { error } = await supabase.from("orders").update({ 
+         total_price: editTotal,
+         status: 'pending_payment'
+      }).eq("id", editingOrder.id);
+
+      if (error) {
+        console.error("Order Revision Failure:", error);
+        alert(`Failed to save revision: ${error.message}`);
+        return;
+      }
+
+      setEditingOrder(null);
+      fetchOrders();
+    } catch (err) {
+      console.error("Unexpected Revision Error:", err);
+      alert("An unexpected error occurred while saving the revision.");
+    }
   };
 
   const isGastro = shop?.industry_type === 'food' || shop?.industry_type === 'restaurant';

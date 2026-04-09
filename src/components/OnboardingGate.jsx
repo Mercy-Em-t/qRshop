@@ -41,19 +41,22 @@ export default function OnboardingGate({ children }) {
     const checkStatus = async () => {
       const { data, error } = await supabase
         .from("shops")
-        .select("needs_password_change, kyc_completed, phone")
+        .select("needs_password_change, kyc_completed, phone, tagline, address")
         .eq("id", user.shop_id)
         .single();
 
       if (!error && data) {
          setShopStatus(data);
-         setPhone(data.phone || "");
+         // Only set initial values if current state is empty to avoid overwriting typed input
+         setPhone(prev => prev || data.phone || "");
+         setTagline(prev => prev || data.tagline || "");
+         setAddress(prev => prev || data.address || "");
       }
       setLoading(false);
     };
     
     checkStatus();
-  }, [user]);
+  }, [user?.id, user?.shop_id]); // Stable dependencies
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();

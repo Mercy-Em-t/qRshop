@@ -149,7 +149,18 @@ export default function MasterAdmin() {
        color: "bg-amber-600",
        status: "Classic Portal",
        metrics: "Root Access"
+    },
+    {
+       id: "developer-portal",
+       name: "Dev Performance Hub",
+       desc: "Advanced API Gateway & Wholesale Enablement",
+       icon: <CpuChipIcon className="w-8 h-8" />,
+       path: "/developer/portal",
+       color: "bg-blue-900",
+       status: "High Speed",
+       metrics: "Active Nodes"
     }
+
   ];
 
   return (

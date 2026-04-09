@@ -215,13 +215,12 @@ export default function Order() {
         activeCoupon?.code || activeCoupon?.coupon_code || null,
         identity.name,
         identity.phone,
-        identity.phone,
         parentOrderId,
         identity.fulfillment_type,
         identity.address,
         deliveryFee,
         identity.email,
-        activeCoupon // 🛰️ PASS PROMO OBJECT FOR SYSTEM B BUNDLE AWARENESS
+        activeCoupon
       );
   };
 

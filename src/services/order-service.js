@@ -30,8 +30,8 @@ export async function createOrder(shopId, tableId, items, totalPrice, discountAm
   const payload = {
     shop_id: shopId,
     table_id: tableId,
-    total_price: totalPrice,
-    discount_amount: discountAmount,
+    total_price: Number(totalPrice) || 0,
+    discount_amount: Number(discountAmount) || 0,
     coupon_code: couponCode,
     client_name: clientName,
     client_phone: clientPhone,
@@ -39,19 +39,24 @@ export async function createOrder(shopId, tableId, items, totalPrice, discountAm
     parent_order_id: parentOrderId,
     fulfillment_type: fulfillmentType,
     delivery_address: deliveryAddress,
-    delivery_fee_charged: deliveryFeeCharged,
-    items: items.map(i => ({ id: i.id, quantity: i.quantity, is_bundled: i.is_bundled || false })),
+    delivery_fee_charged: Number(deliveryFeeCharged) || 0,
+    items: items.map(i => ({ 
+      id: i.id, 
+      quantity: Number(i.quantity) || 1, 
+      is_bundled: i.is_bundled || false 
+    })),
     applied_promotion_id: appliedPromotion?.id || null
   };
 
   const { data: orderId, error: rpcError } = await supabase.rpc('checkout_cart', { payload });
 
   if (rpcError) {
-    console.error("Secure Checkout Error:", rpcError);
+    console.error("Secure Checkout RPC Error Full:", rpcError);
+    const detailMsg = rpcError.details || rpcError.hint || "";
     if (rpcError.message.includes("Insufficient") || rpcError.message.includes("Invalid")) {
-      throw new Error(rpcError.message);
+      throw new Error(`${rpcError.message} ${detailMsg}`);
     }
-    throw new Error("Unable to complete checkout at this time. Please try again.");
+    throw new Error(`Checkout failed: ${rpcError.message}. ${detailMsg}`.trim());
   }
 
   // Track in analytics

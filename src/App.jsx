@@ -38,6 +38,10 @@ import AdminTodo from "./pages/AdminTodo";
 import AdminBooklet from "./pages/AdminBooklet";
 import AdminPayouts from "./pages/AdminPayouts";
 import AdminIndustries from "./pages/AdminIndustries";
+import AdminGateway from "./pages/AdminGateway";
+import DeveloperPortal from "./pages/DeveloperPortal";
+import WholesaleSalesSystem from "./pages/WholesaleSalesSystem";
+import WholesaleJourneyMap from "./pages/WholesaleJourneyMap";
 import Campaign from "./pages/Campaign";
 import TrackOrder from "./pages/TrackOrder";
 import EditOrder from "./pages/EditOrder";
@@ -62,6 +66,8 @@ import Privacy from './pages/Privacy';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import Advertise from './pages/Advertise';
+import SeedWholesaleUser from "./pages/SeedWholesaleUser";
+import Signup from "./pages/Signup";
 
 // Delivery Hub
 import DeliveryPortal from "./pages/DeliveryPortal";
@@ -225,6 +231,7 @@ export default function App() {
 
       {/* Shop Dashboard */}
       <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       
@@ -276,6 +283,11 @@ export default function App() {
       <Route path="/admin/booklet" element={<AdminBooklet />} />
       <Route path="/admin/payouts" element={<AdminPayouts />} />
       <Route path="/admin/industries" element={<AdminIndustries />} />
+      <Route path="/admin/gateway" element={<AdminGateway />} />
+      <Route path="/developer/portal" element={<DeveloperPortal />} />
+      <Route path="/developer/wholesale" element={<WholesaleSalesSystem />} />
+      <Route path="/developer/journey" element={<WholesaleJourneyMap />} />
+      <Route path="/developer/seed-wholesale" element={<SeedWholesaleUser />} />
 
       {/* Fallback 404 to explicitly prevent blank white screens on invalid paths */}
       <Route path="*" element={

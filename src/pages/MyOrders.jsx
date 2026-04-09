@@ -7,13 +7,16 @@ import LoadingSpinner from "../components/LoadingSpinner";
 export default function MyOrders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const fetchHistory = async () => {
       try {
-        const historyIds = JSON.parse(localStorage.getItem('customer_history') || '[]');
+        const localHistoryIds = JSON.parse(localStorage.getItem('customer_history') || '[]');
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        setUser(authUser);
         
-        if (historyIds.length === 0) {
+        if (localHistoryIds.length === 0 && !authUser) {
           setOrders([]);
           setLoading(false);
           return;
@@ -35,10 +38,19 @@ export default function MyOrders() {
               menu_items (name)
             )
           `)
-          .in('id', historyIds)
           .neq('status', 'archived')
           .neq('status', 'stk_pushed');
           
+        // Identity Reconciliation: 
+        // We fetch by BOTH local IDs (from guest sessions) AND the user's UUID (for native sessions)
+        if (authUser && localHistoryIds.length > 0) {
+           query = query.or(`id.in.(${localHistoryIds.map(id => `"${id}"`).join(',')}),user_id.eq.${authUser.id}`);
+        } else if (authUser) {
+           query = query.eq('user_id', authUser.id);
+        } else {
+           query = query.in('id', localHistoryIds);
+        }
+
         if (session && session.shop_id) {
            query = query.eq('shop_id', session.shop_id);
         }
@@ -79,6 +91,22 @@ export default function MyOrders() {
       </header>
 
       <main className="max-w-md mx-auto px-4 py-8 space-y-4">
+        {!user && (
+           <div className="bg-gradient-to-br from-green-600 to-emerald-700 rounded-2xl p-6 shadow-lg shadow-green-100 mb-6 animate-fade-in border border-white/10">
+              <div className="flex justify-between items-start mb-4">
+                 <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                    <span className="text-xl">🛡️</span>
+                 </div>
+                 <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest border border-white/20 px-2 py-0.5 rounded">Security Sync</span>
+              </div>
+              <h3 className="text-white font-bold text-lg leading-tight mb-2">Save your receipts permanently!</h3>
+              <p className="text-green-50 text-xs mb-6 opacity-90 leading-relaxed font-medium">Create an account to access your full order history across all your devices and browsers.</p>
+              <Link to="/signup" className="block w-full bg-white text-green-700 py-3 rounded-xl text-center text-xs font-black uppercase tracking-widest hover:bg-green-50 transition-colors shadow-sm focus:ring-2 focus:ring-white/50 outline-none">
+                 Join Now
+              </Link>
+           </div>
+        )}
+
         {orders.length === 0 ? (
            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center mt-12">
               <span className="text-4xl block mb-4">📭</span>

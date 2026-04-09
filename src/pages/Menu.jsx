@@ -15,6 +15,7 @@ import BundleCard from "../components/BundleCard";
 import { useNomenclature } from "../hooks/use-nomenclature";
 import { useCampaigns } from "../hooks/useCampaigns";
 import { supabase } from "../services/supabase-client";
+import SalesAgentWidget from "../components/SalesAgentWidget";
 
 export default function Menu() {
   const session = getQrSession();
@@ -316,6 +317,12 @@ export default function Menu() {
           onDecline={handleUpsellDecline}
         />
       )}
+
+      {/* ── Sales Agent Widget (Client-Side Presentation Layer) ── */}
+      <SalesAgentWidget
+        menuItems={allMenuItems}
+        addItem={handleAddItem}
+      />
     </div>
   );
 }
