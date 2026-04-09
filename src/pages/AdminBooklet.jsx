@@ -790,6 +790,36 @@ Within milliseconds, System B sends a webhook back to System A's listener. This 
 ──────────────────────
 • Idempotency: If the same order is sent twice, System B recognizes the original ID and simply returns the existing Master ID instead of creating a duplicate.
 • Payment Gatekeeping: System B verifies that the internal payment module has cleared the order before any Master ID is assigned, ensuring only valid, paid orders enter the pipeline.`
+  },
+  {
+    id: "wholesale-identity",
+    icon: "🔐",
+    title: "Chapter 26 — Wholesale & Native Identity",
+    tagline: "Unlocking persistent customer relationships and high-speed fulfillment",
+    content: `Added: April 9, 2026
+
+The platform has now evolved into a "Native-First" ecosystem. While guest checkout remains a core pillar for friction-free sales, recurring customers and wholesale partners now have a permanent home.
+
+──────────────────────
+1. OPTIONAL NATIVE REGISTRATION
+──────────────────────
+• Seamless Transition: Guest users are prompted in their /my-orders history page to "Join to Save History."
+• One-Click Sync: Upon signing up, the system automatically triggers the "claim history" protocol, which reconciles all their previous local guest receipts with their new authenticated account.
+• Cross-Device Access: Customers can now log in from any phone or laptop and see their full receipt history perfectly synced.
+
+──────────────────────
+2. THE SALES AGENT WIDGET (Wholesale Ops)
+──────────────────────
+• High-Velocity Checkout: Designed for wholesalers and merchants who need to process orders at physical counters.
+• Assistant Logic: The "Sales Assistant" can find products, add them to carts, and immediately trigger the checkout flow via keyboard commands.
+• Wholesale Catalog: Accessible via the Developer Portal, allowing agents to see journey maps and catalog health.
+
+──────────────────────
+3. PRODUCTION HARDENING (Resource Protection)
+──────────────────────
+• Anti-Scraping Shields: The product catalog is protected by Row-Level Security (RLS). While it remains public for legitimate customers, it restricts indiscriminate automated scraping by binding visibility to "Online" shops.
+• Resource Draining Prevention: Database-level rate limiting and strict identity checks prevent bot-driven order flooding.
+• Data Extraction: Authorized System Administrators can now export full order and user data as encrypted CSVs directly from the Master Admin Hub.`
   }
 ];
 
