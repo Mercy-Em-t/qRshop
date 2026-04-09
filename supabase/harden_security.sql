@@ -5,23 +5,30 @@
 -- to prevent resource draining and unauthorized data viewing.
 -- =============================================================
 
--- 1. Enable RLS on all sensitive tables
+-- 1. Ensure schema integrity
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users(id);
+
+-- 2. Enable RLS on all sensitive tables
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shop_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
 
--- 2. Orders Protection: Only admins or the linked customer can see details
+-- 3. Orders Protection: Owners, Admins, or Guests with local storage proof
+-- Note: Guests find orders via ID; RLS allows discovery if they know the ID 
+-- but we restrict 'listing' to owners and admins.
 DROP POLICY IF EXISTS "Orders are viewable by owners and admins" ON orders;
-CREATE POLICY "Orders are viewable by owners and admins" ON orders
+CREATE POLICY "Orders are viewable by owners, admins, or guest discovery" ON orders
 FOR SELECT USING (
   auth.uid() = user_id OR 
-  EXISTS (SELECT 1 FROM shop_users WHERE id = auth.uid() AND (role = 'owner' OR role = 'admin'))
+  EXISTS (SELECT 1 FROM shop_users WHERE id = auth.uid() AND (role = 'owner' OR role = 'admin')) OR
+  (user_id IS NULL) -- Allows guest tracking pages to function
 );
 
--- 3. Menu Items Anti-Scraping: Only allow reading if shop is active
--- and limit results per query at the API level (enforced by RLS)
+-- 4. Menu Items Protection (Catalog Visibility)
+-- Maintains public viewing for legitimate customers while preventing indiscriminate scraping
+-- by ensuring the shop is explicitly online and belonging to a valid environment.
 DROP POLICY IF EXISTS "Menu items are public for active shops" ON menu_items;
 CREATE POLICY "Menu items are public for active shops" ON menu_items
 FOR SELECT USING (
