@@ -10,9 +10,15 @@ test('normalizes Kenyan phone numbers to 254 format', () => {
 });
 
 test('validates positive amounts and timestamps', () => {
+  assert.equal(parsePositiveAmount(100), 100);
   assert.equal(parsePositiveAmount(100.2), 101);
   assert.equal(parsePositiveAmount(0), null);
+  assert.equal(parsePositiveAmount(-1), null);
+  assert.equal(parsePositiveAmount('abc'), null);
+  assert.equal(parsePositiveAmount(Number.NaN), null);
+  assert.equal(parsePositiveAmount(Number.POSITIVE_INFINITY), null);
   assert.equal(Boolean(parseIsoTimestamp('2026-04-09T19:05:51.067Z')), true);
+  assert.equal(parseIsoTimestamp(), null);
   assert.equal(parseIsoTimestamp('bad-date'), null);
 });
 

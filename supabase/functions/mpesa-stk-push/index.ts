@@ -69,7 +69,7 @@ serve(async (req) => {
     // Clean phone (must be 254...)
     let safePhone = String(phone).replace(/[^0-9]/g, '')
     if (safePhone.startsWith('0')) safePhone = '254' + safePhone.substring(1)
-    if (!/^254\d{9}$/.test(safePhone)) throw new Error('Invalid phone number format')
+    if (!/^254\d{9}$/.test(safePhone)) throw new Error('Invalid phone number format. Expected format: 254XXXXXXXXX (Kenyan E.164)')
 
     // 6. Push to STK
     const webhookSecret = Deno.env.get('MPESA_WEBHOOK_SECRET')

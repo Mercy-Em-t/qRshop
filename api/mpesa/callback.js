@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     try {
       supabase = createSupabaseAdminClient();
     } catch {
-       console.error("Missing DB context on the Callback Router.");
+       console.error("[CRITICAL] Missing DB context on the Callback Router.");
        return res.status(200).json({ message: "No db credentials, payload dropped" });
     }
 

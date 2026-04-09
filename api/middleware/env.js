@@ -6,7 +6,7 @@ export function getEnv(name, aliases = []) {
   for (const key of keys) {
     const value = process.env[key];
     if (typeof value === 'string' && value.trim().length > 0) {
-      return value;
+      return value.trim();
     }
   }
   return null;

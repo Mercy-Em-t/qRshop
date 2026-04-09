@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { requireEnv, getEnv } from '../middleware/env.js';
 
-const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL']);
-const supabaseServiceKey = getEnv('SUPABASE_SERVICE_ROLE_KEY'); // Requires service role to log everything
-
-const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
+function getSupabaseClient() {
+  const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL']);
+  const supabaseServiceKey = getEnv('SUPABASE_SERVICE_ROLE_KEY');
+  if (!supabaseUrl || !supabaseServiceKey) return null;
+  return createClient(supabaseUrl, supabaseServiceKey);
+}
 
 export default async function handler(req, res) {
   const { method, query, body, headers } = req;
@@ -13,6 +15,7 @@ export default async function handler(req, res) {
   // 1. Health Check Endpoint
   if (req.url.includes('/health')) {
       try {
+        const supabase = getSupabaseClient();
         if (!supabase) throw new Error('Gateway logging database is not configured');
         // Check System A (Self)
         const { error } = await supabase.from('shops').select('id').limit(1);
@@ -119,6 +122,7 @@ export default async function handler(req, res) {
 
 async function logGatewayActivity(log) {
   try {
+    const supabase = getSupabaseClient();
     if (!supabase) return;
     const { error } = await supabase.from('gateway_logs').insert([log]);
     if (error) console.error('Failed to log gateway activity:', error);

@@ -44,8 +44,8 @@ export default async function handler(req, res) {
     if (typeof status !== 'string' || status.length > 32) {
       return res.status(400).json({ error: 'Invalid status value.' });
     }
-    const safeTimestamp = parseIsoTimestamp(timestamp);
-    if (!safeTimestamp) {
+    const safeTimestamp = timestamp ? parseIsoTimestamp(timestamp) : new Date().toISOString();
+    if (timestamp && !safeTimestamp) {
       return res.status(400).json({ error: 'Invalid timestamp format.' });
     }
 

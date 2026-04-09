@@ -20,7 +20,7 @@ export function parsePositiveAmount(value) {
 }
 
 export function parseIsoTimestamp(value) {
-  if (!value) return new Date().toISOString();
+  if (!value) return null;
   const ts = new Date(value);
   if (Number.isNaN(ts.getTime())) return null;
   return ts.toISOString();
