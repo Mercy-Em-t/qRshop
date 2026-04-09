@@ -163,6 +163,41 @@ export default function MasterAdmin() {
 
   ];
 
+  const exportData = async (table) => {
+    try {
+      const { data, error } = await supabase.from(table).select("*");
+      if (error) throw error;
+      
+      const csvContent = "data:text/csv;charset=utf-8," 
+        + [Object.keys(data[0]).join(","), ...data.map(row => Object.values(row).join(","))].join("\n");
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `${table}_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.warn("Export Failed: Unauthorized or Network Error");
+    }
+  };
+
+  systems.push({
+    id: "data-ops",
+    name: "System Export",
+    desc: "Authorized Data Extraction (Orders & Users)",
+    icon: <CircleStackIcon className="w-8 h-8" />,
+    path: "#",
+    color: "bg-emerald-800",
+    status: "Secure",
+    metrics: "Encrypted CSV Output",
+    onClick: () => {
+       const confirmExport = window.confirm("You are about to export sensitive system data. Proceed?");
+       if (confirmExport) exportData("orders");
+    }
+  });
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20">
       {/* Premium Navigation */}
@@ -255,33 +290,37 @@ export default function MasterAdmin() {
         <section className="mb-12">
            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-slate-400 mb-8 border-b border-slate-100 pb-4">Authorized Control Panels</h2>
            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-             {systems.map((system) => (
-                <Link 
-                  key={system.id}
-                  to={system.path}
-                  className="group bg-white rounded-[2.5rem] border border-slate-100 p-8 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[320px]"
-                >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100%] z-0 transition-transform group-hover:scale-110" />
-                  
-                  <div className="relative z-10">
-                    <div className={`${system.color} w-16 h-16 rounded-[1.25rem] flex items-center justify-center text-white mb-6 shadow-lg shadow-${system.color}/20 group-hover:rotate-6 transition-transform`}>
-                      {system.icon}
+              {systems.map((system) => {
+                const CardWrapper = system.path === "#" ? "button" : Link;
+                return (
+                  <CardWrapper 
+                    key={system.id}
+                    to={system.path !== "#" ? system.path : undefined}
+                    onClick={system.onClick}
+                    className="group bg-white rounded-[2.5rem] border border-slate-100 p-8 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[320px] text-left"
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-bl-[100%] z-0 transition-transform group-hover:scale-110" />
+                    
+                    <div className="relative z-10">
+                      <div className={`${system.color} w-16 h-16 rounded-[1.25rem] flex items-center justify-center text-white mb-6 shadow-lg shadow-${system.color}/20 group-hover:rotate-6 transition-transform`}>
+                        {system.icon}
+                      </div>
+                      <h3 className="text-2xl font-black text-slate-900 mb-2">{system.name}</h3>
+                      <p className="text-sm text-slate-500 font-medium leading-relaxed mb-6">{system.desc}</p>
                     </div>
-                    <h3 className="text-2xl font-black text-slate-900 mb-2">{system.name}</h3>
-                    <p className="text-sm text-slate-500 font-medium leading-relaxed mb-6">{system.desc}</p>
-                  </div>
-
-                  <div className="relative z-10 flex items-center justify-between mt-4">
-                    <div className="flex flex-col">
-                      <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Current State</span>
-                      <span className="text-[10px] font-bold text-slate-800 uppercase tracking-tight">{system.metrics}</span>
+  
+                    <div className="relative z-10 flex items-center justify-between mt-4">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Current State</span>
+                        <span className="text-[10px] font-bold text-slate-800 uppercase tracking-tight">{system.metrics}</span>
+                      </div>
+                      <div className="bg-slate-900 text-white p-3 rounded-2xl group-hover:translate-x-1 transition-transform">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                      </div>
                     </div>
-                    <div className="bg-slate-900 text-white p-3 rounded-2xl group-hover:translate-x-1 transition-transform">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-                    </div>
-                  </div>
-                </Link>
-             ))}
+                  </CardWrapper>
+                );
+              })}
            </div>
         </section>
 

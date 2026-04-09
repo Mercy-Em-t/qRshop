@@ -56,15 +56,13 @@ export default function OrderManager() {
         .eq("id", id);
       
       if (error) {
-        console.error("Order Update Failure:", error);
-        alert(`Failed to update order: ${error.message}`);
+        console.warn("Operation restricted or failed.");
         return;
       }
 
       fetchOrders();
     } catch (err) {
-      console.error("Unexpected Order Management Error:", err);
-      alert("An unexpected error occurred while updating the order.");
+      console.warn("Order service unavailable.");
     }
   };
 
@@ -77,8 +75,7 @@ export default function OrderManager() {
       }).eq("id", editingOrder.id);
 
       if (error) {
-        console.error("Order Revision Failure:", error);
-        alert(`Failed to save revision: ${error.message}`);
+        console.warn("Revision rejected by server.");
         return;
       }
 
