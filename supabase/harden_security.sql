@@ -19,6 +19,7 @@ ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
 -- Note: Guests find orders via ID; RLS allows discovery if they know the ID 
 -- but we restrict 'listing' to owners and admins.
 DROP POLICY IF EXISTS "Orders are viewable by owners and admins" ON orders;
+DROP POLICY IF EXISTS "Orders are viewable by owners, admins, or guest discovery" ON orders;
 CREATE POLICY "Orders are viewable by owners, admins, or guest discovery" ON orders
 FOR SELECT USING (
   auth.uid() = user_id OR 
