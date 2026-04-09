@@ -9,7 +9,6 @@ export function normalizeKePhone(value) {
   if (typeof value !== 'string' && typeof value !== 'number') return null;
   let phone = String(value).replace(/\D/g, '');
   if (phone.startsWith('0')) phone = `254${phone.slice(1)}`;
-  if (phone.startsWith('+')) phone = phone.slice(1);
   return E164_KE_REGEX.test(phone) ? phone : null;
 }
 
