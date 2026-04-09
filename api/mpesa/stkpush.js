@@ -1,31 +1,34 @@
+/* global Buffer */
+import { normalizeKePhone, parsePositiveAmount, isUuidV4 } from '../middleware/validation.js';
+import { requireEnv, getEnv } from '../middleware/env.js';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({error: 'Method Not Allowed'});
 
-  const { phone, amount, orderId } = req.body;
+  const { phone, amount, orderId } = req.body || {};
 
   if (!phone || !amount || !orderId) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  // Use environment variables supplied by Vercel for Daraja credentials
-  // Falling back entirely to user-supplied sandbox credentials during test execution phase if omitted
-  const consumerKey = process.env.DARAJA_CONSUMER_KEY || 'Dj2r3ZoXesgpDbCGSRHZFR27gT84U4GgCGfAhldgNR34NHmX';
-  const consumerSecret = process.env.DARAJA_CONSUMER_SECRET || 'NWBcjE3IyoEenemOJYtDcDrWqnxDnevmNwriDTVGKMqZTgk3suuA9f68kzq8XKs3';
-  const passkey = process.env.DARAJA_PASSKEY || 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
-  const shortcode = process.env.DARAJA_SHORTCODE || '174379';
-
-  // Format phone logically
-  let formattedPhone = phone.replace(/\D/g, '');
-  if (formattedPhone.startsWith('0')) {
-    formattedPhone = `254${formattedPhone.slice(1)}`;
-  } else if (!formattedPhone.startsWith('254')) {
-    formattedPhone = `254${formattedPhone}`;
+  const formattedPhone = normalizeKePhone(phone);
+  const safeAmount = parsePositiveAmount(amount);
+  if (!formattedPhone || !safeAmount || !isUuidV4(orderId)) {
+    return res.status(400).json({ error: 'Invalid phone, amount, or orderId format.' });
   }
 
   try {
+    const consumerKey = requireEnv('DARAJA_CONSUMER_KEY');
+    const consumerSecret = requireEnv('DARAJA_CONSUMER_SECRET');
+    const passkey = requireEnv('DARAJA_PASSKEY');
+    const shortcode = requireEnv('DARAJA_SHORTCODE');
+    const gatewayBase = getEnv('GATEWAY_URL', ['VITE_GATEWAY_URL']);
+    const envString = getEnv('DARAJA_ENVIRONMENT') || 'sandbox';
+    const baseUrl = envString === 'production' ? 'https://api.safaricom.co.ke' : 'https://sandbox.safaricom.co.ke';
+
     // 1. Generate Access Token via Consumer Signatures
     const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString('base64');
-    const tokenRes = await fetch("https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials", {
+    const tokenRes = await fetch(`${baseUrl}/oauth/v1/generate?grant_type=client_credentials`, {
       headers: { Authorization: `Basic ${auth}` }
     });
     
@@ -45,9 +48,12 @@ export default async function handler(req, res) {
 
     // Dynamically retrieve the absolute URL Vercel allocated to the deployment for the webhook route
     // Include the orderId in the URL parameters because Safaricom strips metadata from their generic response bodies
-    const host = req.headers['x-forwarded-host'] || req.headers.host;
+    const host = req.headers['x-forwarded-host'] || req.headers.host || '';
     const protocol = host.includes('localhost') ? 'http' : 'https';
-    const rawCallbackBase = process.env.VITE_GATEWAY_URL || `${protocol}://${host}`;
+    const rawCallbackBase = gatewayBase || (host ? `${protocol}://${host}` : null);
+    if (!rawCallbackBase) {
+      throw new Error('Missing gateway callback base URL. Set GATEWAY_URL.');
+    }
     const callbackUrl = `${rawCallbackBase}/api/mpesa/callback?orderId=${encodeURIComponent(orderId)}`;
 
     // 3. Dispatch the payload instructions to Daraja Core
@@ -56,7 +62,7 @@ export default async function handler(req, res) {
       Password: password,
       Timestamp: timestamp,
       TransactionType: "CustomerPayBillOnline",
-      Amount: Math.ceil(amount),
+      Amount: safeAmount,
       PartyA: formattedPhone,
       PartyB: shortcode,
       PhoneNumber: formattedPhone,
@@ -65,7 +71,7 @@ export default async function handler(req, res) {
       TransactionDesc: `Payment for Order ${orderId.slice(0, 5)}`
     };
 
-    const pushRes = await fetch("https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest", {
+    const pushRes = await fetch(`${baseUrl}/mpesa/stkpush/v1/processrequest`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${access_token}`,

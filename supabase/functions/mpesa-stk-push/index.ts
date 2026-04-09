@@ -17,6 +17,9 @@ serve(async (req) => {
     if (!order_id || !phone || !amount || !shop_id) {
       throw new Error("Missing required parameters")
     }
+    if (typeof order_id !== 'string' || typeof shop_id !== 'string') {
+      throw new Error("Invalid parameter types")
+    }
 
     // 1. Initialize Supabase Client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -41,8 +44,9 @@ serve(async (req) => {
     // 3. Platform Credentials for OAuth
     const consumerKey = Deno.env.get('MPESA_CONSUMER_KEY')
     const consumerSecret = Deno.env.get('MPESA_CONSUMER_SECRET')
-    const envString = Deno.env.get('MPESA_ENVIRONMENT') || "sandbox"
-    const baseUrl = envString === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke"
+    const envString = Deno.env.get('MPESA_ENVIRONMENT')
+    const resolvedEnvironment = envString === 'production' ? 'production' : 'sandbox'
+    const baseUrl = resolvedEnvironment === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke"
 
     if (!consumerKey || !consumerSecret) {
        throw new Error("Platform M-Pesa API Keys missing in Supabase secrets.")
@@ -63,9 +67,9 @@ serve(async (req) => {
     const password = btoa(`${shortcode}${passkey}${timestamp}`)
 
     // Clean phone (must be 254...)
-    let safePhone = phone.replace(/[^0-9]/g, '')
+    let safePhone = String(phone).replace(/[^0-9]/g, '')
     if (safePhone.startsWith('0')) safePhone = '254' + safePhone.substring(1)
-    if (safePhone.startsWith('+')) safePhone = safePhone.substring(1)
+    if (!/^254\d{9}$/.test(safePhone)) throw new Error('Invalid phone number format')
 
     // 6. Push to STK
     const webhookSecret = Deno.env.get('MPESA_WEBHOOK_SECRET')

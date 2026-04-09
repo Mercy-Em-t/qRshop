@@ -1,4 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient, getEnv } from '../middleware/env.js';
+import { isUuidV4, parseIsoTimestamp } from '../middleware/validation.js';
+
+const statusMap = {
+  paid: 'paid',
+  confirmed: 'processing',
+  shipped: 'shipped',
+  delivered: 'completed',
+  failed: 'failed',
+  cancelled: 'archived',
+};
+
+export function mapSystemBStatus(status) {
+  return statusMap[status] || 'pending';
+}
 
 /**
  * System B -> System A Webhook Receiver
@@ -8,7 +22,7 @@ import { createClient } from '@supabase/supabase-js';
 export default async function handler(req, res) {
   // 1. Security Check: System B should provide the API key
   const apiKey = req.headers['x-api-key'];
-  const expectedApiKey = process.env.SYSTEM_B_INCOMING_API_KEY;
+  const expectedApiKey = getEnv('SYSTEM_B_INCOMING_API_KEY');
 
   if (expectedApiKey && apiKey !== expectedApiKey) {
     return res.status(401).json({ error: "Unauthorized: Invalid API Key from System B." });
@@ -19,36 +33,32 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { order_id, status, timestamp, tracking_id, reason } = req.body;
+    const { order_id, status, timestamp, tracking_id } = req.body || {};
 
     if (!order_id || !status) {
       return res.status(400).json({ error: "Missing order_id or status in payload." });
     }
+    if (!isUuidV4(order_id)) {
+      return res.status(400).json({ error: 'Invalid order_id format.' });
+    }
+    if (typeof status !== 'string' || status.length > 32) {
+      return res.status(400).json({ error: 'Invalid status value.' });
+    }
+    const safeTimestamp = parseIsoTimestamp(timestamp);
+    if (!safeTimestamp) {
+      return res.status(400).json({ error: 'Invalid timestamp format.' });
+    }
 
     // 2. Database Connection
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // 3. Update Order Status in System A
-    // System B is the official authority on payment (paid) and tracking.
-    const statusMap = {
-      'paid': 'paid',
-      'confirmed': 'processing',
-      'shipped': 'shipped',
-      'delivered': 'completed',
-      'failed': 'failed',
-      'cancelled': 'archived'
-    };
-
-    const mappedStatus = statusMap[status] || 'pending';
+    const supabase = createSupabaseAdminClient();
+    const mappedStatus = mapSystemBStatus(status.toLowerCase());
 
     const { data, error } = await supabase
       .from('orders')
       .update({ 
         system_b_status: status, 
         system_b_tracking_id: tracking_id || null,
-        system_b_updated_at: timestamp || new Date().toISOString(),
+        system_b_updated_at: safeTimestamp,
         status: mappedStatus
       })
       .eq('id', order_id)

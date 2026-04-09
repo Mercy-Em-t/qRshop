@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
+import { requireEnv, getEnv } from '../middleware/env.js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY; // Requires service role to log everything
+const supabaseUrl = getEnv('SUPABASE_URL', ['VITE_SUPABASE_URL']);
+const supabaseServiceKey = getEnv('SUPABASE_SERVICE_ROLE_KEY'); // Requires service role to log everything
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabase = supabaseUrl && supabaseServiceKey ? createClient(supabaseUrl, supabaseServiceKey) : null;
 
 export default async function handler(req, res) {
   const { method, query, body, headers } = req;
@@ -11,18 +12,20 @@ export default async function handler(req, res) {
 
   // 1. Health Check Endpoint
   if (req.url.includes('/health')) {
-    try {
-      // Check System A (Self)
-      const { data, error } = await supabase.from('shops').select('id').limit(1);
+      try {
+        if (!supabase) throw new Error('Gateway logging database is not configured');
+        // Check System A (Self)
+        const { error } = await supabase.from('shops').select('id').limit(1);
       const systemAStatus = error ? 'DOWN' : 'UP';
 
       // Check System B
-      const systemBUrl = process.env.VITE_SYSTEM_B_URL;
+      const systemBUrl = getEnv('SYSTEM_B_URL', ['VITE_SYSTEM_B_URL']);
       let systemBStatus = 'UNKNOWN';
       try {
+        if (!systemBUrl) throw new Error('System B URL missing');
         const bRes = await fetch(`${systemBUrl}/health`, { method: 'GET' });
         systemBStatus = bRes.status === 200 ? 'UP' : 'DEGRADED';
-      } catch (e) {
+      } catch {
         systemBStatus = 'DOWN';
       }
 
@@ -42,15 +45,16 @@ export default async function handler(req, res) {
 
   // 2. Main Gateway Router
   if (req.url.includes('/route')) {
-    const target = query.to || 'SYSTEM_B';
-    const endpoint = query.endpoint || '/orders/new';
+      const target = query.to || 'SYSTEM_B';
+      const endpoint = query.endpoint || '/orders/new';
     
     let targetUrl = '';
     let apiKey = '';
 
     if (target === 'SYSTEM_B') {
-      targetUrl = `${process.env.VITE_SYSTEM_B_URL}${endpoint}`;
-      apiKey = process.env.VITE_SYSTEM_B_API_KEY;
+      const systemBUrl = requireEnv('SYSTEM_B_URL', ['VITE_SYSTEM_B_URL']);
+      apiKey = requireEnv('SYSTEM_B_API_KEY', ['VITE_SYSTEM_B_API_KEY']);
+      targetUrl = `${systemBUrl}${endpoint}`;
     } else {
       return res.status(400).json({ error: 'INVALID_TARGET', message: `Target system ${target} not supported.` });
     }
@@ -115,6 +119,7 @@ export default async function handler(req, res) {
 
 async function logGatewayActivity(log) {
   try {
+    if (!supabase) return;
     const { error } = await supabase.from('gateway_logs').insert([log]);
     if (error) console.error('Failed to log gateway activity:', error);
   } catch (e) {

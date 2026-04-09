@@ -18,7 +18,7 @@ The platform has evolved from a basic static menu viewer into a secure, tiered, 
 
 ## 🛠 Tech Stack
 
-*   **Frontend Ecosystem:** React 18, Vite, Tailwind CSS, React Router DOM, HTML2Canvas (for Smart Receipts).
+*   **Frontend Ecosystem:** React 19, Vite 8, Tailwind CSS v4, React Router DOM v7, HTML2Canvas (for Smart Receipts).
 *   **Backend & Database:** Supabase (PostgreSQL 15), Supabase Native Auth, Row Level Security (RLS).
 *   **Serverless Execution:** Deno-based Supabase Edge Functions (`whatsapp-dispatch`, `whatsapp-webhook`, `mpesa-stk-push`, `mpesa-webhook`).
 *   **Cloud Hosting:** Vercel (Edge Network).
@@ -31,7 +31,7 @@ This platform relies heavily on **Supabase Row Level Security (RLS)** to enforce
 
 To deploy or update schemas, use the `.sql` scripts located in the project's tracking artifacts or the Supabase SQL Editor.
 
-## ⚙️ Getting Started (Local Development)
+## ⚙️ Developer Quickstart
 
 1. **Install Dependencies:**
    ```bash
@@ -48,10 +48,43 @@ To deploy or update schemas, use the `.sql` scripts located in the project's tra
    *   `VITE_SUPABASE_ANON_KEY`
    *   `VITE_GATEWAY_URL` (For generating formatted QR payloads, e.g. `http://localhost:5173`)
 
-3. **Start the Frontend Server:**
+3. **Run quality checks and start the app:**
    ```bash
+   npm run lint
+   npm run test
+   npm run build
    npm run dev
    ```
+
+## 🔐 Server Runtime Environment (Required)
+
+For serverless handlers in `api/` and Supabase functions, configure these secure server variables (not client `VITE_*` values):
+
+* `SUPABASE_URL`
+* `SUPABASE_SERVICE_ROLE_KEY`
+* `DARAJA_CONSUMER_KEY`
+* `DARAJA_CONSUMER_SECRET`
+* `DARAJA_PASSKEY`
+* `DARAJA_SHORTCODE`
+* `WA_VERIFY_TOKEN`
+
+Optional:
+* `GATEWAY_URL`
+* `SYSTEM_B_URL`
+* `SYSTEM_B_API_KEY`
+
+## 🧭 Runtime Architecture Boundaries
+
+* `src/`: Client UX, routing, offline behavior, and shop/admin screens.
+* `api/`: Vercel serverless APIs for secure admin operations and integration routing.
+* `supabase/functions/`: Edge functions for payment and WhatsApp webhooks/dispatch.
+* `supabase/*.sql`: Schema and operational SQL artifacts (recommended to run through an ordered migration process).
+
+## 🚨 Incident Playbooks
+
+* **Failed M-Pesa Callback:** verify webhook secret, inspect `payment_audit_log`, confirm `SUPABASE_SERVICE_ROLE_KEY`.
+* **Failed Gateway Sync:** inspect `gateway_logs` and verify `SYSTEM_B_URL`/`SYSTEM_B_API_KEY`.
+* **WhatsApp Webhook Rejects:** confirm `WA_VERIFY_TOKEN`, `WA_PHONE_NUMBER_ID`, and `WA_ACCESS_TOKEN`.
 
 ## 🌩️ Deploying Edge Functions
 
