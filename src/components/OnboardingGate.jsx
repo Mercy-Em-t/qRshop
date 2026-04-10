@@ -280,7 +280,7 @@ export default function OnboardingGate({ children }) {
            <div className="w-full max-w-lg bg-white rounded-2xl shadow-xl p-8 border border-indigo-100">
                <div className="flex flex-col items-center text-center mb-8">
                   <span className="text-5xl mb-3">📋</span>
-                  <h1 className="text-2xl font-black text-gray-900">Operator Profile Setup</h1>
+                  <h1 className="text-2xl font-black text-gray-900">Operator Profile Setup <span className="text-[10px] text-gray-300 font-normal">v2.10.4</span></h1>
                   <p className="text-gray-500 mt-2 text-sm text-balance">
                      Welcome to the platform! Please provide some basic public information about your business to initialize your profile and agree to the Operator Legal Agreements.
                   </p>
@@ -299,7 +299,11 @@ export default function OnboardingGate({ children }) {
                       type="text"
                       required
                       value={tagline}
-                      onChange={e => setTagline(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setTagline(val);
+                        sessionStorage.setItem('onboarding_tagline', val);
+                      }}
                       placeholder="e.g. Best coffee in town doing what we love!"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 focus:bg-white"
                     />
@@ -310,7 +314,11 @@ export default function OnboardingGate({ children }) {
                       type="text"
                       required
                       value={address}
-                      onChange={e => setAddress(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setAddress(val);
+                        sessionStorage.setItem('onboarding_address', val);
+                      }}
                       placeholder="e.g. 123 Main Street, Block A"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 focus:bg-white"
                     />
@@ -321,7 +329,11 @@ export default function OnboardingGate({ children }) {
                       type="text"
                       required
                       value={contactPhone}
-                      onChange={e => setContactPhone(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        setContactPhone(val);
+                        sessionStorage.setItem('onboarding_phone', val);
+                      }}
                       placeholder="e.g. 254700000000"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 focus:bg-white"
                     />
