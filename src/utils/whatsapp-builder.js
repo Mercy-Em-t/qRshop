@@ -1,4 +1,4 @@
-export function buildWhatsAppMessage(shopName, table, items, orderId, total, discountAmount = 0, couponCode = null, isOffline = false, clientName = null, clientPhone = null, fulfillmentType = 'dine_in', deliveryAddress = null, deliveryFeeCharged = 0) {
+export function buildWhatsAppMessage(shopName, table, items, orderId, total, discountAmount = 0, isOffline = false, clientName = null, clientPhone = null, fulfillmentType = 'dine_in', deliveryAddress = null, deliveryFeeCharged = 0) {
   const shortId = orderId ? orderId.split("-")[0].toUpperCase() : "N/A";
   
   // Create formatted datestring e.g. "17/03/2026, 13:02"
@@ -56,8 +56,51 @@ Subtotal: KSh ${subtotal}${discountSection}${deliverySection}
 💰 *TOTAL: KSh ${total}*
 
 📌 Status: ${status}
+🔗 Track Order: ${window.location.origin}/track/${orderId}
 
 — _Savannah OS_`;
+}
+
+export function buildStatusUpdateMessage(shopName, orderId, newStatus, clientName) {
+  const shortId = orderId ? orderId.split("-")[0].toUpperCase() : "N/A";
+  let statusEmoji = "ℹ️";
+  let statusText = newStatus.toUpperCase();
+
+  if (newStatus === 'confirmed') { statusEmoji = "✅"; statusText = "CONFIRMED & PREPARING"; }
+  if (newStatus === 'ready') { statusEmoji = "🎁"; statusText = "READY FOR PICKUP"; }
+  if (newStatus === 'out_for_delivery') { statusEmoji = "🚗"; statusText = "OUT FOR DELIVERY"; }
+  if (newStatus === 'completed') { statusEmoji = "🏁"; statusText = "COMPLETED"; }
+  if (newStatus === 'cancelled') { statusEmoji = "❌"; statusText = "CANCELLED"; }
+
+  return `${statusEmoji} *ORDER UPDATE: #${shortId}*
+  
+Hi ${clientName || "Customer"}, your order from *${shopName}* is now *${statusText}*.
+
+🔗 Track Live: ${window.location.origin}/track/${orderId}
+
+Thank you for choosing us!`;
+}
+
+export function buildPaymentPromptMessage(shopName, orderId, total, paymentDetails) {
+  const shortId = orderId ? orderId.split("-")[0].toUpperCase() : "N/A";
+  return `💳 *PAYMENT REQUEST: #${shortId}*
+
+Hi, to proceed with your order at *${shopName}*, please settle the balance of *KSh ${total}*.
+
+📌 *Payment Instructions:*
+${paymentDetails || "Please use the M-Pesa prompt on your phone or pay at the counter."}
+
+🔗 View Order: ${window.location.origin}/track/${orderId}`;
+}
+
+export function buildAmendmentConfirmation(shopName, orderId, changes) {
+  const shortId = orderId ? orderId.split("-")[0].toUpperCase() : "N/A";
+  return `🔄 *ORDER AMENDED: #${shortId}*
+
+We've updated your order at *${shopName}* as requested:
+${changes}
+
+🔗 Track Changes: ${window.location.origin}/track/${orderId}`;
 }
 
 export function buildWhatsAppLink(phoneNumber, message) {
