@@ -71,17 +71,17 @@ export default function OnboardingGate({ children }) {
               return data;
            });
 
-           // Only set initial values ONE TIME from DB, but favor sessionStorage if user typed anything
+           // Strictly only initialize from DB if we haven't done it yet AND the user hasn't typed anything locally
            if (!initializedRef.current) {
-              const savedPhone = sessionStorage.getItem('onboarding_phone');
-              if (!savedPhone && data.phone) setPhone(data.phone);
+              const hasTypedAnything = sessionStorage.getItem('onboarding_phone') || 
+                                       sessionStorage.getItem('onboarding_tagline') || 
+                                       sessionStorage.getItem('onboarding_address');
               
-              const savedTagline = sessionStorage.getItem('onboarding_tagline');
-              if (!savedTagline && data.tagline) setTagline(data.tagline);
-              
-              const savedAddress = sessionStorage.getItem('onboarding_address');
-              if (!savedAddress && data.address) setAddress(data.address);
-              
+              if (!hasTypedAnything) {
+                 if (data.phone) setPhone(data.phone);
+                 if (data.tagline) setTagline(data.tagline);
+                 if (data.address) setAddress(data.address);
+              }
               initializedRef.current = true;
            }
         }
