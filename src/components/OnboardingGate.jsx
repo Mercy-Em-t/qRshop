@@ -21,7 +21,7 @@ export default function OnboardingGate({ children }) {
   // KYC Profile State
   const [tagline, setTagline] = useState("");
   const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [kycError, setKycError] = useState("");
   const [kycLoading, setKycLoading] = useState(false);
@@ -39,17 +39,17 @@ export default function OnboardingGate({ children }) {
     const savedTagline = sessionStorage.getItem('onboarding_tagline');
     const savedAddress = sessionStorage.getItem('onboarding_address');
     
-    if (savedPhone) setPhone(savedPhone);
+    if (savedPhone) setContactPhone(savedPhone);
     if (savedTagline) setTagline(savedTagline);
     if (savedAddress) setAddress(savedAddress);
   }, []);
 
   // Sync to sessionStorage
   useEffect(() => {
-    if (phone) sessionStorage.setItem('onboarding_phone', phone);
+    if (contactPhone) sessionStorage.setItem('onboarding_phone', contactPhone);
     if (tagline) sessionStorage.setItem('onboarding_tagline', tagline);
     if (address) sessionStorage.setItem('onboarding_address', address);
-  }, [phone, tagline, address]);
+  }, [contactPhone, tagline, address]);
 
   useEffect(() => {
     if (!user || user.role === "system_admin") {
@@ -78,7 +78,7 @@ export default function OnboardingGate({ children }) {
                                        sessionStorage.getItem('onboarding_address');
               
               if (!hasTypedAnything) {
-                 if (data.phone) setPhone(data.phone);
+                 if (data.phone) setContactPhone(data.phone);
                  if (data.tagline) setTagline(data.tagline);
                  if (data.address) setAddress(data.address);
               }
@@ -159,7 +159,7 @@ export default function OnboardingGate({ children }) {
           .update({
              tagline,
              address,
-             phone,
+             phone: contactPhone,
              kyc_completed: true
           })
           .eq("id", user.shop_id);
@@ -318,10 +318,10 @@ export default function OnboardingGate({ children }) {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Public Support Phone</label>
                     <input 
-                      type="tel"
+                      type="text"
                       required
-                      value={phone}
-                      onChange={e => setPhone(e.target.value)}
+                      value={contactPhone}
+                      onChange={e => setContactPhone(e.target.value)}
                       placeholder="e.g. 254700000000"
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-indigo-500 focus:bg-white"
                     />

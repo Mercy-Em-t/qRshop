@@ -13,7 +13,7 @@ export default function App() {
   const [subdomainShopId, setSubdomainShopId] = useState(null);
   const [resolving, setResolving] = useState(true);
 
-  useOfflineEventQueue();
+  // useOfflineEventQueue(); 
   useSessionInactivity(15); // Explicit 15-minute inactivity logout
 
   useEffect(() => {
