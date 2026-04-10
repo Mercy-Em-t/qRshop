@@ -7,12 +7,14 @@ import { renderCustomerRoutes } from "./routes/customer-routes";
 import { renderDashboardRoutes } from "./routes/dashboard-routes";
 import { renderAdminRoutes } from "./routes/admin-routes";
 import { useOfflineEventQueue } from "./hooks/useOfflineEventQueue";
+import { useSessionInactivity } from "./hooks/useSessionInactivity";
 
 export default function App() {
   const [subdomainShopId, setSubdomainShopId] = useState(null);
   const [resolving, setResolving] = useState(true);
 
   useOfflineEventQueue();
+  useSessionInactivity(15); // Explicit 15-minute inactivity logout
 
   useEffect(() => {
     document.title = "ShopQR | Instant WhatsApp Menus & Ordering";

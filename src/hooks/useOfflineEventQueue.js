@@ -57,7 +57,12 @@ export function useOfflineEventQueue() {
       } else {
         localStorage.removeItem('offlineEvents');
       }
-      setQueue(pendingQueue);
+
+      // Optimization: Only update state if queue content changed to avoid App re-renders
+      setQueue(prev => {
+        if (JSON.stringify(prev) === JSON.stringify(pendingQueue)) return prev;
+        return pendingQueue;
+      });
     } catch (err) {
       console.error("Flush queue error:", err);
     }

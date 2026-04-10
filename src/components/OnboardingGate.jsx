@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser, logout } from "../services/auth-service";
@@ -31,7 +31,25 @@ export default function OnboardingGate({ children }) {
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState("");
 
-  const initializedRef = useState(false);
+  const initializedRef = useRef(false);
+
+  // Restore from sessionStorage on mount
+  useEffect(() => {
+    const savedPhone = sessionStorage.getItem('onboarding_phone');
+    const savedTagline = sessionStorage.getItem('onboarding_tagline');
+    const savedAddress = sessionStorage.getItem('onboarding_address');
+    
+    if (savedPhone) setPhone(savedPhone);
+    if (savedTagline) setTagline(savedTagline);
+    if (savedAddress) setAddress(savedAddress);
+  }, []);
+
+  // Sync to sessionStorage
+  useEffect(() => {
+    if (phone) sessionStorage.setItem('onboarding_phone', phone);
+    if (tagline) sessionStorage.setItem('onboarding_tagline', tagline);
+    if (address) sessionStorage.setItem('onboarding_address', address);
+  }, [phone, tagline, address]);
 
   useEffect(() => {
     if (!user || user.role === "system_admin") {
@@ -48,18 +66,23 @@ export default function OnboardingGate({ children }) {
           .single();
 
         if (!error && data) {
-           // ONLY update shop status if it actually changed to prevent flicker
            setShopStatus(prev => {
               if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
               return data;
            });
 
-           // Only set initial values ONE TIME
-           if (!initializedRef[0]) {
-              if (data.phone) setPhone(data.phone);
-              if (data.tagline) setTagline(data.tagline);
-              if (data.address) setAddress(data.address);
-              initializedRef[1](true);
+           // Only set initial values ONE TIME from DB, but favor sessionStorage if user typed anything
+           if (!initializedRef.current) {
+              const savedPhone = sessionStorage.getItem('onboarding_phone');
+              if (!savedPhone && data.phone) setPhone(data.phone);
+              
+              const savedTagline = sessionStorage.getItem('onboarding_tagline');
+              if (!savedTagline && data.tagline) setTagline(data.tagline);
+              
+              const savedAddress = sessionStorage.getItem('onboarding_address');
+              if (!savedAddress && data.address) setAddress(data.address);
+              
+              initializedRef.current = true;
            }
         }
       } catch (err) {
