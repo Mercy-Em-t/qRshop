@@ -31,7 +31,7 @@ export default function OnboardingGate({ children }) {
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState("");
 
-  const initializedRef = useState(false); // Using state to track if we've filled the form once
+  const initializedRef = useState(false);
 
   useEffect(() => {
     if (!user || user.role === "system_admin") {
@@ -40,23 +40,33 @@ export default function OnboardingGate({ children }) {
     }
 
     const checkStatus = async () => {
-      const { data, error } = await supabase
-        .from("shops")
-        .select("needs_password_change, kyc_completed, phone, tagline, address")
-        .eq("id", user.shop_id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("shops")
+          .select("needs_password_change, kyc_completed, phone, tagline, address")
+          .eq("id", user.shop_id)
+          .single();
 
-      if (!error && data) {
-         setShopStatus(data);
-         // Only set initial values IF we haven't initialized them yet in this session
-         if (!initializedRef[0]) {
-            if (data.phone) setPhone(data.phone);
-            if (data.tagline) setTagline(data.tagline);
-            if (data.address) setAddress(data.address);
-            initializedRef[1](true);
-         }
+        if (!error && data) {
+           // ONLY update shop status if it actually changed to prevent flicker
+           setShopStatus(prev => {
+              if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+              return data;
+           });
+
+           // Only set initial values ONE TIME
+           if (!initializedRef[0]) {
+              if (data.phone) setPhone(data.phone);
+              if (data.tagline) setTagline(data.tagline);
+              if (data.address) setAddress(data.address);
+              initializedRef[1](true);
+           }
+        }
+      } catch (err) {
+        console.error("Status check failed:", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     
     checkStatus();

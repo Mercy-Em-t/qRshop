@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getShopBySubdomain } from "./services/shop-service";
 import { Routes, Route } from "react-router-dom";
 import PublicShopProfile from "./pages/PublicShopProfile";
@@ -74,12 +74,17 @@ export default function App() {
      return <PublicShopProfile directShopId={subdomainShopId} />;
   }
 
+  const publicRoutes = useMemo(() => renderPublicRoutes(), []);
+  const customerRoutes = useMemo(() => renderCustomerRoutes(), []);
+  const dashboardRoutes = useMemo(() => renderDashboardRoutes(), []);
+  const adminRoutes = useMemo(() => renderAdminRoutes(), []);
+
   return (
     <Routes>
-      {renderPublicRoutes()}
-      {renderCustomerRoutes()}
-      {renderDashboardRoutes()}
-      {renderAdminRoutes()}
+      {publicRoutes}
+      {customerRoutes}
+      {dashboardRoutes}
+      {adminRoutes}
 
       {/* Fallback 404 to explicitly prevent blank white screens on invalid paths */}
       <Route path="*" element={
