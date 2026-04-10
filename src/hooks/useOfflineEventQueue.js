@@ -45,10 +45,15 @@ export function useOfflineEventQueue() {
         // - 403/401: Unauthorized, remove from queue (permission issue).
         // - Other (5xx or network drop): Keep in queue and try again later.
         
-        const isClientError = (status >= 400 && status < 500) || error?.status === 409 || error?.code === '23505';
+        // Robust Client Error Detection (includes 409 Conflict, 400 Bad Request, 403 Forbidden)
+        const isClientError = (status >= 400 && status < 500) || 
+                              error?.status === 409 || 
+                              error?.code === '23505' || 
+                              error?.code === 'PGRST116';
 
         if (!error || isClientError) {
-          pendingQueue = pendingQueue.filter((e) => e.id !== event.id);
+          // If it's a conflict or malformed, we MUST remove it to avoid loops
+          pendingQueue = pendingQueue.filter((e) => (e.id || e.event_id) !== (event.id || event.event_id));
         }
       }
       
