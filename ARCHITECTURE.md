@@ -54,33 +54,25 @@ Communication
 
 ```
 src
+ ├── routes             # [NEW] Domain-driven route modules
+ │    ├── PublicRoutes
+ │    ├── CustomerRoutes
+ │    ├── DashboardRoutes
+ │    ├── AdminRoutes
+ │    └── OperatorRoutes
+ │
  ├── components
  │    ├── MenuItem
  │    ├── Cart
- │    ├── UpsellModal
- │    └── QRAccessGuard
- │
- ├── pages
- │    ├── Enter
- │    ├── Menu
- │    ├── Cart
- │    ├── Order
- │    ├── Dashboard
- │    └── Admin
- │
- ├── services
- │    ├── supabaseClient
- │    ├── menuService
- │    └── shopService
- │
- ├── utils
- │    ├── locationCheck
- │    ├── qrSession
- │    └── whatsappBuilder
- │
+...
  └── hooks
       ├── useCart
       └── useShop
+
+supabase
+ ├── migrations         # [NEW] Versioned SQL migrations (Timestamped)
+ ├── functions          # Edge Functions (STK Push, Webhooks)
+ └── archive_sql        # Legacy SQL patches (Archived)
 ```
 
 ---

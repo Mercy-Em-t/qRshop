@@ -17,11 +17,14 @@ export default function Dashboard() {
   const [upsellStats, setUpsellStats] = useState(null);
   const [shop, setShop] = useState(null);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
+  const [lastCheckCount, setLastCheckCount] = useState(null);
+  const [showNewOrderToast, setShowNewOrderToast] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const planAccess = usePlanAccess();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const user = getCurrentUser();
   const shopId = user?.shop_id;
@@ -33,6 +36,10 @@ export default function Dashboard() {
     }
     async function fetchAnalytics() {
       if (!shopId) {
+        setLoading(false);
+        return;
+      }
+      if (!supabase) {
         setLoading(false);
         return;
       }
@@ -81,13 +88,25 @@ export default function Dashboard() {
     if (!shopId) return;
 
     const fetchPendingCount = async () => {
+      if (!supabase) return;
       const { count } = await supabase
         .from("orders")
         .select('*', { count: 'exact', head: true })
         .eq("shop_id", shopId)
         .in("status", ["pending_payment", "pending", "stk_pushed"]);
       
-      setPendingOrdersCount(count || 0);
+      const newCount = count || 0;
+      
+      // If count increased, show toast
+      if (lastCheckCount !== null && newCount > lastCheckCount) {
+         setShowNewOrderToast(true);
+         // Play a subtle sound if possible, or just the toast
+         try { new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play(); } catch(e) {}
+         setTimeout(() => setShowNewOrderToast(false), 5000);
+      }
+      
+      setPendingOrdersCount(newCount);
+      setLastCheckCount(newCount);
     };
 
     fetchPendingCount();
@@ -105,22 +124,59 @@ export default function Dashboard() {
               <span className="bg-slate-900 text-white text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest">Admin View</span>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          {/* Desktop right-side */}
+          <div className="hidden sm:flex items-center gap-4">
             {user?.role === 'system_admin' && <AppLauncher />}
             <button
-              onClick={() => {
-                logout();
-                navigate("/login");
-              }}
+              onClick={() => { logout(); navigate("/login"); }}
               className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
             >
               Logout
             </button>
           </div>
+          {/* Mobile hamburger */}
+          <button
+            className="sm:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100"
+            onClick={() => setMobileMenuOpen(v => !v)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
+            )}
+          </button>
         </div>
+        {/* Mobile dropdown menu */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-3">
+            <Link to="/dashboard/orders" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🛎 Live Orders</Link>
+            <Link to="/menu-manager" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">📋 Menu Manager</Link>
+            <Link to="/dashboard/campaigns" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🎁 Bundles</Link>
+            <Link to="/dashboard/settings" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">⚙️ Settings</Link>
+            <button onClick={() => { logout(); navigate("/login"); }} className="text-sm font-bold text-red-500 text-left">Logout</button>
+          </div>
+        )}
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      {/* New Order Toast */}
+      {showNewOrderToast && (
+        <div className="fixed top-20 right-4 z-[100] animate-bounce">
+          <Link 
+            to="/dashboard/orders"
+            className="bg-green-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-green-400"
+            onClick={() => setShowNewOrderToast(false)}
+          >
+            <span className="text-2xl">🔔</span>
+            <div>
+              <p className="font-bold text-sm">New Order Received!</p>
+              <p className="text-[10px] opacity-90 uppercase font-black tracking-widest">Tap to process</p>
+            </div>
+          </Link>
+        </div>
+      )}
+
+      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
         {showWizard && (
           <OnboardingWizard 
             shopId={shopId} 
@@ -277,6 +333,16 @@ export default function Dashboard() {
                </p>
              </div>
           )}
+
+          {/* Bundles tab — links to Campaign Manager which handles bundle creation */}
+          <Link
+            to="/dashboard/campaigns"
+            className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-orange-200 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-orange-400 w-16 h-16 rounded-bl-full opacity-10"></div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">🎁 Bundles</h2>
+            <p className="text-gray-500 text-sm">Create product bundles and combo promotions for your shop.</p>
+          </Link>
 
           {planAccess.isPro ? (
              <Link

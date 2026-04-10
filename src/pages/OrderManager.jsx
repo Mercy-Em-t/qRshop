@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
+import { updateOrderStatus } from "../services/order-service";
 
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
@@ -11,6 +12,8 @@ export default function OrderManager() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editingOrder, setEditingOrder] = useState(null);
   const [editTotal, setEditTotal] = useState(0);
+  const [noteOrder, setNoteOrder] = useState(null);
+  const [noteText, setNoteText] = useState('');
 
   const navigate = useNavigate();
   const user = getCurrentUser();
@@ -18,6 +21,11 @@ export default function OrderManager() {
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
+    if (!supabase) {
+       console.error("Supabase client is not initialized.");
+       setLoading(false);
+       return;
+    }
     fetchOrders();
 
     const channel = supabase
@@ -34,6 +42,7 @@ export default function OrderManager() {
   }, []);
 
   const fetchOrders = async () => {
+    if (!supabase) return;
     const { data: shopData } = await supabase.from("shops").select("*").eq("id", SHOP_ID).single();
     if (shopData) setShop(shopData);
 
@@ -87,6 +96,40 @@ export default function OrderManager() {
     }
   };
 
+  // --- CSV Export ---
+  const exportCSV = () => {
+    const rows = [
+      ['Order ID', 'Customer', 'Phone', 'Items', 'Total (KSh)', 'Status', 'Type', 'Table', 'Date', 'Notes'],
+      ...orders.map(o => [
+        o.id,
+        o.client_name || 'Guest',
+        o.client_phone || '',
+        (o.order_items || []).map(i => `${i.quantity}x ${i.menu_items?.name}`).join(' | '),
+        o.total_price,
+        o.status,
+        o.order_type || '',
+        o.table_number || '',
+        new Date(o.created_at).toLocaleString(),
+        o.notes || ''
+      ])
+    ];
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders_${shop?.name || 'export'}_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // --- Save Note ---
+  const handleSaveNote = async () => {
+    if (!noteOrder) return;
+    const { error } = await supabase.from('orders').update({ notes: noteText }).eq('id', noteOrder.id);
+    if (!error) { setNoteOrder(null); fetchOrders(); }
+  };
+
   const isGastro = shop?.industry_type === 'food' || shop?.industry_type === 'restaurant';
   
   const filteredOrders = orders.filter(o => {
@@ -124,6 +167,13 @@ export default function OrderManager() {
                      Command Center / {shop?.name}
                   </p>
                </div>
+               <button
+                  onClick={exportCSV}
+                  title="Export all orders to CSV"
+                  className="flex items-center gap-1.5 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-500 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all"
+               >
+                  ⬇ CSV
+               </button>
                {/* Search Bar */}
                <div className="relative flex-1 md:w-64">
                   <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -193,6 +243,13 @@ export default function OrderManager() {
                      <p className="text-lg font-bold text-gray-900">KSh {order.total_price}</p>
                   </div>
 
+                  {order.notes && (
+                    <p className="text-[10px] text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mb-4 font-medium italic">📝 {order.notes}</p>
+                  )}
+                  <button onClick={() => { setNoteOrder(order); setNoteText(order.notes || ''); }} className="w-full text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-700 text-left mb-6 transition">
+                    {order.notes ? '✏️ Edit Note' : '+ Add Note'}
+                  </button>
+
                   <div className="space-y-2">
                      {order.status === 'pending' && (
                         <>
@@ -225,6 +282,27 @@ export default function OrderManager() {
             )}
          </div>
       </main>
+
+      {/* Notes Modal */}
+      {noteOrder && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-sm border border-slate-200">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Ref #{noteOrder.id.split('-')[0].toUpperCase()}</p>
+            <h3 className="text-lg font-bold mb-6 text-gray-900">Order Note</h3>
+            <textarea
+              value={noteText}
+              onChange={e => setNoteText(e.target.value)}
+              rows={4}
+              placeholder="Add a note for this order (e.g. special instructions, delivery info)..."
+              className="w-full border border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 resize-none"
+            />
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <button onClick={handleSaveNote} className="bg-green-600 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest">Save Note</button>
+              <button onClick={() => setNoteOrder(null)} className="bg-gray-50 text-gray-400 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingOrder && (
          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">

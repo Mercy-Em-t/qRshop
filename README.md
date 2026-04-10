@@ -25,11 +25,10 @@ The platform has evolved from a basic static menu viewer into a secure, tiered, 
 
 ## 🗄️ Database & Security Constraints
 
-This platform relies heavily on **Supabase Row Level Security (RLS)** to enforce tenant boundaries (`shop_id`). Furthermore, critical operations execute via Postgres constraints and RPCs:
-*   `checkout_cart` RPC guarantees untampered pricing.
-*   `CHECK (quantity > 0)` and `CHECK (price >= 0)` guarantee data integrity.
-
-To deploy or update schemas, use the `.sql` scripts located in the project's tracking artifacts or the Supabase SQL Editor.
+This platform relies heavily on **Supabase Row Level Security (RLS)** to enforce tenant boundaries (`shop_id`). 
+*   **Versioned Migrations**: All schema changes are managed via `supabase/migrations/` using timestamped SQL files.
+*   **Secure Atomic Checkout (RPC)**: pricing engine verified on the server-side to block client-side tampering.
+*   **Zero Trust Architecture**: Critical operations enforce the use of `SUPABASE_SERVICE_ROLE_KEY` in isolated backend handlers.
 
 ## ⚙️ Getting Started (Local Development)
 

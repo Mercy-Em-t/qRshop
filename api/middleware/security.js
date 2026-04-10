@@ -42,24 +42,26 @@ export async function validateAdminRequest(req, res) {
     return null;
   }
 
-  const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("Critical Security Failure: Missing Supabase Service Role Key in environment.");
+    res.status(500).json({error: 'Server configuration error.'});
+    return null;
+  }
+
   const adminDb = createClient(supabaseUrl, supabaseServiceKey);
 
   // 3. Admin Authentication & Role Verification
   let caller;
-  if (adminToken === 'mock-admin-token-for-admin@qrshop.com') {
-    const { data: mockUser } = await adminDb.from('shop_users').select('*').eq('role', 'system_admin').limit(1).single();
-    caller = mockUser;
-  } else {
-    const { data: { user }, error } = await adminDb.auth.getUser(adminToken);
-    if (error || !user) {
-      res.status(403).json({error: 'Invalid Admin Token. Security exception logged.'});
-      return null;
-    }
-    const { data: profile } = await adminDb.from('shop_users').select('*').eq('email', user.email).single();
-    caller = profile;
+  const { data: { user }, error } = await adminDb.auth.getUser(adminToken);
+  if (error || !user) {
+    res.status(403).json({error: 'Invalid Admin Token. Security exception logged.'});
+    return null;
   }
+  const { data: profile } = await adminDb.from('shop_users').select('*').eq('email', user.email).single();
+  caller = profile;
 
   if (!caller || caller.role !== 'system_admin') {
     res.status(403).json({error: 'Forbidden. System Admin role required.'});

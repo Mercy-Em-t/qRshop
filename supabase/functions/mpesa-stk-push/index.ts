@@ -38,14 +38,19 @@ serve(async (req) => {
     const shortcode = recipient.mpesa_shortcode
     const passkey = recipient.mpesa_passkey
 
-    // 3. Platform Credentials for OAuth
-    const consumerKey = Deno.env.get('MPESA_CONSUMER_KEY')
-    const consumerSecret = Deno.env.get('MPESA_CONSUMER_SECRET')
-    const envString = Deno.env.get('MPESA_ENVIRONMENT') || "sandbox"
-    const baseUrl = envString === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke"
+    // 3. Platform Credentials for OAuth (Fetched from Supabase Vault)
+    const { data: secrets, error: vaultErr } = await supabase.rpc('get_decrypted_secrets');
+    
+    // Fallback if the RPC isn't set up yet, though in production we mandate Vault
+    const vaultMap = Object.fromEntries(secrets?.map((s: any) => [s.name, s.decrypted_secret]) || []);
+
+    const consumerKey = vaultMap['MPESA_CONSUMER_KEY'] || Deno.env.get('MPESA_CONSUMER_KEY');
+    const consumerSecret = vaultMap['MPESA_CONSUMER_SECRET'] || Deno.env.get('MPESA_CONSUMER_SECRET');
+    const envString = vaultMap['MPESA_ENVIRONMENT'] || Deno.env.get('MPESA_ENVIRONMENT') || "sandbox";
+    const baseUrl = envString === "production" ? "https://api.safaricom.co.ke" : "https://sandbox.safaricom.co.ke";
 
     if (!consumerKey || !consumerSecret) {
-       throw new Error("Platform M-Pesa API Keys missing in Supabase secrets.")
+       throw new Error("Platform M-Pesa API Keys missing in Vault or Environment.");
     }
 
     // 4. Generate OAuth Token

@@ -25,6 +25,7 @@ const buildUnstructuredMessage = (shopName, table, items, identity, deliveryFee 
    const itemList = items.map(i => `${i.quantity}x ${i.name}`).join(", ");
    const contactStr = identity?.name ? `\n\nName: ${identity.name}` : ''; 
    const orderTag = orderNumber ? `\n🏷️ Order ID: #${orderNumber}` : '';
+   const trackingLink = orderNumber ? `\n🔗 Track: ${window.location.origin}/track/${orderNumber}` : '';
    
    let fulfillStr = `Table ${table}`;
    if (identity?.fulfillment_type === 'delivery') {
@@ -35,7 +36,7 @@ const buildUnstructuredMessage = (shopName, table, items, identity, deliveryFee 
       fulfillStr = `Digital Delivery to ${identity.address}`;
    }
    
-   return `Hi ${shopName}, I'd like to place an order for ${fulfillStr}.${contactStr}${orderTag}\n\nItems: ${itemList}\n\nPlease confirm.`;
+   return `Hi ${shopName}, I'd like to place an order for ${fulfillStr}.${contactStr}${orderTag}${trackingLink}\n\nItems: ${itemList}\n\nPlease confirm.`;
 };
 
 export default function Order() {

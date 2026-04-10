@@ -1,18 +1,34 @@
+import { z } from 'zod';
+
+const stkPushSchema = z.object({
+  phone: z.string().min(10).max(15),
+  amount: z.number().positive(),
+  orderId: z.string().uuid()
+});
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({error: 'Method Not Allowed'});
 
-  const { phone, amount, orderId } = req.body;
-
-  if (!phone || !amount || !orderId) {
-    return res.status(400).json({ error: "Missing required fields" });
+  const validation = stkPushSchema.safeParse(req.body);
+  if (!validation.success) {
+    return res.status(400).json({ 
+      error: "Invalid input", 
+      details: validation.error.format() 
+    });
   }
 
-  // Use environment variables supplied by Vercel for Daraja credentials
-  // Falling back entirely to user-supplied sandbox credentials during test execution phase if omitted
-  const consumerKey = process.env.DARAJA_CONSUMER_KEY || 'Dj2r3ZoXesgpDbCGSRHZFR27gT84U4GgCGfAhldgNR34NHmX';
-  const consumerSecret = process.env.DARAJA_CONSUMER_SECRET || 'NWBcjE3IyoEenemOJYtDcDrWqnxDnevmNwriDTVGKMqZTgk3suuA9f68kzq8XKs3';
-  const passkey = process.env.DARAJA_PASSKEY || 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919';
-  const shortcode = process.env.DARAJA_SHORTCODE || '174379';
+  const { phone, amount, orderId } = validation.data;
+
+  // Environment variables MUST be set in Vercel/Local .env
+  const consumerKey = process.env.DARAJA_CONSUMER_KEY;
+  const consumerSecret = process.env.DARAJA_CONSUMER_SECRET;
+  const passkey = process.env.DARAJA_PASSKEY;
+  const shortcode = process.env.DARAJA_SHORTCODE;
+
+  if (!consumerKey || !consumerSecret || !passkey || !shortcode) {
+    console.error("Critical Security Failure: Missing Daraja credentials in environment.");
+    return res.status(500).json({ error: "Server configuration error" });
+  }
 
   // Format phone logically
   let formattedPhone = phone.replace(/\D/g, '');

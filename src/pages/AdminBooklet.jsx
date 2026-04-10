@@ -820,6 +820,67 @@ The platform has now evolved into a "Native-First" ecosystem. While guest checko
 • Anti-Scraping Shields: The product catalog is protected by Row-Level Security (RLS). While it remains public for legitimate customers, it restricts indiscriminate automated scraping by binding visibility to "Online" shops.
 • Resource Draining Prevention: Database-level rate limiting and strict identity checks prevent bot-driven order flooding.
 • Data Extraction: Authorized System Administrators can now export full order and user data as encrypted CSVs directly from the Master Admin Hub.`
+  },
+  {
+    id: "production-hardening",
+    icon: "🚧",
+    title: "Chapter 27 — Production Hardening & Testing",
+    tagline: "Building for 99.9% reliability and zero-trust security",
+    content: `Added: April 10, 2026
+
+Modern Savannah has now entered the "Production-Ready" phase. This means we have moved away from MVP (Minimum Viable Product) shortcuts and implemented industrial-grade guards.
+
+──────────────────────
+1. ZERO-TRUST SECURITY (Supabase Vault)
+──────────────────────
+• The Problem: In many apps, secrets like M-Pesa keys are stored in ".env" files. If a hacker gets access to the server logs, they can see your keys.
+• The Solution: We use the Supabase Vault. Your M-Pesa Passkeys and WhatsApp Tokens are now encrypted inside the database. They are only "unlocked" during a transaction and are never visible in the frontend code.
+
+──────────────────────
+2. INTEGRATION TESTING (Playwright)
+──────────────────────
+• The Problem: As we add more features, we risk accidentally breaking the checkout or login pages.
+• The Solution: We use Playwright—an automated browser that "acts" like a customer. It clicks buttons, types phone numbers, and checks if the payment prompt appears. This happens automatically before every update to ensure nothing is broken.
+
+──────────────────────
+3. TYPE SAFETY (TypeScript)
+──────────────────────
+• The Problem: JavaScript is flexible but can be "loose," leading to crashes when data looks different than expected (e.g., a missing price).
+• The Solution: The platform core is now written in TypeScript. This forces the code to be mathematically correct. If a programmer tries to order 1.5 burgers (instead of a whole number), the code simply won't run, preventing data corruption at the source.
+
+──────────────────────
+4. DATABASE GOVERNANCE (Migrations)
+──────────────────────
+• The Problem: Changing the database structure manually can lead to "Configuration Drift" where your local test site looks different from the live production site.
+• The Solution: Every database change is now a "Migration File." This allows us to "replay" the entire history of the database on a clean server in seconds, ensuring the production environment is always a perfect, stable mirror of our local tests.`
+  },
+  {
+    id: "shop-homepages",
+    icon: "🏠",
+    title: "Chapter 28 — Personalized Shop Homepages",
+    tagline: "Every shop gets its own digital storefront",
+    content: `Added: April 10, 2026
+
+Modern Savannah now supports beautiful, personalized homepages for every shop. This moves beyond just a simple menu list to a full "online website" experience for each merchant.
+
+──────────────────────
+1. THE DYNAMIC TEMPLATE
+──────────────────────
+• Automatic Branding: The homepage automatically adopts the shop's name, logo, and primary brand colors.
+• High-Impact Hero Section: A professional hero section greets customers, featuring the shop's tagline and a direct "Start Ordering" button.
+• Smart Sections: Includes "About Us," "Featured Items," and "Contact Details" that pull live data from the shop's profile.
+
+──────────────────────
+2. INDEPENDENT URLS
+──────────────────────
+• Every shop is accessible via a direct link (e.g., /shops/shop-id). 
+• This link acts as the shop's official website, which they can share on social media or print on business cards.
+
+──────────────────────
+3. FLUID TRANSITIONS
+──────────────────────
+• When a customer is ready to buy, the homepage transitions them seamlessly into the ordering menu (/shops/shop-id/menu).
+• All cart data is preserved across the transition, ensuring a frictionless shopping journey.`
   }
 ];
 
