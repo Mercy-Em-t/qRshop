@@ -52,8 +52,9 @@ export function useOfflineEventQueue() {
                               error?.code === 'PGRST116';
 
         if (!error || isClientError) {
-          // If it's a conflict or malformed, we MUST remove it to avoid loops
-          pendingQueue = pendingQueue.filter((e) => (e.id || e.event_id) !== (event.id || event.event_id));
+          // If successful OR unrecoverable conflict, remove from queue
+          // We match by object reference here since pendingQueue is a copy of currentQueue
+          pendingQueue = pendingQueue.filter((e) => e !== event);
         }
       }
       

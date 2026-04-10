@@ -15,15 +15,12 @@ export async function logEvent(
   const sessionId = getOrCreateTrackingSession();
 
   const newEvent = {
-    id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7),
     event_type: eventType,
     qr_id: qrId,
     shop_id: shopId,
     session_id: sessionId,
     device_id: deviceId,
     campaign_id: extraMetadata.campaign_id || null,
-    // Note: user_id and visit_id are not in the base public.events schema
-    // so we pack them safely into device_info until the V3 schema is manually applied
     device_info: {
       userAgent: deviceInfo,
       user_id: extraMetadata.user_id || null,
