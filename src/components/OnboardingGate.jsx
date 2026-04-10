@@ -31,8 +31,9 @@ export default function OnboardingGate({ children }) {
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState("");
 
+  const initializedRef = useState(false); // Using state to track if we've filled the form once
+
   useEffect(() => {
-    // If not logged in, or is a system admin, they don't need this gate
     if (!user || user.role === "system_admin") {
       setLoading(false);
       return;
@@ -47,16 +48,19 @@ export default function OnboardingGate({ children }) {
 
       if (!error && data) {
          setShopStatus(data);
-         // Only set initial values if current state is empty to avoid overwriting typed input
-         setPhone(prev => prev || data.phone || "");
-         setTagline(prev => prev || data.tagline || "");
-         setAddress(prev => prev || data.address || "");
+         // Only set initial values IF we haven't initialized them yet in this session
+         if (!initializedRef[0]) {
+            if (data.phone) setPhone(data.phone);
+            if (data.tagline) setTagline(data.tagline);
+            if (data.address) setAddress(data.address);
+            initializedRef[1](true);
+         }
       }
       setLoading(false);
     };
     
     checkStatus();
-  }, [user?.id, user?.shop_id]); // Stable dependencies
+  }, [user?.id, user?.shop_id]);
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
