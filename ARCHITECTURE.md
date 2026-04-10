@@ -26,6 +26,25 @@ WhatsApp Deep Link
 
 The system uses a **frontend-heavy architecture** to keep infrastructure simple and scalable.
 
+### Runtime Boundary Model
+
+1. **Client (`src/`)**
+   - Public, customer, dashboard, and admin route surfaces.
+   - Offline queueing and QR access/session UX enforcement.
+
+2. **Serverless API (`api/`)**
+   - Secure admin actions and gateway routing.
+   - Webhook receivers for M-Pesa and cross-system status sync.
+   - Uses server-side env vars (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, integration secrets).
+
+3. **Supabase Edge Functions (`supabase/functions/`)**
+   - Payment push + callback orchestration.
+   - WhatsApp dispatch + webhook interaction loop.
+
+4. **Data Layer (`supabase/*.sql`)**
+   - Schema artifacts, hardening patches, and operational SQL.
+   - Should be applied through ordered migrations to reduce drift.
+
 ---
 
 ## Technology Stack
@@ -152,6 +171,20 @@ Session expiration:
 ```
 30 minutes
 ```
+
+Additional controls:
+
+* No fallback hardcoded credentials in payment/webhook handlers.
+* Webhook token/secret checks for inbound integration traffic.
+* Input validation on order IDs, amount, phone format, and timestamps.
+
+---
+
+## Operations & Incident Response
+
+* **Payment incidents:** Trace `payment_audit_log` and webhook secret configuration.
+* **Gateway incidents:** Trace `gateway_logs` for sent/received payloads and latency.
+* **Admin API incidents:** Validate service-role envs and admin token role mapping in `shop_users`.
 
 ---
 

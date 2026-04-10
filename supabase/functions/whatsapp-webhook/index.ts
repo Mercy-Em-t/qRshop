@@ -9,8 +9,10 @@ serve(async (req) => {
     const token = url.searchParams.get('hub.verify_token')
     const challenge = url.searchParams.get('hub.challenge')
 
-    // Optional: Protect with a secret Verify Token
-    const verifyToken = Deno.env.get('WA_VERIFY_TOKEN') || 'shopqr_webhook_secret'
+    const verifyToken = Deno.env.get('WA_VERIFY_TOKEN')
+    if (!verifyToken) {
+      return new Response('Webhook token not configured', { status: 500 })
+    }
 
     if (mode === 'subscribe' && token === verifyToken) {
       console.log('Webhook verified!')

@@ -1,35 +1,35 @@
-import { createClient } from '@supabase/supabase-js';
+import { createSupabaseAdminClient } from '../middleware/env.js';
+import { isUuidV4 } from '../middleware/validation.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({error: 'Method Not Allowed'});
 
   try {
-    const { Body } = req.body;
+    const { Body } = req.body || {};
     
-    const callbackData = Body.stkCallback;
+    const callbackData = Body?.stkCallback;
+    if (!callbackData || typeof callbackData.ResultCode !== 'number') {
+      return res.status(400).json({ error: 'Invalid callback payload' });
+    }
     const resultCode = callbackData.ResultCode; // 0 is success
-    const resultDesc = callbackData.ResultDesc;
-
     console.log("M-Pesa Callback Ping:", JSON.stringify(callbackData));
 
     // Order tracking injection extracted from webhook URL
     const orderId = req.query.orderId;
 
-    if (!orderId) {
+    if (!orderId || !isUuidV4(orderId)) {
       // Must return 200 HTTP otherwise Daraja spam retries your endpoint 10x per failed order
       return res.status(200).json({ message: "Acknowledged ping but missing order anchor" });
     }
 
     // Spin up internal core db connection using Service Role privileges 
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-    
-    if(!supabaseUrl || !supabaseKey) {
-       console.error("Missing DB context on the Callback Router.");
+    let supabase;
+    try {
+      supabase = createSupabaseAdminClient();
+    } catch {
+       console.error("[CRITICAL] Missing DB context on the Callback Router.");
        return res.status(200).json({ message: "No db credentials, payload dropped" });
     }
-
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Parse transaction status
     // If resultCode === 0 exactly, payment is cleanly authorized by user

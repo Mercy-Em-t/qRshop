@@ -1,15 +1,14 @@
-import { validateAdminRequest, sanitizeSlug } from '../middleware/security.js';
+import { validateAdminRequest } from '../middleware/security.js';
 
 export default async function handler(req, res) {
   const security = await validateAdminRequest(req, res);
   if (!security) return; 
 
-  const { adminDb, caller } = security;
+  const { adminDb } = security;
 
   try {
     const { 
        shopName, 
-       subdomain, 
        phone, 
        whatsapp, 
        industry, 
