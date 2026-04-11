@@ -27,11 +27,16 @@ export default function App() {
       // but NOT the main domain (e.g. tmsavannah.com)
       const isLocal = hostname === 'localhost' || hostname.includes('127.0.0.1');
       const isVercel = hostname.includes('vercel.app');
+      const isCustomDomain = hostname.includes('tmsavannah.com');
       
-      // Basic extraction: if there are 3 parts (shop.tmsavannah.com) or 2 parts on localhost (shop.localhost)
       let subdomain = null;
-      if (!isLocal && !isVercel && parts.length >= 3) {
-         subdomain = parts[0];
+      if (isCustomDomain || isVercel) {
+         // shop.tmsavannah.com (parts.length >= 3) or shop.qrshop.vercel.app (parts.length >= 4)
+         if (isVercel && parts.length >= 4) {
+            subdomain = parts[0];
+         } else if (isCustomDomain && parts.length >= 3) {
+            subdomain = parts[0];
+         }
       } else if (isLocal && parts.length >= 2) {
          subdomain = parts[0];
       }

@@ -90,7 +90,7 @@ export async function createOrder(
   // Track in analytics (Fire and forget or awaited depending on preference)
   trackOrder(shopId, tableId, items, totalPrice).catch(e => console.error("Analytics Error:", e));
 
-  // Phase 47: System A -> System B Synchronization
+  // Phase 47: System A -> System B Synchronization (Soft Failure)
   try {
     pingExternalOrderGateway({
       orderId: orderId as string,
@@ -104,9 +104,11 @@ export async function createOrder(
       deliveryAddress: deliveryAddress || "",
       notes: tableId ? `Table ${tableId}` : "",
       appliedPromotion: appliedPromotion
-    }).catch(e => console.warn("System B Background Sync Pending:", e));
+    }).catch(e => {
+       console.warn("System B Gateway Sync Delayed/Offline. Order persisted locally.", e.message);
+    });
   } catch (e) {
-    console.error("System B Trigger Failed:", e);
+    console.error("System B Sync Wrapper Exception:", e);
   }
 
   return { id: orderId as string };
