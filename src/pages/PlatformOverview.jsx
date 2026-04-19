@@ -107,7 +107,7 @@ export default function PlatformOverview() {
               <Link to="/privacy" className="hover:text-gray-900 transition">Privacy</Link>
            </div>
            
-           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">© 2026 ShopQR Platform. All rights reserved.</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">© 2026 The Modern Savannah. All rights reserved.</p>
         </div>
       </footer>
 
@@ -141,7 +141,7 @@ export default function PlatformOverview() {
                    }} 
                 />
               </div>
-              <p className="mt-8 text-center text-white/50 font-black uppercase tracking-widest text-xs">Scan any ShopQR Menu</p>
+              <p className="mt-8 text-center text-white/50 font-black uppercase tracking-widest text-xs">Scan any Modern Savannah Menu</p>
            </div>
         </div>
       )}

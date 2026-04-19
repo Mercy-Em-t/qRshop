@@ -89,7 +89,7 @@ export default function AdminSEO() {
                     <p className="text-blue-100 text-sm">Control how your master platform appears on Google.</p>
                   </div>
                   <button 
-                     onClick={() => handleOpenModal('platform', null, 'ShopQR Platform')}
+                     onClick={() => handleOpenModal('platform', null, 'The Modern Savannah')}
                      className="bg-white text-blue-600 font-bold px-4 py-2 rounded-lg text-sm hover:shadow-md transition"
                   >
                      {platformConfig ? "Edit Schema" : "Setup Schema"}

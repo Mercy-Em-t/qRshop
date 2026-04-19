@@ -100,7 +100,7 @@ export default function Login() {
         </form>
       </div>
       
-      <p className="mt-8 text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">ShopQR Secure Node</p>
+      <p className="mt-8 text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">Modern Savannah Secure Node</p>
     </div>
   );
 }

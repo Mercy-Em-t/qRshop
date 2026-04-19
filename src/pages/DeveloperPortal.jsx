@@ -98,7 +98,7 @@ export default function DeveloperPortal() {
            <div className="bg-blue-900/5 p-8 rounded-2xl border border-blue-900/20 flex flex-col md:flex-row gap-8 items-center justify-between">
               <div className="flex-1">
                  <h4 className="text-white font-bold mb-2 uppercase">Custom Integration Required?</h4>
-                 <p className="text-blue-900 text-sm">Our engineering team can assist in bridging legacy systems with the ShopQR Wholesale Engine.</p>
+                 <p className="text-blue-900 text-sm">Our engineering team can assist in bridging legacy systems with The Modern Savannah Wholesale Engine.</p>
               </div>
               <button className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-bold transition uppercase text-xs tracking-widest">
                  Open Ticket

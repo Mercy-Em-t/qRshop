@@ -104,7 +104,7 @@ export default function Home() {
               <Link to="/privacy" className="hover:text-gray-900 transition">Privacy</Link>
            </div>
            
-           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">© 2026 ShopQR Platform. All rights reserved.</p>
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">© 2026 The Modern Savannah. All rights reserved.</p>
         </div>
       </footer>
 

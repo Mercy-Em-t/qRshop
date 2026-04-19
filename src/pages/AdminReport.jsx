@@ -562,7 +562,7 @@ export default function AdminReport() {
                               🤖
                            </div>
                            <div>
-                              <p className="text-sm font-bold text-gray-800">ShopQR V3 Core Engine</p>
+                              <p className="text-sm font-bold text-gray-800">The Modern Savannah V3 Core Engine</p>
                               <p className="text-xs text-gray-400">Automated Intelligence Division</p>
                            </div>
                         </div>
