@@ -1,100 +1,166 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
+import ComingSoonGuard from "../components/ComingSoonGuard";
 import Logo from "../components/Logo";
-import { PLANS } from "../config/plans";
+
+const PLANS = [
+  {
+    id: 'free',
+    name: 'Free Starter',
+    price: 0,
+    priceLabel: '0',
+    shortDesc: 'Perfect for testing and very small shops.',
+    features: [
+      { text: 'Digital Menu (Unlimited)', active: true, strong: true },
+      { text: 'WhatsApp Ordering', active: true },
+      { text: '50 items max', active: true },
+      { text: 'Basic Analytics', active: true },
+      { text: 'Custom Branding', active: false },
+      { text: 'Inventory Tracking', active: false },
+    ],
+    theme: 'light',
+    colorTag: 'green'
+  },
+  {
+    id: 'pro',
+    name: 'Pro Growth',
+    price: 1500,
+    priceLabel: '1,500',
+    shortDesc: 'For active shops ready to scale.',
+    popular: true,
+    features: [
+      { text: 'Everything in Free', active: true },
+      { text: 'Unlimited items', active: true, strong: true },
+      { text: 'Rich Analytics (Realtime)', active: true },
+      { text: 'Custom Branding', active: true },
+      { text: 'Smart Order Revisions', active: true, strong: true },
+      { text: 'Inventory Sync (Soon)', active: false },
+    ],
+    theme: 'dark',
+    colorTag: 'green'
+  },
+  {
+     id: 'business',
+     name: 'Business Elite',
+     price: 4500,
+     priceLabel: '4,500',
+     shortDesc: 'Complete platform automation.',
+     features: [
+       { text: 'Everything in Pro', active: true },
+       { text: 'M-Pesa STK Integration', active: true, strong: true },
+       { text: 'Domain Customization', active: true },
+       { text: 'Priority Support', active: true },
+       { text: 'Kitchen Stream (Live)', active: true, strong: true },
+       { text: 'Multi-User Access', active: true },
+     ],
+     theme: 'light_accent',
+     colorTag: 'blue'
+  },
+  {
+     id: 'agency',
+     name: 'Agency White-Label',
+     price: 15000,
+     priceLabel: '15,000+',
+     shortDesc: 'Run your own marketplace.',
+     features: [
+       { text: 'Sub-reseller rights', active: true, strong: true },
+       { text: 'Revenue sharing (80/20)', active: true },
+       { text: 'Regional Jurisdictions', active: true },
+       { text: 'Agency Dashboard', active: true },
+       { text: 'Batch QR Generation', active: true, strong: true },
+       { text: 'API Access', active: true },
+     ],
+     theme: 'light',
+     colorTag: 'purple'
+  }
+];
 
 export default function Pricing() {
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   return (
-    <div className="min-h-screen bg-white pb-24">
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Navigation */}
       <nav className="border-b border-gray-100 px-4 sm:px-6 lg:px-8 bg-white/80 backdrop-blur sticky top-0 z-50">
         <div className="max-w-6xl mx-auto flex justify-between h-20 items-center">
           <Link to="/"><Logo /></Link>
           <div className="hidden md:flex gap-8 items-center text-sm font-bold text-gray-500">
-            <Link to="/how-it-works" className="hover:text-green-600 transition">How it Works</Link>
-            <Link to="/explore" className="hover:text-green-600 transition">Marketplace</Link>
-            <Link to="/login" className="hover:text-green-600 transition text-gray-900 bg-gray-50 px-4 py-2 rounded-lg">Login</Link>
-            <Link to="/request-access" className="bg-green-600 text-white px-6 py-2.5 rounded-xl hover:bg-green-700 transition shadow-lg shadow-green-500/20">Get Started</Link>
+            <Link to="/" className="hover:text-theme-secondary transition">Home</Link>
+            <Link to="/explore" className="hover:text-theme-secondary transition">Marketplace</Link>
+            <Link to="/login" className="bg-theme-secondary text-white px-6 py-2.5 rounded-xl hover:bg-theme-main transition shadow-lg shadow-purple-500/20">Get Started</Link>
           </div>
-
-          {/* Mobile Menu Button */}
-          <button 
-             onClick={() => setShowMobileMenu(!showMobileMenu)}
-             className="md:hidden p-2 text-gray-500 hover:text-green-600 transition"
-          >
-             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={showMobileMenu ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}></path>
-             </svg>
-          </button>
         </div>
-
-        {/* Mobile Menu Panel */}
-        {showMobileMenu && (
-           <div className="md:hidden bg-white border-t border-gray-100 py-6 px-4 space-y-4 animate-in slide-in-from-top duration-300">
-              <Link to="/how-it-works" className="block text-lg font-bold text-gray-900">How it Works</Link>
-              <Link to="/explore" className="block text-lg font-bold text-gray-900">Marketplace</Link>
-              <Link to="/login" className="block text-lg font-bold text-gray-900">Login</Link>
-              <Link to="/request-access" className="block bg-green-600 text-white text-center py-4 rounded-xl font-black">Get Started</Link>
-           </div>
-        )}
       </nav>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-         <div className="text-center mb-20 animate-in fade-in slide-in-from-top-4 duration-700">
-            <h1 className="text-4xl sm:text-6xl font-black text-gray-900 mb-6 tracking-tight">Our Plans & Pricing</h1>
-            <p className="text-xl text-gray-500 max-w-2xl mx-auto leading-relaxed">Simple, transparent pricing to help you scale your business from the first order to the ten-thousandth.</p>
-         </div>
-
-         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {PLANS.map((plan) => (
-               <div 
-                  key={plan.id}
-                  className={`rounded-[2.5rem] p-10 border-2 flex flex-col transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${plan.theme === 'dark' ? 'bg-gray-900 border-gray-900 text-white shadow-xl shadow-gray-200' : 'bg-white border-gray-100 text-gray-900 shadow-sm'}`}
-               >
-                  {plan.popular && (
-                     <div className="bg-green-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full self-start mb-6">Most Popular</div>
-                  )}
-                  
-                  <h3 className="text-2xl font-black mb-1">{plan.name}</h3>
-                  <p className={`text-xs uppercase tracking-widest font-bold mb-8 ${plan.theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>{plan.shortDesc}</p>
-                  
-                  <div className="mb-10">
-                     <div className="flex items-baseline gap-1">
-                        <span className="text-10 text-gray-400 font-bold tracking-tighter self-start mt-1">KSh</span>
-                        <span className="text-5xl font-black">{plan.priceLabel}</span>
-                        <span className="text-sm font-bold uppercase tracking-widest text-gray-400">/ mo</span>
-                     </div>
-                  </div>
-                  
-                  <ul className="space-y-5 mb-12 flex-1">
-                     {plan.features.map((feat, idx) => (
-                        <li key={idx} className="flex gap-4 text-sm items-start">
-                           <span className={feat.active ? 'text-green-500 font-bold' : 'text-gray-300'}>
-                              {feat.active ? '✓' : '✗'}
-                           </span>
-                           <span className={`${plan.theme === 'dark' ? 'text-gray-400' : 'text-gray-500'} ${feat.strong ? 'font-black text-white' : ''}`}>
-                              {feat.text}
-                           </span>
-                        </li>
-                     ))}
-                  </ul>
-                  
-                  <Link 
-                     to="/request-access"
-                     className={`w-full py-5 rounded-2xl font-black text-sm uppercase tracking-widest text-center transition shadow-lg ${plan.theme === 'dark' ? 'bg-green-600 text-white hover:bg-green-500 shadow-green-900/40' : 'bg-gray-900 text-white hover:bg-black shadow-gray-200'}`}
-                  >
-                     {plan.id === 'free' ? 'Join Waitlist' : 'Select ' + plan.name}
-                  </Link>
+      <div className="flex-1 relative">
+         {/* Pricing Section (Locked) */}
+         <ComingSoonGuard 
+            title="Simple Pricing." 
+            message="Our advanced billing infrastructure is almost ready. You can get started right now completely for free."
+            primaryLabel="Start Free Account"
+            primaryAction="/signup"
+            secondaryLabel="Return to Homepage"
+            secondaryAction="/"
+         >
+            <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+               <div className="text-center mb-16">
+                  <h2 className="text-4xl font-black text-gray-900">Simple Pricing.</h2>
+                  <p className="text-gray-500 mt-4 max-w-xl mx-auto">Start free, upgrade as you grow. No hidden platform taxes.</p>
                </div>
-            ))}
-         </div>
 
-         <section className="mt-28 bg-gray-50 rounded-[3rem] p-12 text-center">
-            <h2 className="text-2xl font-black mb-4">Need a Custom Enterprise Solution?</h2>
-            <p className="text-gray-500 mb-8 max-w-xl mx-auto">For multi-location chains and high-volume distribution networks, we offer tailored infrastructure and dedicated support.</p>
-            <Link to="/contact" className="text-green-600 font-black uppercase tracking-widest text-sm hover:underline">Speak with an Expert →</Link>
-         </section>
-      </main>
+               <div className="grid md:grid-cols-4 gap-6">
+                  {PLANS.map(plan => {
+                     const isDark = plan.theme === 'dark';
+                     const isAccent = plan.theme === 'light_accent';
+                     
+                     const iconColors = {
+                        green: isDark ? 'text-green-400' : 'text-green-500',
+                        blue: isDark ? 'text-blue-400' : 'text-blue-500',
+                        purple: isDark ? 'text-purple-400' : 'text-purple-500'
+                     };
+                     
+                     return (
+                        <div key={plan.id} className={`${isDark ? 'bg-gray-900 border-gray-800 shadow-xl scale-105 z-10' : 'bg-white shadow-sm border-gray-100'} ${isAccent ? 'border-blue-100 overflow-hidden' : ''} rounded-3xl p-8 border flex flex-col relative`}>
+                           
+                           {plan.popular && <div className={`absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest`}>Most Popular</div>}
+                           
+                           <h3 className={`text-xl font-black mb-2 ${isDark ? 'text-white' : 'text-gray-900'}`}>{plan.name}</h3>
+                           <p className={`text-3xl font-black mb-1 ${isDark ? 'text-white' : 'text-gray-900'}`}>{plan.priceLabel} <span className={`text-sm font-medium ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>KSh/mo</span></p>
+                           <p className={`text-xs mb-6 pb-6 border-b ${isDark ? 'text-gray-400 border-gray-800' : 'text-gray-500 border-gray-100'}`}>{plan.shortDesc}</p>
+                           
+                           <ul className="space-y-4 mb-8 flex-1">
+                              {plan.features.map((feat, idx) => (
+                                 <li key={idx} className={`flex gap-3 text-xs ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                                    <span className={feat.active ? iconColors[plan.colorTag] : 'text-gray-300'}>{feat.active ? '✓' : '✗'}</span>
+                                    <span className={feat.strong ? 'font-bold' : ''}>{feat.text}</span>
+                                 </li>
+                              ))}
+                           </ul>
+                           
+                           <button disabled className={`w-full text-center py-4 rounded-xl font-black transition text-sm uppercase tracking-widest ${isDark ? 'bg-theme-secondary text-white hover:bg-theme-main' : isAccent ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' : 'border-2 border-slate-100 text-slate-400 hover:border-theme-secondary hover:text-theme-secondary'}`}>
+                              Finalizing...
+                           </button>
+                        </div>
+                     );
+                  })}
+               </div>
+            </section>
+         </ComingSoonGuard>
+      </div>
+      
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-100 py-12 mt-auto">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+           <div className="flex items-center gap-2 grayscale opacity-50">
+             <Logo textClassName="font-bold text-lg" />
+           </div>
+           
+           <div className="flex gap-8 text-xs text-gray-500 font-bold uppercase tracking-widest">
+              <Link to="/about" className="hover:text-gray-900 transition">About</Link>
+              <Link to="/contact" className="hover:text-gray-900 transition">Contact Us</Link>
+              <Link to="/privacy" className="hover:text-gray-900 transition">Privacy</Link>
+           </div>
+           
+           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">© 2026 ShopQR Platform. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
  * A soft, user-friendly overlay that locks a feature area
  * while still letting the user see what's underneath it (privacy blur).
  */
-export default function ComingSoonGuard({ children, title = "Under Construction", message = "This feature is currently being built in private. Check back soon for the full launch!" }) {
+export default function ComingSoonGuard({ children, title = "Under Construction", message = "This feature is currently being built in private. Check back soon for the full launch!", primaryLabel = "Return to Dashboard", primaryAction = "/dashboard", secondaryLabel = "Go Home", secondaryAction = "/" }) {
   const navigate = useNavigate();
 
   return (
@@ -26,18 +26,22 @@ export default function ComingSoonGuard({ children, title = "Under Construction"
             {message}
           </p>
           <div className="space-y-3">
-             <button 
-               onClick={() => navigate('/dashboard')}
-               className="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl text-sm hover:bg-gray-800 transition"
-             >
-               Return to Dashboard
-             </button>
-             <button 
-               onClick={() => navigate('/')}
-               className="w-full bg-gray-50 text-gray-600 font-bold py-3.5 rounded-xl text-sm hover:bg-gray-100 transition"
-             >
-               Go Home
-             </button>
+             {primaryLabel && (
+               <button 
+                 onClick={() => navigate(primaryAction)}
+                 className="w-full bg-theme-secondary text-white font-bold py-3.5 rounded-xl text-sm hover:bg-theme-main transition shadow-xl"
+               >
+                 {primaryLabel}
+               </button>
+             )}
+             {secondaryLabel && (
+               <button 
+                 onClick={() => navigate(secondaryAction)}
+                 className="w-full bg-gray-50 text-gray-600 font-bold py-3.5 rounded-xl text-sm hover:bg-gray-100 transition"
+               >
+                 {secondaryLabel}
+               </button>
+             )}
           </div>
         </div>
       </div>

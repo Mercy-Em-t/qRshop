@@ -10,6 +10,7 @@ import Enter from "./pages/Enter";
 import InvalidAccess from "./pages/InvalidAccess";
 import PublicQrLanding from "./pages/PublicQrLanding";
 import RequestAccess from "./pages/RequestAccess";
+import Pricing from "./pages/Pricing";
 import AutoCart from "./pages/AutoCart";
 import CommunityFeed from "./pages/social/CommunityFeed";
 import Directory from "./pages/social/Directory";
@@ -139,6 +140,7 @@ export default function App() {
       <Route path="/shops/:shopId" element={<PublicShopProfile />} />
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
       <Route path="/request-access" element={<RequestAccess />} />
+      <Route path="/pricing" element={<Pricing />} />
       <Route path="/buy/:itemName" element={<AutoCart />} />
       <Route path="/buy" element={<AutoCart />} />
       <Route path="/auto-cart" element={<AutoCart />} />
