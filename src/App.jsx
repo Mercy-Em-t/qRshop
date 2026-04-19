@@ -28,6 +28,7 @@ import SupplierSignup from "./pages/SupplierSignup";
 // --- Customer Pages ---
 import QrAccessGuard from "./components/QrAccessGuard";
 import OfflineMenuWrapper from "./components/OfflineMenuWrapper";
+import ComingSoonGuard from "./components/ComingSoonGuard";
 import Menu from "./pages/Menu";
 import CartPage from "./pages/CartPage";
 import Order from "./pages/Order";
@@ -141,8 +142,8 @@ export default function App() {
       <Route path="/buy/:itemName" element={<AutoCart />} />
       <Route path="/buy" element={<AutoCart />} />
       <Route path="/auto-cart" element={<AutoCart />} />
-      <Route path="/community" element={<CommunityFeed />} />
-      <Route path="/explore" element={<Directory />} />
+      <Route path="/community" element={<ComingSoonGuard title="Community Hub"><CommunityFeed /></ComingSoonGuard>} />
+      <Route path="/explore" element={<ComingSoonGuard title="Marketplace"><Directory /></ComingSoonGuard>} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/about" element={<About />} />
@@ -192,7 +193,7 @@ export default function App() {
       <Route path="/admin/industries" element={<AdminIndustries />} />
       <Route path="/admin/gateway" element={<AdminGateway />} />
       <Route path="/admin/intelligence" element={<BusinessIntelligence />} />
-      <Route path="/social/commerce" element={<SocialCommerce />} />
+      <Route path="/social/commerce" element={<ComingSoonGuard title="Social Commerce Studio"><SocialCommerce /></ComingSoonGuard>} />
       <Route path="/developer/portal" element={<DeveloperPortal />} />
       <Route path="/developer/wholesale" element={<WholesaleSalesSystem />} />
       <Route path="/developer/journey" element={<WholesaleJourneyMap />} />

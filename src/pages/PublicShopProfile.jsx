@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getShop } from "../services/shop-service";
 import { getMenuItems } from "../services/menu-service";
+import { getCurrentUser } from "../services/auth-service";
 import MetaTags from "../components/MetaTags";
 
 // Shop Homepage Components
@@ -33,6 +34,16 @@ export default function PublicShopProfile({ directShopId }) {
           return;
         }
 
+        // Feature Gate: Savannah Atelier Exclusive Access
+        if (shopData.subdomain?.toLowerCase() === 'atelier' || shopData.name.toLowerCase().includes('atelier')) {
+           const user = getCurrentUser();
+           if (!user) {
+              sessionStorage.setItem('return_to', window.location.pathname);
+              navigate('/login?exclusive=true');
+              return;
+           }
+        }
+
         setShop(shopData);
         // Take first 4 items as featured
         setFeaturedItems(items.slice(0, 4));
@@ -43,10 +54,10 @@ export default function PublicShopProfile({ directShopId }) {
       }
     }
     loadShopData();
-  }, [shopId]);
+  }, [shopId, navigate]);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>;
-  if (error || !shop) return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-4"><h1 className="text-2xl font-bold text-gray-800">Shop Not Found</h1><button onClick={() => navigate("/")} className="mt-4 text-indigo-600">Go Home</button></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme-secondary"></div></div>;
+  if (error || !shop) return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-4"><h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Shop Not Found</h1><button onClick={() => navigate("/")} className="mt-4 text-theme-secondary font-bold">Go Home</button></div>;
 
   // Extract unique categories for the scroller
   const categories = Array.from(new Set(featuredItems.map(i => i.category))).map(cat => ({
@@ -73,11 +84,14 @@ export default function PublicShopProfile({ directShopId }) {
         
         <ValueProps />
 
-        <div className="text-center py-16 px-4 bg-gray-50">
-            <h2 className="text-2xl font-black mb-4">Ready to browse everything?</h2>
+        <div className="text-center py-16 px-4 bg-slate-50 dark:bg-slate-950">
+            <h2 className="text-2xl font-black mb-4 dark:text-white">Ready to browse everything?</h2>
             <button 
-                onClick={() => navigate(`/shops/${shopId}/menu`)}
-                className="bg-indigo-600 text-white px-10 py-4 rounded-full font-black uppercase tracking-widest hover:bg-indigo-700 transition"
+                onClick={() => {
+                   sessionStorage.setItem('qr_session', JSON.stringify({ shop_id: shopId }));
+                   navigate(`/menu`);
+                }}
+                className="bg-theme-secondary text-white px-10 py-4 rounded-full font-black uppercase tracking-widest hover:bg-theme-secondary/90 transition shadow-xl"
             >
                 View Full Menu
             </button>

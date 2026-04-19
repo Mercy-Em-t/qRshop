@@ -25,7 +25,8 @@ export default function MarketingStudio() {
   });
   const [selectedProductIds, setSelectedProductIds] = useState(new Set());
 
-  const [loading, setLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const canvasRef = useRef(null);
   const navigate = useNavigate();
@@ -41,19 +42,23 @@ export default function MarketingStudio() {
     }
     
     const init = async () => {
-      setLoading(true);
-      // 1. If not a shop owner, check if they are a supplier
-      if (!shopId) {
-        const { data: supplier } = await supabase.from('suppliers').select('id').eq('owner_id', user.id).single();
-        if (supplier) setSupplierId(supplier.id);
+      setIsFetching(true);
+      try {
+        if (!shopId) {
+          const { data: supplier } = await supabase.from('suppliers').select('id').eq('owner_id', user.id).single();
+          if (supplier) setSupplierId(supplier.id);
+        }
+        
+        await Promise.all([
+          fetchQRs(),
+          fetchPromotions(),
+          fetchProductPool()
+        ]);
+      } catch (err) {
+        console.error("Initialization Failed:", err);
+      } finally {
+        setIsFetching(false);
       }
-      
-      await Promise.all([
-        fetchQRs(),
-        fetchPromotions(),
-        fetchProductPool()
-      ]);
-      setLoading(false);
     };
     
     init();
@@ -90,7 +95,7 @@ export default function MarketingStudio() {
 
   const handleCreatePromo = async (e) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     try {
       const payload = { ...promoForm };
       if (shopId) payload.shop_id = shopId;
@@ -122,7 +127,7 @@ export default function MarketingStudio() {
     } catch (err) {
       alert("Failed to create promotion: " + err.message);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -251,7 +256,7 @@ export default function MarketingStudio() {
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Target QR Node</label>
-                  {loading ? (
+                  {isFetching ? (
                      <p className="text-sm text-gray-500">Loading your nodes...</p>
                   ) : qrs.length === 0 ? (
                      <p className="text-sm text-red-500">You need to generate a QR code first in the QR Manager before creating an ad.</p>
@@ -481,10 +486,10 @@ export default function MarketingStudio() {
 
                     <button 
                       type="submit" 
-                      disabled={loading || (selectedProductIds.size === 0 && promoForm.discount_type === 'bundle_price')}
+                      disabled={isSubmitting || (selectedProductIds.size === 0 && promoForm.discount_type === 'bundle_price')}
                       className="w-full bg-black text-white py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-gray-800 transition shadow-lg disabled:opacity-50"
                     >
-                      {loading ? 'Creating...' : '🚀 Launch This Promotion'}
+                      {isSubmitting ? 'Creating...' : '🚀 Launch This Promotion'}
                     </button>
                   </form>
                 </div>

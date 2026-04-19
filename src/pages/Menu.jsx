@@ -15,6 +15,7 @@ import BundleCard from "../components/BundleCard";
 import { useNomenclature } from "../hooks/use-nomenclature";
 import { useCampaigns } from "../hooks/useCampaigns";
 import { supabase } from "../services/supabase-client";
+import { getCurrentUser } from "../services/auth-service";
 import SalesAgentWidget from "../components/SalesAgentWidget";
 
 export default function Menu() {
@@ -53,6 +54,18 @@ export default function Menu() {
         console.error("Failed to fetch bundles:", err);
      }
   };
+
+  useEffect(() => {
+     if (shop) {
+        if (shop.subdomain?.toLowerCase() === 'atelier' || shop.name?.toLowerCase().includes('atelier')) {
+           const user = getCurrentUser();
+           if (!user) {
+              sessionStorage.setItem('return_to', '/menu');
+              navigate('/login?exclusive=true', { replace: true });
+           }
+        }
+     }
+  }, [shop, navigate]);
 
   const handleAddItem = async (item) => {
     addItem(item);

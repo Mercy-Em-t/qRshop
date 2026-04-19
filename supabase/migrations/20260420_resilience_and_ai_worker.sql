@@ -27,7 +27,7 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-    new_order_id uuid;
+    v_order_id uuid;
     item record;
     calculated_total numeric := 0;
     actual_price numeric;
@@ -47,16 +47,19 @@ DECLARE
 BEGIN
     -- STEP 0: Idempotency Check
     IF p_mutation_id IS NOT NULL THEN
-        SELECT id INTO new_order_id FROM public.orders WHERE client_mutation_id = p_mutation_id;
-        IF new_order_id IS NOT NULL THEN
-            RETURN new_order_id; -- Silently return existing order instead of erroring
+        v_order_id := (SELECT id FROM public.orders WHERE client_mutation_id = p_mutation_id LIMIT 1);
+        IF v_order_id IS NOT NULL THEN
+            RETURN v_order_id; -- Silently return existing order instead of erroring
         END IF;
     END IF;
+    
+    -- Pre-generate the Order ID to avoid RETURNING clauses
+    v_order_id := gen_random_uuid();
 
     -- Step A: Secure Total Calculation
     FOR item IN SELECT * FROM jsonb_array_elements(p_items)
     LOOP
-        SELECT price INTO actual_price FROM public.menu_items WHERE id = (item.value->>'id')::uuid;
+        actual_price := (SELECT price FROM public.menu_items WHERE id = (item.value->>'id')::uuid LIMIT 1);
         IF actual_price IS NULL THEN
             RAISE EXCEPTION 'Invalid product in payload.';
         END IF;
@@ -67,30 +70,29 @@ BEGIN
 
     -- Step C: Insert Order with Resilience Keys
     INSERT INTO public.orders (
-        shop_id, table_id, total_price, status, 
+        id, shop_id, table_id, total_price, status, 
         client_name, client_phone, customer_email, fulfillment_type, 
         delivery_address, delivery_fee_charged, discount_amount, coupon_code, 
         parent_order_id, client_mutation_id,
         expires_at, fulfillment_deadline
     )
     VALUES (
-        p_shop_id, p_table_id, calculated_total, 'pending',
+        v_order_id, p_shop_id, p_table_id, calculated_total, 'pending',
         p_client_name, p_client_phone, p_email, p_fulfillment,
         p_address, p_fee, p_discount, p_coupon, 
         NULLIF(p_parent, '')::uuid, p_mutation_id,
         now() + interval '2 hours', -- Default expiration: 2 hours
         now() + interval '45 minutes' -- Default fulfillment target: 45 minutes
-    )
-    RETURNING id INTO new_order_id;
+    );
 
     -- Step D: Order Items
     FOR item IN SELECT * FROM jsonb_array_elements(p_items)
     LOOP
-        SELECT price INTO actual_price FROM public.menu_items WHERE id = (item.value->>'id')::uuid;
+        actual_price := (SELECT price FROM public.menu_items WHERE id = (item.value->>'id')::uuid LIMIT 1);
         INSERT INTO public.order_items (order_id, menu_item_id, quantity, price)
-        VALUES (new_order_id, (item.value->>'id')::uuid, (item.value->>'quantity')::int, actual_price);
+        VALUES (v_order_id, (item.value->>'id')::uuid, (item.value->>'quantity')::int, actual_price);
     END LOOP;
 
-    RETURN new_order_id;
+    RETURN v_order_id;
 END;
 $$;
