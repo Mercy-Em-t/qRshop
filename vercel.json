@@ -2,6 +2,13 @@
   "name": "qrshop-main",
   "framework": "vite",
   "rewrites": [
+    { "source": "/api/admin/create-community", "destination": "/api/admin/router.js?action=create-community" },
+    { "source": "/api/admin/create-shop", "destination": "/api/admin/router.js?action=create-shop" },
+    { "source": "/api/admin/create-supplier", "destination": "/api/admin/router.js?action=create-supplier" },
+    { "source": "/api/admin/process-kyc", "destination": "/api/admin/router.js?action=process-kyc" },
+    { "source": "/api/admin/process-marketplace-listing", "destination": "/api/admin/router.js?action=process-marketplace-listing" },
+    { "source": "/api/admin/process-upgrade", "destination": "/api/admin/router.js?action=process-upgrade" },
+    { "source": "/api/admin/update-shop-metadata", "destination": "/api/admin/router.js?action=update-shop-metadata" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
