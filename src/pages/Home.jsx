@@ -107,11 +107,11 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex justify-between h-20 items-center">
           <Logo />
           <div className="hidden md:flex gap-8 items-center text-sm font-bold text-gray-500">
-            <a href="#features" className="hover:text-green-600 transition">Features</a>
-            <a href="#pricing" className="hover:text-green-600 transition">Pricing</a>
-            <a href="/explore" className="hover:text-green-600 transition">Marketplace</a>
-            <Link to="/login" className="hover:text-green-600 transition">Login</Link>
-            <Link to="/request-access" className="bg-green-600 text-white px-6 py-2.5 rounded-xl hover:bg-green-700 transition shadow-lg shadow-green-500/20">Get Started</Link>
+            <a href="#features" className="hover:text-theme-secondary transition">Features</a>
+            <a href="#pricing" className="hover:text-theme-secondary transition">Pricing</a>
+            <a href="/explore" className="hover:text-theme-secondary transition">Marketplace</a>
+            <Link to="/login" className="hover:text-theme-secondary transition">Login</Link>
+            <Link to="/request-access" className="bg-theme-secondary text-white px-6 py-2.5 rounded-xl hover:bg-theme-main transition shadow-lg shadow-purple-500/20">Get Started</Link>
           </div>
         </div>
       </nav>
@@ -120,14 +120,14 @@ export default function Home() {
       <header className="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center">
         <h1 className="text-5xl sm:text-7xl font-black text-gray-900 tracking-tight leading-[1.1] mb-6">
           Your Shop, <br/> 
-          <span className="text-green-600">On WhatsApp.</span>
+          <span className="text-theme-secondary">On Every Screen.</span>
         </h1>
         <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
           The simplest way to digitize your menu and handle orders directly on WhatsApp. No complex apps, just a scan and a chat.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link to="/request-access" className="w-full sm:w-auto bg-green-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-green-700 transition shadow-2xl shadow-green-600/30 hover:-translate-y-1 active:scale-95">
-             Get Started Free
+          <Link to="/request-access" className="w-full sm:w-auto bg-theme-secondary text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-theme-main transition shadow-2xl shadow-purple-600/30 hover:-translate-y-1 active:scale-95">
+             Join the Savannah
           </Link>
           <a href="#pricing" className="w-full sm:w-auto px-10 py-5 rounded-2xl font-bold text-gray-400 hover:text-gray-900 transition">
              View Plans & Pricing
@@ -200,7 +200,7 @@ export default function Home() {
                         ))}
                      </ul>
                      
-                     <Link to={plan.buttonLink} className={`w-full text-center py-4 rounded-xl font-black transition text-sm uppercase tracking-widest ${isDark ? 'bg-green-600 text-white hover:bg-green-700' : isAccent ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' : 'border-2 border-slate-100 text-slate-400 hover:border-green-600 hover:text-green-600'}`}>
+                     <Link to={plan.buttonLink} className={`w-full text-center py-4 rounded-xl font-black transition text-sm uppercase tracking-widest ${isDark ? 'bg-theme-secondary text-white hover:bg-theme-main' : isAccent ? 'bg-blue-50 text-blue-700 hover:bg-blue-100' : 'border-2 border-slate-100 text-slate-400 hover:border-theme-secondary hover:text-theme-secondary'}`}>
                         {plan.buttonLabel}
                      </Link>
                   </div>
@@ -230,7 +230,7 @@ export default function Home() {
 
       <button 
         onClick={() => setShowScanner(true)}
-        className="fixed bottom-6 right-6 w-16 h-16 bg-green-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-green-700 hover:scale-110 transition-all z-50 cursor-pointer border-4 border-white"
+        className="fixed bottom-6 right-6 w-16 h-16 bg-theme-secondary text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-theme-main hover:scale-110 transition-all z-50 cursor-pointer border-4 border-white"
       >
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
            <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15a2.25 2.25 0 0 0 2.25-2.25V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />

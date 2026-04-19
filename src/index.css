@@ -6,7 +6,13 @@
   --color-deep-ebony: #1A1A1A;
   --color-sunset-gold: #E9C46A;
   --color-mist-white: #F8F9FA;
-  --color-savannah-silk: #fcfcfc; /* Savannah Silk */
+  --color-savannah-silk: #fcfcfc;
+
+  /* Modern Savannah 60-30-10 Project Tokens */
+  --color-theme-main: #020617;      /* 60%: Slate-950 (Foundation) */
+  --color-theme-secondary: #4c1d95; /* 30%: Purple-900 (Brand Identity) */
+  --color-theme-accent: #f59e0b;    /* 10%: Amber-500 (Glow/Action) */
+  --color-theme-accent-hover: #d97706;
 }
 
 /* Smooth modal animations for UpsellModal and PaymentModal */

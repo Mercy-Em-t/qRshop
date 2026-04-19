@@ -63,6 +63,8 @@ import AdminBooklet from "./pages/AdminBooklet";
 import AdminPayouts from "./pages/AdminPayouts";
 import AdminIndustries from "./pages/AdminIndustries";
 import AdminGateway from "./pages/AdminGateway";
+import BusinessIntelligence from "./pages/BusinessIntelligence";
+import SocialCommerce from "./pages/SocialCommerce";
 import DeveloperPortal from "./pages/DeveloperPortal";
 import WholesaleSalesSystem from "./pages/WholesaleSalesSystem";
 import WholesaleJourneyMap from "./pages/WholesaleJourneyMap";
@@ -189,6 +191,8 @@ export default function App() {
       <Route path="/admin/payouts" element={<AdminPayouts />} />
       <Route path="/admin/industries" element={<AdminIndustries />} />
       <Route path="/admin/gateway" element={<AdminGateway />} />
+      <Route path="/admin/intelligence" element={<BusinessIntelligence />} />
+      <Route path="/social/commerce" element={<SocialCommerce />} />
       <Route path="/developer/portal" element={<DeveloperPortal />} />
       <Route path="/developer/wholesale" element={<WholesaleSalesSystem />} />
       <Route path="/developer/journey" element={<WholesaleJourneyMap />} />

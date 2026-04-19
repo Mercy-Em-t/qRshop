@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
 import { updateOrderStatus } from "../services/order-service";
+import { useShopAgent } from "../hooks/use-shop-agent";
 
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
@@ -14,10 +15,14 @@ export default function OrderManager() {
   const [editTotal, setEditTotal] = useState(0);
   const [noteOrder, setNoteOrder] = useState(null);
   const [noteText, setNoteText] = useState('');
+  const [overflowOpenId, setOverflowOpenId] = useState(null);
 
   const navigate = useNavigate();
   const user = getCurrentUser();
   const SHOP_ID = user?.shop_id;
+
+  // Activate AI Shop Worker Agent
+  useShopAgent(SHOP_ID);
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
@@ -230,6 +235,29 @@ export default function OrderManager() {
                       }`}>{order.status.replace('_', ' ')}</span>
                   </div>
 
+                  {/* Fulfillment Deadline */}
+                  {order.fulfillment_deadline && order.status !== 'completed' && (
+                     <div className="mb-4 flex items-center justify-between bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Target</span>
+                        <div className="flex items-center gap-1.5 font-black text-rose-600">
+                           <span className="text-xs">⏱️</span>
+                           <span className="text-[10px]">
+                              {Math.max(0, Math.floor((new Date(order.fulfillment_deadline) - new Date()) / 60000))} MINS
+                           </span>
+                        </div>
+                     </div>
+                  )}
+
+                  {/* AI Agent Status */}
+                  {order.ai_agent_status && order.ai_agent_status !== 'idle' && (
+                     <div className="mb-4 flex items-center gap-2 px-3 py-1.5 bg-indigo-50 rounded-xl border border-indigo-100">
+                        <div className={`w-1.5 h-1.5 rounded-full ${order.ai_agent_status === 'processing' ? 'bg-indigo-500 animate-pulse' : 'bg-slate-400'}`}></div>
+                        <span className="text-[9px] font-bold text-indigo-700 uppercase tracking-widest">
+                           AI Worker: {order.ai_agent_status}
+                        </span>
+                     </div>
+                  )}
+
                   <div className="space-y-2 mb-6 border-y border-slate-50 py-4 max-h-40 overflow-y-auto no-scrollbar">
                      {order.order_items?.map((item, i) => (
                         <div key={i} className="flex justify-between text-xs font-semibold">
@@ -252,25 +280,59 @@ export default function OrderManager() {
 
                   <div className="space-y-2">
                      {order.status === 'pending' && (
-                        <>
-                           <div className="grid grid-cols-2 gap-2">
-                              <button onClick={() => updateOrderStatus(order.id, 'preparing')} className="bg-green-600 text-white py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest">Accept</button>
-                              <button onClick={() => updateOrderStatus(order.id, 'rejected')} className="bg-red-50 text-red-600 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest">Reject</button>
+                        <div className="relative">
+                           {/* PRIMARY ACTION — Big Accept */}
+                           <button
+                              onClick={() => { updateOrderStatus(order.id, 'accepted'); setOverflowOpenId(null); }}
+                              className="w-full bg-green-600 hover:bg-green-700 active:scale-95 text-white py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all shadow-lg shadow-green-200 flex items-center justify-center gap-2"
+                           >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"/></svg>
+                              Accept Order
+                           </button>
+
+                           {/* SECONDARY — 3-Dot Overflow */}
+                           <div className="absolute top-2 right-2">
+                              <button
+                                 onClick={() => setOverflowOpenId(overflowOpenId === order.id ? null : order.id)}
+                                 className="p-1.5 rounded-lg hover:bg-white/50 text-green-100 transition"
+                                 title="More options"
+                              >
+                                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
+                              </button>
+
+                              {overflowOpenId === order.id && (
+                                 <div className="absolute right-0 top-8 bg-white rounded-2xl border border-slate-100 shadow-xl z-20 w-48 overflow-hidden">
+                                    <button
+                                       onClick={() => { setEditingOrder(order); setEditTotal(order.total_price); setOverflowOpenId(null); }}
+                                       className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition"
+                                    >
+                                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                       Edit & Request Pay
+                                    </button>
+                                    <div className="border-t border-slate-50"/>
+                                    <button
+                                       onClick={() => { if (window.confirm('Reject this order?')) { updateOrderStatus(order.id, 'rejected'); setOverflowOpenId(null); } }}
+                                       className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-red-400 hover:bg-red-50 flex items-center gap-2 transition"
+                                    >
+                                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                       Reject Order
+                                    </button>
+                                 </div>
+                              )}
                            </div>
-                           <button onClick={() => { setEditingOrder(order); setEditTotal(order.total_price); }} className="w-full border border-amber-200 text-amber-700 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest">Edit & Req Pay</button>
-                        </>
+                        </div>
                      )}
                      {order.status === 'pending_payment' && (
-                        <button onClick={() => updateOrderStatus(order.id, 'paid')} className="w-full bg-green-600 text-white py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest">Confirm Cash/Mpesa</button>
+                        <button onClick={() => updateOrderStatus(order.id, 'paid')} className="w-full bg-green-600 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-green-100">✅ Confirm Cash / MPesa</button>
                      )}
-                     {['paid', 'preparing'].includes(order.status) && (
-                        <button onClick={() => updateOrderStatus(order.id, 'ready')} className="w-full bg-blue-600 text-white py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest">Mark Ready</button>
+                     {['paid', 'accepted', 'preparing'].includes(order.status) && (
+                        <button onClick={() => updateOrderStatus(order.id, 'ready')} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition">📦 Mark Ready</button>
                      )}
                      {order.status === 'ready' && (
-                        <button onClick={() => updateOrderStatus(order.id, 'completed')} className="w-full bg-emerald-600 text-white py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest">Finish / Handover</button>
+                        <button onClick={() => updateOrderStatus(order.id, 'completed')} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition">🤝 Finish / Handover</button>
                      )}
                      {order.status === 'completed' && (
-                        <button onClick={() => updateOrderStatus(order.id, 'archived')} className="w-full bg-gray-900 text-white py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest text-center">Archive Record</button>
+                        <button onClick={() => updateOrderStatus(order.id, 'archived')} className="w-full bg-gray-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest">Archive Record</button>
                      )}
                   </div>
                </div>

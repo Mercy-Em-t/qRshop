@@ -25,16 +25,10 @@ export default function CartPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50">
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
-          <button
-            onClick={() => navigate("/menu")}
-            className="text-green-600 font-medium hover:text-green-700 transition-colors cursor-pointer"
-          >
-            ← Back to Menu
-          </button>
-          <h1 className="text-xl font-bold text-gray-800">Your Cart</h1>
+text-theme-secondary font-black hover:text-theme-accent transition-colors cursor-pointer uppercase tracking-tighter text-xs          <h1 className="text-xl font-bold text-gray-800">Your Cart</h1>
           <div className="w-24"></div>
         </div>
       </header>
@@ -61,7 +55,7 @@ export default function CartPage() {
             <button
               onClick={() => navigate("/order")}
               disabled={shop?.is_online === false}
-              className={`w-full py-3 rounded-lg font-semibold text-lg transition-colors ${shop?.is_online === false ? 'bg-gray-400 text-gray-200 cursor-not-allowed' : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'}`}
+              className={`w-full py-4 rounded-xl font-black text-lg transition-all shadow-xl transform active:scale-95 flex items-center justify-center gap-2 ${shop?.is_online === false ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover cursor-pointer'}`}
             >
               Confirm Order — KSh {total}
             </button>

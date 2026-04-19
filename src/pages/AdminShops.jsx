@@ -393,7 +393,12 @@ export default function AdminShops() {
                              <div>
                                 <h3 className="text-lg font-bold text-gray-900">{shop.name}</h3>
                                 <p className="text-xs text-gray-400 font-mono">{shop.subdomain}.tmsavannah.com</p>
-                                {shop.is_suspended && <span className="bg-red-100 text-red-800 font-black px-2 py-0.5 rounded text-[10px] uppercase">FROZEN</span>}
+                                <div className="flex gap-2 items-center mt-1">
+                                  {shop.is_suspended && <span className="bg-red-100 text-red-800 font-black px-2 py-0.5 rounded text-[10px] uppercase">FROZEN</span>}
+                                  {(shop.mpesa_shortcode && shop.mpesa_passkey) 
+                                     ? <span className="bg-green-100 text-green-800 font-black px-2 py-0.5 rounded text-[10px] uppercase">M-PESA: READY</span>
+                                     : <span className="bg-amber-100 text-amber-800 font-black px-2 py-0.5 rounded text-[10px] uppercase">M-PESA: MISSING</span>}
+                                </div>
                              </div>
                              <div className="flex flex-col items-end gap-1">
                                 <select 

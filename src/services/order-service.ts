@@ -33,7 +33,8 @@ export async function createOrder(
   deliveryAddress: string | null = null,
   deliveryFeeCharged: number = 0,
   clientEmail: string | null = null,
-  appliedPromotion: Promotion | null = null
+  appliedPromotion: Promotion | null = null,
+  clientMutationId: string | null = null
 ): Promise<{ id: string } | any> {
   if (!supabase) {
     return {
@@ -73,7 +74,8 @@ export async function createOrder(
       quantity: Number(i.quantity) || 1, 
       is_bundled: i.is_bundled || false 
     })),
-    applied_promotion_id: appliedPromotion?.id || null
+    applied_promotion_id: appliedPromotion?.id || null,
+    client_mutation_id: clientMutationId || crypto.randomUUID?.() || Date.now().toString()
   };
 
   const { data: orderId, error: rpcError } = await supabase.rpc('checkout_cart', { payload });

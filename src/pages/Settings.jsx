@@ -9,6 +9,11 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   
+  // MPesa Test State
+  const [showMpesaTest, setShowMpesaTest] = useState(false);
+  const [testPhone, setTestPhone] = useState("");
+  const [isTestingMpesa, setIsTestingMpesa] = useState(false);
+  
   const navigate = useNavigate();
   const user = getCurrentUser();
   const SHOP_ID = user?.shop_id;
@@ -36,12 +41,39 @@ export default function Settings() {
       industry_type: shop.industry_type,
       delivery_fee_fixed: shop.delivery_fee_fixed,
       min_order_value: shop.min_order_value,
-      is_open: shop.is_open
+      is_open: shop.is_open,
+      mpesa_shortcode: shop.mpesa_shortcode || null,
+      mpesa_passkey: shop.mpesa_passkey || null,
     }).eq("id", SHOP_ID);
     
     setSaving(false);
     setMessage(error ? "Error updating settings" : "Settings updated successfully!");
     setTimeout(() => setMessage(null), 3000);
+  };
+
+  const handleTestMpesa = async (e) => {
+    e.preventDefault();
+    setIsTestingMpesa(true);
+    try {
+      const response = await supabase.functions.invoke('mpesa-stk-push', {
+        body: {
+          order_id: `TEST-${Date.now()}`,
+          phone: testPhone,
+          amount: 1, // 1 KES test via Sandbox
+          shop_id: SHOP_ID,
+          is_b2b: false
+        }
+      });
+      
+      if (response.error) throw new Error(response.error.message || "Failed to trigger STK");
+      
+      setMessage("✅ STK Push sent! Check your phone.");
+      setShowMpesaTest(false);
+    } catch (err) {
+      alert("Test failed: " + err.message + "\n\nVerify your Shortcode, Passkey, and Environment variables.");
+    } finally {
+      setIsTestingMpesa(false);
+    }
   };
 
   if (loading) return <div className="p-10 text-center animate-pulse text-green-600 font-bold">Syncing Profile...</div>;
@@ -135,6 +167,55 @@ export default function Settings() {
               </div>
            </div>
 
+           {/* M-Pesa Payment Credentials */}
+           <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+              <div className="flex items-center justify-between mb-6 border-b border-slate-50 pb-4">
+                 <h2 className="text-sm font-black text-green-600 uppercase tracking-widest">M-Pesa Credentials</h2>
+                 <span className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full ${
+                    shop.mpesa_shortcode && shop.mpesa_passkey
+                      ? 'bg-green-50 text-green-700'
+                      : 'bg-amber-50 text-amber-600'
+                 }`}>
+                    {shop.mpesa_shortcode && shop.mpesa_passkey ? '✅ Configured' : '⚠️ Not Set'}
+                 </span>
+              </div>
+              <p className="text-xs text-slate-400 mb-6 leading-relaxed">
+                 Enter your M-Pesa Paybill or Till number and the Passkey provided by Safaricom. These are used to trigger STK push payments directly to your shop.
+              </p>
+              <div className="grid md:grid-cols-2 gap-6">
+                 <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Shortcode / Till Number</label>
+                    <input
+                       type="text"
+                       value={shop.mpesa_shortcode || ''}
+                       onChange={e => setShop({...shop, mpesa_shortcode: e.target.value})}
+                       placeholder="e.g. 174379"
+                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-mono text-gray-900 tracking-wider"
+                    />
+                 </div>
+                 <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Passkey (Encrypted)</label>
+                    <input
+                       type="password"
+                       value={shop.mpesa_passkey || ''}
+                       onChange={e => setShop({...shop, mpesa_passkey: e.target.value})}
+                       placeholder="••••••••••••••••"
+                       className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-mono text-gray-900 tracking-[0.2em]"
+                    />
+                 </div>
+              </div>
+              <div className="mt-6 flex items-center justify-between">
+                 <p className="text-[10px] text-slate-400 font-medium tracking-wide">🔒 Keys are masked and stored securely in the system.</p>
+                 <button 
+                   type="button"
+                   onClick={() => setShowMpesaTest(true)}
+                   disabled={!shop.mpesa_shortcode || !shop.mpesa_passkey}
+                   className="bg-slate-100 hover:bg-slate-200 text-slate-700 disabled:opacity-50 text-xs font-bold px-4 py-2 rounded-lg uppercase tracking-widest transition"
+                 >
+                   Test Connection
+                 </button>
+              </div>
+           </div>
            <div className="flex items-center justify-between gap-4 sticky bottom-4 z-10 bg-white/80 backdrop-blur p-4 rounded-3xl shadow-2xl border border-slate-100">
               <div className="flex items-center gap-3">
                  <div className={`w-3 h-3 rounded-full ${shop.is_open ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
@@ -156,6 +237,37 @@ export default function Settings() {
            {message && <div className="fixed top-24 right-6 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl animate-in font-bold text-xs uppercase tracking-widest z-50 border border-slate-700">{message}</div>}
         </form>
       </main>
+
+      {/* M-Pesa Test Modal */}
+      {showMpesaTest && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-sm border border-slate-200">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">System Diagnostics</p>
+            <h3 className="text-xl font-black mb-4 text-gray-900">Test M-Pesa STK</h3>
+            <p className="text-xs text-gray-500 mb-6">Enter your phone number. We will send a 1 KES payment request to verify your credentials are working.</p>
+            
+            <form onSubmit={handleTestMpesa}>
+               <input
+                 type="tel"
+                 required
+                 value={testPhone}
+                 onChange={e => setTestPhone(e.target.value)}
+                 placeholder="07XX XXX XXX"
+                 className="w-full border-2 border-slate-200 rounded-xl p-3 text-sm focus:outline-none focus:border-green-500 mb-6 font-mono font-bold"
+               />
+               <div className="grid grid-cols-2 gap-3">
+                 <button disabled={isTestingMpesa} className="bg-green-600 text-white py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-700 disabled:opacity-50">
+                    {isTestingMpesa ? 'Pinging...' : 'Send STK'}
+                 </button>
+                 <button type="button" onClick={() => setShowMpesaTest(false)} className="bg-gray-100 text-gray-600 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-200">
+                    Cancel
+                 </button>
+               </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

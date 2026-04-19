@@ -1,11 +1,16 @@
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 
-const envFile = fs.readFileSync('.env.local', 'utf-8');
+let envFile;
+try {
+  envFile = fs.readFileSync('.env.local', 'utf-8');
+} catch {
+  envFile = fs.readFileSync('.env', 'utf-8');
+}
 const env = {};
 envFile.split('\n').forEach(line => {
    const [key, ...val] = line.split('=');
-   if (key && val) env[key.trim()] = val.join('=').trim().replace(/['"]/g, '');
+   if (key && val.length > 0) env[key.trim()] = val.join('=').trim().replace(/['"]/g, '');
 });
 
 const supabaseUrl = env['VITE_SUPABASE_URL'];
@@ -13,14 +18,16 @@ const supabaseKey = env['VITE_SUPABASE_ANON_KEY'];
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function test() {
-  console.log("Fetching test shop...");
-  const { data: shops } = await supabase.from('shops').select('id').limit(1);
-  if (!shops || shops.length === 0) return console.log("No shops found");
-  const shopId = shops[0].id;
+  console.log("Searching for a shop with menu items...");
+  const { data: items } = await supabase
+    .from('menu_items')
+    .select('shop_id, id, price, name')
+    .limit(1);
+    
+  if (!items || items.length === 0) return console.log("No menu items found in the entire database!");
   
-  console.log("Fetching test item...");
-  const { data: items } = await supabase.from('menu_items').select('id, price').eq('shop_id', shopId).limit(1);
-  if (!items || items.length === 0) return console.log("No items found for shop");
+  const shopId = items[0].shop_id;
+  console.log(`Using Shop ID: ${shopId} | Item: ${items[0].name}`);
   
   const payload = {
     shop_id: shopId,

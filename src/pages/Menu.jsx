@@ -124,7 +124,7 @@ export default function Menu() {
       {/* ── Shop Header with Logo ── */}
       <header className="bg-white shadow-sm sticky top-0 z-20">
         {/* Shop Identity Bar */}
-        <div className="bg-green-700 text-white px-4 py-3 flex items-center gap-3 justify-between">
+        <div className="bg-theme-main text-white px-4 py-3 flex items-center gap-3 justify-between">
           <Link to={shop?.id ? `/shops/${shop.id}` : '#'} className="flex w-full items-center gap-3 active:opacity-75 transition-opacity">
             {shop?.logo_url ? (
               <img
@@ -144,14 +144,14 @@ export default function Menu() {
                     {shop?.industry_type || 'Retail'}
                  </span>
                  {shop?.tagline && (
-                    <p className="text-xs text-green-200 truncate">{shop.tagline}</p>
+                    <p className="text-xs text-theme-accent-hover truncate">{shop.tagline}</p>
                  )}
               </div>
             </div>
           </Link>
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className={`w-2 h-2 rounded-full ${shop?.is_online !== false ? 'bg-green-300 animate-pulse' : 'bg-red-400'}`}></div>
-            <span className="text-xs text-green-100">{shop?.is_online !== false ? 'Open' : 'Closed'}</span>
+            <span className="text-xs text-theme-accent">{shop?.is_online !== false ? 'Open' : 'Closed'}</span>
           </div>
         </div>
         {/* Action Bar */}
@@ -177,7 +177,7 @@ export default function Menu() {
             <button
               onClick={() => navigate("/cart")}
               disabled={shop?.is_online === false}
-              className={`relative px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-colors ${shop?.is_online === false ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-80' : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'}`}
+              className={`relative px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-colors ${shop?.is_online === false ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-80' : 'bg-theme-secondary text-white hover:bg-theme-main cursor-pointer'}`}
             >
               🛒 Cart
               {itemCount > 0 && (
@@ -201,7 +201,7 @@ export default function Menu() {
                 }}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                   activeCat === cat
-                    ? "bg-green-600 text-white shadow-sm"
+                    ? "bg-theme-secondary text-white shadow-sm"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -275,7 +275,7 @@ export default function Menu() {
           {/* App Brand */}
           <div className="flex flex-col items-center text-center mb-5">
             <div className="flex items-center gap-2 mb-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-green-600" viewBox="0 0 20 20" fill="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-theme-secondary" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clipRule="evenodd" />
               </svg>
               <span className="text-sm font-bold text-gray-700 tracking-tight">Savannah</span>
@@ -286,16 +286,16 @@ export default function Menu() {
           {/* Quick Links */}
           <div className="grid grid-cols-3 gap-3 mb-5 text-center">
             <a href="https://wa.me/254700000000?text=Hi%2C+I+need+support" target="_blank" rel="noreferrer"
-              className="flex flex-col items-center gap-1 text-gray-500 hover:text-green-600 transition-colors">
+              className="flex flex-col items-center gap-1 text-gray-500 hover:text-theme-secondary transition-colors">
               <span className="text-lg">💬</span>
               <span className="text-xs font-medium">Support</span>
             </a>
             <Link to="/request-access"
-              className="flex flex-col items-center gap-1 text-gray-500 hover:text-green-600 transition-colors">
+              className="flex flex-col items-center gap-1 text-gray-500 hover:text-theme-secondary transition-colors">
               <span className="text-lg">🏪</span>
               <span className="text-xs font-medium">Get a Shop</span>
             </Link>
-            <a href="/" className="flex flex-col items-center gap-1 text-gray-500 hover:text-green-600 transition-colors">
+            <a href="/" className="flex flex-col items-center gap-1 text-gray-500 hover:text-theme-secondary transition-colors">
               <span className="text-lg">🌐</span>
               <span className="text-xs font-medium">About Us</span>
             </a>

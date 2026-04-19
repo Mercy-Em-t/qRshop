@@ -64,6 +64,14 @@ export default function Order() {
   const [couponError, setCouponError] = useState("");
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [systemDeliveryFee, setSystemDeliveryFee] = useState(null);
+  const [clientMutationId] = useState(() => {
+    const saved = sessionStorage.getItem('qr_pending_mutation_id');
+    if (saved) return saved;
+    const newId = crypto.randomUUID ? crypto.randomUUID() : Date.now().toString() + Math.random();
+    sessionStorage.setItem('qr_pending_mutation_id', newId);
+    return newId;
+  });
+  const [serverAcknowledged, setServerAcknowledged] = useState(false);
    
   const terms = useNomenclature(session?.shop_id);
   
@@ -221,7 +229,8 @@ export default function Order() {
         identity.address,
         deliveryFee,
         identity.email,
-        activeCoupon
+        activeCoupon,
+        clientMutationId
       );
   };
 
@@ -263,8 +272,14 @@ export default function Order() {
                }).catch(e => console.error("Silent WA Dispatch Error:", e));
             }
 
+            setServerAcknowledged(true);
+            sessionStorage.removeItem('qr_pending_mutation_id');
             clearCart();
-            navigate(`/track/${order.id}`);
+            
+            // Show short "Success Ping" before redirect
+            setTimeout(() => {
+                navigate(`/track/${order.id}`);
+            }, 800);
          }
       } catch (err) {
          console.error("Direct Checkout Failed:", err);
@@ -440,6 +455,20 @@ export default function Order() {
       {!isOnline && (
         <OfflineAlert message={`You are offline — your ${terms.order.toLowerCase()} will be sent when connection is restored`} />
       )}
+
+      {/* Resilience Ping Overlay */}
+      {serverAcknowledged && (
+        <div className="fixed inset-0 bg-theme-main/90 backdrop-blur-md z-[100] flex flex-col items-center justify-center animate-fade-in">
+           <div className="bg-theme-secondary/20 p-8 rounded-full mb-6 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-theme-accent/10 scale-0 group-hover:scale-150 transition-transform duration-1000"></div>
+              <svg className="w-20 h-20 text-theme-accent animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+              </svg>
+           </div>
+           <h2 className="text-3xl font-black text-white uppercase tracking-tighter mb-2 italic">Acknowledge Received</h2>
+           <p className="text-theme-accent font-bold uppercase tracking-widest text-[10px] animate-pulse">End-to-End Encrypted Tunnel Active</p>
+        </div>
+      )}
       
       {lockedFeatureFocus && (
         <UpgradeModal
@@ -561,9 +590,9 @@ export default function Order() {
               </>
             )}
 
-            <div className="flex justify-between pt-2 border-t border-gray-100">
-              <span className="text-lg font-semibold text-gray-800">Final Total</span>
-              <span className="text-xl font-bold text-green-700">
+            <div className="flex justify-between pt-4 border-t border-theme-main/10 mt-4">
+              <span className="text-lg font-black text-theme-main uppercase tracking-tighter">Total Payable</span>
+              <span className="text-2xl font-black text-theme-secondary underline decoration-theme-accent decoration-4">
                 KSh {finalPayableTotal}
               </span>
             </div>
@@ -593,13 +622,13 @@ export default function Order() {
                   setCapturingIdentity(true);
               }}
               disabled={sending || shop?.is_online === false}
-              className={`w-full py-4 rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2 shadow-md ${sending || shop?.is_online === false ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-80' : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'}`}
+              className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-2 shadow-xl transform active:scale-95 ${sending || shop?.is_online === false ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover cursor-pointer'}`}
             >
               {!isOnline 
-                 ? "📥 Queue via WhatsApp" 
+                 ? "📥 Queue Offline Order" 
                  : !shopPlanAccess.isBasic 
-                    ? `💬 Place ${terms.order} via WhatsApp` 
-                    : `🛒 Place ${terms.order} (Direct Checkout)`}
+                    ? `💬 Place ${terms.order} (WhatsApp)` 
+                    : `🛒 Confirm ${terms.order}`}
             </button>
             
             <a

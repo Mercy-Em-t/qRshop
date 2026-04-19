@@ -208,6 +208,10 @@ export default function Admin() {
                     <h3 className="font-bold text-blue-900 relative z-10 flex items-center gap-2 text-sm uppercase black">🚀 Shop Launcher & Registry</h3>
                     <p className="text-[10px] text-blue-800/80 mt-1 max-w-[80%] relative z-10">Deploy parallel environments and monitor the active registry.</p>
                  </Link>
+                 <Link to="/admin/intelligence" className="p-4 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50 transition group">
+                    <h3 className="font-bold text-gray-800 group-hover:text-blue-800">🧠 Business Intelligence</h3>
+                    <p className="text-xs text-gray-500 mt-2">Model characteristics & behavior.</p>
+                 </Link>
                  <Link to="/admin/seo" className="p-4 rounded-xl border border-slate-100 hover:border-blue-300 hover:bg-blue-50 transition group">
                     <h3 className="font-bold text-gray-800 group-hover:text-blue-800">🔍 Search Engine (SEO)</h3>
                     <p className="text-xs text-gray-500 mt-2">JSON-LD optimizations.</p>

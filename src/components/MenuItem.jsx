@@ -14,7 +14,7 @@ export default function MenuItem({ item, onAdd, isShopOnline = true }) {
             <div className="flex justify-between items-start gap-2">
                <h3 className="text-lg font-bold text-gray-800 leading-tight">{item.name}</h3>
                {item.product_link && (
-                  <a href={item.product_link} target="_blank" rel="noreferrer" className="text-indigo-600 p-1.5 rounded-lg hover:bg-indigo-50 transition shadow-sm border border-indigo-100 flex-shrink-0">
+                  <a href={item.product_link} target="_blank" rel="noreferrer" className="text-theme-secondary hover:bg-theme-secondary/10 border-theme-secondary/20 flex-shrink-0">
                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                        <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
@@ -33,7 +33,7 @@ export default function MenuItem({ item, onAdd, isShopOnline = true }) {
                      <span key={idx} className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded tracking-wide uppercase border border-gray-200">{t}</span>
                   ))}
                   {item.variant_options && Object.keys(item.variant_options).slice(0, 2).map((vKey, idx) => (
-                     <span key={`v-${idx}`} className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded tracking-wide uppercase border border-indigo-100 flex items-center gap-1">
+                     <span key={`v-${idx}`} className="bg-theme-accent/10 text-theme-secondary border-theme-accent/20 flex items-center gap-1">
                         Select {vKey}
                      </span>
                   ))}
@@ -42,13 +42,13 @@ export default function MenuItem({ item, onAdd, isShopOnline = true }) {
          </div>
 
          <div className="flex items-end justify-between mt-3">
-            <span className="text-lg font-extrabold text-indigo-700 tracking-tight">
+            <span className="text-theme-secondary font-black underline decoration-theme-accent/50 decoration-2 underline-offset-4">
                KSh {item.price}
             </span>
             <button
                onClick={() => isShopOnline && onAdd(item)}
                disabled={!isShopOnline}
-               className={`px-4 py-2 rounded-xl text-sm font-bold shadow-md flex items-center gap-1.5 transition-transform transform ${!isShopOnline ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-gray-900 text-white hover:bg-black active:scale-95'}`}
+               className={`px-4 py-2 rounded-xl transition-all shadow-xl font-black uppercase text-xs tracking-widest ${!isShopOnline ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-theme-main text-white hover:bg-theme-secondary active:scale-95'}`}
             >
                <span>Add</span>
                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
