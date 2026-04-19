@@ -79,7 +79,7 @@ export default function App() {
   useOfflineEventQueue();
 
   useEffect(() => {
-    document.title = "The Modern Savannah | Instant WhatsApp Menus & Ordering";
+    document.title = "The Modern Savannah";
 
     async function resolveSubdomain() {
       const hostname = window.location.hostname;
