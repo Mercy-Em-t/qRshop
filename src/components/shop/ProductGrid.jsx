@@ -1,15 +1,28 @@
 import { useNavigate } from 'react-router-dom';
+import { createPublicSession } from '../../utils/qr-session';
 import './ProductGrid.css';
 
 export default function ProductGrid({ items = [], shopId }) {
+  const navigate = useNavigate();
   if (items.length === 0) return null;
+
+  const handleProductClick = (itemName) => {
+    if (shopId) {
+      createPublicSession(shopId);
+      navigate(`/menu?search=${encodeURIComponent(itemName)}`);
+    }
+  };
 
   return (
     <section className="product-grid">
       <h2 className="product-grid__title">Featured Products</h2>
       <div className="product-grid__items">
         {items.map((item) => (
-          <div key={item.id} className="product-card">
+          <div 
+            key={item.id} 
+            className="product-card cursor-pointer"
+            onClick={() => handleProductClick(item.name)}
+          >
             <div className="product-card__image">
               <span className="product-card__emoji">{item.emoji || '📦'}</span>
             </div>

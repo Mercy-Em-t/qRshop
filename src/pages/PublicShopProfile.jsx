@@ -78,7 +78,7 @@ export default function PublicShopProfile({ directShopId }) {
         <ShopHero shop={shop} />
         
         <div style={{ padding: '20px 0' }}>
-            <CategoryScroller categories={categories} />
+            <CategoryScroller categories={categories} shopId={shopId} />
         </div>
 
         <ProductGrid items={featuredItems} shopId={shopId} />

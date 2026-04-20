@@ -1,12 +1,25 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
+import { createPublicSession } from '../../utils/qr-session';
 import './CategoryScroller.css';
 
-export default function CategoryScroller({ categories = [] }) {
+export default function CategoryScroller({ categories = [], shopId: propShopId }) {
   const navigate = useNavigate();
+  const params = useParams();
+  const shopId = propShopId || params.shopId;
+
   const displayCategories = categories.length > 0 ? categories : [
     { id: 'all', name: 'All Products', emoji: '🛍️' },
     { id: 'offers', name: 'Daily Offers', emoji: '🔥' }
   ];
+
+  const handleCategoryClick = (categoryName) => {
+    if (shopId) {
+      createPublicSession(shopId);
+      navigate(`/menu?category=${encodeURIComponent(categoryName)}`);
+    } else {
+      navigate('/error'); // Fallback
+    }
+  };
 
   return (
     <section className="category-scroller">
@@ -15,8 +28,8 @@ export default function CategoryScroller({ categories = [] }) {
         {displayCategories.map((category) => (
           <button
             key={category.id}
-            className="category-card"
-            onClick={() => navigate(`/menu?category=${encodeURIComponent(category.name)}`)}
+            className="category-card cursor-pointer"
+            onClick={() => handleCategoryClick(category.name)}
           >
             <span className="category-card__icon">{category.emoji}</span>
             <span className="category-card__name">{category.name}</span>
