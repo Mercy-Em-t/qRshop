@@ -80,6 +80,20 @@ export default function OrderManager() {
     }
   };
 
+  const handleHandshake = async (id) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ shop_confirmed_at: new Date().toISOString() })
+        .eq("id", id);
+      
+      if (error) throw error;
+      fetchOrders();
+    } catch (err) {
+      alert("Failed to confirm handover.");
+    }
+  };
+
   const handleSaveEdit = async () => {
     if (!editingOrder) return;
     try {
@@ -359,7 +373,20 @@ export default function OrderManager() {
                           <button onClick={() => updateOrderStatus(order.id, 'ready')} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition">📦 Mark Ready</button>
                        )}
                        {order.status === 'ready' && (
-                          <button onClick={() => updateOrderStatus(order.id, 'completed')} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition">🤝 Finish / Handover</button>
+                          <div className="space-y-2">
+                             {!order.shop_confirmed_at ? (
+                                <button 
+                                  onClick={() => handleHandshake(order.id)} 
+                                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition"
+                                >
+                                   🤝 Finish / Handover
+                                </button>
+                             ) : (
+                                <div className="w-full bg-emerald-50 text-emerald-700 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center border border-emerald-100 italic">
+                                   ⌛ Waiting for Customer...
+                                </div>
+                             )}
+                          </div>
                        )}
                        {order.status === 'completed' && (
                           <button onClick={() => updateOrderStatus(order.id, 'archived')} className="w-full bg-gray-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest">Archive Record</button>
@@ -420,9 +447,14 @@ export default function OrderManager() {
                             {['paid', 'accepted', 'preparing'].includes(order.status) && (
                                <button onClick={() => updateOrderStatus(order.id, 'ready')} className="text-blue-600 hover:underline">Ready</button>
                             )}
-                            {order.status === 'ready' && (
-                               <button onClick={() => updateOrderStatus(order.id, 'completed')} className="text-emerald-600 hover:underline">Finish</button>
-                            )}
+                             {order.status === 'ready' && (
+                                <button 
+                                  onClick={() => handleHandshake(order.id)} 
+                                  className={`text-emerald-600 hover:underline ${order.shop_confirmed_at ? 'opacity-50 pointer-events-none' : ''}`}
+                                >
+                                   {order.shop_confirmed_at ? '⌛ Wait' : 'Finish'}
+                                </button>
+                             )}
                             <button 
                               onClick={() => { setNoteOrder(order); setNoteText(order.notes || ''); }} 
                               className="text-slate-400 hover:text-slate-600"

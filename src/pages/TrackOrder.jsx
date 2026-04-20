@@ -98,12 +98,13 @@ export default function TrackOrder() {
   const handleConfirmReceipt = async () => {
     setConfirmingReceipt(true);
     try {
+      const now = new Date().toISOString();
       const { error } = await supabase
         .from("orders")
-        .update({ status: 'completed' })
+        .update({ customer_confirmed_at: now })
         .eq("id", orderId);
       if (error) throw error;
-      setOrder(prev => ({ ...prev, status: 'completed' }));
+      setOrder(prev => ({ ...prev, customer_confirmed_at: now }));
     } catch (err) {
       alert("Failed to confirm receipt. Please try again.");
     } finally {
@@ -296,7 +297,7 @@ export default function TrackOrder() {
             )}
 
             {/* Confirm Receipt Action */}
-            {order.status === 'ready' && (
+            {order.status === 'ready' && !order.customer_confirmed_at && (
               <button 
                 onClick={handleConfirmReceipt}
                 disabled={confirmingReceipt}
@@ -304,6 +305,13 @@ export default function TrackOrder() {
               >
                 {confirmingReceipt ? '✅ Updating...' : '🤝 Confirm Receipt'}
               </button>
+            )}
+
+            {order.status === 'ready' && order.customer_confirmed_at && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-100 rounded-xl text-center">
+                 <p className="text-green-800 font-bold text-sm">✅ Receipt Confirmed</p>
+                 <p className="text-green-600/60 text-[10px] font-bold uppercase tracking-widest mt-1">Awaiting shop to finish handover...</p>
+              </div>
             )}
          </section>
 
