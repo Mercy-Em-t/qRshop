@@ -37,28 +37,44 @@ export async function authenticateUser(email, password) {
     return { error: authError?.message || "Invalid credentials." };
   }
 
-  console.log("Auth: Native success, fetching shop_user profile for ID:", authData.user.id);
+  console.log("Auth: Native success, fetching shop_user profiles for ID:", authData.user.id);
 
-  // Phase 2: Fetch minimal metadata (No Joins)
-  const { data: shopUser, error: suError } = await supabase
+  // Phase 2: Fetch all linked shops (support for multi-shop accounts)
+  const { data: profiles, error: suError } = await supabase
     .from("shop_users")
-    .select("email, role, shop_id")
-    .eq("id", authData.user.id)
-    .single();
+    .select("email, role, shop_id, shops(name, subdomain)")
+    .eq("id", authData.user.id);
 
-  if (suError || !shopUser) {
+  if (suError || !profiles || profiles.length === 0) {
     console.error("Auth: Profile fetch failed", suError);
     await supabase.auth.signOut();
     return { error: "User profile missing or access denied." };
   }
 
-  console.log("Auth: Profile found, link to shop:", shopUser.shop_id);
+  console.log(`Auth: ${profiles.length} profiles found for user.`);
 
+  // If multiple shops, we return them all and let the UI handle selection
+  if (profiles.length > 1) {
+    return { 
+      user: { id: authData.user.id, email: authData.user.email }, 
+      profiles: profiles.map(p => ({
+        shop_id: p.shop_id,
+        role: p.role,
+        shop_name: p.shops?.name,
+        subdomain: p.shops?.subdomain
+      })),
+      requiresSelection: true 
+    };
+  }
+
+  // Single shop case (Legacy compatibility)
+  const shopUser = profiles[0];
   const sessionUser = {
     id: authData.user.id,
     email: shopUser.email,
     role: shopUser.role,
-    shop_id: shopUser.shop_id
+    shop_id: shopUser.shop_id,
+    shop_name: shopUser.shops?.name
   };
 
   localStorage.setItem("savannah_session", JSON.stringify(sessionUser));

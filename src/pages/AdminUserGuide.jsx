@@ -104,7 +104,7 @@ const FEATURE_GUIDES = [
     icon: "📋",
     title: "Setting Up Your Menu",
     steps: [
-      "After logging in, click 'Menu Manager' from your dashboard.",
+      "After logging in, click 'Product Manager' from your dashboard.",
       "Click 'Add Item'. Fill in the name, price, category, and optionally upload a product photo.",
       "Group items into categories (e.g. 'Food', 'Drinks', 'Specials') using the Category field.",
       "Toggle items as 'Available' or 'Out of Stock' any time — changes are instant.",

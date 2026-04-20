@@ -21,10 +21,17 @@ export default function LoadingSpinner({
 
   const spinner = (
     <div className={fullPage ? "text-center" : "flex justify-center items-center"}>
+      {fullPage && (
+        <div className="mb-8 animate-pulse">
+           <div className="w-16 h-16 bg-theme-main rounded-2xl flex items-center justify-center mx-auto shadow-indigo-200 shadow-xl border-4 border-white transform -rotate-3 overflow-hidden">
+               <span className="text-3xl font-black text-theme-accent italic">Sav</span>
+           </div>
+        </div>
+      )}
       <div
-        className={`animate-spin rounded-full border-b-2 border-green-600 ${sizeClass} ${fullPage ? "mx-auto mb-4" : ""}`}
+        className={`animate-spin rounded-full border-b-2 border-theme-secondary ${sizeClass} ${fullPage ? "mx-auto mb-4" : ""}`}
       ></div>
-      {message && fullPage && <p className="text-gray-600">{message}</p>}
+      {message && fullPage && <p className="text-theme-main font-bold uppercase tracking-tighter text-xs animate-pulse">{message}</p>}
     </div>
   );
 

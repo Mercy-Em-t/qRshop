@@ -87,11 +87,17 @@ export default function TrackOrder() {
       title: "Pending",
       description: `Your ${terms.order.toLowerCase()} has been sent to the shop and is waiting to be reviewed.`
     },
+    accepted: {
+      color: "bg-blue-100 text-blue-800 border-blue-200",
+      icon: "🤝",
+      title: "Order Accepted",
+      description: `The shop has accepted your ${terms.order.toLowerCase()}! They will request payment soon.`
+    },
     pending_payment: {
       color: "bg-orange-100 text-orange-800 border-orange-200",
       icon: "📋",
-      title: "Accepted – Awaiting Payment",
-      description: `The shop has accepted your ${terms.order.toLowerCase()}! Please send payment to the shop's number (${order?.shops?.phone || order?.shops?.whatsapp_number || "the counter"}) to confirm.`
+      title: "Awaiting Payment",
+      description: `The shop is ready! Please send payment to the shop's number (${order?.shops?.phone || order?.shops?.whatsapp_number || "the counter"}) to confirm.`
     },
     stk_pushed: {
       color: "bg-green-100 text-green-800 border-green-200",

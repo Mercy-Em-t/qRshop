@@ -31,7 +31,11 @@ const buildUnstructuredMessage = (shopName, table, items, identity, deliveryFee 
    if (identity?.fulfillment_type === 'delivery') {
       fulfillStr = `Delivery to ${identity.address}\n🚗 Delivery Fee: KSh ${deliveryFee}`;
    } else if (identity?.fulfillment_type === 'pickup') {
-      fulfillStr = `Pickup`;
+      fulfillStr = `In-Store Pickup`;
+   } else if (identity?.fulfillment_type === 'leave_with_items') {
+      fulfillStr = `Takeaway (Leave with items)`;
+   } else if (identity?.fulfillment_type === 'pickup_point') {
+      fulfillStr = `Pickup at Depot: ${identity.address}`;
    } else if (identity?.fulfillment_type === 'digital') {
       fulfillStr = `Digital Delivery to ${identity.address}`;
    }
@@ -114,7 +118,11 @@ export default function Order() {
                return { ...prev, fulfillment_type: session?.table ? 'dine_in' : 'pickup' };
            }
            // Default Retail
-           return { ...prev, fulfillment_type: shop.offers_pickup ? 'pickup' : 'delivery' };
+           const settings = shop.fulfillment_settings || {};
+           if (settings.accepts_pickup) return { ...prev, fulfillment_type: 'pickup' };
+           if (settings.accepts_leave_with_items) return { ...prev, fulfillment_type: 'leave_with_items' };
+           if (settings.accepts_delivery) return { ...prev, fulfillment_type: 'delivery' };
+           return { ...prev, fulfillment_type: 'pickup' };
         });
 
         // 🏆 NEW: Fetch Centralized Delivery Fee
@@ -177,7 +185,7 @@ export default function Order() {
 
   const deliveryFee = identity.fulfillment_type === 'delivery' 
     ? (systemDeliveryFee ?? shop?.delivery_fee ?? 0) 
-    : 0;
+    : (identity.fulfillment_type === 'pickup_point' ? (shop?.fulfillment_settings?.pickup_point_fee || 0) : 0);
   const finalPayableTotal = Math.max(0, subtotal - (discountAmount || 0) + deliveryFee);
   const total = finalPayableTotal; // Back-compat for UI display
 
@@ -662,35 +670,51 @@ export default function Order() {
 
                {/* Fulfillment Selection */}
                {shop?.industry_type !== 'digital' && (
-                 <div className="mb-5 flex gap-2">
-                   {(!shop?.industry_type || shop?.industry_type === 'restaurant') && shop?.offers_dine_in !== false && session?.table && (
+                 <div className="mb-5 grid grid-cols-2 gap-2">
+                   {(!shop?.industry_type || shop?.industry_type === 'restaurant') && shop?.fulfillment_settings?.accepts_dine_in !== false && session?.table && (
                      <button 
                         onClick={() => setIdentity({...identity, fulfillment_type: 'dine_in'})}
-                        className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'dine_in' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
+                        className={`flex items-center justify-center gap-2 py-3 px-1 rounded-xl text-[10px] font-black uppercase tracking-tight border-2 transition-all ${identity.fulfillment_type === 'dine_in' ? 'bg-theme-main text-white border-theme-main' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
                      >
                        🍽️ Dine In
                      </button>
                    )}
-                   {shop?.offers_pickup && (
+                   {shop?.fulfillment_settings?.accepts_pickup && (
                      <button 
                         onClick={() => setIdentity({...identity, fulfillment_type: 'pickup'})}
-                        className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'pickup' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
+                        className={`flex items-center justify-center gap-2 py-3 px-1 rounded-xl text-[10px] font-black uppercase tracking-tight border-2 transition-all ${identity.fulfillment_type === 'pickup' ? 'bg-theme-main text-white border-theme-main' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
                      >
-                       🛍️ Pickup
+                       🛍️ In-Store
                      </button>
                    )}
-                   {shop?.offers_delivery && (
+                   {shop?.fulfillment_settings?.accepts_leave_with_items && (
+                      <button 
+                         onClick={() => setIdentity({...identity, fulfillment_type: 'leave_with_items'})}
+                         className={`flex items-center justify-center gap-2 py-3 px-1 rounded-xl text-[10px] font-black uppercase tracking-tight border-2 transition-all ${identity.fulfillment_type === 'leave_with_items' ? 'bg-theme-main text-white border-theme-main' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                      >
+                        🔖 Takeaway
+                      </button>
+                   )}
+                   {shop?.fulfillment_settings?.accepts_delivery && (
                       <button 
                          onClick={() => {
                            setIdentity({...identity, fulfillment_type: 'delivery'});
                            if (shop?.operational_region && !localStorage.getItem('qr_regional_ack')) {
-                              alert(`Note: This shop primarily serves ${shop.operational_region}. Please ensure your delivery address is within range.`);
-                              localStorage.setItem('qr_regional_ack', 'true');
+                               alert(`Note: This shop primarily serves ${shop.operational_region}. Please ensure your delivery address is within range.`);
+                               localStorage.setItem('qr_regional_ack', 'true');
                            }
                          }}
-                         className={`flex-1 py-2 px-1 rounded-lg text-sm font-bold border ${identity.fulfillment_type === 'delivery' ? 'bg-green-50 border-green-600 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'} transition-all text-center`}
+                         className={`flex items-center justify-center gap-2 py-3 px-1 rounded-xl text-[10px] font-black uppercase tracking-tight border-2 transition-all ${identity.fulfillment_type === 'delivery' ? 'bg-theme-main text-white border-theme-main' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
                       >
                         🚗 Delivery
+                      </button>
+                   )}
+                   {shop?.fulfillment_settings?.accepts_pickup_point && (
+                      <button 
+                         onClick={() => setIdentity({...identity, fulfillment_type: 'pickup_point'})}
+                         className={`flex items-center justify-center gap-2 py-3 px-1 rounded-xl text-[10px] font-black uppercase tracking-tight border-2 transition-all ${identity.fulfillment_type === 'pickup_point' ? 'bg-theme-main text-white border-theme-main' : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'}`}
+                      >
+                        📦 Depot
                       </button>
                    )}
                  </div>

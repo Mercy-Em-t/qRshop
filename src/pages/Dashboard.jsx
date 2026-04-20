@@ -9,7 +9,7 @@ import SubscriptionStatus from "../components/SubscriptionStatus";
 import OnboardingWizard from "../components/OnboardingWizard";
 import UpgradeModal from "../components/UpgradeModal";
 import AppLauncher from "../components/AppLauncher";
-import usePlanAccess from "../hooks/usePlanAccess";
+import ShareShopModal from "../components/ShareShopModal";
 
 export default function Dashboard() {
   const [ordersPerDay, setOrdersPerDay] = useState([]);
@@ -25,6 +25,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const planAccess = usePlanAccess();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   const user = getCurrentUser();
   const shopId = user?.shop_id;
@@ -126,6 +127,12 @@ export default function Dashboard() {
           </div>
           {/* Desktop right-side */}
           <div className="hidden sm:flex items-center gap-4">
+            <button 
+              onClick={() => setShowShareModal(true)}
+              className="text-xs font-bold bg-theme-main text-white px-4 py-2 rounded-xl hover:bg-slate-900 transition flex items-center gap-2"
+            >
+              <span>🔗</span> Share Shop
+            </button>
             {user?.role === 'system_admin' && <AppLauncher />}
             <button
               onClick={() => { logout(); navigate("/login"); }}
@@ -151,13 +158,19 @@ export default function Dashboard() {
         {mobileMenuOpen && (
           <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-3">
             <Link to="/dashboard/orders" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🛎 Live Orders</Link>
-            <Link to="/menu-manager" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">📋 Menu Manager</Link>
+            <Link to="/product-manager" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">📋 Product Manager</Link>
             <Link to="/dashboard/campaigns" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🎁 Bundles</Link>
             <Link to="/dashboard/settings" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">⚙️ Settings</Link>
             <button onClick={() => { logout(); navigate("/login"); }} className="text-sm font-bold text-red-500 text-left">Logout</button>
           </div>
         )}
       </header>
+
+      <ShareShopModal 
+        shop={shop} 
+        isOpen={showShareModal} 
+        onClose={() => setShowShareModal(false)} 
+      />
 
       {/* New Order Toast */}
       {showNewOrderToast && (
@@ -237,14 +250,14 @@ export default function Dashboard() {
           </Link>
 
           <Link
-            to="/menu-manager"
+            to="/product-manager"
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow"
           >
             <h2 className="text-lg font-semibold text-gray-800 mb-2">
-              📋 Menu Manager
+              📋 Product Manager
             </h2>
             <p className="text-gray-500 text-sm">
-              Add, edit, and remove menu items and categories.
+              Add, edit, and remove products, categories and search tags.
             </p>
           </Link>
 

@@ -42,7 +42,8 @@ export default function Settings() {
       delivery_fee_fixed: shop.delivery_fee_fixed,
       min_order_value: shop.min_order_value,
       is_open: shop.is_open,
-      mpesa_shortcode: shop.mpesa_shortcode || null,
+        fulfillment_settings: shop.fulfillment_settings,
+        mpesa_shortcode: shop.mpesa_shortcode || null,
       mpesa_passkey: shop.mpesa_passkey || null,
     }).eq("id", SHOP_ID);
     
@@ -121,12 +122,113 @@ export default function Settings() {
               </div>
            </div>
 
-           {/* Operational Logistics */}
-           <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
-              <h2 className="text-sm font-black text-green-600 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Logistics & Payments</h2>
-              <div className="grid md:grid-cols-2 gap-6">
-                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Industry Type</label>
+            {/* Fulfillment Options */}
+            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+               <h2 className="text-sm font-black text-green-600 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Fulfillment Options</h2>
+               <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div>
+                        <p className="text-sm font-bold text-gray-800">🏠 In-Store Pickup / Dine-In</p>
+                        <p className="text-[10px] text-gray-500 uppercase font-medium">Free — Order is consumed or collected at the shop</p>
+                     </div>
+                     <input 
+                        type="checkbox" 
+                        checked={shop?.fulfillment_settings?.accepts_pickup || false} 
+                        onChange={e => {
+                           const settings = shop.fulfillment_settings || {};
+                           setShop({...shop, fulfillment_settings: {...settings, accepts_pickup: e.target.checked, accepts_dine_in: e.target.checked}});
+                        }}
+                        className="w-5 h-5 accent-green-600 rounded cursor-pointer"
+                     />
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div>
+                        <p className="text-sm font-bold text-gray-800">🛍️ Leave with Items (Takeaway)</p>
+                        <p className="text-[10px] text-gray-500 uppercase font-medium">Free — Digital receipt for takeaway items</p>
+                     </div>
+                     <input 
+                        type="checkbox" 
+                        checked={shop?.fulfillment_settings?.accepts_leave_with_items || false} 
+                        onChange={e => {
+                           const settings = shop.fulfillment_settings || {};
+                           setShop({...shop, fulfillment_settings: {...settings, accepts_leave_with_items: e.target.checked}});
+                        }}
+                        className="w-5 h-5 accent-green-600 rounded cursor-pointer"
+                     />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div>
+                        <p className="text-sm font-bold text-gray-800">🚗 Home Delivery</p>
+                        <p className="text-[10px] text-gray-500 uppercase font-medium">Paid — Customers provide address / Maps pin</p>
+                     </div>
+                     <input 
+                        type="checkbox" 
+                        checked={shop?.fulfillment_settings?.accepts_delivery || false} 
+                        onChange={e => {
+                           const settings = shop.fulfillment_settings || {};
+                           setShop({...shop, fulfillment_settings: {...settings, accepts_delivery: e.target.checked}});
+                        }}
+                        className="w-5 h-5 accent-green-600 rounded cursor-pointer"
+                     />
+                  </div>
+
+                  {shop?.fulfillment_settings?.accepts_delivery && (
+                     <div className="pl-8 border-l-2 border-slate-100 mt-2 space-y-4 animate-fade-in">
+                        <div>
+                           <label className="block text-[10px] font-bold text-gray-400 uppercase mb-2">Delivery Fee (KSh)</label>
+                           <input 
+                              type="number" 
+                              value={shop.delivery_fee_fixed} 
+                              onChange={e => setShop({...shop, delivery_fee_fixed: Number(e.target.value)})}
+                              className="w-full max-w-[200px] bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none focus:border-green-600 font-bold text-gray-900"
+                           />
+                        </div>
+                     </div>
+                  )}
+
+                  <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl">
+                     <div>
+                        <p className="text-sm font-bold text-gray-800">📦 Pickup Point (Depot)</p>
+                        <p className="text-[10px] text-gray-500 uppercase font-medium">Paid — Items sent to a specific collection center</p>
+                     </div>
+                     <input 
+                        type="checkbox" 
+                        checked={shop?.fulfillment_settings?.accepts_pickup_point || false} 
+                        onChange={e => {
+                           const settings = shop.fulfillment_settings || {};
+                           setShop({...shop, fulfillment_settings: {...settings, accepts_pickup_point: e.target.checked}});
+                        }}
+                        className="w-5 h-5 accent-green-600 rounded cursor-pointer"
+                     />
+                  </div>
+
+                  {shop?.fulfillment_settings?.accepts_pickup_point && (
+                     <div className="pl-8 border-l-2 border-slate-100 mt-2 space-y-4 animate-fade-in">
+                        <div>
+                           <label className="block text-[10px] font-bold text-gray-400 uppercase mb-2">Pickup Point Fee (KSh)</label>
+                           <input 
+                              type="number" 
+                              value={shop?.fulfillment_settings?.pickup_point_fee || 0} 
+                              onChange={e => {
+                                 const settings = shop.fulfillment_settings || {};
+                                 setShop({...shop, fulfillment_settings: {...settings, pickup_point_fee: Number(e.target.value)}});
+                              }}
+                              className="w-full max-w-[200px] bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none focus:border-green-600 font-bold text-gray-900"
+                           />
+                        </div>
+                     </div>
+                  )}
+               </div>
+            </div>
+
+            {/* Operational Logistics */}
+            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+               <h2 className="text-sm font-black text-green-600 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Logistics & Payments</h2>
+               <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Industry Type</label>
                     <select 
                        value={shop.industry_type} 
                        onChange={e => setShop({...shop, industry_type: e.target.value})}

@@ -40,7 +40,8 @@ import MyOrders from "./pages/MyOrders";
 
 // --- Operator Pages ---
 import OnboardingGate from "./components/OnboardingGate";
-import MenuManager from "./pages/MenuManager";
+import ProductManager from "./pages/ProductManager";
+import ShopSelection from "./pages/ShopSelection";
 import QrGenerator from "./pages/QrGenerator";
 import Plans from "./pages/Plans";
 
@@ -157,6 +158,7 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/join/distribution-network" element={<SupplierSignup />} />
+      <Route path="/shop-selection" element={<ShopSelection />} />
 
       {/* === CUSTOMER ROUTES === */}
       <Route path="/menu" element={<QrAccessGuard><OfflineMenuWrapper><Menu /></OfflineMenuWrapper></QrAccessGuard>} />
@@ -168,7 +170,8 @@ export default function App() {
       <Route path="/history" element={<QrAccessGuard><MyOrders /></QrAccessGuard>} />
 
       {/* === OPERATOR ROUTES === */}
-      <Route path="/menu-manager" element={<OnboardingGate><MenuManager /></OnboardingGate>} />
+      <Route path="/product-manager" element={<OnboardingGate><ProductManager /></OnboardingGate>} />
+      <Route path="/menu-manager" element={<OnboardingGate><ProductManager /></OnboardingGate>} />
       <Route path="/qr-generator" element={<OnboardingGate><QrGenerator /></OnboardingGate>} />
       <Route path="/plans" element={<OnboardingGate><Plans /></OnboardingGate>} />
 

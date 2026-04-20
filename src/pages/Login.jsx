@@ -15,11 +15,18 @@ export default function Login() {
     setLoading(true);
     setError(null);
 
-    const { user, error: authError } = await authenticateUser(email, password);
+    const { user, profiles, requiresSelection, error: authError } = await authenticateUser(email, password);
     setLoading(false);
 
     if (authError) {
       setError(authError);
+      return;
+    }
+
+    if (requiresSelection) {
+      localStorage.setItem("pending_selection", JSON.stringify(profiles));
+      localStorage.setItem("pending_user_id", JSON.stringify(user.id));
+      navigate("/shop-selection");
       return;
     }
 
