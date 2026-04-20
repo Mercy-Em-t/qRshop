@@ -8,6 +8,7 @@ import AnalyticsChart from "../components/AnalyticsChart";
 import SubscriptionStatus from "../components/SubscriptionStatus";
 import OnboardingWizard from "../components/OnboardingWizard";
 import UpgradeModal from "../components/UpgradeModal";
+import MultiShopNoticeboard from "../components/MultiShopNoticeboard";
 import AppLauncher from "../components/AppLauncher";
 import ShareShopModal from "../components/ShareShopModal";
 import usePlanAccess from "../hooks/usePlanAccess";
@@ -230,18 +231,23 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Link
-            to="/dashboard/orders"
-            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-green-100 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-10"></div>
-            {pendingOrdersCount > 0 && (
-               <div className="absolute top-4 right-4 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md">
-                 {pendingOrdersCount}
-               </div>
-            )}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          
+          {/* Master Account Global Noticeboard */}
+          <MultiShopNoticeboard userId={user?.id} />
+
+          {/* Quick Actions / Statistics Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Link
+              to="/dashboard/orders"
+              className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-green-100 relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+              {pendingOrdersCount > 0 && (
+                 <div className="absolute top-4 right-4 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md">
+                   {pendingOrdersCount}
+                 </div>
+              )}
             <h2 className="text-lg font-semibold text-gray-800 mb-2">
               🛎 Live Orders
             </h2>
@@ -474,6 +480,7 @@ export default function Dashboard() {
             </p>
           </Link>
         </div>
+      </div>
 
         {/* Analytics Section */}
         <h2 id="analytics" className="text-lg font-bold text-gray-800 mb-4 pt-4">📊 Analytics</h2>

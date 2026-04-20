@@ -78,14 +78,19 @@ export async function authenticateUser(email, password) {
   };
 
   localStorage.setItem("savannah_session", JSON.stringify(sessionUser));
+  cachedUser = sessionUser;
   return { user: sessionUser };
 }
 
+let cachedUser = null;
+
 export function getCurrentUser() {
+  if (cachedUser) return cachedUser;
   try {
     const raw = localStorage.getItem("savannah_session");
     if (!raw) return null;
-    return JSON.parse(raw);
+    cachedUser = JSON.parse(raw);
+    return cachedUser;
   } catch {
     return null;
   }
@@ -94,6 +99,7 @@ export function getCurrentUser() {
 export async function logout() {
   await supabase.auth.signOut();
   localStorage.removeItem("savannah_session");
+  cachedUser = null;
 }
 
 /**

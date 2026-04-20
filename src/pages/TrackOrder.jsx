@@ -24,9 +24,27 @@ export default function TrackOrder() {
 
     fetchOrderDetails();
 
-    // Poll for status updates every 10 seconds to simulate real-time
-    const interval = setInterval(fetchOrderDetails, 10000);
-    return () => clearInterval(interval);
+    // 1. Real-time Subscription for instant propagation
+    const channel = supabase
+      .channel(`order-status-${orderId}`)
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'orders',
+        filter: `id=eq.${orderId}` 
+      }, (payload) => {
+        console.log("Order Update Received:", payload.new);
+        setOrder(prev => ({ ...prev, ...payload.new }));
+      })
+      .subscribe();
+
+    // 2. Poll as a fallback every 15 seconds
+    const interval = setInterval(fetchOrderDetails, 15000);
+    
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [orderId]);
 
   const fetchOrderDetails = async () => {

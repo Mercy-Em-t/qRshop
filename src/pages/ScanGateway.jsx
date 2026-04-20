@@ -109,37 +109,45 @@ export default function ScanGateway() {
      // 4. Resolve Behavior based on Standardized Actions
      const categoryParam = node.category_filter ? `?category=${encodeURIComponent(node.category_filter)}` : "";
 
-     switch (node.action) {
-        case 'open_menu':
-          createQrSession(node.shop_id, node.location);
-          navigate(`/menu${categoryParam}`, { replace: true });
-          break;
-          
-        case 'open_order':
-          if (node.location && node.location.startsWith('AD:')) {
-             // It's a hidden, semantic digital Ad Link! Forward immediately to AutoCart.
-             const payload = node.location.substring(3);
-             createQrSession(node.shop_id, "Direct Link");
-             navigate(`/buy?shop=${node.shop_id}&items=${payload}:1`, { replace: true });
-          } else {
-             // Standard shop table physical QR checkout
-             createQrSession(node.shop_id, node.location);
-             navigate("/cart", { replace: true });
-          }
-          break;
-          
-        case 'open_campaign':
-           createQrSession(node.shop_id, node.location, null, node.campaign_id);
-           navigate("/campaign", { replace: true, state: { campaignId: node.campaign_id } });
+      const redirect = (path) => {
+        setTimeout(() => {
+          navigate(path, { replace: true });
+        }, 2000);
+      };
+
+      switch (node.action) {
+         case 'open_menu':
+           createQrSession(node.shop_id, node.location);
+           redirect(`/menu${categoryParam}`);
            break;
            
-        case 'open_loyalty':
-           setError(`The Loyalty experience is currently under construction.`);
+         case 'open_order':
+           if (node.location && node.location.startsWith('AD:')) {
+              const payload = node.location.substring(3);
+              createQrSession(node.shop_id, "Direct Link");
+              redirect(`/buy?shop=${node.shop_id}&items=${payload}:1`);
+           } else {
+              createQrSession(node.shop_id, node.location);
+              redirect("/cart");
+           }
            break;
            
-        default:
-           setError(`Action '${node.action}' is not supported by this platform version.`);
-     }
+         case 'open_campaign':
+            createQrSession(node.shop_id, node.location, null, node.campaign_id);
+            setTimeout(() => {
+              navigate("/campaign", { replace: true, state: { campaignId: node.campaign_id } });
+            }, 2000);
+            break;
+            
+         case 'open_loyalty':
+            setError(`The Loyalty experience is currently under construction.`);
+            setIsProcessing(false);
+            break;
+            
+         default:
+            setError(`Action '${node.action}' is not supported by this platform version.`);
+            setIsProcessing(false);
+      }
   };
 
   const handleConsentAccept = () => {

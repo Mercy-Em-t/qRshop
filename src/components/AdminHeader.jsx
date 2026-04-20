@@ -26,6 +26,12 @@ export default function AdminHeader({ title, user, backLink = "/admin" }) {
           )}
           <AppLauncher />
           <button 
+            onClick={() => navigate("/select-shop")}
+            className="text-[11px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-800 transition"
+          >
+            Switch Shop
+          </button>
+          <button 
             onClick={() => { logout(); navigate("/login"); }}
             className="text-[11px] font-black uppercase tracking-widest text-red-500 hover:text-red-600 transition"
           >
