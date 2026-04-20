@@ -69,6 +69,27 @@ export function createQrSession(shopId, table, serverSession = null, campaignId 
   return session;
 }
 
+/**
+ * Creates a "Public" session for web visitors (e.g. from a subdomain or public link).
+ * Bypasses the requirement for a physical QR scan while maintaining shop context.
+ */
+export function createPublicSession(shopId) {
+  const deviceId = getOrCreateDeviceId();
+  const trackingSessionId = generateTrackingId();
+
+  const session = {
+    shop_id: shopId,
+    table: "Web",
+    created_at: new Date().toISOString(),
+    expires_at: new Date(Date.now() + SESSION_EXPIRY_MINUTES * 60 * 1000).toISOString(),
+    device_id: deviceId,
+    tracking_session_id: trackingSessionId
+  };
+
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  return session;
+}
+
 export function getQrSession() {
   const raw = sessionStorage.getItem(SESSION_KEY);
   if (!raw) return null;

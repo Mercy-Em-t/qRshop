@@ -4,6 +4,7 @@ import { getShop } from "../services/shop-service";
 import { getMenuItems } from "../services/menu-service";
 import { getCurrentUser } from "../services/auth-service";
 import MetaTags from "../components/MetaTags";
+import { createPublicSession } from "../utils/qr-session";
 
 // Shop Homepage Components
 import ShopHero from "../components/shop/ShopHero";
@@ -88,7 +89,7 @@ export default function PublicShopProfile({ directShopId }) {
             <h2 className="text-2xl font-black mb-4 dark:text-white">Ready to browse everything?</h2>
             <button 
                 onClick={() => {
-                   sessionStorage.setItem('qr_session', JSON.stringify({ shop_id: shopId }));
+                   createPublicSession(shopId);
                    navigate(`/menu`);
                 }}
                 className="bg-theme-secondary text-white px-10 py-4 rounded-full font-black uppercase tracking-widest hover:bg-theme-secondary/90 transition shadow-xl"
