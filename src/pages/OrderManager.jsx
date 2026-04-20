@@ -325,6 +325,17 @@ export default function OrderManager() {
                      {order.status === 'pending_payment' && (
                         <button onClick={() => updateOrderStatus(order.id, 'paid')} className="w-full bg-green-600 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-green-100">✅ Confirm Cash / MPesa</button>
                      )}
+                     
+                     {['accepted', 'preparing'].includes(order.status) && (
+                        <button 
+                           onClick={() => updateOrderStatus(order.id, 'pending_payment')} 
+                           className="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-amber-100 flex items-center justify-center gap-2 mb-2"
+                        >
+                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                           Request Payment
+                        </button>
+                     )}
+
                      {['paid', 'accepted', 'preparing'].includes(order.status) && (
                         <button onClick={() => updateOrderStatus(order.id, 'ready')} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition">📦 Mark Ready</button>
                      )}
