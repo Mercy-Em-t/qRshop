@@ -10,6 +10,7 @@ import OnboardingWizard from "../components/OnboardingWizard";
 import UpgradeModal from "../components/UpgradeModal";
 import AppLauncher from "../components/AppLauncher";
 import ShareShopModal from "../components/ShareShopModal";
+import { usePlanAccess } from "../hooks/usePlanAccess";
 
 export default function Dashboard() {
   const [ordersPerDay, setOrdersPerDay] = useState([]);
