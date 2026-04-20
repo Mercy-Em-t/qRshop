@@ -62,7 +62,9 @@ export default function PublicShopProfile({ directShopId }) {
       }
     }
     loadShopData();
-  }, [shopId, navigate]);
+  }, [shopIdentifier, navigate]);
+
+  const shopId = shop?.id;
 
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme-secondary"></div></div>;
   if (error || !shop) return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-4"><h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Shop Not Found</h1><button onClick={() => navigate("/")} className="mt-4 text-theme-secondary font-bold">Go Home</button></div>;
@@ -96,8 +98,10 @@ export default function PublicShopProfile({ directShopId }) {
             <h2 className="text-2xl font-black mb-4 dark:text-white">Ready to browse everything?</h2>
             <button 
                 onClick={() => {
-                   createPublicSession(shopId);
-                   navigate(`/menu`);
+                   if (shopId) {
+                      createPublicSession(shopId);
+                      navigate(`/menu`);
+                   }
                 }}
                 className="bg-theme-secondary text-white px-10 py-4 rounded-full font-black uppercase tracking-widest hover:bg-theme-secondary/90 transition shadow-xl"
             >
