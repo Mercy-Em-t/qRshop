@@ -108,7 +108,7 @@ export default function App() {
          try {
             const shop = await getShopBySubdomain(subdomain);
             if (shop) {
-               const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+               const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
                if (uuidRegex.test(shop.id)) {
                   setSubdomainShopId(shop.id);
                   sessionStorage.setItem(`subdomain_cache_${subdomain}`, shop.id);
