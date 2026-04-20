@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../services/supabase-client";
 
 export default function SeedWholesaleUser() {
-  const [email, setEmail] = useState("wholesale@qrshop.com");
+  const [email, setEmail] = useState("wholesale@tmsavannah.com");
   const [password, setPassword] = useState("wholesale2026");
   const [shopId, setShopId] = useState("d0dbf20e-1134-46c5-9c9d-c4e1a8f0d882");
   const [status, setStatus] = useState("Ready to provision.");

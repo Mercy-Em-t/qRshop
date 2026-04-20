@@ -7,7 +7,7 @@ export async function authenticateUser(email, password) {
   // Phase 0: Clear any existing sessions to prevent hand-off deadlocks
   console.log("Auth: Clearing stale session before login handshake...");
   await supabase.auth.signOut();
-  localStorage.removeItem("qrshop_session");
+  localStorage.removeItem("savannah_session");
 
   // Phase 1: Authenticate natively against Supabase Auth (with Timeout Guard)
   console.log("Auth: Initiating native signIn for", email.trim());
@@ -61,13 +61,13 @@ export async function authenticateUser(email, password) {
     shop_id: shopUser.shop_id
   };
 
-  localStorage.setItem("qrshop_session", JSON.stringify(sessionUser));
+  localStorage.setItem("savannah_session", JSON.stringify(sessionUser));
   return { user: sessionUser };
 }
 
 export function getCurrentUser() {
   try {
-    const raw = localStorage.getItem("qrshop_session");
+    const raw = localStorage.getItem("savannah_session");
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -77,7 +77,7 @@ export function getCurrentUser() {
 
 export async function logout() {
   await supabase.auth.signOut();
-  localStorage.removeItem("qrshop_session");
+  localStorage.removeItem("savannah_session");
 }
 
 /**

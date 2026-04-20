@@ -83,7 +83,7 @@ export const BusinessModeler = ({ shopData, onSave }) => {
             </h4>
             <div className="mt-3 text-sm">
               <div className="text-blue-500 truncate">{seo.title}</div>
-              <div className="text-green-600 truncate text-xs">https://{shopData.subdomain}.qrshop.ai</div>
+              <div className="text-green-600 truncate text-xs">https://{shopData.subdomain}.tmsavannah.com</div>
               <div className="text-gray-400 line-clamp-2 mt-1 italic">"{seo.description}"</div>
             </div>
           </div>

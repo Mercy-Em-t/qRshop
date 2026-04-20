@@ -46,7 +46,7 @@ export class BusinessWorker {
       return {
         matched: true,
         message: `You can get this at ${this.shop.name}! ${this.shop.tagline || ''}`,
-        link: `https://${this.shop.subdomain}.qrshop.ai`
+        link: `https://${this.shop.subdomain}.tmsavannah.com`
       };
     }
 

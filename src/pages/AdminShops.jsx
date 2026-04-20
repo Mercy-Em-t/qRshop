@@ -114,7 +114,7 @@ export default function AdminShops() {
     setIsCreating(true);
     try {
       const { data: authData } = await supabase.auth.getSession();
-      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
+      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@tmsavannah.com";
 
       const response = await fetch("/api/admin/create-shop", {
          method: "POST",
@@ -146,7 +146,7 @@ export default function AdminShops() {
   const handleProcessUpgrade = async (reqId, shopId, approved) => {
     try {
       const { data: authData } = await supabase.auth.getSession();
-      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
+      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@tmsavannah.com";
       const response = await fetch("/api/admin/process-upgrade", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminToken, requestId: reqId, shopId, approved })
@@ -160,7 +160,7 @@ export default function AdminShops() {
   const handleProcessKYC = async (kycId, approved) => {
     try {
       const { data: authData } = await supabase.auth.getSession();
-      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
+      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@tmsavannah.com";
       const response = await fetch("/api/admin/process-kyc", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminToken, kycId, approved })
@@ -175,7 +175,7 @@ export default function AdminShops() {
     e.preventDefault(); setIsCreating(true);
     try {
       const { data: authData } = await supabase.auth.getSession();
-      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
+      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@tmsavannah.com";
       const response = await fetch("/api/admin/create-community", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminToken, name: newCommunityName, slug: newCommunitySlug, description: newCommunityDesc })
@@ -190,7 +190,7 @@ export default function AdminShops() {
     e.preventDefault(); setIsCreating(true);
     try {
       const { data: authData } = await supabase.auth.getSession();
-      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
+      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@tmsavannah.com";
       const response = await fetch("/api/admin/create-supplier", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminToken, name: newSupName, industry: newSupIndustry, phone: newSupPhone, email: newSupEmail, mpesaShortcode: newSupMpesa, mpesaPasskey: newSupPasskey })
@@ -205,7 +205,7 @@ export default function AdminShops() {
   const handleToggleSuspension = async (shopId, currentStatus) => {
     try {
       const { data: authData } = await supabase.auth.getSession();
-      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
+      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@tmsavannah.com";
       const response = await fetch("/api/admin/update-shop-metadata", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminToken, shopId, isSuspended: !currentStatus })
@@ -219,7 +219,7 @@ export default function AdminShops() {
   const handleProcessMarketplace = async (shopId, status) => {
     try {
       const { data: authData } = await supabase.auth.getSession();
-      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
+      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@tmsavannah.com";
       const response = await fetch("/api/admin/process-marketplace-listing", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminToken, shopId, status })
@@ -251,7 +251,7 @@ export default function AdminShops() {
       }
 
       const { data: authData } = await supabase.auth.getSession();
-      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
+      const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@tmsavannah.com";
       const response = await fetch("/api/admin/update-shop-metadata", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -277,7 +277,7 @@ export default function AdminShops() {
      setIsUpdating(true);
      try {
         const { data: authData } = await supabase.auth.getSession();
-        const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@qrshop.com";
+        const adminToken = authData?.session?.access_token || "mock-admin-token-for-admin@tmsavannah.com";
         const response = await fetch("/api/admin/update-shop-metadata", {
            method: "POST", 
            headers: { "Content-Type": "application/json" },

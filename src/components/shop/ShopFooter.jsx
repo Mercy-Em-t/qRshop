@@ -17,7 +17,7 @@ export default function ShopFooter({ shop }) {
       </div>
       <div className="footer__bottom">
         <p>© {currentYear} {shop?.name}. All rights reserved.</p>
-        <p className="footer__attribution">Build your own shop at <a href="https://qrshop.co">qrshop.co</a></p>
+        <p className="footer__attribution">Build your own shop at <a href="https://tmsavannah.com" className="font-bold underline decoration-amber-500">tmsavannah.com</a></p>
       </div>
     </footer>
   );
