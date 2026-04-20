@@ -40,7 +40,8 @@ export default function PublicShopProfile({ directShopId }) {
           return;
         }
 
-        // Feature Gate: Savannah Atelier Exclusive Access
+        // Legacy Feature Gate: Savannah Atelier Exclusive Access (REMOVED to restore public customer flow)
+        /* 
         if (shopData.subdomain?.toLowerCase() === 'atelier' || shopData.name.toLowerCase().includes('atelier')) {
            const user = getCurrentUser();
            if (!user) {
@@ -49,6 +50,7 @@ export default function PublicShopProfile({ directShopId }) {
               return;
            }
         }
+        */
 
         setShop(shopData);
         // Take first 4 items as featured
