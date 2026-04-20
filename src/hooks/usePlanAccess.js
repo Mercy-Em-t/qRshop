@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { getCurrentUser } from "../services/auth-service";
 import { getSubscription } from "../services/subscription-service";
 import { supabase } from "../services/supabase-client";
+import { useConfig } from "../services/config-service";
 
 export default function usePlanAccess() {
   const [access, setAccess] = useState({
@@ -38,7 +39,7 @@ export default function usePlanAccess() {
       const { data: shopData } = await supabase
         .from("shops")
         .select("plan")
-        .eq("id", user.shop_id)
+        .eq("shop_id", user.shop_id)
         .single();
 
       let planId = shopData?.plan?.toLowerCase() || null;
@@ -79,5 +80,6 @@ export default function usePlanAccess() {
     return () => window.removeEventListener("focus", onFocus);
   }, [checkPlan]);
 
-  return access;
+  const { isFeatureEnabled } = useConfig();
+  return { ...access, isFeatureEnabled };
 }

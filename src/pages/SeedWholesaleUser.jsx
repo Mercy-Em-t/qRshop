@@ -56,7 +56,7 @@ export default function SeedWholesaleUser() {
           await supabase.from("shops").update({ 
             needs_password_change: true,
             kyc_completed: false 
-          }).eq("id", shopId);
+          }).eq("shop_id", shopId);
           
           setStatus("SUCCESS! Account provisioned natively.");
         }

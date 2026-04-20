@@ -35,7 +35,7 @@ CHECK (internal_status IN (
 CREATE TABLE IF NOT EXISTS public.payments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID REFERENCES public.orders(id) ON DELETE CASCADE,
-    shop_id UUID REFERENCES public.shops(id) ON DELETE CASCADE,
+    shop_id UUID REFERENCES public.shops(shop_id) ON DELETE CASCADE,
     transaction_id TEXT, -- M-Pesa Receipt / External ID
     amount DECIMAL(12,2) NOT NULL,
     method TEXT DEFAULT 'mpesa', -- 'mpesa', 'cash', 'bank', 'card'
@@ -71,7 +71,9 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_payments_modtime ON public.payments;
 CREATE TRIGGER update_payments_modtime
     BEFORE UPDATE ON public.payments
     FOR EACH ROW
     EXECUTE PROCEDURE update_modified_column();
+

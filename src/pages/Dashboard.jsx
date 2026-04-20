@@ -70,7 +70,7 @@ export default function Dashboard() {
           getOrdersPerDay(shopId),
           getPopularItems(shopId),
           getUpsellStats(shopId),
-          supabase.from("shops").select("*").eq("id", shopId).single(),
+          supabase.from("shops").select("*, id:shop_id").eq("shop_id", shopId).single(),
         ]);
         setOrdersPerDay(orders);
         setPopularItems(popular);
@@ -129,6 +129,12 @@ export default function Dashboard() {
           </div>
           {/* Desktop right-side */}
           <div className="hidden sm:flex items-center gap-4">
+            <button 
+              onClick={() => navigate("/shop-selection")}
+              className="text-xs font-black bg-slate-900 text-white px-4 py-2 rounded-xl hover:bg-slate-800 transition flex items-center gap-2 border border-white/10"
+            >
+              <span>🔄</span> Switch Shop
+            </button>
             <button 
               onClick={() => setShowShareModal(true)}
               className="text-xs font-bold bg-theme-main text-white px-4 py-2 rounded-xl hover:bg-slate-900 transition flex items-center gap-2"

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getShop } from "../services/shop-service";
+import { resolveShopIdentifier } from "../services/shop-service";
 import { getMenuItems } from "../services/menu-service";
 import { getCurrentUser } from "../services/auth-service";
 import MetaTags from "../components/MetaTags";
@@ -16,7 +16,7 @@ import ShopFooter from "../components/shop/ShopFooter";
 export default function PublicShopProfile({ directShopId }) {
   const params = useParams();
   const navigate = useNavigate();
-  const shopId = directShopId || params.shopId;
+  const shopIdentifier = directShopId || params.shopId;
   const [shop, setShop] = useState(null);
   const [featuredItems, setFeaturedItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,10 +25,15 @@ export default function PublicShopProfile({ directShopId }) {
   useEffect(() => {
     async function loadShopData() {
       try {
-        const [shopData, items] = await Promise.all([
-          getShop(shopId),
-          getMenuItems(shopId)
-        ]);
+        const shopData = await resolveShopIdentifier(shopIdentifier);
+
+        if (!shopData) {
+          setError("Shop not found");
+          return;
+        }
+
+        const items = await getMenuItems(shopData.id);
+
 
         if (!shopData) {
           setError("Shop not found");

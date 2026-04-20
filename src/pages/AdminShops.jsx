@@ -62,7 +62,7 @@ export default function AdminShops() {
     try {
       const { data: shopsData, error: shopsErr } = await supabase
         .from("shops")
-        .select(`*, shop_users (email, role)`)
+        .select(`*, id:shop_id, shop_users (email, role)`)
         .order("created_at", { ascending: false });
       if (shopsData) setShops(shopsData);
 
@@ -98,7 +98,7 @@ export default function AdminShops() {
 
       const { data: mktData } = await supabase
         .from('shops')
-        .select('id, name, subdomain, industry_type, plan, created_at, shop_users(email)')
+        .select('id:shop_id, name, subdomain, industry_type, plan, created_at, shop_users(email)')
         .eq('marketplace_status', 'pending_review')
         .order('created_at', { ascending: false });
       if (mktData) setMarketplacePending(mktData);

@@ -21,12 +21,14 @@ ALTER TABLE "internal_security"."platform_secrets" ENABLE ROW LEVEL SECURITY;
 
 -- 4. Create Strict RLS Policies
 -- Only the service_role (Edge Functions/Admins) can ever see these secrets
+DROP POLICY IF EXISTS "Service Role Full Access" ON "internal_security"."platform_secrets";
 CREATE POLICY "Service Role Full Access" 
 ON "internal_security"."platform_secrets"
 FOR ALL 
 TO service_role 
 USING (true) 
 WITH CHECK (true);
+
 
 -- 5. Enable pg_net for Edge Function communication
 CREATE EXTENSION IF NOT EXISTS "pg_net";

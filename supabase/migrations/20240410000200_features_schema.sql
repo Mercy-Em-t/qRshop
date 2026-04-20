@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS supplier_items (
 CREATE TABLE IF NOT EXISTS supplier_orders (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   supplier_id UUID REFERENCES suppliers(id) ON DELETE CASCADE NOT NULL,
-  shop_id UUID REFERENCES shops(id) ON DELETE CASCADE NOT NULL,
+  shop_id UUID REFERENCES shops(shop_id) ON DELETE CASCADE NOT NULL,
   status TEXT DEFAULT 'pending',
   total_amount NUMERIC NOT NULL,
   notes TEXT,

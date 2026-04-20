@@ -3,11 +3,17 @@
 
 DO $$
 DECLARE
-    v_user_id UUID := '88888888-8888-4444-9999-000000000000';
+    v_user_id UUID;
+    v_target_id UUID := '88888888-8888-4444-9999-000000000000';
     v_password_hash TEXT := crypt('Savannah2026!Master', gen_salt('bf'));
 BEGIN
+    -- 0. Get ID if user exists
+    SELECT id INTO v_user_id FROM auth.users WHERE email = 'emmercy65@gmail.com' LIMIT 1;
+
     -- 1. Create the User in Auth Schema (if it doesn't exist)
-    IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = 'emmercy65@gmail.com') THEN
+    IF v_user_id IS NULL THEN
+        v_user_id := v_target_id;
+
         INSERT INTO auth.users (
             id, 
             instance_id, 

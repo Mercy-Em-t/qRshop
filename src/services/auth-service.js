@@ -40,9 +40,18 @@ export async function authenticateUser(email, password) {
   console.log("Auth: Native success, fetching shop_user profiles for ID:", authData.user.id);
 
   // Phase 2: Fetch all linked shops (support for multi-shop accounts)
+  // We use an explicit join syntax that is more resilient to column renames
   const { data: profiles, error: suError } = await supabase
     .from("shop_users")
-    .select("email, role, shop_id, shops(name, subdomain)")
+    .select(`
+      email, 
+      role, 
+      shop_id, 
+      shops:shop_id (
+        name, 
+        subdomain
+      )
+    `)
     .eq("id", authData.user.id);
 
   if (suError || !profiles || profiles.length === 0) {

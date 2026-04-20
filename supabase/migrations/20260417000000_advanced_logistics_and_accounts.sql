@@ -24,17 +24,20 @@ CREATE TABLE IF NOT EXISTS public.customer_profiles (
 ALTER TABLE public.customer_profiles ENABLE ROW LEVEL SECURITY;
 
 -- 3. RLS POLICIES FOR CUSTOMER PROFILES
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.customer_profiles;
 CREATE POLICY "Users can view their own profile" 
 ON public.customer_profiles FOR SELECT 
 TO authenticated 
 USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.customer_profiles;
 CREATE POLICY "Users can update their own profile" 
 ON public.customer_profiles FOR UPDATE 
 TO authenticated 
 USING (auth.uid() = id)
 WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON public.customer_profiles;
 CREATE POLICY "Users can insert their own profile" 
 ON public.customer_profiles FOR INSERT 
 TO authenticated 
@@ -42,10 +45,12 @@ WITH CHECK (auth.uid() = id);
 
 -- Allow Shops and Riders to view customer profiles if they have an active order
 -- (Optional: For now keep it strict or allow internal service role)
+DROP POLICY IF EXISTS "Service role can see all profiles" ON public.customer_profiles;
 CREATE POLICY "Service role can see all profiles" 
 ON public.customer_profiles FOR SELECT 
 TO service_role 
 USING (true);
+
 
 -- 4. LINK ORDERS TO REGISTERED USERS
 -- Add user_id to orders if not already present

@@ -26,6 +26,18 @@ export default function MenuItem({ item, onAdd, isShopOnline = true }) {
                <p className="text-sm text-gray-500 mt-1 line-clamp-2">{item.description}</p>
             )}
 
+            {/* Custom Attributes (Mama Rosy specialized fields) */}
+            {item.attributes && Object.keys(item.attributes).length > 0 && (
+               <div className="flex flex-wrap gap-2 mt-2">
+                  {Object.entries(item.attributes).map(([key, value]) => (
+                     <div key={key} className="flex items-center gap-1 bg-theme-accent/5 px-2 py-1 rounded-lg border border-theme-accent/10">
+                        <span className="text-[10px] font-bold text-theme-main uppercase opacity-60">{key}:</span>
+                        <span className="text-[11px] font-bold text-gray-700">{String(value)}</span>
+                     </div>
+                  ))}
+               </div>
+            )}
+
             {/* Tags / Variants UI */}
             {(item.tags?.length > 0 || (item.variant_options && Object.keys(item.variant_options).length > 0)) && (
                <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
@@ -39,6 +51,7 @@ export default function MenuItem({ item, onAdd, isShopOnline = true }) {
                   ))}
                </div>
             )}
+
          </div>
 
          <div className="flex items-end justify-between mt-3">

@@ -41,7 +41,7 @@ ALTER TABLE public.shops ADD COLUMN IF NOT EXISTS industry_type TEXT DEFAULT 're
 -- 4. TRUST & ACCOUNTABILITY: REVIEWS & REPORTS
 CREATE TABLE IF NOT EXISTS public.shop_reviews (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    shop_id UUID REFERENCES public.shops(id) ON DELETE CASCADE,
+    shop_id UUID REFERENCES public.shops(shop_id) ON DELETE CASCADE,
     rating INTEGER CHECK (rating >= 1 AND rating <= 5),
     comment TEXT,
     created_at TIMESTAMPTZ DEFAULT now()
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS public.shop_reviews (
 
 CREATE TABLE IF NOT EXISTS public.shop_reports (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    shop_id UUID REFERENCES public.shops(id) ON DELETE CASCADE,
+    shop_id UUID REFERENCES public.shops(shop_id) ON DELETE CASCADE,
     agent_id UUID REFERENCES public.agents(id) ON DELETE SET NULL,
     category TEXT NOT NULL,
     description TEXT,
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS public.adverts (
     target_url TEXT,
     placement TEXT DEFAULT 'infeed' CHECK (placement IN ('header', 'infeed', 'sidebar')),
     is_active BOOLEAN DEFAULT true,
-    shop_id UUID REFERENCES public.shops(id) ON DELETE SET NULL, -- Optional: Brand-sponsored ads
+    shop_id UUID REFERENCES public.shops(shop_id) ON DELETE SET NULL, -- Optional: Brand-sponsored ads
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
@@ -154,3 +154,16 @@ DROP TRIGGER IF EXISTS tr_audit_immutable ON public.system_audit_logs;
 CREATE TRIGGER tr_audit_immutable
 BEFORE UPDATE OR DELETE ON public.system_audit_logs
 FOR EACH ROW EXECUTE FUNCTION public.prevent_audit_tampering();
+
+-- 13. FIX SHOP_USER CONSTRAINTS (Early repair to support multi-shop management)
+DO $$ 
+BEGIN
+    ALTER TABLE public.shop_users DROP CONSTRAINT IF EXISTS shop_users_pkey;
+    ALTER TABLE public.shop_users DROP CONSTRAINT IF EXISTS shop_users_email_key;
+    ALTER TABLE public.shop_users DROP CONSTRAINT IF EXISTS shop_users_id_key;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'shop_users_user_shop_unique') THEN
+        ALTER TABLE public.shop_users ADD CONSTRAINT shop_users_user_shop_unique UNIQUE (id, shop_id);
+    END IF;
+END $$;
+

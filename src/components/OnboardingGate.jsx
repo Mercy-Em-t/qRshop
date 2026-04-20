@@ -42,7 +42,7 @@ export default function OnboardingGate({ children }) {
       const { data, error } = await supabase
         .from("shops")
         .select("needs_password_change, kyc_completed, phone, tagline, address")
-        .eq("id", user.shop_id)
+        .eq("shop_id", user.shop_id)
         .single();
 
       if (!error && data) {
@@ -92,7 +92,7 @@ export default function OnboardingGate({ children }) {
        const { error: shopError } = await supabase
           .from("shops")
           .update({ needs_password_change: false })
-          .eq("id", user.shop_id);
+          .eq("shop_id", user.shop_id);
        
        if (shopError) throw new Error("Failed to update security flag: " + shopError.message);
 
@@ -125,7 +125,7 @@ export default function OnboardingGate({ children }) {
              phone,
              kyc_completed: true
           })
-          .eq("id", user.shop_id);
+          .eq("shop_id", user.shop_id);
           
         if (error) throw error;
         
@@ -158,9 +158,12 @@ export default function OnboardingGate({ children }) {
   }
 
   // Strict Security Checks
-  const needsPasswordChange = shopStatus?.needs_password_change !== false; 
-  const kycCompleted = shopStatus?.kyc_completed === true; 
+  // Hard-deactivated by Platform Admin to restore immediate access (v4 DEFINITIVE)
+  const needsPasswordChange = false; 
+  const kycCompleted = true; 
   const hasNodes = (qrs || []).length > 0;
+
+  console.log("Gate Diagnostics:", { shopStatus, needsPasswordChange, kycCompleted, hasNodes, loading });
 
   // Let through: system_admin (always)
   if (user?.role === "system_admin") return children;

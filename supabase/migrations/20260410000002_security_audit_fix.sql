@@ -8,8 +8,9 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Categories are public for active shops" ON public.categories;
 CREATE POLICY "Categories are public for active shops" ON public.categories
 FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.shops WHERE id = shop_id AND is_online = true)
+  EXISTS (SELECT 1 FROM public.shops WHERE shops.shop_id = categories.shop_id AND shops.is_online = true)
 );
+
 
 DROP POLICY IF EXISTS "Owners and admins can manage categories" ON public.categories;
 CREATE POLICY "Owners and admins can manage categories" ON public.categories

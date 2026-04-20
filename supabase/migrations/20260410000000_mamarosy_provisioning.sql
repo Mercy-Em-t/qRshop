@@ -16,7 +16,7 @@ BEGIN
     -- This addresses the "categories list" requirement for better management
     CREATE TABLE IF NOT EXISTS public.categories (
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        shop_id UUID REFERENCES public.shops(id) ON DELETE CASCADE,
+        shop_id UUID REFERENCES public.shops(shop_id) ON DELETE CASCADE,
         name TEXT NOT NULL,
         slug TEXT,
         created_at TIMESTAMPTZ DEFAULT now(),
@@ -24,7 +24,7 @@ BEGIN
     );
 
     -- 3. PROVISION SHOP: MAMAROSY
-    INSERT INTO public.shops (id, name, subdomain, industry_type, plan, subscription_expires_at, is_online)
+    INSERT INTO public.shops (shop_id, name, subdomain, industry_type, plan, subscription_expires_at, is_online)
     VALUES (
         mamarosy_id, 
         'Mamarosy Health Grocery', 
@@ -33,7 +33,7 @@ BEGIN
         'pro',
         now() + interval '1 year',
         true
-    ) ON CONFLICT (id) DO UPDATE SET 
+    ) ON CONFLICT (shop_id) DO UPDATE SET 
         industry_type = EXCLUDED.industry_type,
         plan = EXCLUDED.plan,
         subscription_expires_at = EXCLUDED.subscription_expires_at;
@@ -43,7 +43,8 @@ BEGIN
     IF owner_id IS NOT NULL THEN
         INSERT INTO public.shop_users (id, shop_id, email, role)
         VALUES (owner_id, mamarosy_id, 'mamarosy@shopqr.ke', 'owner')
-        ON CONFLICT (id) DO UPDATE SET shop_id = EXCLUDED.shop_id;
+        ON CONFLICT (id, shop_id) DO UPDATE SET role = EXCLUDED.role;
+
     END IF;
 
     -- 4. SEED PRODUCT CATEGORIES
@@ -211,7 +212,7 @@ BEGIN
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         order_customer_name TEXT,
         order_id UUID REFERENCES public.orders(id), -- FIXED reference to orders
-        shop_id UUID REFERENCES public.shops(id),
+        shop_id UUID REFERENCES public.shops(shop_id),
         notification_type TEXT,
         channel TEXT DEFAULT 'whatsapp',
         status TEXT DEFAULT 'sent',

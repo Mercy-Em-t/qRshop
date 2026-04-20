@@ -40,6 +40,7 @@ import MyOrders from "./pages/MyOrders";
 
 // --- Operator Pages ---
 import OnboardingGate from "./components/OnboardingGate";
+import MaintenanceGate from "./components/MaintenanceGate";
 import ProductManager from "./pages/ProductManager";
 import ShopSelection from "./pages/ShopSelection";
 import QrGenerator from "./pages/QrGenerator";
@@ -133,12 +134,15 @@ export default function App() {
   }
 
   return (
-    <Routes>
+    <MaintenanceGate>
+      <Routes>
       {/* === PUBLIC ROUTES === */}
       <Route path="/" element={<Home />} />
       <Route path="/enter" element={<Enter />} />
       <Route path="/invalid-access" element={<InvalidAccess />} />
       <Route path="/shops/:shopId" element={<PublicShopProfile />} />
+      <Route path="/s/:shopId" element={<PublicShopProfile />} />
+
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
       <Route path="/request-access" element={<RequestAccess />} />
       <Route path="/pricing" element={<Pricing />} />
@@ -213,6 +217,7 @@ export default function App() {
             <a href="/" className="bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition">Return Home</a>
          </div>
       } />
-    </Routes>
+      </Routes>
+    </MaintenanceGate>
   );
 }

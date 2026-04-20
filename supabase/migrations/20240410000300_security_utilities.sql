@@ -50,5 +50,13 @@ ALTER TABLE public.ratelimit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payment_audit_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.login_attempts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Service role can manage payment logs" ON payment_audit_log FOR ALL USING (true);
-CREATE POLICY "Public can insert login attempts" ON public.login_attempts FOR INSERT WITH CHECK (true);
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role can manage payment logs' AND tablename = 'payment_audit_log') THEN
+        CREATE POLICY "Service role can manage payment logs" ON payment_audit_log FOR ALL USING (true);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public can insert login attempts' AND tablename = 'login_attempts') THEN
+        CREATE POLICY "Public can insert login attempts" ON public.login_attempts FOR INSERT WITH CHECK (true);
+    END IF;
+END $$;
+

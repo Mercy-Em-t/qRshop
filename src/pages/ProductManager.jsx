@@ -56,7 +56,7 @@ export default function ProductManager() {
     setLoading(true);
     const { data, error } = await supabase
       .from("menu_items")
-      .select("*")
+      .select("*, product_images(url)")
       .eq("shop_id", SHOP_ID)
       .order("category", { ascending: true })
       .order("created_at", { ascending: false });
@@ -142,6 +142,9 @@ export default function ProductManager() {
                  url: publicUrl,
                  position: 0
              });
+             
+             // Direct sync to menu_items to ensure immediate visibility across all components
+             await supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", newProductId);
              
              setUploadProgress(100);
           } catch (imgErr) {
@@ -346,6 +349,9 @@ export default function ProductManager() {
            parsedTags = cleanStr(row[7]).split(',').map(t=>t.trim()).filter(Boolean);
         }
         
+        const imageUrls = (row.length >= 10 && cleanStr(row[9])) ? cleanStr(row[9]).split('|') : [];
+        imageCreations.push(imageUrls);
+
         bulkItems.push({
            shop_id: SHOP_ID,
            name: name,
@@ -357,10 +363,8 @@ export default function ProductManager() {
            product_link: row.length >= 7 ? (cleanStr(row[6]) || null) : null,
            tags: parsedTags,
            variant_options: parsedVariants,
+           image_url: (imageUrls && imageUrls.length > 0) ? imageUrls[0].trim() : null
         });
-        
-        const imageUrls = (row.length >= 10 && cleanStr(row[9])) ? cleanStr(row[9]).split('|') : [];
-        imageCreations.push(imageUrls);
       }
 
       if (validationErrors.length > 0) {
@@ -531,7 +535,7 @@ export default function ProductManager() {
                        </button>
                        <div className="relative hover:bg-gray-50 transition-colors">
                           <button className="w-full text-left px-4 py-3 text-sm text-gray-700 font-medium flex items-center gap-2">
-                               ☁️ Upload CSV
+                                ☁️ Upload CSV
                           </button>
                           <input 
                               type="file" 
@@ -726,27 +730,40 @@ export default function ProductManager() {
              <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden">
                 {currentItems.map((item) => (
                    <div key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${item.is_active === false ? 'bg-gray-50/50 opacity-60' : 'hover:bg-gray-50/30'}`}>
-                      <div className="min-w-0">
-                         <div className="flex items-center gap-2">
-                           <h3 className={`font-bold ${item.is_active === false ? 'text-gray-500' : 'text-gray-900'}`}>{item.name}</h3>
-                           <span className="text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest bg-gray-100 text-gray-500">
-                             {item.category}
-                           </span>
-                         </div>
-                         <p className="text-xs text-gray-500 mt-0.5 font-mono">SKU: {item.sku || 'N/A'}</p>
-                         <p className="text-sm font-black text-gray-900 mt-2">KSh {item.price}</p>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                         <button onClick={() => generateAdLink(item)} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg hover:rotate-12 transition-all" title="Get Share Link">
-                            🔗
-                         </button>
-                         <button onClick={() => startEdit(item)} className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors" title="Edit Metadata">
-                            ✏️
-                         </button>
-                         <button onClick={() => handleToggleActive(item.id, item.is_active)} className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-red-50'}`} title={item.is_active === false ? "Live" : "Archive"}>
-                            {item.is_active === false ? '👁️' : '🚫'}
-                         </button>
-                      </div>
+                       <div className="flex items-center gap-3 min-w-0">
+                          {/* Item Thumbnail */}
+                          <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                             {item.product_images && item.product_images.length > 0 ? (
+                                <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
+                             ) : item.image_url ? (
+                                <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                             ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-300 text-[9px] font-bold uppercase tracking-tighter">No Pic</div>
+                             )}
+                          </div>
+                          
+                          <div className="min-w-0">
+                             <div className="flex items-center gap-2">
+                               <h3 className={`font-bold ${item.is_active === false ? 'text-gray-500' : 'text-gray-900'} truncate`}>{item.name}</h3>
+                               <span className="text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest bg-gray-100 text-gray-500 flex-shrink-0">
+                                 {item.category}
+                               </span>
+                             </div>
+                             <p className="text-[10px] text-gray-500 mt-0.5 font-mono">SKU: {item.sku || 'N/A'}</p>
+                             <p className="text-sm font-black text-gray-900 mt-1">KSh {item.price}</p>
+                          </div>
+                       </div>
+                       <div className="flex items-center gap-2 shrink-0">
+                          <button onClick={() => generateAdLink(item)} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg hover:rotate-12 transition-all" title="Get Share Link">
+                             🔗
+                          </button>
+                          <button onClick={() => startEdit(item)} className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors" title="Edit Metadata">
+                             ✏️
+                          </button>
+                          <button onClick={() => handleToggleActive(item.id, item.is_active)} className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-red-50'}`} title={item.is_active === false ? "Live" : "Archive"}>
+                             {item.is_active === false ? '👁️' : '🚫'}
+                          </button>
+                       </div>
                    </div>
                 ))}
              </div>

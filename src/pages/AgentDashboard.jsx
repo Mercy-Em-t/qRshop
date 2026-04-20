@@ -28,7 +28,7 @@ export default function AgentDashboard() {
       setAgent(agentData);
       const { data: shopsData } = await supabase
         .from("shops")
-        .select("*")
+        .select("*, id:shop_id")
         .eq("agent_id", agentData.id);
       setShops(shopsData || []);
 
@@ -46,7 +46,7 @@ export default function AgentDashboard() {
     const { error } = await supabase
       .from("shops")
       .update({ verification_level: level })
-      .eq("id", shopId);
+      .eq("shop_id", shopId);
     if (!error) fetchAgentData();
   };
 
@@ -59,7 +59,7 @@ export default function AgentDashboard() {
     const { error } = await supabase
       .from("shops")
       .update({ payment_mode: newMode })
-      .eq("id", shopId);
+      .eq("shop_id", shopId);
     if (!error) fetchAgentData();
   };
 

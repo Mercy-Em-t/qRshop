@@ -24,7 +24,7 @@ export default function Settings() {
   }, []);
 
   const fetchSettings = async () => {
-    const { data } = await supabase.from("shops").select("*").eq("id", SHOP_ID).single();
+    const { data } = await supabase.from("shops").select("*, id:shop_id").eq("shop_id", SHOP_ID).single();
     if (data) setShop(data);
     setLoading(false);
   };
@@ -45,7 +45,7 @@ export default function Settings() {
         fulfillment_settings: shop.fulfillment_settings,
         mpesa_shortcode: shop.mpesa_shortcode || null,
       mpesa_passkey: shop.mpesa_passkey || null,
-    }).eq("id", SHOP_ID);
+    }).eq("shop_id", SHOP_ID);
     
     setSaving(false);
     setMessage(error ? "Error updating settings" : "Settings updated successfully!");

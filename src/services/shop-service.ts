@@ -21,8 +21,8 @@ export async function getShop(shopId: string): Promise<Shop | null> {
 
   const { data, error } = await supabase
     .from("shops")
-    .select("*")
-    .eq("id", shopId)
+    .select("*, id:shop_id")
+    .eq("shop_id", shopId)
     .single();
 
   if (error) {
@@ -38,9 +38,10 @@ export async function getShopBySubdomain(subdomain: string): Promise<Shop | null
 
   const { data, error } = await supabase
     .from("shops")
-    .select("*")
+    .select("*, id:shop_id")
     .eq("subdomain", subdomain)
     .single();
+
 
   if (error) {
     console.error("Error fetching shop by subdomain:", error);
@@ -50,7 +51,18 @@ export async function getShopBySubdomain(subdomain: string): Promise<Shop | null
   return data as Shop;
 }
 
+export async function resolveShopIdentifier(identifier: string): Promise<Shop | null> {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  
+  if (uuidRegex.test(identifier)) {
+    return getShop(identifier);
+  }
+  
+  return getShopBySubdomain(identifier);
+}
+
 export async function getTable(shopId: string, tableNumber: string): Promise<Table | null> {
+
   if (!supabase) return null;
 
   const { data, error } = await supabase

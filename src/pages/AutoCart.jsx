@@ -56,8 +56,8 @@ export default function AutoCart() {
         // 1. Validate the shop exists and is online
         const { data: shop, error: shopErr } = await supabase
           .from("shops")
-          .select("id, name, is_online")
-          .eq("id", currentShopId)
+          .select("shop_id, name, is_online")
+          .eq("shop_id", currentShopId)
           .single();
 
         if (shopErr || !shop) throw new Error(`This shop could not be found: ${shopErr?.message || 'Store deleted.'}`);
