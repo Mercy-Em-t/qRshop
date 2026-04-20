@@ -12,6 +12,11 @@ export default function TrackOrder() {
   const [error, setError] = useState(null);
   const [pin, setPin] = useState("");
   const [processingPin, setProcessingPin] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+  const [ratingSaved, setRatingSaved] = useState(false);
+  const [confirmingReceipt, setConfirmingReceipt] = useState(false);
   
   const terms = useNomenclature(order?.shop_id);
 
@@ -69,11 +74,81 @@ export default function TrackOrder() {
       if (itemsError) throw itemsError;
       setItems(itemsData || []);
 
+      // Check for existing rating
+      const { data: ratingData } = await supabase
+        .from("order_ratings")
+        .select("*")
+        .eq("order_id", orderId)
+        .single();
+      
+      if (ratingData) {
+        setRating(ratingData.rating);
+        setComment(ratingData.comment);
+        setRatingSaved(true);
+      }
+
     } catch (err) {
       console.error("Order Tracking Error:", err);
       if (!order) setError("Could not find order. It may have been deleted.");
     } finally {
       if (loading) setLoading(false);
+    }
+  };
+
+  const handleConfirmReceipt = async () => {
+    setConfirmingReceipt(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: 'completed' })
+        .eq("id", orderId);
+      if (error) throw error;
+      setOrder(prev => ({ ...prev, status: 'completed' }));
+    } catch (err) {
+      alert("Failed to confirm receipt. Please try again.");
+    } finally {
+      setConfirmingReceipt(false);
+    }
+  };
+
+  const handleSubmitRating = async () => {
+    if (rating === 0) return alert("Please select a rating.");
+    setIsSubmittingRating(true);
+    try {
+      const { error } = await supabase
+        .from("order_ratings")
+        .insert([{
+          order_id: orderId,
+          shop_id: order.shop_id,
+          rating,
+          comment
+        }]);
+      if (error) throw error;
+      setRatingSaved(true);
+    } catch (err) {
+      alert("Failed to save rating. Thank you anyway!");
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
+  const handleReorder = () => {
+    try {
+      const cartItems = items.map(i => ({
+        id: i.menu_item_id,
+        name: i.menu_items?.name,
+        price: i.price,
+        quantity: i.quantity,
+        image_url: i.menu_items?.image_url
+      }));
+      const sid = order.shop_id;
+      localStorage.setItem(`qr_cart_${sid}`, JSON.stringify(cartItems));
+      localStorage.removeItem(`qr_parent_order_${sid}`);
+      localStorage.removeItem(`qr_active_coupon_${sid}`);
+      
+      navigate(`/cart?shop=${sid}`);
+    } catch (err) {
+      alert("Failed to reorder. Please add items manually.");
     }
   };
 
@@ -219,6 +294,17 @@ export default function TrackOrder() {
                   </div>
                </div>
             )}
+
+            {/* Confirm Receipt Action */}
+            {order.status === 'ready' && (
+              <button 
+                onClick={handleConfirmReceipt}
+                disabled={confirmingReceipt}
+                className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-xl shadow-green-100 transition-all flex items-center justify-center gap-2"
+              >
+                {confirmingReceipt ? '✅ Updating...' : '🤝 Confirm Receipt'}
+              </button>
+            )}
          </section>
 
         {/* Payment Module */}
@@ -325,7 +411,75 @@ export default function TrackOrder() {
               <span className="text-gray-500">Total Charged</span>
               <span className="text-xl font-bold text-gray-900">KSh {order.total_price}</span>
            </div>
+           
+           <button 
+              onClick={() => window.print()}
+              className="mt-6 w-full border border-gray-200 text-gray-500 py-3 rounded-xl text-xs font-bold hover:bg-gray-50 transition print:hidden"
+           >
+              📄 Download/Print Receipt
+           </button>
         </section>
+
+        {/* Feedback Module */}
+        {order.status === 'completed' && (
+          <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 print:hidden">
+            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <span>⭐️</span> {ratingSaved ? 'Your Feedback' : 'Rate Your Experience'}
+            </h3>
+            
+            {ratingSaved ? (
+              <div className="text-center py-4">
+                <div className="flex justify-center gap-1 mb-2">
+                  {[1,2,3,4,5].map(s => (
+                    <span key={s} className={`text-2xl ${s <= rating ? 'text-amber-400' : 'text-gray-200'}`}>★</span>
+                  ))}
+                </div>
+                <p className="text-gray-600 italic">"{comment || 'No comment left.'}"</p>
+                <p className="text-[10px] font-black text-green-600 uppercase tracking-widest mt-4">Thank you for your feedback!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex justify-center gap-2">
+                  {[1,2,3,4,5].map(s => (
+                    <button 
+                      key={s} 
+                      onClick={() => setRating(s)}
+                      className={`text-3xl transition-transform hover:scale-110 ${s <= rating ? 'text-amber-400' : 'text-gray-200'}`}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                <textarea 
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Tell us what you liked (optional)..."
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-amber-500 transition-all resize-none"
+                  rows={3}
+                />
+                <button 
+                  onClick={handleSubmitRating}
+                  disabled={isSubmittingRating || rating === 0}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-xl shadow-md transition disabled:opacity-50"
+                >
+                  {isSubmittingRating ? 'Saving...' : 'Submit Review'}
+                </button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Reorder Block */}
+        {order.status === 'completed' && (
+          <div className="pt-4 print:hidden">
+            <button 
+              onClick={handleReorder}
+              className="w-full bg-gray-900 text-white font-black py-4 rounded-xl shadow-lg hover:bg-black transition flex items-center justify-center gap-2"
+            >
+              <span>🔄</span> One-Click Reorder
+            </button>
+          </div>
+        )}
 
         {/* Action Blocks */}
         {order.status === 'requires_edit' && (
