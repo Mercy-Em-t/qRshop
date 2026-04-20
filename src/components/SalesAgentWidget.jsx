@@ -9,15 +9,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
-const QUICK_REPLIES = [
-  { label: "🧶 Show Yarns", query: "yarns" },
-  { label: "🧵 Threads", query: "threads" },
-  { label: "🔘 Buttons", query: "buttons" },
-  { label: "📦 Fabrics", query: "fabrics" },
-  { label: "📿 Beads", query: "beads" },
-  { label: "🔥 What's popular?", query: "popular" },
-];
-
 export default function SalesAgentWidget({ menuItems = [], addItem }) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
@@ -31,29 +22,50 @@ export default function SalesAgentWidget({ menuItems = [], addItem }) {
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
 
+  // Dynamic Quick Replies based on actual shop inventory
+  const categories = [...new Set(menuItems.map(item => item.category).filter(Boolean))];
+  const QUICK_REPLIES = [
+    ...categories.slice(0, 4).map(cat => ({ label: `📦 ${cat}`, query: cat })),
+    { label: "🔥 What's popular?", query: "popular" },
+    { label: "💰 Affordable", query: "cheap" },
+  ];
+
   useEffect(() => {
     if (isOpen) chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isOpen]);
 
   const findProducts = (query) => {
-    const q = query.toLowerCase();
-    if (q.includes("yarn")) return menuItems.filter((p) => p.category?.toLowerCase().includes("yarn")).slice(0, 3);
-    if (q.includes("thread")) return menuItems.filter((p) => p.category?.toLowerCase().includes("thread")).slice(0, 3);
-    if (q.includes("button")) return menuItems.filter((p) => p.category?.toLowerCase().includes("button")).slice(0, 3);
-    if (q.includes("fabric") || q.includes("material")) return menuItems.filter((p) => p.category?.toLowerCase().includes("fabric")).slice(0, 3);
-    if (q.includes("bead")) return menuItems.filter((p) => p.category?.toLowerCase().includes("bead")).slice(0, 3);
-    if (q.includes("popular") || q.includes("best")) return [...menuItems].sort((a, b) => b.price - a.price).slice(0, 3);
+    const q = query.toLowerCase().trim();
+    
+    // Greeting Handler
+    if (["hey", "hello", "hi", "greetings", "sup", "yo"].includes(q)) {
+      return "GREETING";
+    }
+
+    // Filter by Category first
+    const categoryMatches = menuItems.filter((p) => p.category?.toLowerCase().includes(q));
+    if (categoryMatches.length > 0) return categoryMatches.slice(0, 3);
+
+    // Sorting overrides
+    if (q.includes("popular") || q.includes("best")) return [...menuItems].sort((a, b) => (b.orders_count || 0) - (a.orders_count || 0)).slice(0, 3);
     if (q.includes("cheap") || q.includes("affordable")) return [...menuItems].sort((a, b) => a.price - b.price).slice(0, 3);
-    // Generic search
-    return menuItems.filter((p) => p.name?.toLowerCase().includes(q) || p.description?.toLowerCase().includes(q)).slice(0, 3);
+    
+    // Generic Keyword Search
+    return menuItems.filter((p) => 
+      p.name?.toLowerCase().includes(q) || 
+      p.description?.toLowerCase().includes(q) ||
+      (p.tags && p.tags.some(t => t.toLowerCase().includes(q)))
+    ).slice(0, 3);
   };
 
   const buildReply = (query, recs) => {
+    if (recs === "GREETING") return "Hey there! How can I help you navigate our shop today? I can suggest products based on category or help you find our most popular items.";
+    
     const q = query.toLowerCase();
-    if (recs.length === 0) return "I couldn't find an exact match, but feel free to browse the catalog! You can also ask about specific items.";
-    if (q.includes("popular") || q.includes("best")) return "Here are our top-value wholesale picks:";
-    if (q.includes("cheap") || q.includes("affordable")) return "Here are our most affordable wholesale options:";
-    return `I found ${recs.length} great option${recs.length > 1 ? "s" : ""} for you. Click **Propel** to add directly to your cart:`;
+    if (recs.length === 0) return "I couldn't find an exact match for that, but feel free to browse our full catalog! You can also ask about specific categories.";
+    if (q.includes("popular") || q.includes("best")) return "Here are our most popular items right now:";
+    if (q.includes("cheap") || q.includes("affordable")) return "Here are some of our most affordable options:";
+    return `I found ${recs.length} recommendation${recs.length > 1 ? "s" : ""} for you. Hit **Propel** to add to cart:`;
   };
 
   const handleSend = (customText = null) => {
@@ -66,13 +78,13 @@ export default function SalesAgentWidget({ menuItems = [], addItem }) {
     setIsTyping(true);
 
     setTimeout(() => {
-      // Phase 48: Dedicated Checkout Handler
+      // Checkout Handler
       if (text.toLowerCase().includes("checkout") || text.toLowerCase().includes("pay")) {
         setMessages((prev) => [
           ...prev, 
           { 
             sender: "ai", 
-            text: "Ready to finalize? Click below to proceed to the secure checkout and place your order.",
+            text: "Ready to finalize? Click below to proceed to the secure checkout page.",
             actions: [
                 { label: "Proceed to Checkout", path: "/order" }
             ] 
@@ -84,7 +96,14 @@ export default function SalesAgentWidget({ menuItems = [], addItem }) {
 
       const recs = findProducts(text);
       const reply = buildReply(text, recs);
-      setMessages((prev) => [...prev, { sender: "ai", text: reply, recommendations: recs }]);
+      
+      const aiResponse = { 
+        sender: "ai", 
+        text: reply, 
+        recommendations: Array.isArray(recs) ? recs : [] 
+      };
+      
+      setMessages((prev) => [...prev, aiResponse]);
       setIsTyping(false);
     }, 800);
   };

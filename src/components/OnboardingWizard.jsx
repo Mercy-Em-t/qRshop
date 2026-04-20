@@ -36,7 +36,7 @@ export default function OnboardingWizard({ shopId, onComplete }) {
     setLoading(true);
     const { error } = await supabase.from("qrs").insert({
       shop_id: shopId,
-      location_name: "Table 1",
+      location: "Table 1",
       action: "open_menu",
     });
 
