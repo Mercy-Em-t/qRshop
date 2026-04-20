@@ -8,30 +8,27 @@ import {
   CartesianGrid,
 } from 'recharts';
 
-export default function AnalyticsChart({ events }) {
-  if (!events || !events.length) {
+export default function AnalyticsChart({ 
+  data = [], 
+  title, 
+  labelKey = "label", 
+  valueKey = "value", 
+  unit = "" 
+}) {
+  if (!data || !data.length) {
     return (
-      <div className="flex h-64 items-center justify-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-        Waiting for telemetry data to visualize...
+      <div className="flex flex-col h-64 items-center justify-center text-gray-400 bg-gray-50 rounded-xl border border-dashed border-gray-200 p-6 text-center">
+        <span className="text-2xl mb-2">📊</span>
+        <p className="text-xs font-bold uppercase tracking-widest">{title || "Waiting for data..."}</p>
+        <p className="text-[10px] mt-1 opacity-60">Telemetry stream initializing...</p>
       </div>
     );
   }
 
-  // Transform events into chart-friendly data (bucketing by hour)
-  const dataMap = {};
-  events.forEach(e => {
-    // We group by hour of day for simple visualization
-    const date = new Date(e.timestamp);
-    const label = `${date.getHours()}:00`;
-    
-    // Using a map keyed by the label string allows days to aggregate into typical hours of activity
-    dataMap[label] = dataMap[label] ? dataMap[label] + 1 : 1;
-  });
-
-  // Sort chronologically by hour (0 to 23)
-  const chartData = Object.keys(dataMap)
-    .sort((a, b) => parseInt(a) - parseInt(b))
-    .map(timeLabel => ({ timeLabel, volume: dataMap[timeLabel] }));
+  const chartData = data.map(item => ({
+    timeLabel: item[labelKey],
+    volume: item[valueKey]
+  }));
 
   return (
     <div className="h-72 w-full pt-4">
