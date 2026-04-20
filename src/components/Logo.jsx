@@ -1,7 +1,7 @@
 export default function Logo({ className = "h-8 w-8", textClassName = "font-black text-xl italic tracking-tighter" }) {
   return (
     <div className="flex items-center gap-2 group cursor-pointer">
-      <div className={`${className} bg-purple-950 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform overflow-hidden relative border border-white/10`}>
+      <div className={`${className} bg-purple-950 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform overflow-hidden relative border border-white/10`}>
         <img 
           src="/modern_savannah_logo.png" 
           alt="Modern Savannah Logo" 
