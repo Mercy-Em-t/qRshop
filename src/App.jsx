@@ -73,6 +73,7 @@ import DeveloperPortal from "./pages/DeveloperPortal";
 import WholesaleSalesSystem from "./pages/WholesaleSalesSystem";
 import WholesaleJourneyMap from "./pages/WholesaleJourneyMap";
 import SeedWholesaleUser from "./pages/SeedWholesaleUser";
+import ProductDetails from "./pages/ProductDetails";
 
 export default function App() {
   const [subdomainShopId, setSubdomainShopId] = useState(null);
@@ -142,6 +143,7 @@ export default function App() {
       <Route path="/invalid-access" element={<InvalidAccess />} />
       <Route path="/shops/:shopId" element={<PublicShopProfile />} />
       <Route path="/s/:shopId" element={<PublicShopProfile />} />
+      <Route path="/product/:productId" element={<ProductDetails />} />
 
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
       <Route path="/request-access" element={<RequestAccess />} />

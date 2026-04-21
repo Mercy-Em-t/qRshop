@@ -17,6 +17,8 @@ export default function SeedWholesaleUser() {
       if (!supabase) throw new Error("Supabase client is not initialized.");
 
       // 2. Clear out any previous session logic that might interfere
+      localStorage.removeItem("qr_session");
+      sessionStorage.removeItem("qr_session");
       localStorage.removeItem("qrshop_session");
 
       // 3. Perform Native SignUp

@@ -39,7 +39,7 @@ export default function QrGenerator() {
     }
     
     if (shopId) {
-       supabase.from("shops").select("subdomain, name").eq("id", shopId).single()
+       supabase.from("shops").select("subdomain, name").eq("shop_id", shopId).single()
          .then(({ data }) => {
             if (data?.subdomain) setShopSubdomain(data.subdomain);
             if (data?.name) {
@@ -50,11 +50,9 @@ export default function QrGenerator() {
   }, [user, navigate, shopId]);
 
   const qrLink = createdQr ? (
-     shopSubdomain 
-        ? `https://${shopSubdomain}.tmsavannah.com/q/${createdQr.id}`
-        : isFree
-           ? `${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${createdQr.id}`
-           : `${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${shopSlug || 'shop'}?n=${createdQr.id}`
+    shopSubdomain 
+       ? `https://${shopSubdomain}.tmsavannah.com/q/${createdQr.qr_id || createdQr.id}`
+       : `${import.meta.env.VITE_PLATFORM_URL || "https://tmsavannah.com"}/q/${createdQr.qr_id || createdQr.id}`
   ) : "";
 
   const handleSubmit = async (e) => {
@@ -122,7 +120,7 @@ export default function QrGenerator() {
         // Trigger download
         const pngFile = canvas.toDataURL("image/png");
         const downloadLink = document.createElement("a");
-        downloadLink.download = `Savannah_${shopSubdomain || 'Node'}_${createdQr?.id.substring(0,8)}.png`;
+        downloadLink.download = `Savannah_${shopSubdomain || 'Node'}_${createdQr?.qr_id.substring(0,8)}.png`;
         downloadLink.href = pngFile;
         downloadLink.click();
      };

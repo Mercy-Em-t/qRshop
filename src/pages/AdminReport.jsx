@@ -173,7 +173,7 @@ export default function AdminReport() {
               <h4 className="font-bold text-gray-800 mb-2">Architectural Cohesion Audit</h4>
               <ul className="list-disc list-inside text-gray-600 space-y-2 ml-2">
                  <li><strong>Backend (Supabase):</strong> Unified under Row-Level Security (RLS) linking to `shop_id`. No isolated or orphaned data fragments exist. Rate-Limits are handled via pure Postgres triggers.</li>
-                 <li><strong>Frontend Engine:</strong> Routing layer maps flawlessly from physical QR scans (`/q/:qrId`) to virtual shop profiles (`/shops/:shopId`). All hooks bind securely to `qrshop_session`.</li>
+                 <li><strong>Frontend Engine:</strong> Routing layer maps flawlessly from physical QR scans (`/q/:qrId`) to virtual shop profiles (`/shops/:shopId`). All hooks bind securely to `qr_session`.</li>
                  <li><strong>Legal & Compliance:</strong> The perimeter privacy interceptor successfully blocks background telemetry until local GDPR/Kenya DPA consent is granted.</li>
                  <li><strong>eCommerce Synchronization:</strong> The Bulk CSV Lexical Uploader correctly maps nested JSON variants and multiple image attachments directly into scalable arrays.</li>
               </ul>

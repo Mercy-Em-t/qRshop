@@ -427,22 +427,24 @@ export default function ProductManager() {
 
   const generateAdLink = async (item) => {
     try {
-      const slug = item.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      const randomChars = Math.random().toString(36).substr(2, 4);
-      const shortId = `${slug}-${randomChars}`;
-
-      const { error } = await supabase.from('qrs').insert({
-          id: shortId,
-          shop_id: item.shop_id,
+      const shortId = Math.random().toString(36).substring(7).toUpperCase();
+      const nodeId = `AL-${shortId}`;
+      const { data: qrNode, error: qrError } = await supabase
+        .from('qrs')
+        .insert([{
+          qr_id: nodeId,
+          shop_id: shopId,
           location: `AD:${item.id}`,
           action: 'open_order',
-          status: 'active'
-      });
+          qr_mode: 'direct_buy'
+        }])
+        .select()
+        .single();
 
-      if (error && error.code !== '23505') throw error; 
+      if (qrError && qrError.code !== '23505') throw qrError; 
 
       const baseUrl = window.location.origin;
-      const link = `${baseUrl}/q/${shortId}`;
+      const link = `${baseUrl}/q/${nodeId}`;
       
       navigator.clipboard.writeText(link);
       alert("✅ Product Link generated & copied!\n\nLink: " + link);

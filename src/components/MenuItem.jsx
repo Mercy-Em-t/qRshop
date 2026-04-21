@@ -1,18 +1,29 @@
-export default function MenuItem({ item, onAdd, isShopOnline = true }) {
+import { memo } from "react";
+import { Link } from "react-router-dom";
+
+const MenuItem = memo(function MenuItem({ item, onAdd, isShopOnline = true }) {
   return (
     <div className="border border-gray-100 rounded-2xl p-4 flex gap-4 bg-white shadow-sm hover:shadow-md transition">
       
       {/* Thumbnail */}
-      {item.product_images && item.product_images.length > 0 && (
-         <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden relative border border-gray-100">
-            <img src={item.product_images[0].url} alt={item.name} className="w-full h-full object-cover" />
-         </div>
-      )}
+      <Link to={`/product/${item.id}`} className="block">
+        {item.product_images && item.product_images.length > 0 ? (
+           <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden relative border border-gray-100">
+              <img src={item.product_images[0].url} alt={item.name} className="w-full h-full object-cover" />
+           </div>
+        ) : (
+           <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-100 text-gray-400">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+           </div>
+        )}
+      </Link>
 
       <div className="flex-1 flex flex-col justify-between">
          <div>
             <div className="flex justify-between items-start gap-2">
-               <h3 className="text-lg font-bold text-gray-800 leading-tight">{item.name}</h3>
+               <Link to={`/product/${item.id}`} className="hover:text-theme-secondary transition-colors">
+                  <h3 className="text-lg font-bold text-gray-800 leading-tight">{item.name}</h3>
+               </Link>
                {item.product_link && (
                   <a href={item.product_link} target="_blank" rel="noreferrer" className="text-theme-secondary hover:bg-theme-secondary/10 border-theme-secondary/20 flex-shrink-0">
                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -72,4 +83,6 @@ export default function MenuItem({ item, onAdd, isShopOnline = true }) {
       </div>
     </div>
   );
-}
+});
+
+export default MenuItem;

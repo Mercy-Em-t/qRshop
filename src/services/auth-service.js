@@ -47,7 +47,7 @@ export async function authenticateUser(email, password) {
       email, 
       role, 
       shop_id, 
-      shops:shop_id (
+      shops!shop_id (
         name, 
         subdomain
       )
@@ -68,6 +68,7 @@ export async function authenticateUser(email, password) {
       user: { id: authData.user.id, email: authData.user.email }, 
       profiles: profiles.map(p => ({
         shop_id: p.shop_id,
+        email: p.email,
         role: p.role,
         shop_name: p.shops?.name,
         subdomain: p.shops?.subdomain
@@ -91,15 +92,11 @@ export async function authenticateUser(email, password) {
   return { user: sessionUser };
 }
 
-let cachedUser = null;
-
 export function getCurrentUser() {
-  if (cachedUser) return cachedUser;
   try {
     const raw = localStorage.getItem("savannah_session");
     if (!raw) return null;
-    cachedUser = JSON.parse(raw);
-    return cachedUser;
+    return JSON.parse(raw);
   } catch {
     return null;
   }
@@ -108,7 +105,6 @@ export function getCurrentUser() {
 export async function logout() {
   await supabase.auth.signOut();
   localStorage.removeItem("savannah_session");
-  cachedUser = null;
 }
 
 /**

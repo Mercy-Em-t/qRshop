@@ -18,7 +18,7 @@ export default function ShopSelection() {
   const handleSelect = (profile) => {
     const sessionUser = {
       id: profile.user_id || JSON.parse(localStorage.getItem("pending_user_id")),
-      email: profile.email || profile.shop_name,
+      email: profile.email || "merchant@qrshop.com",
       role: profile.role,
       shop_id: profile.shop_id,
       shop_name: profile.shop_name

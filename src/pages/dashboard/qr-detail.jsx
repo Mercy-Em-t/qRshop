@@ -12,12 +12,22 @@ export default function QRAnalytics() {
   const { isFree } = usePlanAccess();
   const [shopSlug, setShopSlug] = useState('shop');
 
+  if (qrId === "undefined" || !qrId) {
+     return (
+        <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 bg-white rounded-3xl shadow-sm border border-gray-100">
+           <h2 className="text-xl font-bold text-gray-800 mb-2">Node Identity Missing</h2>
+           <p className="text-gray-500 text-center mb-6">This analytics block cannot be loaded because the node identity was not provided correctly. Please clear your site cache and try again.</p>
+           <Link to="/dashboard/qrs" className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">Return to Fleet</Link>
+        </div>
+     );
+  }
+
   useEffect(() => {
      async function fetchSlug() {
         if (!events || events.length === 0) return;
         const shopId = events[0]?.shop_id;
         if (!shopId) return;
-        const { data } = await supabase.from('shops').select('name').eq('id', shopId).single();
+        const { data } = await supabase.from('shops').select('name').eq('shop_id', shopId).single();
         if (data?.name) {
            setShopSlug(data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
         }
@@ -37,11 +47,9 @@ export default function QRAnalytics() {
   const menuViews = events.filter(e => e.event_type === 'menu_opened').length;
   const ordersStarting = events.filter(e => e.event_type === 'order_started').length;
   
-  // Allow env override for QR destinations so you can generate real-world codes even while developing on localhost
-  const gatewayBase = import.meta.env.VITE_GATEWAY_URL || window.location.origin;
   const url = isFree 
-     ? `${gatewayBase}/q/${qrId}` 
-     : `${gatewayBase}/q/${shopSlug}?n=${qrId}`;
+     ? `${import.meta.env.VITE_PLATFORM_URL || "https://tmsavannah.com"}/q/${qrId}` 
+     : `https://${shopSlug}.tmsavannah.com/q/${qrId}`;
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">

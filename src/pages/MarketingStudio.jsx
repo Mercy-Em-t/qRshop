@@ -66,7 +66,7 @@ export default function MarketingStudio() {
 
   const fetchQRs = async () => {
     if (!shopId) return; // Suppliers don't have physical QR nodes usually
-    const { data } = await supabase.from('qrs').select('*').eq('shop_id', shopId).eq('status', 'active');
+    const { data } = await supabase.from('qrs').select('*, id:qr_id').eq('shop_id', shopId).eq('status', 'active');
     if (data && data.length > 0) {
       setQrs(data);
       setSelectedQr(data[0]);
@@ -263,11 +263,11 @@ export default function MarketingStudio() {
                   ) : (
                     <select
                       className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
-                      value={selectedQr?.id || ""}
-                      onChange={(e) => setSelectedQr(qrs.find(q => q.id === e.target.value))}
+                      value={selectedQr?.qr_id || selectedQr?.id || ""}
+                      onChange={(e) => setSelectedQr(qrs.find(q => (q.qr_id || q.id) === e.target.value))}
                     >
                       {qrs.map(qr => (
-                        <option key={qr.id} value={qr.id}>{qr.location || "Unnamed Node"} ({qr.action})</option>
+                        <option key={qr.qr_id || qr.id} value={qr.qr_id || qr.id}>{qr.location || "Unnamed Node"} ({qr.action})</option>
                       ))}
                     </select>
                   )}
@@ -314,7 +314,7 @@ export default function MarketingStudio() {
                       <div className={`p-6 rounded-3xl ${theme === 'light' ? 'bg-white shadow-xl border border-gray-100' : 'bg-white shadow-[0_0_50px_rgba(255,255,255,0.2)]'}`}>
                          {selectedQr ? (
                             <QRCodeSVG 
-                              value={`${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${selectedQr.id}`} 
+                              value={`${import.meta.env.VITE_GATEWAY_URL || window.location.origin}/q/${selectedQr.qr_id || selectedQr.id}`} 
                               size={180}
                               level="H"
                               includeMargin={false}

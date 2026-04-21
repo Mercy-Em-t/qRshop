@@ -54,7 +54,7 @@ export async function getAllMetadataConfigs() {
 
   const { data, error } = await supabase
     .from("google_metadata")
-    .select("*, shops!google_metadata_target_id_fkey(shop_name)") // Try to join shop name if it's a shop target
+    .select("*, shops!google_metadata_target_id_fkey(name)") // Try to join shop name if it's a shop target
     .order("created_at", { ascending: false });
 
   if (error) {

@@ -12,9 +12,9 @@ function generateShortId(length = 6) {
 export async function createQrNode(shopId, location, action = "open_menu") {
   if (!supabase) return null;
 
-  const id = generateShortId();
+  const qr_id = generateShortId();
   const newNode = {
-    id,
+    qr_id,
     shop_id: shopId,
     location,
     action,
@@ -24,7 +24,7 @@ export async function createQrNode(shopId, location, action = "open_menu") {
   const { data, error } = await supabase
     .from("qrs")
     .insert([newNode])
-    .select()
+    .select("*, id:qr_id")
     .single();
 
   if (error) {
@@ -40,7 +40,7 @@ export async function getShopQrs(shopId) {
 
   const { data, error } = await supabase
     .from("qrs")
-    .select("*")
+    .select("*, id:qr_id")
     .eq("shop_id", shopId)
     .order("created_at", { ascending: false });
 
@@ -57,8 +57,8 @@ export async function getQrNode(qrId) {
 
   const { data, error } = await supabase
     .from("qrs")
-    .select("*")
-    .eq("id", qrId)
+    .select("*, id:qr_id")
+    .eq("qr_id", qrId)
     .single();
 
   if (error) {

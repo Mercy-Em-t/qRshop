@@ -33,8 +33,8 @@ export default function PublicQrLanding() {
 
         if (shopData) {
            document.title = campaign 
-              ? `${campaign.name} at ${shopData.shop_name}` 
-              : `Visit ${shopData.shop_name} - Scan to Order`;
+              ? `${campaign.name} at ${shopData.name}` 
+              : `Visit ${shopData.name} - Scan to Order`;
         }
       } catch (err) {
         setError("Error loading QR landing page.");
@@ -73,12 +73,12 @@ export default function PublicQrLanding() {
       "@context": "https://schema.org",
       "@type": "SaleEvent",
       "name": campaign.name,
-      "description": `Redeem ${campaign.reward_value} ${campaign.reward_type === 'percentage' ? '%' : 'KSh'} off at ${shop.shop_name}!`,
+      "description": `Redeem ${campaign.reward_value} ${campaign.reward_type === 'percentage' ? '%' : 'KSh'} off at ${shop.name}!`,
       "startDate": campaign.start_date || new Date().toISOString(),
       "endDate": campaign.end_date || new Date(Date.now() + 86400000 * 30).toISOString(),
       "location": {
         "@type": "Place",
-        "name": shop.shop_name,
+        "name": shop.name,
         "address": {
           "@type": "PostalAddress",
           "addressLocality": "Nairobi",
@@ -92,12 +92,12 @@ export default function PublicQrLanding() {
     jsonLd = {
       "@context": "https://schema.org",
       "@type": "WebPage",
-      "name": `Order at ${shop.shop_name}`,
-      "description": `Scan this QR code to view the menu and order at ${shop.shop_name}.`,
+      "name": `Order at ${shop.name}`,
+      "description": `Scan this QR code to view the menu and order at ${shop.name}.`,
       "url": `https://www.shopqrplatform.com/qr/${qrId}`,
       "publisher": {
          "@type": "LocalBusiness",
-         "name": shop.shop_name
+         "name": shop.name
       }
     };
   }
@@ -112,10 +112,10 @@ export default function PublicQrLanding() {
         
         <div className="relative z-10 pt-16 px-6 pb-8">
            <div className="w-24 h-24 bg-white shadow-lg text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl font-extrabold border-4 border-gray-50">
-             {shop.shop_name.charAt(0).toUpperCase()}
+             {shop.name?.charAt(0).toUpperCase() || '🏪'}
            </div>
            
-           <h1 className="text-2xl font-extrabold text-gray-800 mb-1">{shop.shop_name}</h1>
+           <h1 className="text-2xl font-extrabold text-gray-800 mb-1">{shop.name}</h1>
            
            {campaign ? (
               <div className="my-6 p-4 bg-indigo-50 border border-indigo-100 rounded-2xl">

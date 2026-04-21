@@ -48,7 +48,7 @@ export default function OrderManager() {
 
   const fetchOrders = async () => {
     if (!supabase) return;
-    const { data: shopData } = await supabase.from("shops").select("*").eq("id", SHOP_ID).single();
+    const { data: shopData } = await supabase.from("shops").select("*").eq("shop_id", SHOP_ID).single();
     if (shopData) setShop(shopData);
 
     const { data: orderData, error } = await supabase

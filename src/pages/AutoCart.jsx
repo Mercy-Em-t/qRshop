@@ -3,6 +3,7 @@ import { useSearchParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { useCart } from "../hooks/use-cart";
 import { shortToUuid } from "../utils/short-id";
+import { createQrSession } from "../utils/qr-session";
 
 // AutoCart — Pre-populate cart from a share link and redirect to cart
 // URL format: /auto-cart?shop=SHOP_ID&items=ITEM_ID:QTY,ITEM_ID2:QTY&promo=CODE&name=Bundle+Name
@@ -83,14 +84,7 @@ export default function AutoCart() {
         if (prodErr) throw new Error(`Could not load products: ${prodErr.message}`);
 
         // 4. Set QR session for this shop
-        const sessionKey = "qrshop_session";
-        const existingSession = JSON.parse(localStorage.getItem(sessionKey) || "{}");
-        localStorage.setItem(sessionKey, JSON.stringify({
-          ...existingSession,
-          shopId: currentShopId,
-          table: "Direct Link",
-          expiresAt: Date.now() + 4 * 60 * 60 * 1000
-        }));
+        createQrSession(currentShopId, "Direct Link");
 
         // 5. Seed the cart
         clearCart();
@@ -117,14 +111,7 @@ export default function AutoCart() {
         
         // If we know the shop ID, gracefully route them to the menu instead of dead-ending.
         if (activeShopId) {
-           const sessionKey = "qrshop_session";
-           const existingSession = JSON.parse(localStorage.getItem(sessionKey) || "{}");
-           localStorage.setItem(sessionKey, JSON.stringify({
-             ...existingSession,
-             shopId: activeShopId,
-             table: "Fallback",
-             expiresAt: Date.now() + 4 * 60 * 60 * 1000
-           }));
+           createQrSession(activeShopId, "Fallback");
            navigate("/menu", { replace: true });
            return;
         }

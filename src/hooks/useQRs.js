@@ -5,9 +5,19 @@ export function useQRs(shopId) {
   const [qrs, setQrs] = useState(() => {
     try {
       if (!shopId) return [];
-      const cached = localStorage.getItem(`qrs_cache_${shopId}`);
+      const cacheKey = `qrs_cache_${shopId}`;
+      const cacheVersion = "v3.1"; // Increment this to force refresh
+      const versionKey = `${cacheKey}_version`;
+      
+      if (localStorage.getItem(versionKey) !== cacheVersion) {
+        localStorage.removeItem(cacheKey);
+        localStorage.setItem(versionKey, cacheVersion);
+        return [];
+      }
+
+      const cached = localStorage.getItem(cacheKey);
       return cached ? JSON.parse(cached) : [];
-    } catch {
+    } catch (e) {
       return [];
     }
   });
@@ -48,7 +58,7 @@ export function useQRs(shopId) {
 
       const { data, error } = await supabase
         .from('qrs')
-        .select('*')
+        .select('*, id:qr_id')
         .eq('shop_id', shopId)
         .not('location', 'ilike', 'AD:%')
         .order('created_at', { ascending: false });
@@ -57,8 +67,13 @@ export function useQRs(shopId) {
       clearTimeout(timeoutId);
 
       if (!error && data) {
-        setQrs(data);
-        localStorage.setItem(`qrs_cache_${shopId}`, JSON.stringify(data));
+        const normalized = data.map(q => ({
+          ...q,
+          qr_id: q.qr_id || q.id,
+          id: q.id || q.qr_id
+        }));
+        setQrs(normalized);
+        localStorage.setItem(`qrs_cache_${shopId}`, JSON.stringify(normalized));
       } else if (error) {
         console.error("Failed to sync nodes from Supabase:", error);
       }
@@ -77,8 +92,8 @@ export function useQRs(shopId) {
     }
     const { data, error } = await supabase
       .from('qrs')
-      .insert(newQR)
-      .select();
+      .insert({ ...newQR, qr_id: newQR.qr_id || Math.random().toString(36).substring(2, 8).toUpperCase() })
+      .select('*, id:qr_id');
       
     if (!error && data) setQrs((prev) => [data[0], ...prev]);
     return { data, error };
@@ -92,11 +107,11 @@ export function useQRs(shopId) {
     const { data, error } = await supabase
       .from('qrs')
       .update(updates)
-      .eq('id', qrId)
-      .select();
+      .eq('qr_id', qrId)
+      .select('*, id:qr_id');
       
     if (!error && data) {
-      setQrs((prev) => prev.map((q) => (q.id === qrId ? data[0] : q)));
+      setQrs((prev) => prev.map((q) => (q.qr_id === qrId ? data[0] : q)));
     }
     return { data, error };
   }
@@ -109,10 +124,10 @@ export function useQRs(shopId) {
     const { error } = await supabase
       .from('qrs')
       .delete()
-      .eq('id', qrId);
+      .eq('qr_id', qrId);
       
     if (!error) {
-      setQrs((prev) => prev.filter((q) => q.id !== qrId));
+      setQrs((prev) => prev.filter((q) => q.qr_id !== qrId));
     }
     return { error };
   }

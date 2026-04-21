@@ -14,11 +14,12 @@ export default function DynamicQrSettings() {
   });
 
   useEffect(() => {
-    async function init() {
+    async function fetchSettings() {
+      if (!qrId || qrId === "undefined") return;
       const { data, error } = await supabase
         .from("qrs")
         .select("*")
-        .eq("id", qrId)
+        .eq("qr_id", qrId)
         .single();
         
       if (error) {
@@ -49,7 +50,7 @@ export default function DynamicQrSettings() {
     const { error } = await supabase
       .from("qrs")
       .update(payload)
-      .eq("id", qrId);
+      .eq("qr_id", qrId);
 
     setSaving(false);
     if (error) {

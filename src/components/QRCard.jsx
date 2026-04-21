@@ -11,25 +11,25 @@ export default function QRCard({ qr, campaigns = [], updateQR, deleteQR }) {
 
   useEffect(() => {
     async function loadMetrics() {
-      const data = await getQrMetrics(qr.id);
+      const data = await getQrMetrics(qr.qr_id);
       setMetrics(data);
     }
     loadMetrics();
-  }, [qr.id]);
+  }, [qr.qr_id]);
 
   const handleToggleStatus = async (e) => {
     e.stopPropagation();
     setIsPending(true);
     const newStatus = qr.status === 'active' ? 'inactive' : 'active';
-    await updateQR(qr.id, { status: newStatus });
+    await updateQR(qr.qr_id || qr.id, { status: newStatus });
     setIsPending(false);
   };
 
   const handleDelete = async (e) => {
     e.stopPropagation();
-    if (window.confirm(`Are you sure you want to delete node ${qr.id}? All associated historical telemetry will remain anonymous via Gateway.`)) {
+    if (window.confirm(`Are you sure you want to delete node ${qr.qr_id}? All associated historical telemetry will remain anonymous via Gateway.`)) {
       setIsPending(true);
-      await deleteQR(qr.id);
+      await deleteQR(qr.qr_id);
     }
   };
 
@@ -45,7 +45,7 @@ export default function QRCard({ qr, campaigns = [], updateQR, deleteQR }) {
                      setEditingLoc(false);
                      if (editLocation.trim() !== qr.location) {
                          setIsPending(true);
-                         await updateQR(qr.id, { location: editLocation });
+                         await updateQR(qr.qr_id || qr.id, { location: editLocation });
                          setIsPending(false);
                      }
                  }}
@@ -72,7 +72,7 @@ export default function QRCard({ qr, campaigns = [], updateQR, deleteQR }) {
         <div className="text-sm text-gray-600 mb-6 space-y-3">
           <div className="flex justify-between items-center bg-gray-50 border border-gray-100 px-3 py-2 rounded-lg">
             <span className="text-gray-500 font-medium">Node ID</span> 
-            <span className="font-mono font-bold text-gray-700">{qr.id}</span>
+            <span className="font-mono font-bold text-gray-700">{qr.qr_id || qr.id}</span>
           </div>
           <div className="flex justify-between items-center bg-gray-50 border border-gray-100 px-3 py-2 rounded-lg">
             <span className="text-gray-500 font-medium">Total Scans</span> 
@@ -85,7 +85,7 @@ export default function QRCard({ qr, campaigns = [], updateQR, deleteQR }) {
                  value={qr.action}
                  onChange={async (e) => {
                     setIsPending(true);
-                    await updateQR(qr.id, { action: e.target.value });
+                    await updateQR(qr.qr_id || qr.id, { action: e.target.value });
                     setIsPending(false);
                  }}
                  disabled={isPending}
@@ -110,7 +110,7 @@ export default function QRCard({ qr, campaigns = [], updateQR, deleteQR }) {
                    value={qr.campaign_id || ""}
                    onChange={async (e) => {
                       setIsPending(true);
-                      await updateQR(qr.id, { campaign_id: e.target.value || null });
+                      await updateQR(qr.qr_id || qr.id, { campaign_id: e.target.value || null });
                       setIsPending(false);
                    }}
                    disabled={isPending}
@@ -131,14 +131,14 @@ export default function QRCard({ qr, campaigns = [], updateQR, deleteQR }) {
       </div>
       <div className="flex gap-2 mt-auto">
          <button
-           onClick={() => navigate(`/dashboard/qrs/${qr.id}`)}
+           onClick={() => navigate(`/dashboard/qrs/${qr.qr_id || qr.id}`)}
            className="flex-1 px-3 py-2 bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-200 hover:bg-white hover:border-blue-300 hover:text-blue-600 transition-colors text-sm"
            title="View Analytics Output"
          >
            Output
          </button>
          <button
-           onClick={() => navigate(`/dashboard/qrs/${qr.id}/settings`)}
+           onClick={() => navigate(`/dashboard/qrs/${qr.qr_id || qr.id}/settings`)}
            className="flex-1 px-3 py-2 bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-200 hover:bg-white hover:border-gray-300 hover:text-gray-900 transition-colors text-sm"
            title="Configure Dynamic Routing"
          >

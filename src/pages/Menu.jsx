@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { getQrSession } from "../utils/qr-session";
 import { getUpsellItems } from "../services/menu-service";
@@ -110,26 +110,30 @@ export default function Menu() {
   const isLoading = shopLoading || menuLoading;
   if (isLoading) return <LoadingSpinner message="Loading menu..." />;
 
+  // Metadata and Campaign memoization
+  const activeCampaign = useMemo(() => campaigns?.find(c => c.is_active), [campaigns]);
+
   // Flatten items for BundleCard retrieval
-  const allMenuItems = categories ? Object.values(categories).flat() : [];
+  const allMenuItems = useMemo(() => (categories ? Object.values(categories).flat() : []), [categories]);
 
   // GRACEFUL TIER DEGRADATION: Cap display items to 50 if Free tier or expired
-  const isFreeTier = shop?.plan === 'free' || (shop?.subscription_expires_at && new Date(shop.subscription_expires_at) < new Date());
-  let displayCategories = categories;
-  
-  if (isFreeTier && categories) {
+  const displayCategories = useMemo(() => {
+    const isFreeTier = shop?.plan === 'free' || (shop?.subscription_expires_at && new Date(shop.subscription_expires_at) < new Date());
+    if (!isFreeTier || !categories) return categories;
+
     let count = 0;
-    displayCategories = {};
+    const limited = {};
     for (const cat of Object.keys(categories)) {
       const remaining = 50 - count;
       if (remaining <= 0) break;
-      displayCategories[cat] = categories[cat].slice(0, remaining);
-      count += displayCategories[cat].length;
-      if (displayCategories[cat].length >= remaining) break;
+      limited[cat] = categories[cat].slice(0, remaining);
+      count += limited[cat].length;
+      if (limited[cat].length >= remaining) break;
     }
-  }
+    return limited;
+  }, [categories, shop]);
 
-  const categoryNames = Object.keys(displayCategories);
+  const categoryNames = useMemo(() => Object.keys(displayCategories || {}), [displayCategories]);
   const activeCat = activeCategory || categoryNames[0];
 
   return (

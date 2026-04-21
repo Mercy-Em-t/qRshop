@@ -34,7 +34,9 @@ export default function OnboardingWizard({ shopId, onComplete }) {
 
   const handleGenerateQR = async () => {
     setLoading(true);
+    const shortId = Math.random().toString(36).substring(2, 8).toUpperCase();
     const { error } = await supabase.from("qrs").insert({
+      qr_id: shortId,
       shop_id: shopId,
       location: "Table 1",
       action: "open_menu",

@@ -34,6 +34,23 @@ export async function getUpsellItems(itemId) {
   return data || [];
 }
 
+export async function getMenuItemById(itemId) {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("*, product_images(url, position)")
+    .eq("id", itemId)
+    .single();
+
+  if (error) {
+    console.error("Error fetching menu item:", error);
+    return null;
+  }
+
+  return data;
+}
+
 export async function getMenuItemsByCategory(shopId) {
   const items = await getMenuItems(shopId);
   const categories = {};

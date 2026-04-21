@@ -444,7 +444,7 @@ export default function MenuManager() {
 
       // Insert as a digital QR code in the system, stealth-marked with AD: prefix
       const { error } = await supabase.from('qrs').insert({
-          id: shortId,
+          qr_id: shortId,
           shop_id: item.shop_id,
           location: `AD:${item.id}`,
           action: 'open_order',
