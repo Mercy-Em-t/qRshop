@@ -84,7 +84,7 @@ export default function SupplierPortal() {
             <button className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition">Create Supplier Profile</button>
           </form>
           <div className="mt-6">
-             <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-600">← Back to Dashboard</Link>
+             <Link to="/a" className="text-sm text-gray-400 hover:text-gray-600">← Back to Dashboard</Link>
           </div>
         </div>
       </div>
@@ -96,7 +96,7 @@ export default function SupplierPortal() {
       <header className="bg-white border-b border-gray-100 p-4 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-              <Link to="/dashboard" className="text-gray-400 hover:text-gray-600">←</Link>
+              <Link to="/a" className="text-gray-400 hover:text-gray-600">←</Link>
               <h1 className="text-xl font-black text-gray-900 tracking-tight uppercase">{supplier.name} <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded ml-2">Distribution Hub</span></h1>
           </div>
           <div className="flex items-center gap-2">

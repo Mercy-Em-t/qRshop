@@ -33,7 +33,7 @@ export default function Login() {
     if (user.role === 'system_admin') {
       navigate("/admin");
     } else {
-      navigate("/dashboard");
+      navigate("/a");
     }
   };
 

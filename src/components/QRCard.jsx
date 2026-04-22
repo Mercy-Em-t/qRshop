@@ -131,14 +131,14 @@ export default function QRCard({ qr, campaigns = [], updateQR, deleteQR }) {
       </div>
       <div className="flex gap-2 mt-auto">
          <button
-           onClick={() => navigate(`/dashboard/qrs/${qr.qr_id || qr.id}`)}
+           onClick={() => navigate(`/a/qrs/${qr.qr_id || qr.id}`)}
            className="flex-1 px-3 py-2 bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-200 hover:bg-white hover:border-blue-300 hover:text-blue-600 transition-colors text-sm"
            title="View Analytics Output"
          >
            Output
          </button>
          <button
-           onClick={() => navigate(`/dashboard/qrs/${qr.qr_id || qr.id}/settings`)}
+           onClick={() => navigate(`/a/qrs/${qr.qr_id || qr.id}/settings`)}
            className="flex-1 px-3 py-2 bg-gray-50 text-gray-700 font-medium rounded-lg border border-gray-200 hover:bg-white hover:border-gray-300 hover:text-gray-900 transition-colors text-sm"
            title="Configure Dynamic Routing"
          >

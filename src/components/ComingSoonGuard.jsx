@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
  * A soft, user-friendly overlay that locks a feature area
  * while still letting the user see what's underneath it (privacy blur).
  */
-export default function ComingSoonGuard({ children, title = "Under Construction", message = "This feature is currently being built in private. Check back soon for the full launch!", primaryLabel = "Return to Dashboard", primaryAction = "/dashboard", secondaryLabel = "Go Home", secondaryAction = "/" }) {
+export default function ComingSoonGuard({ children, title = "Under Construction", message = "This feature is currently being built in private. Check back soon for the full launch!", primaryLabel = "Return to Dashboard", primaryAction = "/a", secondaryLabel = "Go Home", secondaryAction = "/" }) {
   const navigate = useNavigate();
 
   return (

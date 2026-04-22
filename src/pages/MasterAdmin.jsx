@@ -75,7 +75,7 @@ export default function MasterAdmin() {
       name: "Logistics Hub",
       desc: "Fleet Dispatch & Regional Routing",
       icon: <TruckIcon className="w-8 h-8" />,
-      path: "/dashboard/delivery/manager",
+      path: "/a/delivery/manager",
       color: "bg-amber-500",
       status: "Idle",
       metrics: "12 Global Hubs Online"

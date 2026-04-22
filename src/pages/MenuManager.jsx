@@ -496,7 +496,7 @@ export default function MenuManager() {
       <header className="bg-white shadow-sm sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link
-            to="/dashboard"
+            to="/a"
             className="text-green-600 font-medium hover:text-green-700 transition-colors"
           >
             ← Dashboard

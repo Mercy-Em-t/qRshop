@@ -87,7 +87,7 @@ export default function DeliveryWorker() {
     <div className="min-h-screen bg-slate-100 pb-20">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
-           <Link to="/dashboard/delivery" className="text-slate-400">← Back</Link>
+           <Link to="/a/delivery" className="text-slate-400">← Back</Link>
            <h1 className="font-bold text-slate-800">My Deliveries</h1>
            <button onClick={fetchOrders} className="text-blue-600 text-sm font-bold">Refresh</button>
         </div>

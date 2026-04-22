@@ -137,7 +137,7 @@ export default function QrGenerator() {
       <header className="bg-white shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link
-            to="/dashboard/qrs"
+            to="/a/qrs"
             className="text-green-600 font-medium hover:text-green-700 transition-colors"
           >
             ← QRs
@@ -246,7 +246,7 @@ export default function QrGenerator() {
                </div>
 
                <button 
-                  onClick={() => navigate("/dashboard/qrs")}
+                  onClick={() => navigate("/a/qrs")}
                   className="text-green-600 font-medium hover:text-green-700"
                >
                  View in Dashboard →

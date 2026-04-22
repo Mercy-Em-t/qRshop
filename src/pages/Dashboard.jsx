@@ -165,10 +165,10 @@ export default function Dashboard() {
         {/* Mobile dropdown menu */}
         {mobileMenuOpen && (
           <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-3">
-            <Link to="/dashboard/orders" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🛎 Live Orders</Link>
+            <Link to="/a/orders" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🛎 Live Orders</Link>
             <Link to="/product-manager" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">📋 Product Manager</Link>
-            <Link to="/dashboard/campaigns" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🎁 Bundles</Link>
-            <Link to="/dashboard/settings" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">⚙️ Settings</Link>
+            <Link to="/a/campaigns" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🎁 Bundles</Link>
+            <Link to="/a/settings" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">⚙️ Settings</Link>
             <button onClick={() => { logout(); navigate("/login"); }} className="text-sm font-bold text-red-500 text-left">Logout</button>
           </div>
         )}
@@ -184,7 +184,7 @@ export default function Dashboard() {
       {showNewOrderToast && (
         <div className="fixed top-20 right-4 z-[100] animate-bounce">
           <Link 
-            to="/dashboard/orders"
+            to="/a/orders"
             className="bg-green-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border-2 border-green-400"
             onClick={() => setShowNewOrderToast(false)}
           >
@@ -229,7 +229,7 @@ export default function Dashboard() {
               </p>
             </div>
             <Link 
-              to="/dashboard/orders"
+              to="/a/orders"
               className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold text-sm hover:bg-red-700 transition"
             >
               View Orders
@@ -245,7 +245,7 @@ export default function Dashboard() {
           {/* Quick Actions / Statistics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <Link
-              to="/dashboard/orders"
+              to="/a/orders"
               className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-green-100 relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-10"></div>
@@ -303,7 +303,7 @@ export default function Dashboard() {
           )}
 
           <Link
-            to="/dashboard/qrs"
+            to="/a/qrs"
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-blue-100 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 bg-blue-500 w-16 h-16 rounded-bl-full opacity-10"></div>
@@ -316,7 +316,7 @@ export default function Dashboard() {
           </Link>
 
           <Link
-            to="/dashboard/settings"
+            to="/a/settings"
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-gray-200 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 bg-gray-500 w-16 h-16 rounded-bl-full opacity-10"></div>
@@ -330,7 +330,7 @@ export default function Dashboard() {
         
           {planAccess.isPro ? (
              <Link
-               to="/dashboard/campaigns"
+               to="/a/campaigns"
                className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-purple-100 relative overflow-hidden"
              >
                <div className="absolute top-0 right-0 bg-purple-500 w-16 h-16 rounded-bl-full opacity-10"></div>
@@ -362,7 +362,7 @@ export default function Dashboard() {
 
           {/* Bundles tab — links to Campaign Manager which handles bundle creation */}
           <Link
-            to="/dashboard/campaigns"
+            to="/a/campaigns"
             className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-orange-200 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 bg-orange-400 w-16 h-16 rounded-bl-full opacity-10"></div>
@@ -372,7 +372,7 @@ export default function Dashboard() {
 
           {planAccess.isPro ? (
              <Link
-               to="/dashboard/marketing"
+               to="/a/marketing"
                className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-100 relative overflow-hidden"
              >
                <div className="absolute top-0 right-0 bg-indigo-500 w-16 h-16 rounded-bl-full opacity-10"></div>
@@ -406,7 +406,7 @@ export default function Dashboard() {
           {(user?.role === 'system_admin' || shop?.plan === 'business') && (
             <>
               <Link
-                to="/dashboard/connect-distribution"
+                to="/a/connect-distribution"
                 className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-100 relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 bg-indigo-600 w-16 h-16 rounded-bl-full opacity-10"></div>
@@ -431,7 +431,7 @@ export default function Dashboard() {
               </Link>
 
               <Link
-                to="/dashboard/supply-mgmt"
+                to="/a/supply-mgmt"
                 className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-slate-500 relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 bg-slate-900 w-16 h-16 rounded-bl-full opacity-10"></div>
@@ -447,7 +447,7 @@ export default function Dashboard() {
 
           {(user?.role === 'system_admin' || user?.role === 'delivery_manager' || user?.role === 'delivery_worker' || shop?.plan === 'business') && (
             <Link
-              to="/dashboard/delivery"
+              to="/a/delivery"
               className="bg-slate-900 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-slate-500 relative overflow-hidden group"
             >
               <div className="absolute top-0 right-0 bg-white/20 w-16 h-16 rounded-bl-full opacity-10 group-hover:scale-125 transition-transform"></div>
@@ -462,7 +462,7 @@ export default function Dashboard() {
           )}
 
           <Link
-            to="/dashboard/finances"
+            to="/a/finances"
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-100 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 bg-indigo-600 w-16 h-16 rounded-bl-full opacity-10"></div>

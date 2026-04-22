@@ -22,7 +22,7 @@ export default function DeliveryPortal() {
 
     const roles = ['delivery_manager', 'delivery_worker', 'system_admin'];
     if (!roles.includes(user.role) && user.plan !== 'business') {
-      navigate("/dashboard");
+      navigate("/a");
       return;
     }
 
@@ -63,7 +63,7 @@ export default function DeliveryPortal() {
               <p className="text-xs text-slate-400 font-medium uppercase tracking-widest">Last-Mile Logistics</p>
             </div>
           </div>
-          <Link to="/dashboard" className="text-sm bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition font-bold">Back to Dashboard</Link>
+          <Link to="/a" className="text-sm bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition font-bold">Back to Dashboard</Link>
         </div>
       </header>
 
@@ -106,7 +106,7 @@ export default function DeliveryPortal() {
               </ul>
             </div>
             <Link 
-              to="/dashboard/delivery/worker" 
+              to="/a/delivery/worker" 
               className="bg-slate-900 hover:bg-slate-800 text-white py-5 text-center font-bold text-lg transition-colors"
             >
               Start Shift
@@ -128,7 +128,7 @@ export default function DeliveryPortal() {
                 </div>
               </div>
               <Link 
-                to="/dashboard/delivery/manager" 
+                to="/a/delivery/manager" 
                 className="bg-blue-600 hover:bg-blue-700 text-white py-5 text-center font-bold text-lg transition-colors"
               >
                 Access Dashboard

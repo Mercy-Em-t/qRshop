@@ -32,7 +32,7 @@ export default function ShopSelection() {
     if (profile.role === 'system_admin') {
       navigate("/admin");
     } else {
-      navigate("/dashboard");
+      navigate("/a");
     }
   };
 

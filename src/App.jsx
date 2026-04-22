@@ -46,8 +46,10 @@ import ShopSelection from "./pages/ShopSelection";
 import QrGenerator from "./pages/QrGenerator";
 import Plans from "./pages/Plans";
 
-// --- Dashboard Pages ---
+// --- Dashboard Routes ---
 import DashboardRoutes from "./routes/DashboardRoutes";
+import AuthGate from "./components/AuthGate";
+import { Navigate } from "react-router-dom";
 
 // --- Admin Pages ---
 import MasterAdmin from "./pages/MasterAdmin";
@@ -174,40 +176,43 @@ export default function App() {
       <Route path="/edit/:orderId" element={<QrAccessGuard><EditOrder /></QrAccessGuard>} />
       <Route path="/history" element={<QrAccessGuard><MyOrders /></QrAccessGuard>} />
 
-      {/* === OPERATOR ROUTES === */}
-      <Route path="/product-manager" element={<OnboardingGate><ProductManager /></OnboardingGate>} />
-      <Route path="/menu-manager" element={<OnboardingGate><ProductManager /></OnboardingGate>} />
-      <Route path="/qr-generator" element={<OnboardingGate><QrGenerator /></OnboardingGate>} />
-      <Route path="/plans" element={<OnboardingGate><Plans /></OnboardingGate>} />
+      {/* === PROTECTED ACCOUNT ROUTES === */}
+      <Route path="/a/*" element={<AuthGate><DashboardRoutes /></AuthGate>} />
+      
+      {/* Legacy Redirects */}
+      <Route path="/a/*" element={<Navigate to="/a" replace />} />
+      <Route path="/product-manager" element={<Navigate to="/a/orders" replace />} />
+      <Route path="/menu-manager" element={<Navigate to="/a/settings" replace />} />
+      <Route path="/qr-generator" element={<Navigate to="/a/qrs" replace />} />
+      <Route path="/plans" element={<Navigate to="/a/settings" replace />} />
+      <Route path="/admin/*" element={<Navigate to="/a" replace />} />
 
-      {/* === DASHBOARD ROUTES === */}
-      <Route path="/dashboard/*" element={<DashboardRoutes />} />
-
-      {/* === ADMIN ROUTES === */}
-      <Route path="/admin" element={<MasterAdmin />} />
-      <Route path="/admin/ops" element={<Admin />} />
-      <Route path="/admin/shops" element={<AdminShops />} />
-      <Route path="/admin/plans" element={<AdminPlans />} />
-      <Route path="/admin/seo" element={<AdminSEO />} />
-      <Route path="/admin/report" element={<AdminReport />} />
-      <Route path="/admin/engineering" element={<AdminEngineering />} />
-      <Route path="/admin/global-orders" element={<AdminGlobalOrders />} />
-      <Route path="/admin/global-products" element={<AdminGlobalProducts />} />
-      <Route path="/monitoring" element={<AdminMonitoring />} />
-      <Route path="/admin/monitoring" element={<AdminMonitoring />} />
-      <Route path="/admin/suppliers" element={<AdminSuppliers />} />
-      <Route path="/admin/analytics" element={<AdminAnalytics />} />
-      <Route path="/admin/todo" element={<AdminTodo />} />
-      <Route path="/admin/booklet" element={<AdminBooklet />} />
-      <Route path="/admin/payouts" element={<AdminPayouts />} />
-      <Route path="/admin/industries" element={<AdminIndustries />} />
-      <Route path="/admin/gateway" element={<AdminGateway />} />
-      <Route path="/admin/intelligence" element={<BusinessIntelligence />} />
-      <Route path="/social/commerce" element={<ComingSoonGuard title="Social Commerce Studio"><SocialCommerce /></ComingSoonGuard>} />
-      <Route path="/developer/portal" element={<DeveloperPortal />} />
-      <Route path="/developer/wholesale" element={<WholesaleSalesSystem />} />
-      <Route path="/developer/journey" element={<WholesaleJourneyMap />} />
-      <Route path="/developer/seed-wholesale" element={<SeedWholesaleUser />} />
+      {/* === ADMIN ROUTES (Now nested under /a/ if possible, or kept separate but gated) === */}
+      {/* For now, keeping them simple but they should ideally be inside DashboardRoutes or prefixed with /a/admin */}
+      <Route path="/a/admin" element={<AuthGate><MasterAdmin /></AuthGate>} />
+      <Route path="/a/admin/ops" element={<AuthGate><Admin /></AuthGate>} />
+      <Route path="/a/admin/shops" element={<AuthGate><AdminShops /></AuthGate>} />
+      <Route path="/a/admin/plans" element={<AuthGate><AdminPlans /></AuthGate>} />
+      <Route path="/a/admin/seo" element={<AuthGate><AdminSEO /></AuthGate>} />
+      <Route path="/a/admin/report" element={<AuthGate><AdminReport /></AuthGate>} />
+      <Route path="/a/admin/engineering" element={<AuthGate><AdminEngineering /></AuthGate>} />
+      <Route path="/a/admin/global-orders" element={<AuthGate><AdminGlobalOrders /></AuthGate>} />
+      <Route path="/a/admin/global-products" element={<AuthGate><AdminGlobalProducts /></AuthGate>} />
+      <Route path="/a/admin/monitoring" element={<AuthGate><AdminMonitoring /></AuthGate>} />
+      <Route path="/a/admin/suppliers" element={<AuthGate><AdminSuppliers /></AuthGate>} />
+      <Route path="/a/admin/analytics" element={<AuthGate><AdminAnalytics /></AuthGate>} />
+      <Route path="/a/admin/todo" element={<AuthGate><AdminTodo /></AuthGate>} />
+      <Route path="/a/admin/booklet" element={<AuthGate><AdminBooklet /></AuthGate>} />
+      <Route path="/a/admin/payouts" element={<AuthGate><AdminPayouts /></AuthGate>} />
+      <Route path="/a/admin/industries" element={<AuthGate><AdminIndustries /></AuthGate>} />
+      <Route path="/a/admin/gateway" element={<AuthGate><AdminGateway /></AuthGate>} />
+      <Route path="/a/admin/intelligence" element={<AuthGate><BusinessIntelligence /></AuthGate>} />
+      
+      {/* Developer Portal (Gated) */}
+      <Route path="/a/developer/portal" element={<AuthGate><DeveloperPortal /></AuthGate>} />
+      <Route path="/a/developer/wholesale" element={<AuthGate><WholesaleSalesSystem /></AuthGate>} />
+      <Route path="/a/developer/journey" element={<AuthGate><WholesaleJourneyMap /></AuthGate>} />
+      <Route path="/a/developer/seed-wholesale" element={<AuthGate><SeedWholesaleUser /></AuthGate>} />
 
       {/* === 404 FALLBACK === */}
       <Route path="*" element={

@@ -181,7 +181,7 @@ export default function MarketingStudio() {
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link
-            to="/dashboard"
+            to="/a"
             className="text-green-600 font-medium hover:text-green-700 transition-colors"
           >
             ← Dashboard

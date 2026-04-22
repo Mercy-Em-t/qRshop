@@ -56,7 +56,7 @@ export default function DynamicQrSettings() {
     if (error) {
       alert("Error saving settings: " + error.message);
     } else {
-      navigate("/dashboard/qrs");
+      navigate("/a/qrs");
     }
   };
 
@@ -67,7 +67,7 @@ export default function DynamicQrSettings() {
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-         <Link to="/dashboard/qrs" className="text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-2">
+         <Link to="/a/qrs" className="text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-2">
             ← Back to Fleet
          </Link>
          <h1 className="text-2xl font-bold tracking-tight">Node <span className="font-mono text-blue-600 bg-blue-50 px-2 rounded-md">{qrId}</span> Settings</h1>
@@ -118,7 +118,7 @@ export default function DynamicQrSettings() {
             <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
                <button 
                  type="button" 
-                 onClick={() => navigate("/dashboard/qrs")}
+                 onClick={() => navigate("/a/qrs")}
                  className="px-6 py-2.5 rounded-xl font-bold bg-gray-50 text-gray-600 hover:bg-gray-100 transition text-sm"
                >
                  Cancel

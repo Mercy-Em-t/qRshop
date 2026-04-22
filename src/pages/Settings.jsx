@@ -85,7 +85,7 @@ export default function Settings() {
       <header className="bg-white border-b border-slate-100 px-6 py-4 sticky top-0 z-10 shadow-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
            <h1 className="text-xl font-bold text-gray-900">Shop Settings</h1>
-           <button onClick={() => navigate('/dashboard')} className="text-xs font-bold text-gray-400 hover:text-gray-600 transition uppercase tracking-widest">Back to Dashboard</button>
+           <button onClick={() => navigate('/a')} className="text-xs font-bold text-gray-400 hover:text-gray-600 transition uppercase tracking-widest">Back to Dashboard</button>
         </div>
       </header>
 

@@ -134,7 +134,7 @@ export default function Menu() {
   const categoryNames = useMemo(() => Object.keys(displayCategories || {}), [displayCategories]);
   const activeCat = activeCategory || categoryNames[0];
 
-  if (isLoading) return <LoadingSpinner message="Loading menu..." />;
+  if (isLoading) return <LoadingSpinner showLogo={true} message="Loading menu..." />;
 
   // Extract unique categories for the scroller
 

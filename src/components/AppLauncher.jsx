@@ -34,7 +34,7 @@ export default function AppLauncher() {
       name: "Logistics Hub", 
       desc: "Delivery & Fleet", 
       icon: <TruckIcon className="w-6 h-6 text-amber-500" />, 
-      path: "/dashboard/delivery/manager",
+      path: "/a/delivery/manager",
       color: "bg-amber-50"
     },
     { 

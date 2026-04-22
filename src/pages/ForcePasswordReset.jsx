@@ -38,7 +38,7 @@ export default function ForcePasswordReset() {
     }
 
     await markPasswordChanged(user?.id);
-    navigate("/dashboard", { replace: true });
+    navigate("/a", { replace: true });
   };
 
   return (

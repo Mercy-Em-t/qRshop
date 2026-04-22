@@ -16,12 +16,13 @@ export default function LoadingSpinner({
   message = "Checking System Status...",
   fullPage = true,
   size = "md",
+  showLogo = false,
 }) {
   const sizeClass = SIZE_CLASSES[size] || SIZE_CLASSES.md;
 
   const spinner = (
     <div className={fullPage ? "text-center relative z-10" : "flex justify-center items-center"}>
-      {fullPage && (
+      {fullPage && showLogo && (
         <div className="mb-12 relative flex justify-center items-center">
             {/* The "Lighting Up" Logo Container */}
             <div className="w-24 h-24 bg-transparent rounded-full flex items-center justify-center mx-auto overflow-hidden relative group">

@@ -17,7 +17,7 @@ export default function QRAnalytics() {
         <div className="min-h-[50vh] flex flex-col items-center justify-center p-8 bg-white rounded-3xl shadow-sm border border-gray-100">
            <h2 className="text-xl font-bold text-gray-800 mb-2">Node Identity Missing</h2>
            <p className="text-gray-500 text-center mb-6">This analytics block cannot be loaded because the node identity was not provided correctly. Please clear your site cache and try again.</p>
-           <Link to="/dashboard/qrs" className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">Return to Fleet</Link>
+           <Link to="/a/qrs" className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold">Return to Fleet</Link>
         </div>
      );
   }
@@ -56,7 +56,7 @@ export default function QRAnalytics() {
       
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-         <Link to="/dashboard/qrs" className="text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-2">
+         <Link to="/a/qrs" className="text-gray-500 hover:text-gray-800 transition-colors flex items-center gap-2">
             ← Back to Fleet
          </Link>
          <h1 className="text-2xl font-bold tracking-tight">Node <span className="font-mono text-blue-600 bg-blue-50 px-2 rounded-md">{qrId}</span></h1>

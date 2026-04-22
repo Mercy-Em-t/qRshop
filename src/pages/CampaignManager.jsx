@@ -73,7 +73,7 @@ export default function CampaignManager() {
       <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link
-            to="/dashboard"
+            to="/a"
             className="text-purple-600 font-medium hover:text-purple-700 transition-colors"
           >
             ← Dashboard

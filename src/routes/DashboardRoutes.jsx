@@ -21,7 +21,7 @@ export default function DashboardRoutes() {
     <OnboardingGate>
       <Routes>
         <Route path="/" element={<Dashboard />} />
-        <Route path="analytics" element={<Navigate to="/dashboard#analytics" replace />} />
+        <Route path="analytics" element={<Navigate to="/a#analytics" replace />} />
         <Route path="orders" element={<OrderManager />} />
         <Route path="qrs" element={<QrDashboard />} />
         <Route path="qrs/:qrId" element={<QRAnalytics />} />

@@ -62,7 +62,7 @@ export default function QrDashboard() {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link
-            to="/dashboard"
+            to="/a"
             className="text-green-600 font-medium hover:text-green-700 transition-colors"
           >
             ← Dashboard

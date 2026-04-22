@@ -21,7 +21,7 @@ export default function Plans() {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/dashboard" className="text-green-600 font-medium hover:text-green-700 transition">← Dashboard</Link>
+          <Link to="/a" className="text-green-600 font-medium hover:text-green-700 transition">← Dashboard</Link>
           <h1 className="text-xl font-bold text-gray-800">Subscription Plans</h1>
           <button onClick={() => { logout(); navigate("/login"); }} className="text-sm font-bold text-red-500 hover:text-red-700 cursor-pointer">Logout</button>
         </div>

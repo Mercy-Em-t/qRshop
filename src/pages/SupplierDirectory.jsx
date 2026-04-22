@@ -121,7 +121,7 @@ export default function SupplierDirectory() {
        <header className="bg-white border-b border-gray-100 p-4 sticky top-0 z-10 shadow-sm">
           <div className="max-w-6xl mx-auto flex items-center justify-between">
              <div className="flex items-center gap-3">
-                <Link to="/dashboard" className="text-gray-400 hover:text-gray-600">←</Link>
+                <Link to="/a" className="text-gray-400 hover:text-gray-600">←</Link>
                 <h1 className="text-xl font-black text-indigo-900 tracking-tight flex items-center gap-2">
                    📦 Supplier Hub
                 </h1>

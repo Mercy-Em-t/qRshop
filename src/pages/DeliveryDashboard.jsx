@@ -23,7 +23,7 @@ export default function DeliveryDashboard() {
     if (!user) { navigate("/login"); return; }
     const roles = ['delivery_manager', 'system_admin'];
     if (!roles.includes(user.role) && user.plan !== 'business') {
-      navigate("/dashboard/delivery");
+      navigate("/a/delivery");
       return;
     }
     fetchData();
@@ -162,7 +162,7 @@ export default function DeliveryDashboard() {
                     {isCreatingBatch ? '...' : `Create Batch (${selectedOrders.length})`}
                  </button>
               )}
-              <Link to="/dashboard/delivery" className="px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-bold hover:bg-white/20 transition">Exit</Link>
+              <Link to="/a/delivery" className="px-4 py-2 bg-white/10 text-white rounded-xl text-xs font-bold hover:bg-white/20 transition">Exit</Link>
            </div>
         </div>
       </header>
