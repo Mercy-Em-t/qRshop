@@ -44,11 +44,12 @@ export default function Contact() {
               <ul className="space-y-4 text-sm font-medium text-gray-700">
                  <li className="flex items-start gap-2">
                     <span>📍</span>
-                    <span>Nairobi Node: Kilimani Hub, Off Chania Ave.</span>
+                                         <span>Digital Hub: Operations based in Nairobi (Logistics Delivery Only).</span>
+
                  </li>
                  <li className="flex items-start gap-2">
                     <span>📍</span>
-                    <span>Mombasa Node: Nyali Point.</span>
+                    
                  </li>
               </ul>
            </div>

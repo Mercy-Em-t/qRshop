@@ -23,7 +23,6 @@ export default function Footer() {
               <li><Link to="/explore" className="hover:text-safari-green transition">Discovery</Link></li>
               <li><Link to="/community" className="hover:text-safari-green transition">Community</Link></li>
               <li><Link to="/request-access" className="hover:text-safari-green transition">Create Shop</Link></li>
-              <li><Link to="/advertise" className="hover:text-safari-green font-bold text-savannah-ochre transition">Advertise</Link></li>
             </ul>
           </div>
 

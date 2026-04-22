@@ -24,12 +24,13 @@ export default function LoadingSpinner({
       {fullPage && (
         <div className="mb-12 relative flex justify-center items-center">
             {/* The "Lighting Up" Logo Container */}
-            <div className="w-24 h-24 bg-[#020617] rounded-full flex items-center justify-center mx-auto border-4 border-white/20 animate-glow overflow-hidden relative group">
-                {/* Branding Text */}
-                <div className="flex flex-col items-center justify-center leading-none">
-                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] mb-0.5">TM</span>
-                    <span className="text-2xl font-black text-white italic tracking-tighter">Savannah</span>
-                </div>
+            <div className="w-24 h-24 bg-transparent rounded-full flex items-center justify-center mx-auto overflow-hidden relative group">
+                {/* Branding Image Logo */}
+                <img 
+                    src="/modern_savannah_logo.png" 
+                    alt="Savannah Platform" 
+                    className="w-full h-full object-contain animate-pulse"
+                />
             </div>
         </div>
       )}

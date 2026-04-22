@@ -45,7 +45,7 @@ export default function Home() {
           <span className="text-theme-secondary">On Every Screen.</span>
         </h1>
         <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-          The simplest way to digitize your menu and handle orders directly on WhatsApp. No complex apps, just a scan and a chat.
+          The simplest way to digitize your menu and handle orders directly. No complex apps, just a scan and a click.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Link to="/request-access" className="w-full sm:w-auto bg-theme-secondary text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-theme-main transition shadow-2xl shadow-purple-600/30 hover:-translate-y-1 active:scale-95">
@@ -65,8 +65,8 @@ export default function Home() {
                  <div className="bg-green-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
                     <span className="text-2xl">📱</span>
                  </div>
-                 <h3 className="text-xl font-bold text-gray-900 mb-3">Direct-to-WhatsApp</h3>
-                 <p className="text-gray-500">Orders land directly in your WhatsApp inbox with a clean, summarized list and client contact details.</p>
+                 <h3 className="text-xl font-bold text-gray-900 mb-3">Direct Ordering</h3>
+                 <p className="text-gray-500">Orders land directly in your dashboard with high-fidelity customer data, ready for fulfillment.</p>
               </div>
               <div>
                  <div className="bg-blue-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
@@ -99,7 +99,7 @@ export default function Home() {
            <div className="flex gap-8 text-xs text-gray-500 font-bold uppercase tracking-widest">
               <Link to="/about" className="hover:text-gray-900 transition">About</Link>
               <Link to="/contact" className="hover:text-gray-900 transition">Contact Us</Link>
-              <Link to="/advertise" className="hover:text-gray-900 transition">Advertising</Link>
+              
               <Link to="/terms" className="hover:text-gray-900 transition">Terms</Link>
               <Link to="/privacy" className="hover:text-gray-900 transition">Privacy</Link>
            </div>

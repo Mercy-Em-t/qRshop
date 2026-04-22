@@ -1,4 +1,4 @@
-import { Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Home from "../pages/Home";
 import Enter from "../pages/Enter";
 import InvalidAccess from "../pages/InvalidAccess";
@@ -19,6 +19,7 @@ import Signup from "../pages/Signup";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import SupplierSignup from "../pages/SupplierSignup";
+import SalesMagazine from "../pages/SalesMagazine";
 
 export default function PublicRoutes() {
   return (
@@ -47,6 +48,7 @@ export default function PublicRoutes() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/join/distribution-network" element={<SupplierSignup />} />
+      <Route path="/s/:identifier/magazine" element={<SalesMagazine />} />
     </Routes>
   );
 }

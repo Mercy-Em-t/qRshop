@@ -157,7 +157,6 @@ export default function App() {
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
-      <Route path="/advertise" element={<Advertise />} />
       <Route path="/q/:qrId" element={<ScanGateway />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />

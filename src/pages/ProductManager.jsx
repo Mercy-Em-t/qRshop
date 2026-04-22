@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
+import { fetchTemplates } from "../services/template-service";
 import { getCurrentUser, logout } from "../services/auth-service";
 import usePlanAccess from "../hooks/usePlanAccess";
 import UpgradeModal from "../components/UpgradeModal";
 import { uuidToShort } from "../utils/short-id";
+import { generateSalesContent } from "../services/sales-content-generator";
 
 export default function ProductManager() {
   const [items, setItems] = useState([]);
@@ -45,13 +47,38 @@ export default function ProductManager() {
   const [imagePreview, setImagePreview] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  // Extended Sales Attributes
+  const [benefits, setBenefits] = useState("");
+  const [usageInstructions, setUsageInstructions] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [processing, setProcessing] = useState("");
+  const [nutritionInfo, setNutritionInfo] = useState("");
+  const [recipe, setRecipe] = useState("");
+  const [brand, setBrand] = useState("");
+  const [dietTags, setDietTags] = useState("");
+
+  // Template State
+  const [availableTemplates, setAvailableTemplates] = useState([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [customFields, setCustomFields] = useState({});
+
   useEffect(() => {
     if (!user) {
       navigate('/login');
       return;
     }
     fetchItems();
+    loadTemplates();
   }, [user, navigate]);
+
+  const loadTemplates = async () => {
+     try {
+        const data = await fetchTemplates(SHOP_ID);
+        setAvailableTemplates(data);
+     } catch (err) {
+        console.error("Templates load error:", err);
+     }
+  };
 
   const fetchItems = async () => {
     setLoading(true);
@@ -100,6 +127,26 @@ export default function ProductManager() {
       sku: sku || null,
       product_link: productLink || null,
       tags: parsedTags,
+      // Extended attributes for Sales Magazine
+      benefits,
+      usage_instructions: usageInstructions,
+      origin,
+      processing,
+      nutrition_info: nutritionInfo,
+      recipe,
+      brand,
+      diet_tags: dietTags ? dietTags.split(',').map(d => d.trim()).filter(Boolean) : [],
+      // Template data
+      template_id: selectedTemplateId || null,
+      attributes: {
+         ...customFields,
+         // We still keep the specific fields for backward compatibility with the Magazine
+         benefits,
+         origin,
+         processing,
+         nutrition_info: nutritionInfo,
+         recipe
+      }
     };
 
     let error;
@@ -154,6 +201,34 @@ export default function ProductManager() {
           }
        }
 
+       // Auto-generate Sales Magazine Content
+       try {
+          const salesContent = generateSalesContent({
+             name,
+             benefits,
+             processing,
+             origin,
+             nutrition_info: nutritionInfo,
+             recipe,
+             category,
+             brand,
+             diet_tags: dietTags ? dietTags.split(',').map(d => d.trim()).filter(Boolean) : []
+          });
+
+          await supabase.from("product_sales_pages").upsert({
+             product_id: newProductId,
+             headline: salesContent.headline,
+             sales_script: salesContent.sales_script,
+             benefits_summary: salesContent.benefits_summary,
+             recipe_suggestions: salesContent.recipe_suggestions,
+             is_published: true
+          }, { onConflict: 'product_id' });
+          
+          console.log("Sales content auto-generated successfully.");
+       } catch (salesErr) {
+          console.error("Failed to generate sales content:", salesErr);
+       }
+
        handleCancelEdit();
        fetchItems();
     } else {
@@ -174,6 +249,20 @@ export default function ProductManager() {
      setSku(item.sku || "");
      setProductLink(item.product_link || "");
      setTags(item.tags ? item.tags.join(", ") : "");
+      
+     // Load extended attributes
+     setBenefits(item.benefits || "");
+     setUsageInstructions(item.usage_instructions || "");
+     setOrigin(item.origin || "");
+     setProcessing(item.processing || "");
+     setNutritionInfo(item.nutrition_info || "");
+     setRecipe(item.recipe || "");
+     setBrand(item.brand || "");
+     setDietTags(item.diet_tags ? item.diet_tags.join(", ") : "");
+     
+     setSelectedTemplateId(item.template_id || "");
+     setCustomFields(item.attributes || {});
+
      setImageFile(null);
      setImagePreview(null);
      setShowAddForm(true);
@@ -190,6 +279,16 @@ export default function ProductManager() {
      setSku("");
      setProductLink("");
      setTags("");
+     setBenefits("");
+     setUsageInstructions("");
+     setOrigin("");
+     setProcessing("");
+     setNutritionInfo("");
+     setRecipe("");
+     setBrand("");
+     setDietTags("");
+     setSelectedTemplateId("");
+     setCustomFields({});
      setImageFile(null);
      setImagePreview(null);
      setShowAddForm(false);
@@ -708,6 +807,119 @@ export default function ProductManager() {
                />
             </div>
             
+             <div className="md:col-span-2 pt-4 border-t border-gray-100 mt-4">
+                <h3 className="text-sm font-bold text-indigo-600 uppercase tracking-widest">Product Structure</h3>
+                <p className="text-[10px] text-gray-400">Choose a blueprint to define custom fields for this item.</p>
+             </div>
+
+             <div className="md:col-span-2">
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Select Blueprint / Template</label>
+                <select 
+                  value={selectedTemplateId}
+                  onChange={(e) => setSelectedTemplateId(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-600 outline-none transition"
+                >
+                   <option value="">Generic (Standard Fields)</option>
+                   {availableTemplates.map(t => (
+                      <option key={t.id} value={t.id}>{t.name}</option>
+                   ))}
+                </select>
+             </div>
+
+             {/* DYNAMIC TEMPLATE FIELDS */}
+             {selectedTemplateId && (
+                <div className="md:col-span-2 p-6 bg-indigo-50/20 rounded-2xl border border-indigo-100/50 space-y-4">
+                   <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 italic">Building based on {availableTemplates.find(t => t.id === selectedTemplateId)?.name} blueprint</p>
+                   <div className="grid md:grid-cols-2 gap-4">
+                      {availableTemplates.find(t => t.id === selectedTemplateId)?.product_template_fields?.map(field => (
+                          <div key={field.id}>
+                             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">{field.label}</label>
+                             {field.field_type === 'textarea' ? (
+                                <textarea 
+                                   value={customFields[field.field_key] || ""}
+                                   onChange={e => setCustomFields({...customFields, [field.field_key]: e.target.value})}
+                                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                                />
+                             ) : (
+                                <input 
+                                   type={field.field_type}
+                                   value={customFields[field.field_key] || ""}
+                                   onChange={e => setCustomFields({...customFields, [field.field_key]: e.target.value})}
+                                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                                />
+                             )}
+                          </div>
+                      ))}
+                   </div>
+                </div>
+             )}
+
+             {/* FALLBACK STATIC FIELDS (Only shown if no template) */}
+             {!selectedTemplateId && (
+                <>
+                   <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
+                      <input
+                        type="text"
+                        value={brand}
+                        onChange={(e) => setBrand(e.target.value)}
+                        placeholder="e.g. Mama Rosy"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Origin</label>
+                      <input
+                        type="text"
+                        value={origin}
+                        onChange={(e) => setOrigin(e.target.value)}
+                        placeholder="e.g. Kenya (Makueni)"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Processing</label>
+                      <input
+                        type="text"
+                        value={processing}
+                        onChange={(e) => setProcessing(e.target.value)}
+                        placeholder="e.g. Cold-pressed, Organic"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
+                      />
+                   </div>
+                   <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Nutrition Focus</label>
+                      <input
+                        type="text"
+                        value={nutritionInfo}
+                        onChange={(e) => setNutritionInfo(e.target.value)}
+                        placeholder="e.g. High Protein, Vitamin C"
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
+                      />
+                   </div>
+                   <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Product Benefits (Key Selling Points)</label>
+                      <textarea
+                        rows={2}
+                        value={benefits}
+                        onChange={(e) => setBenefits(e.target.value)}
+                        placeholder="e.g. Supports focus and energy without the crash..."
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
+                      />
+                   </div>
+                   <div className="md:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Usage Instructions / Recipe</label>
+                      <textarea
+                        rows={2}
+                        value={usageInstructions}
+                        onChange={(e) => setUsageInstructions(e.target.value)}
+                        placeholder="e.g. Add 1 scoop to hot water, whisk until frothy."
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
+                      />
+                   </div>
+                </>
+             )}
+
             <div className="md:col-span-2 mt-4 flex gap-6 items-end">
                <div className="flex-1">
                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Image (Max 5MB)</label>

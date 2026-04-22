@@ -14,6 +14,7 @@ import Settings from "../pages/Settings";
 import DeliveryPortal from "../pages/DeliveryPortal";
 import DeliveryWorker from "../pages/DeliveryWorker";
 import DeliveryDashboard from "../pages/DeliveryDashboard";
+import TemplateSettings from "../pages/TemplateSettings";
 
 export default function DashboardRoutes() {
   return (
@@ -34,6 +35,7 @@ export default function DashboardRoutes() {
         <Route path="delivery" element={<DeliveryPortal />} />
         <Route path="delivery/worker" element={<DeliveryWorker />} />
         <Route path="delivery/manager" element={<DeliveryDashboard />} />
+        <Route path="templates" element={<TemplateSettings />} />
       </Routes>
     </OnboardingGate>
   );
