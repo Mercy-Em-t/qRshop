@@ -39,21 +39,25 @@ export default function QrGenerator() {
     }
     
     if (shopId) {
-       supabase.from("shops").select("subdomain, name").eq("shop_id", shopId).single()
+       supabase.from("shops").select("subdomain, slug, name").eq("shop_id", shopId).single()
          .then(({ data }) => {
             if (data?.subdomain) setShopSubdomain(data.subdomain);
-            if (data?.name) {
+            if (data?.slug) setShopSlug(data.slug);
+            else if (data?.name) {
                 setShopSlug(data.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
             }
          });
     }
   }, [user, navigate, shopId]);
 
-  const qrLink = createdQr ? (
-    shopSubdomain 
-       ? `https://${shopSubdomain}.tmsavannah.com/q/${createdQr.qr_id || createdQr.id}`
-       : `${import.meta.env.VITE_PLATFORM_URL || "https://tmsavannah.com"}/q/${createdQr.qr_id || createdQr.id}`
-  ) : "";
+  const qrId = createdQr?.qr_id || createdQr?.id;
+  if (createdQr && !qrId) {
+    console.error("QR generated but ID missing:", createdQr);
+  }
+
+  const qrLink = shopSlug ? (
+    `${import.meta.env.VITE_PLATFORM_URL || "https://tmsavannah.com"}/q/${shopSlug}`
+  ) : (qrId ? `${import.meta.env.VITE_PLATFORM_URL || "https://tmsavannah.com"}/q/${qrId}` : "");
 
   const handleSubmit = async (e) => {
     e.preventDefault();

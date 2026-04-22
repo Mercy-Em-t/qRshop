@@ -32,6 +32,7 @@ export default function AdminShops() {
   const [editPhone, setEditPhone] = useState("");
   const [editSubdomain, setEditSubdomain] = useState("");
   const [editPlan, setEditPlan] = useState("");
+  const [editSlug, setEditSlug] = useState("");
 
   // Community State
   const [newCommunityName, setNewCommunityName] = useState("");
@@ -236,6 +237,7 @@ export default function AdminShops() {
     setEditPhone(shop.phone || "");
     setEditSubdomain(shop.subdomain || "");
     setEditPlan(shop.plan || "free");
+    setEditSlug(shop.slug || "");
     setShowEditModal(true);
   };
 
@@ -260,6 +262,7 @@ export default function AdminShops() {
           name: editName || undefined, 
           phone: editPhone || undefined, 
           subdomain: editSubdomain || undefined,
+          slug: editSlug || undefined,
           plan: editPlan 
         })
       });
@@ -392,7 +395,9 @@ export default function AdminShops() {
                           <div className="flex justify-between items-start">
                              <div>
                                 <h3 className="text-lg font-bold text-gray-900">{shop.name}</h3>
-                                <p className="text-xs text-gray-400 font-mono">{shop.subdomain}.tmsavannah.com</p>
+                                <p className="text-xs text-gray-400 font-mono">
+                                  Slug: <span className="text-indigo-600 font-bold">{shop.slug}</span> · Subdomain: {shop.subdomain}.tmsavannah.com
+                                </p>
                                 <div className="flex gap-2 items-center mt-1">
                                   {shop.is_suspended && <span className="bg-red-100 text-red-800 font-black px-2 py-0.5 rounded text-[10px] uppercase">FROZEN</span>}
                                   {(shop.mpesa_shortcode && shop.mpesa_passkey) 
@@ -510,6 +515,10 @@ export default function AdminShops() {
                         <p className="text-[10px] text-gray-400 mt-1 italic italic">Free and Basic levels use generic URLs. Upgrade to Pro to enable subdomains.</p>
                     </div>
                   )}
+                  <div>
+                     <label className="block text-[10px] font-black text-gray-400 uppercase mb-1">Public Slug</label>
+                     <input value={editSlug} onChange={(e) => setEditSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))} className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none text-sm transition" />
+                  </div>
                   <div>
                      <label className="block text-[10px] font-black text-gray-400 uppercase mb-1">Contact Phone</label>
                      <input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="w-full bg-gray-50 border-2 border-transparent focus:border-indigo-400 rounded-xl px-4 py-3 outline-none text-sm transition" />

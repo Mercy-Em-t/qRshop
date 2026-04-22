@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { getQrNode } from "../services/qr-node-service";
+import { resolveShopIdentifier } from "../services/shop-service";
 import { logEvent } from "../services/telemetry-service";
 import { logVisit } from "../services/visit-service";
 import { createQrSession } from "../utils/qr-session";
 import BrandedSplash from "../components/BrandedSplash";
 
 export default function ScanGateway() {
-  const { qrId } = useParams();
+  const { qrId, identifier } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -22,14 +23,27 @@ export default function ScanGateway() {
   useEffect(() => {
     async function initScan() {
       try {
-        let activeNodeId = qrId;
-        if (nodeId) {
-            activeNodeId = nodeId;
+        let activeId = identifier || qrId || nodeId;
+
+        if (!activeId) throw new Error("Invalid QR Code");
+
+        // Attempt 1: Resolve as a specific QR Node
+        let node = await getQrNode(activeId);
+
+        // Attempt 2: Resolve as a direct Shop Slug/ID (Standardized Entry)
+        if (!node) {
+          const shop = await resolveShopIdentifier(activeId);
+          if (shop) {
+             // Create a synthetic node for direct-to-shop scanning
+             node = {
+                qr_id: activeId,
+                shop_id: shop.id,
+                location: "Direct Scan",
+                action: "open_menu",
+                status: "active"
+             };
+          }
         }
-
-        if (!activeNodeId) throw new Error("Invalid QR Code");
-
-        const node = await getQrNode(activeNodeId);
 
         if (!node) {
           navigate("/invalid-access", { replace: true });
@@ -60,7 +74,7 @@ export default function ScanGateway() {
     if (!isProcessing) {
       initScan();
     }
-  }, [qrId, nodeId, navigate]);
+  }, [qrId, identifier, nodeId, navigate]);
 
   const processAction = async (node) => {
      setIsProcessing(true);

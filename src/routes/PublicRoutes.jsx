@@ -26,6 +26,8 @@ export default function PublicRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/enter" element={<Enter />} />
       <Route path="/invalid-access" element={<InvalidAccess />} />
+      <Route path="/s/:identifier" element={<PublicShopProfile />} />
+      <Route path="/q/:identifier" element={<ScanGateway />} />
       <Route path="/shops/:shopId" element={<PublicShopProfile />} />
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
       <Route path="/request-access" element={<RequestAccess />} />

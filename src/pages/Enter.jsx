@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { createQrSession } from "../utils/qr-session";
-import { getShop } from "../services/shop-service";
+import { resolveShopIdentifier } from "../services/shop-service";
 import { validateQrSession, getDeviceId } from "../services/qr-session-service";
 import { checkLocation } from "../utils/location-check";
 
@@ -24,7 +24,7 @@ export default function Enter() {
       }
 
       try {
-        const shop = await getShop(shopId);
+        const shop = await resolveShopIdentifier(shopId);
         if (!shop) {
           setError("Shop not found. Please scan a valid QR code.");
           setLoading(false);

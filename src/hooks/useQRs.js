@@ -70,7 +70,9 @@ export function useQRs(shopId) {
         const normalized = data.map(q => ({
           ...q,
           qr_id: q.qr_id || q.id,
-          id: q.id || q.qr_id
+          id: q.id || q.qr_id,
+          action: q.action || q.action_type || 'open_menu',
+          location: q.location || 'Unknown Location'
         }));
         setQrs(normalized);
         localStorage.setItem(`qrs_cache_${shopId}`, JSON.stringify(normalized));
@@ -95,7 +97,16 @@ export function useQRs(shopId) {
       .insert({ ...newQR, qr_id: newQR.qr_id || Math.random().toString(36).substring(2, 8).toUpperCase() })
       .select('*, id:qr_id');
       
-    if (!error && data) setQrs((prev) => [data[0], ...prev]);
+    if (!error && data) {
+      const normalized = {
+        ...data[0],
+        qr_id: data[0].qr_id || data[0].id,
+        id: data[0].id || data[0].qr_id,
+        action: data[0].action || data[0].action_type || 'open_menu',
+        location: data[0].location || 'Unknown Location'
+      };
+      setQrs((prev) => [normalized, ...prev]);
+    }
     return { data, error };
   }
 
@@ -111,7 +122,14 @@ export function useQRs(shopId) {
       .select('*, id:qr_id');
       
     if (!error && data) {
-      setQrs((prev) => prev.map((q) => (q.qr_id === qrId ? data[0] : q)));
+      const normalized = {
+        ...data[0],
+        qr_id: data[0].qr_id || data[0].id,
+        id: data[0].id || data[0].qr_id,
+        action: data[0].action || data[0].action_type || 'open_menu',
+        location: data[0].location || 'Unknown Location'
+      };
+      setQrs((prev) => prev.map((q) => (q.qr_id === qrId ? normalized : q)));
     }
     return { data, error };
   }

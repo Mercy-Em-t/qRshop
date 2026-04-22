@@ -19,6 +19,7 @@ export default function ProductManager() {
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState("list"); // 'list' or 'grid'
   const itemsPerPage = 20;
 
   const navigate = useNavigate();
@@ -433,7 +434,7 @@ export default function ProductManager() {
         .from('qrs')
         .insert([{
           qr_id: nodeId,
-          shop_id: shopId,
+          shop_id: SHOP_ID,
           location: `AD:${item.id}`,
           action: 'open_order',
           qr_mode: 'direct_buy'
@@ -561,31 +562,52 @@ export default function ProductManager() {
               </div>
            </div>
 
-           {!showAddForm && (
-           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-50">
-              <div className="sm:col-span-2 relative">
-                 <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                 </span>
-                 <input
-                   type="text"
-                   placeholder="Search items by name, category, or tags..."
-                   value={searchTerm}
-                   onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                   className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm focus:outline-none focus:bg-white transition"
-                 />
-              </div>
-              <select
-                value={categoryFilter}
-                onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
-                className="bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-sm font-medium text-gray-700 outline-none capitalize"
-              >
-                 {allCategories.map(cat => (
-                   <option key={cat} value={cat}>{cat}</option>
-                 ))}
-              </select>
-           </div>
-           )}
+            {!showAddForm && (
+            <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-gray-50 items-center justify-between">
+               <div className="relative flex-1 w-full">
+                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                     <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search items by name, category, or tags..."
+                    value={searchTerm}
+                    onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                    className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm focus:outline-none focus:bg-white transition"
+                  />
+               </div>
+               
+               <div className="flex items-center gap-2 w-full sm:w-auto">
+                 <select
+                   value={categoryFilter}
+                   onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
+                   className="bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-sm font-medium text-gray-700 outline-none capitalize flex-1 sm:flex-none"
+                 >
+                    {allCategories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                 </select>
+
+                  <div className="flex border border-gray-200 rounded-lg overflow-hidden shrink-0">
+                    <button 
+                      onClick={() => setViewMode("list")}
+                      className={`px-3 py-2 text-xs font-bold transition-colors ${viewMode === 'list' ? 'bg-green-600 text-white shadow-inner' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                      title="List View"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                    </button>
+                    <button 
+                      onClick={() => setViewMode("grid")}
+                      className={`px-3 py-2 text-xs font-bold transition-colors ${viewMode === 'grid' ? 'bg-green-600 text-white shadow-inner' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                      title="Grid View"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 12h16M4 18h16M4 6h16M4 12zm0 0h16M4 18h16" /></svg>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                    </button>
+                  </div>
+               </div>
+            </div>
+            )}
         </div>
 
         {showAddForm && (
@@ -728,7 +750,7 @@ export default function ProductManager() {
              <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100 italic text-gray-400">
                 No products discovered in this category.
              </div>
-          ) : (
+          ) : viewMode === "list" ? (
              <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden">
                 {currentItems.map((item) => (
                    <div key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${item.is_active === false ? 'bg-gray-50/50 opacity-60' : 'hover:bg-gray-50/30'}`}>
@@ -766,6 +788,34 @@ export default function ProductManager() {
                              {item.is_active === false ? '👁️' : '🚫'}
                           </button>
                        </div>
+                   </div>
+                ))}
+             </div>
+          ) : (
+             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {currentItems.map((item) => (
+                   <div key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-md ${item.is_active === false ? 'opacity-60' : ''}`}>
+                      <div className="aspect-square bg-gray-100 relative group">
+                         {item.product_images && item.product_images.length > 0 ? (
+                             <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
+                         ) : item.image_url ? (
+                             <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                         ) : (
+                             <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-bold uppercase">No Image</div>
+                         )}
+                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button onClick={() => generateAdLink(item)} className="p-2 bg-white rounded-full text-indigo-600 shadow-sm hover:scale-110 transition-transform">🔗</button>
+                            <button onClick={() => startEdit(item)} className="p-2 bg-white rounded-full text-slate-600 shadow-sm hover:scale-110 transition-transform">✏️</button>
+                         </div>
+                      </div>
+                      <div className="p-3 flex-1 flex flex-col">
+                         <div className="flex items-start justify-between gap-1 mb-1">
+                            <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{item.name}</h3>
+                            <button onClick={() => handleToggleActive(item.id, item.is_active)} className="text-xs">{item.is_active === false ? '👁️' : '🚫'}</button>
+                         </div>
+                         <p className="text-[10px] text-gray-500 mb-2">{item.category}</p>
+                         <p className="mt-auto font-black text-green-700">KSh {item.price}</p>
+                      </div>
                    </div>
                 ))}
              </div>

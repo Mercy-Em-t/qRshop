@@ -22,9 +22,13 @@ export async function fetchMenu(qrId) {
   if (!supabase) return null;
   const { data, error } = await supabase
     .from("qrs")
-    .select("qr_id, action_type, shop_id")
+    .select("qr_id, action, action_type, shop_id, location")
     .eq("qr_id", qrId)
     .single();
   if (error) console.error(error);
+  if (data) {
+    data.action = data.action || data.action_type || 'open_menu';
+    data.location = data.location || 'Unknown Location';
+  }
   return data;
 }

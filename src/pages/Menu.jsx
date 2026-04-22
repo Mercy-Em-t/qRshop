@@ -32,7 +32,6 @@ export default function Menu() {
 
   const terms = useNomenclature(session?.shop_id);
   const { campaigns } = useCampaigns(session?.shop_id);
-  const activeCampaign = campaigns?.find(c => c.is_active);
 
   useEffect(() => {
      if (session?.shop_id) {
@@ -108,9 +107,8 @@ export default function Menu() {
   };
 
   const isLoading = shopLoading || menuLoading;
-  if (isLoading) return <LoadingSpinner message="Loading menu..." />;
 
-  // Metadata and Campaign memoization
+  // Metadata and Campaign memoization (Moved up to satisfy Rules of Hooks)
   const activeCampaign = useMemo(() => campaigns?.find(c => c.is_active), [campaigns]);
 
   // Flatten items for BundleCard retrieval
@@ -135,6 +133,10 @@ export default function Menu() {
 
   const categoryNames = useMemo(() => Object.keys(displayCategories || {}), [displayCategories]);
   const activeCat = activeCategory || categoryNames[0];
+
+  if (isLoading) return <LoadingSpinner message="Loading menu..." />;
+
+  // Extract unique categories for the scroller
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

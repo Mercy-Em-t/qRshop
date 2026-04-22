@@ -19,6 +19,7 @@ export default function MenuManager() {
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState("list"); // 'list' or 'grid'
   const itemsPerPage = 20;
 
   const navigate = useNavigate();
@@ -445,7 +446,7 @@ export default function MenuManager() {
       // Insert as a digital QR code in the system, stealth-marked with AD: prefix
       const { error } = await supabase.from('qrs').insert({
           qr_id: shortId,
-          shop_id: item.shop_id,
+          shop_id: SHOP_ID,
           location: `AD:${item.id}`,
           action: 'open_order',
           status: 'active'
@@ -577,8 +578,8 @@ export default function MenuManager() {
 
            {/* Search & Filter Inputs */}
            {!showAddForm && (
-           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-50">
-              <div className="sm:col-span-2 relative">
+           <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-gray-50 items-center justify-between">
+              <div className="sm:col-span-2 relative flex-1 w-full">
                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                  </span>
@@ -590,15 +591,35 @@ export default function MenuManager() {
                    className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-green-500 focus:border-green-500 transition"
                  />
               </div>
-              <select
-                value={categoryFilter}
-                onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
-                className="bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-sm font-medium text-gray-700 focus:ring-green-500 focus:border-green-500 outline-none capitalize"
-              >
-                 {allCategories.map(cat => (
-                   <option key={cat} value={cat}>{cat}</option>
-                 ))}
-              </select>
+              
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
+                  className="bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-sm font-medium text-gray-700 focus:ring-green-500 focus:border-green-500 outline-none capitalize flex-1 sm:flex-none"
+                >
+                   {allCategories.map(cat => (
+                     <option key={cat} value={cat}>{cat}</option>
+                   ))}
+                </select>
+
+                <div className="flex border border-gray-200 rounded-lg overflow-hidden shrink-0 shadow-sm">
+                   <button 
+                    onClick={() => setViewMode("list")}
+                    className={`px-3 py-2 text-xs font-bold transition-colors ${viewMode === 'list' ? 'bg-green-600 text-white shadow-inner' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                    title="List View"
+                   >
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                   </button>
+                   <button 
+                    onClick={() => setViewMode("grid")}
+                    className={`px-3 py-2 text-xs font-bold transition-colors ${viewMode === 'grid' ? 'bg-green-600 text-white shadow-inner' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+                    title="Grid View"
+                   >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                   </button>
+                </div>
+              </div>
            </div>
            )}
         </div>

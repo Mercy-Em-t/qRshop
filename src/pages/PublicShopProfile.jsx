@@ -16,7 +16,7 @@ import ShopFooter from "../components/shop/ShopFooter";
 export default function PublicShopProfile({ directShopId }) {
   const params = useParams();
   const navigate = useNavigate();
-  const shopIdentifier = directShopId || params.shopId;
+  const shopIdentifier = directShopId || params.identifier || params.shopId;
   const [shop, setShop] = useState(null);
   const [featuredItems, setFeaturedItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +53,12 @@ export default function PublicShopProfile({ directShopId }) {
         */
 
         setShop(shopData);
+        
+        // Canonical Redirect: If accessed via UUID or old link, redirect to the current slug
+        if (shopIdentifier !== shopData.slug && !directShopId) {
+          navigate(`/s/${shopData.slug}`, { replace: true });
+        }
+
         // Take first 4 items as featured
         setFeaturedItems(items.slice(0, 4));
       } catch (err) {

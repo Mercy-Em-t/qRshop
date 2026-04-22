@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { getShop } from "../services/shop-service";
+import { resolveShopIdentifier } from "../services/shop-service";
 
-export function useShop(shopId) {
+export function useShop(identifier) {
   const [shop, setShop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!shopId) {
+    if (!identifier) {
       setLoading(false);
       return;
     }
@@ -19,7 +19,7 @@ export function useShop(shopId) {
       setError(null);
 
       try {
-        const data = await getShop(shopId);
+        const data = await resolveShopIdentifier(identifier);
         if (!cancelled) {
           setShop(data);
         }
@@ -39,7 +39,7 @@ export function useShop(shopId) {
     return () => {
       cancelled = true;
     };
-  }, [shopId]);
+  }, [identifier]);
 
   return { shop, loading, error };
 }

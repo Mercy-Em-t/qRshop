@@ -42,8 +42,9 @@ export default function Settings() {
       delivery_fee_fixed: shop.delivery_fee_fixed,
       min_order_value: shop.min_order_value,
       is_open: shop.is_open,
-        fulfillment_settings: shop.fulfillment_settings,
-        mpesa_shortcode: shop.mpesa_shortcode || null,
+      slug: shop.slug,
+      fulfillment_settings: shop.fulfillment_settings,
+      mpesa_shortcode: shop.mpesa_shortcode || null,
       mpesa_passkey: shop.mpesa_passkey || null,
     }).eq("shop_id", SHOP_ID);
     
@@ -118,6 +119,22 @@ export default function Settings() {
                        onChange={e => setShop({...shop, description: e.target.value})}
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition h-24 font-medium text-gray-900"
                     />
+                 </div>
+                 <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Public URL Slug (Instagram/TikTok Link)</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-mono text-gray-400">{window.location.origin}/s/</span>
+                      <input 
+                         type="text" 
+                         value={shop.slug || ""} 
+                         onChange={e => setShop({...shop, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')})}
+                         placeholder="your-shop-name"
+                         className="flex-1 bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-bold text-gray-900"
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-wide">
+                      This is the link you put in your Instagram or TikTok bio. Changing this will update your public identity.
+                    </p>
                  </div>
               </div>
            </div>

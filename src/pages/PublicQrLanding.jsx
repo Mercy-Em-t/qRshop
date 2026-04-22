@@ -5,7 +5,8 @@ import { getShop } from "../services/shop-service";
 import { getCampaignById } from "../services/campaign-service";
 
 export default function PublicQrLanding() {
-  const { qrId } = useParams();
+  const { qrId, identifier } = useParams();
+  const shopIdentifier = identifier || qrId;
   const [node, setNode] = useState(null);
   const [shop, setShop] = useState(null);
   const [campaign, setCampaign] = useState(null);
@@ -25,6 +26,17 @@ export default function PublicQrLanding() {
 
         const shopData = await getShop(qrData.shop_id);
         setShop(shopData);
+
+        // Canonical Redirect: If accessed via UUID or old link, and it's NOT a node-specific Landing (/qr/:id)
+        // actually if node exists, we might want to stay on /qr/:id, but the user said Option A: /q/:slug
+        // Wait, PublicQrLanding is /qr/:qrId. 
+        // ScanGateway is /q/:qrId.
+        // User wants /q/:slug -> Menu.
+        // So PublicQrLanding should redirect /qr/:slug -> /qr/:uuid or /q/:slug?
+        // Actually, if we are in PublicQrLanding with a slug, it means we want the landing page.
+        if (identifier && shopData && identifier !== shopData.slug) {
+           navigate(`/qr/${shopData.slug}`, { replace: true });
+        }
 
         if (qrData.campaign_id) {
            const campData = await getCampaignById(qrData.campaign_id);
