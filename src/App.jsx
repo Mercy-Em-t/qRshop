@@ -180,7 +180,7 @@ export default function App() {
       <Route path="/a/*" element={<AuthGate><DashboardRoutes /></AuthGate>} />
       
       {/* Legacy Redirects */}
-      <Route path="/a/*" element={<Navigate to="/a" replace />} />
+      <Route path="/dashboard/*" element={<Navigate to="/a" replace />} />
       <Route path="/product-manager" element={<Navigate to="/a/orders" replace />} />
       <Route path="/menu-manager" element={<Navigate to="/a/settings" replace />} />
       <Route path="/qr-generator" element={<Navigate to="/a/qrs" replace />} />
