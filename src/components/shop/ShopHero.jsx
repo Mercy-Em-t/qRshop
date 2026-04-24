@@ -19,6 +19,25 @@ export default function ShopHero({ shop }) {
       navigate('/menu?filter=offers');
     }
   };
+
+  const handleShare = async () => {
+    const shareData = {
+      title: shop?.name || 'Modern Savannah',
+      text: shop?.tagline || 'Check out this amazing shop on Modern Savannah!',
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Shop link copied to clipboard!');
+      }
+    } catch (err) {
+      console.error('Error sharing:', err);
+    }
+  };
   
   return (
     <section className="hero">
@@ -34,6 +53,9 @@ export default function ShopHero({ shop }) {
       <div className="hero__actions">
         <button onClick={handleStartOrdering} className="btn btn--primary cursor-pointer">Start Ordering</button>
         <button onClick={handleViewOffers} className="btn btn--secondary cursor-pointer">View Offers</button>
+        <button onClick={handleShare} className="btn btn--share cursor-pointer">
+           <span className="mr-2">🔗</span> Share Shop
+        </button>
       </div>
     </section>
   );

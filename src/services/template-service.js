@@ -1,4 +1,5 @@
 import { supabase } from "./supabase-client";
+import { normalizeAttributeKey } from "../utils/attribute-utils";
 
 /**
  * template-service.js
@@ -31,15 +32,18 @@ export const createTemplate = async (shopId, name, description, fields = []) => 
 
   // 2. Insert Fields if any
   if (fields.length > 0) {
-    const fieldsToInsert = fields.map((f, index) => ({
-      template_id: template.id,
-      label: f.label,
-      field_key: f.field_key || f.label.toLowerCase().replace(/\s+/g, '_'),
-      field_type: f.field_type || 'text',
-      options: f.options || [],
-      is_required: !!f.is_required,
-      sort_order: index
-    }));
+    const fieldsToInsert = fields.map((f, index) => {
+      const standardKey = normalizeAttributeKey(f.label);
+      return {
+        template_id: template.id,
+        label: f.label,
+        field_key: f.field_key || standardKey,
+        field_type: f.field_type || 'text',
+        options: f.options || [],
+        is_required: !!f.is_required,
+        sort_order: index
+      };
+    });
 
     const { error: fError } = await supabase
       .from("product_template_fields")

@@ -2,12 +2,16 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo";
 import { Scanner } from "@yudiel/react-qr-scanner";
+import { useStandalone } from "../hooks/useStandalone";
+import { useState as useReactState } from "react";
 
 
 
 export default function Home() {
   const [showScanner, setShowScanner] = useState(false);
   const [isUnknownSubdomain, setIsUnknownSubdomain] = useState(false);
+  const [authView, setAuthView] = useState("login"); // 'login' | 'signup' | 'request'
+  const isStandalone = useStandalone();
 
   useEffect(() => {
      // SEO Security: If we've landed on Home via an unknown subdomain (wildcard fallback)
@@ -21,6 +25,73 @@ export default function Home() {
         setIsUnknownSubdomain(true);
      }
   }, []);
+
+  if (isStandalone) {
+     return (
+        <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 sm:p-12">
+           <div className="w-full max-w-sm">
+              <div className="flex justify-center mb-12">
+                 <Logo size="lg" />
+              </div>
+
+              <div className="bg-gray-50 p-1 rounded-2xl flex mb-8">
+                 <button 
+                    onClick={() => setAuthView("login")}
+                    className={`flex-1 py-3 text-sm font-bold rounded-xl transition ${authView === 'login' ? 'bg-white shadow text-gray-900' : 'text-gray-400'}`}
+                 >
+                    Login
+                 </button>
+                 <button 
+                    onClick={() => setAuthView("signup")}
+                    className={`flex-1 py-3 text-sm font-bold rounded-xl transition ${authView === 'signup' ? 'bg-white shadow text-gray-900' : 'text-gray-400'}`}
+                 >
+                    Signup
+                 </button>
+                 <button 
+                    onClick={() => setAuthView("request")}
+                    className={`flex-1 py-3 text-sm font-bold rounded-xl transition ${authView === 'request' ? 'bg-white shadow text-gray-900' : 'text-gray-400'}`}
+                 >
+                    Request
+                 </button>
+              </div>
+
+              {authView === 'login' && (
+                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <h2 className="text-2xl font-black mb-2">Welcome Back</h2>
+                    <p className="text-gray-500 mb-8">Login to manage your shops and orders.</p>
+                    <Link to="/login" className="block w-full bg-theme-secondary text-white text-center py-4 rounded-xl font-bold hover:bg-theme-main transition shadow-xl">
+                       Continue to Login
+                    </Link>
+                 </div>
+              )}
+
+              {authView === 'signup' && (
+                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <h2 className="text-2xl font-black mb-2">Grow your business</h2>
+                    <p className="text-gray-500 mb-8">Start selling directly on Every Screen.</p>
+                    <Link to="/signup" className="block w-full bg-theme-secondary text-white text-center py-4 rounded-xl font-bold hover:bg-theme-main transition shadow-xl">
+                       Create Merchant Account
+                    </Link>
+                 </div>
+              )}
+
+              {authView === 'request' && (
+                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <h2 className="text-2xl font-black mb-2">Need Help?</h2>
+                    <p className="text-gray-500 mb-8">Request access or custom setup for your shop.</p>
+                    <Link to="/request-access" className="block w-full bg-gray-900 text-white text-center py-4 rounded-xl font-bold hover:bg-black transition shadow-xl">
+                       Submit Request
+                    </Link>
+                 </div>
+              )}
+              
+              <div className="mt-12 text-center text-[10px] font-black uppercase tracking-widest text-gray-300">
+                 Native OS Platform • Modern Savannah
+              </div>
+           </div>
+        </div>
+     );
+  }
 
   return (
     <div className="min-h-screen bg-white">

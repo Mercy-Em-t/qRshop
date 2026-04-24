@@ -57,9 +57,10 @@ export default function ShopSelection() {
             >
               <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
-                   <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform">
-                      {profile.shop_name?.charAt(0) || '🏪'}
-                   </div>
+                    <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-xl group-hover:scale-110 transition-transform relative">
+                       {profile.shop_name?.charAt(0) || '🏪'}
+                       <div className="absolute -top-1 -right-1 bg-red-500 w-3 h-3 rounded-full border-2 border-white animate-pulse"></div>
+                    </div>
                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-lg">
                       {profile.role}
                    </span>

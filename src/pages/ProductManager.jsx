@@ -7,6 +7,7 @@ import usePlanAccess from "../hooks/usePlanAccess";
 import UpgradeModal from "../components/UpgradeModal";
 import { uuidToShort } from "../utils/short-id";
 import { generateSalesContent } from "../services/sales-content-generator";
+import { normalizeAttributeKey } from "../utils/attribute-utils";
 
 export default function ProductManager() {
   const [items, setItems] = useState([]);
@@ -139,7 +140,10 @@ export default function ProductManager() {
       // Template data
       template_id: selectedTemplateId || null,
       attributes: {
-         ...customFields,
+         ...Object.keys(customFields).reduce((acc, key) => {
+            acc[normalizeAttributeKey(key)] = customFields[key];
+            return acc;
+         }, {}),
          // We still keep the specific fields for backward compatibility with the Magazine
          benefits,
          origin,

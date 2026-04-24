@@ -78,66 +78,80 @@ import SeedWholesaleUser from "./pages/SeedWholesaleUser";
 import ProductDetails from "./pages/ProductDetails";
 
 export default function App() {
-  const [subdomainShopId, setSubdomainShopId] = useState(null);
-  const [resolving, setResolving] = useState(true);
+  const [systemState, setSystemState] = useState({
+    maintenance: null,
+    resolving: true,
+    subdomainShopId: null
+  });
 
   useOfflineEventQueue();
 
   useEffect(() => {
     document.title = "The Modern Savannah";
 
-    async function resolveSubdomain() {
+    async function initializeSystem() {
       const hostname = window.location.hostname;
       const parts = hostname.split('.');
-      
       const isLocal = hostname === 'localhost' || hostname.includes('127.0.0.1');
       const isVercel = hostname.includes('vercel.app');
       
       let subdomain = null;
-      if (!isLocal && !isVercel && parts.length >= 3) {
-         subdomain = parts[0];
-      } else if (isLocal && parts.length >= 2) {
-         subdomain = parts[0];
-      }
+      if (!isLocal && !isVercel && parts.length >= 3) subdomain = parts[0];
+      else if (isLocal && parts.length >= 2) subdomain = parts[0];
 
-      if (subdomain && subdomain !== 'www') {
-         const cachedId = sessionStorage.getItem(`subdomain_cache_${subdomain}`);
-         if (cachedId) {
-            setSubdomainShopId(cachedId);
-            setResolving(false);
-            return;
-         }
+      try {
+        // Parallelized System Checks
+        const [maintenanceRes, shopRes] = await Promise.all([
+          // 1. Maintenance Check
+          supabase
+            .from("system_config")
+            .select("config_value")
+            .eq("config_key", "maintenance_mode")
+            .maybeSingle(),
+          
+          // 2. Subdomain Resolution (Conditional)
+          subdomain && subdomain !== 'www' 
+            ? getShopBySubdomain(subdomain)
+            : Promise.resolve(null)
+        ]);
 
-         try {
-            const shop = await getShopBySubdomain(subdomain);
-            if (shop) {
-               const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-               if (uuidRegex.test(shop.id)) {
-                  setSubdomainShopId(shop.id);
-                  sessionStorage.setItem(`subdomain_cache_${subdomain}`, shop.id);
-               } else {
-                  console.error("Security Incident: Malformed Shop ID received from resolution.");
-               }
-            } else {
-               console.warn(`Routing Notice: Subdomain "${subdomain}" not recognized.`);
-            }
-         } catch (e) {
-            console.error("Subdomain Resolution Failed:", e);
-         }
+        let resolvedShopId = null;
+        if (shopRes) {
+          resolvedShopId = shopRes.id;
+          sessionStorage.setItem(`subdomain_cache_${subdomain}`, resolvedShopId);
+        }
+
+        setSystemState({
+          maintenance: maintenanceRes?.data?.config_value || null,
+          resolving: false,
+          subdomainShopId: resolvedShopId
+        });
+      } catch (e) {
+        console.error("System Initialization Failed:", e);
+        setSystemState(prev => ({ ...prev, resolving: false }));
       }
-      setResolving(false);
     }
-    resolveSubdomain();
+    initializeSystem();
   }, []);
 
-  if (resolving) return <div className="min-h-screen bg-white flex items-center justify-center"><div className="animate-spin h-8 w-8 border-b-2 border-green-600 rounded-full"></div></div>;
+  if (systemState.resolving) {
+    return (
+      <LoadingSpinner 
+        showLogo={false} 
+        message="Establishing Secure Connection..." 
+        fullPage={true} 
+      />
+    );
+  }
+
+  const { subdomainShopId, maintenance } = systemState;
 
   if (subdomainShopId && window.location.pathname === "/") {
      return <PublicShopProfile directShopId={subdomainShopId} />;
   }
 
   return (
-    <MaintenanceGate>
+    <MaintenanceGate preFetchedMaintenance={maintenance}>
       <Routes>
       {/* === PUBLIC ROUTES === */}
       <Route path="/" element={<Home />} />
@@ -181,7 +195,7 @@ export default function App() {
       
       {/* Legacy Redirects */}
       <Route path="/dashboard/*" element={<Navigate to="/a" replace />} />
-      <Route path="/product-manager" element={<Navigate to="/a/orders" replace />} />
+      <Route path="/product-manager" element={<Navigate to="/a/products" replace />} />
       <Route path="/menu-manager" element={<Navigate to="/a/settings" replace />} />
       <Route path="/qr-generator" element={<Navigate to="/a/qrs" replace />} />
       <Route path="/plans" element={<Navigate to="/a/settings" replace />} />

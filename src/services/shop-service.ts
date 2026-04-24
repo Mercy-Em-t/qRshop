@@ -75,6 +75,21 @@ export async function resolveShopIdentifier(identifier: string): Promise<Shop | 
     return null;
   }
 
+  // Fallback: Check Slug Redirects Engine
+  if (!data && !isUUID) {
+    console.log(`Identifier "${identifier}" not found in shops. Checking Redirect Engine...`);
+    const { data: redirectData } = await supabase
+      .from("shop_slug_redirects")
+      .select("shop_id")
+      .eq("old_slug", identifier)
+      .maybeSingle();
+
+    if (redirectData) {
+      console.log(`Legacy redirect found for "${identifier}" -> Shop ${redirectData.shop_id}`);
+      return getShop(redirectData.shop_id);
+    }
+  }
+
   return data as Shop;
 }
 

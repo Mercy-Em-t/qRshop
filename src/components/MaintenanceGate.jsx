@@ -3,12 +3,14 @@ import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
 import LoadingSpinner from "./LoadingSpinner";
 
-export default function MaintenanceGate({ children }) {
-  const [maintenance, setMaintenance] = useState(null);
-  const [loading, setLoading] = useState(true);
+export default function MaintenanceGate({ children, preFetchedMaintenance }) {
+  const [maintenance, setMaintenance] = useState(preFetchedMaintenance || null);
+  const [loading, setLoading] = useState(!preFetchedMaintenance);
   const user = getCurrentUser();
 
   useEffect(() => {
+    if (preFetchedMaintenance) return; // Skip if we already have it
+
     async function checkMaintenance() {
       try {
         const { data, error } = await supabase
@@ -28,7 +30,7 @@ export default function MaintenanceGate({ children }) {
     }
 
     checkMaintenance();
-  }, []);
+  }, [preFetchedMaintenance]);
 
   if (loading) return <LoadingSpinner message="Checking system status..." />;
 
