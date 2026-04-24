@@ -320,28 +320,29 @@ export default function ProductManager() {
       return;
     }
     
-    const headers = ["Name", "Category", "Price", "Description", "Stock", "SKU", "Product_Link", "Tags", "Variant_Options", "Image_URLs"];
-    const csvRows = [headers.join(",")];
-    
-    for (const item of items) {
-      const escapeCell = (str) => `"${String(str || "").replace(/"/g, '""')}"`;
-      const tagsStr = Array.isArray(item.tags) ? item.tags.join(",") : "";
-      const variantStr = (item.variant_options && Object.keys(item.variant_options).length > 0) ? JSON.stringify(item.variant_options) : "";
-      
-      const row = [
-        escapeCell(item.name),
-        escapeCell(item.category),
-        item.price,
-        escapeCell(item.description),
-        item.stock || "",
-        escapeCell(item.sku),
-        escapeCell(item.product_link),
-        escapeCell(tagsStr),
-        escapeCell(variantStr),
-        ""
-      ];
-      csvRows.push(row.join(","));
-    }
+     const headers = ["ID", "Name", "Category", "Price", "Description", "Stock", "SKU", "Product_Link", "Tags", "Variant_Options", "Image_URL"];
+     const csvRows = [headers.join(",")];
+     
+     for (const item of items) {
+       const escapeCell = (str) => `"${String(str || "").replace(/"/g, '""')}"`;
+       const tagsStr = Array.isArray(item.tags) ? item.tags.join(",") : "";
+       const variantStr = (item.variant_options && Object.keys(item.variant_options).length > 0) ? JSON.stringify(item.variant_options) : "";
+       
+       const row = [
+         item.id,
+         escapeCell(item.name),
+         escapeCell(item.category),
+         item.price || 0,
+         escapeCell(item.description),
+         item.stock || "",
+         escapeCell(item.sku),
+         escapeCell(item.product_link),
+         escapeCell(tagsStr),
+         escapeCell(variantStr),
+         item.image_url || ""
+       ];
+       csvRows.push(row.join(","));
+     }
     
     const csvString = csvRows.join("\n");
     const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
@@ -359,8 +360,8 @@ export default function ProductManager() {
 
   const handleDownloadTemplate = () => {
     const templateContent = [
-      "Name,Category,Price,Description,Stock,SKU,Product_Link,Tags,Variant_Options,Image_URLs",
-      "Signature Item,Main,750,High quality product description,50,SAV-01,,tag1,tag2,\"{\"\"size\"\":[\"\"Small\"\",\"\"Large\"\"]}\",https://example.com/p1.jpg"
+      "ID,Name,Category,Price,Description,Stock,SKU,Product_Link,Tags,Variant_Options,Image_URL",
+      ",Signature Item,Main,750,High quality product description,50,SAV-01,,tag1,tag2,\"{\"\"size\"\":[\"\"Small\"\",\"\"Large\"\"]}\",https://example.com/p1.jpg"
     ].join("\n");
     
     const blob = new Blob([templateContent], { type: "text/csv;charset=utf-8;" });
@@ -418,7 +419,6 @@ export default function ProductManager() {
       const rows = csvData.split("\n");
       
       const bulkItems = [];
-      const imageCreations = [];
       let validationErrors = [];
 
       const cleanStr = (str) => str ? str.trim() : "";
@@ -427,13 +427,18 @@ export default function ProductManager() {
         if (rows[i].trim() === "") continue;
         
         const row = parseCSVRow(rows[i]);
-        if (row.length < 3) {
+        // Support both old (10 cols) and new (11 cols with ID)
+        const hasId = row.length >= 11;
+        const offset = hasId ? 1 : 0;
+
+        if (row.length < (3 + offset)) {
             validationErrors.push(`Row ${i + 1}: Missing required columns.`);
             continue;
         }
 
-        const name = cleanStr(row[0]);
-        const priceRaw = cleanStr(row[2]);
+        const id = hasId ? cleanStr(row[0]) : null;
+        const name = cleanStr(row[0 + offset]);
+        const priceRaw = cleanStr(row[2 + offset]);
 
         if (!name) {
             validationErrors.push(`Row ${i + 1}: Product name is required.`);
@@ -447,32 +452,37 @@ export default function ProductManager() {
         }
 
         let parsedVariants = {};
-        if (row.length >= 9 && cleanStr(row[8])) {
-           try { parsedVariants = JSON.parse(cleanStr(row[8])); } 
+        if (row.length >= (9 + offset) && cleanStr(row[8 + offset])) {
+           try { parsedVariants = JSON.parse(cleanStr(row[8 + offset])); } 
            catch(err) { console.warn("Invalid variants JSON for item: " + name) }
         }
 
         let parsedTags = [];
-        if (row.length >= 8 && cleanStr(row[7])) {
-           parsedTags = cleanStr(row[7]).split(',').map(t=>t.trim()).filter(Boolean);
+        if (row.length >= (8 + offset) && cleanStr(row[7 + offset])) {
+           parsedTags = cleanStr(row[7 + offset]).split(',').map(t=>t.trim()).filter(Boolean);
         }
         
-        const imageUrls = (row.length >= 10 && cleanStr(row[9])) ? cleanStr(row[9]).split('|') : [];
-        imageCreations.push(imageUrls);
+        const imageUrl = (row.length >= (10 + offset) && cleanStr(row[9 + offset])) ? cleanStr(row[9 + offset]) : null;
 
-        bulkItems.push({
+        const itemData = {
            shop_id: SHOP_ID,
            name: name,
-           category: cleanStr(row[1]) || "Main",
+           category: cleanStr(row[1 + offset]) || "Main",
            price: parsedPrice,
-           description: row.length >= 4 ? cleanStr(row[3]) : "",
-           stock: (row.length >= 5 && cleanStr(row[4])) ? parseInt(row[4]) : -1,
-           sku: row.length >= 6 ? (cleanStr(row[5]) || null) : null,
-           product_link: row.length >= 7 ? (cleanStr(row[6]) || null) : null,
+           description: row.length >= (4 + offset) ? cleanStr(row[3 + offset]) : "",
+           stock: (row.length >= (5 + offset) && cleanStr(row[4 + offset])) ? parseInt(row[4 + offset]) : -1,
+           sku: row.length >= (6 + offset) ? (cleanStr(row[5 + offset]) || null) : null,
+           product_link: row.length >= (7 + offset) ? (cleanStr(row[6 + offset]) || null) : null,
            tags: parsedTags,
            variant_options: parsedVariants,
-           image_url: (imageUrls && imageUrls.length > 0) ? imageUrls[0].trim() : null
-        });
+           image_url: imageUrl
+        };
+
+        if (id && id.length > 10) {
+           itemData.id = id;
+        }
+
+        bulkItems.push(itemData);
       }
 
       if (validationErrors.length > 0) {
@@ -486,37 +496,28 @@ export default function ProductManager() {
             return;
         }
         
-        if (!window.confirm(`Are you sure you want to import ${bulkItems.length} products?`)) return;
+        const isUpdate = bulkItems.some(item => item.id);
+        const msg = isUpdate 
+           ? `Are you sure you want to Sync/Update ${bulkItems.length} products?`
+           : `Are you sure you want to import ${bulkItems.length} new products?`;
+
+        if (!window.confirm(msg)) return;
 
         setLoading(true);
-        const { data: insertedItems, error } = await supabase.from('menu_items').insert(bulkItems).select();
+        // Using upsert to support updates via CSV
+        const { error } = await supabase.from('menu_items').upsert(bulkItems, { 
+           onConflict: 'id',
+           ignoreDuplicates: false 
+        });
         
-        if (!error && insertedItems) {
-           const imagePayloads = [];
-           for (let i = 0; i < insertedItems.length; i++) {
-              const productId = insertedItems[i].id;
-              const urls = imageCreations[i];
-              if (urls && urls.length > 0) {
-                 urls.forEach((url, index) => {
-                    imagePayloads.push({
-                       product_id: productId,
-                       url: url.trim(),
-                       position: index
-                    });
-                 });
-              }
-           }
-           
-           if (imagePayloads.length > 0) {
-              await supabase.from('product_images').insert(imagePayloads);
-           }
-           
-           alert(`Successfully imported ${bulkItems.length} products!`);
+        if (!error) {
+           alert(isUpdate ? "✅ Catalog synced successfully!" : "✅ Products imported successfully!");
            fetchItems();
         } else {
-           alert("Bulk upload failed: " + error?.message);
+           console.error("Bulk upload error:", error);
+           alert("Failed to upload items. Check console for details.");
+           setLoading(false);
         }
-        setLoading(false);
       }
     };
     reader.readAsText(file);
@@ -622,24 +623,27 @@ export default function ProductManager() {
               </div>
               
               <div className="flex flex-wrap gap-2 w-full sm:w-auto relative">
-                <Link
-                  to="/a/bulk-image-mapper"
-                  className="bg-purple-50 text-purple-700 font-bold text-sm px-4 py-2 rounded-lg border border-purple-100 hover:bg-purple-100 transition shadow-sm flex items-center gap-1"
+                <button
+                  onClick={() => navigate("/a/bulk-image-mapper")}
+                  className="bg-purple-50 text-purple-700 font-bold text-sm px-4 py-2 rounded-lg border border-purple-100 hover:bg-purple-100 transition shadow-sm flex items-center gap-2"
                 >
-                   🖼️ Bulk Images
-                </Link>
+                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                   <span>Bulk Images</span>
+                </button>
                 <button 
                   onClick={handleExportCSV}
-                  className="bg-white text-gray-700 font-bold text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition shadow-sm"
+                  className="bg-white text-gray-700 font-bold text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition shadow-sm flex items-center gap-2"
                 >
-                   📥 Export
+                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                   <span>Export</span>
                 </button>
                 <div className="relative">
                   <button 
                     onClick={() => setShowImportMenu(!showImportMenu)}
-                    className="bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-lg hover:bg-indigo-100 transition border border-indigo-100 flex items-center gap-1"
+                    className="bg-indigo-50 text-indigo-700 font-bold text-sm px-4 py-2 rounded-lg hover:bg-indigo-100 transition border border-indigo-100 flex items-center gap-2"
                   >
-                     📤 Import
+                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                     <span>Import</span>
                   </button>
                   {showImportMenu && (
                     <div className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-56 bg-white border border-gray-100 shadow-xl rounded-xl overflow-hidden transition-all duration-200 z-50">
