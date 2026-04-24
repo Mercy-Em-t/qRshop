@@ -50,6 +50,7 @@ import Plans from "./pages/Plans";
 
 // --- Dashboard Routes ---
 import DashboardRoutes from "./routes/DashboardRoutes";
+import BulkImageMapper from "./pages/BulkImageMapper";
 import AuthGate from "./components/AuthGate";
 import { Navigate } from "react-router-dom";
 
@@ -194,6 +195,7 @@ export default function App() {
 
       {/* === PROTECTED ACCOUNT ROUTES === */}
       <Route path="/a/*" element={<AuthGate><DashboardRoutes /></AuthGate>} />
+      <Route path="/a/bulk-image-mapper" element={<AuthGate><BulkImageMapper /></AuthGate>} />
       
       {/* Legacy Redirects */}
       <Route path="/dashboard/*" element={<Navigate to="/a" replace />} />

@@ -618,6 +618,12 @@ export default function ProductManager() {
               </div>
               
               <div className="flex flex-wrap gap-2 w-full sm:w-auto relative">
+                <Link
+                  to="/a/bulk-image-mapper"
+                  className="bg-purple-50 text-purple-700 font-bold text-sm px-4 py-2 rounded-lg border border-purple-100 hover:bg-purple-100 transition shadow-sm flex items-center gap-1"
+                >
+                   🖼️ Bulk Images
+                </Link>
                 <button 
                   onClick={handleExportCSV}
                   className="bg-white text-gray-700 font-bold text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 hover:text-gray-900 transition shadow-sm"
