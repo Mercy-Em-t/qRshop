@@ -106,7 +106,7 @@ export default function BulkImageMapper() {
   const processImages = async () => {
     const toUpload = pendingImages.filter(img => img.matchedProductId && img.status !== "success");
     if (toUpload.length === 0) {
-      alert("No matched images to process.");
+      alert("No matched images to process. Ensure you have selected a product or 'Create New' for each image.");
       return;
     }
 
@@ -117,8 +117,34 @@ export default function BulkImageMapper() {
       try {
         setPendingImages(prev => prev.map(img => img.id === item.id ? { ...img, status: "uploading" } : img));
 
+        let productId = item.matchedProductId;
+        
+        // --- NEW DRAFT CREATION LOGIC ---
+        if (productId === "CREATE_NEW") {
+           const productFriendlyName = cleanName(item.file.name)
+              .split(' ')
+              .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ');
+
+           const { data: newProd, error: prodErr } = await supabase
+              .from("menu_items")
+              .insert({
+                 shop_id: SHOP_ID,
+                 name: productFriendlyName || "Unnamed Product",
+                 price: 0,
+                 is_active: false,
+                 category: "Main",
+                 description: "Auto-created from bulk image upload."
+              })
+              .select()
+              .single();
+           
+           if (prodErr) throw prodErr;
+           productId = newProd.id;
+        }
+
         const fileExt = item.file.name.split('.').pop();
-        const fileName = `${SHOP_ID}/${item.matchedProductId}-${Date.now()}.${fileExt}`;
+        const fileName = `${SHOP_ID}/${productId}-${Date.now()}.${fileExt}`;
 
         // 1. Upload to Storage
         const { error: uploadError } = await supabase.storage
@@ -137,16 +163,16 @@ export default function BulkImageMapper() {
         // 3. Update Database (Parallel)
         await Promise.all([
           supabase.from("product_images").insert({
-            product_id: item.matchedProductId,
+            product_id: productId,
             url: publicUrl,
             position: 0
           }),
-          supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", item.matchedProductId)
+          supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", productId)
         ]);
 
         successCount++;
         setPendingImages(prev => prev.map(img => 
-          img.id === item.id ? { ...img, status: "success" } : img
+          img.id === item.id ? { ...img, status: "success", matchedProductId: productId } : img
         ));
       } catch (err) {
         console.error(`Failed to process ${item.file.name}:`, err);
@@ -158,8 +184,8 @@ export default function BulkImageMapper() {
 
     setProcessing(false);
     updateStats(pendingImages);
-    alert(`Successfully processed ${successCount} images.`);
-    fetchProducts(); // Refresh product list to show new images
+    alert(`Successfully processed ${successCount} items.`);
+    fetchProducts(); // Refresh product list
   };
 
   if (loading) return <LoadingSpinner message="Loading Product Catalog..." fullPage={true} />;
@@ -235,8 +261,8 @@ export default function BulkImageMapper() {
                        <p className="text-xs text-slate-600 italic">Filenames like <code className="bg-slate-100 px-1 rounded">iphone_15.jpg</code> will auto-match "iPhone 15 Pro".</p>
                     </li>
                     <li className="flex items-start gap-3">
-                       <span className="bg-green-100 text-green-600 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5">2</span>
-                       <p className="text-xs text-slate-600 italic">Review the results in the table and manually fix any mismatches.</p>
+                       <span className="bg-indigo-100 text-indigo-600 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5">2</span>
+                       <p className="text-xs text-slate-600 italic">If no match is found, select <b>"Create as New Product"</b> to build your catalog automatically.</p>
                     </li>
                     <li className="flex items-start gap-3">
                        <span className="bg-green-100 text-green-600 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold mt-0.5">3</span>
@@ -287,15 +313,22 @@ export default function BulkImageMapper() {
                             onChange={(e) => handleMatchChange(img.id, e.target.value)}
                             disabled={img.status === "success" || processing}
                             className={`w-full text-xs font-bold p-2.5 rounded-xl border-2 transition-all outline-none ${
-                              img.matchedProductId 
+                              img.matchedProductId === "CREATE_NEW"
+                                ? "border-indigo-100 bg-indigo-50/20 text-indigo-700 focus:border-indigo-500"
+                                : img.matchedProductId 
                                 ? "border-green-100 bg-white text-slate-900 focus:border-green-500" 
                                 : "border-red-50 bg-red-50/30 text-red-400 focus:border-red-200"
                             }`}
                           >
                             <option value="">-- No Product Matched --</option>
-                            {products.map(p => (
-                              <option key={p.id} value={p.id}>{p.name}</option>
-                            ))}
+                            <optgroup label="Actions">
+                               <option value="CREATE_NEW">✨ Create as New Product: "{cleanName(img.file.name)}"</option>
+                            </optgroup>
+                            <optgroup label="Existing Products">
+                               {products.map(p => (
+                                 <option key={p.id} value={p.id}>{p.name}</option>
+                               ))}
+                            </optgroup>
                           </select>
                         </td>
                         <td className="px-6 py-4 text-center">
