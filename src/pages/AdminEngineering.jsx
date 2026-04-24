@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCurrentUser, logout } from "../services/auth-service";
+import packageJson from "../../package.json";
 
 export default function AdminEngineering() {
   const navigate = useNavigate();
@@ -27,6 +28,7 @@ export default function AdminEngineering() {
                !
              </div>
              <h1 className="text-lg font-black text-green-400 tracking-widest hidden sm:block uppercase">System Engineering Compartment</h1>
+              <span className="text-[10px] text-green-600 font-mono ml-2 border border-green-900/50 px-1 rounded">v{packageJson.version}</span>
           </div>
           <button
              onClick={() => { logout(); navigate("/login"); }}
@@ -111,6 +113,7 @@ export default function AdminEngineering() {
 
                <div className="pt-4 border-t border-green-900/30">
                   <p className="text-[10px] text-green-700 font-bold uppercase text-center">Unauthorized access is strictly forbidden.</p>
+                   <p className="text-[11px] text-green-600 font-mono text-center mt-1">BUILD_VERSION_V2.4: {packageJson.version}-STABLE</p>
                </div>
             </section>
 

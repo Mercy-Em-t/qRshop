@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { getShopBySubdomain } from "./services/shop-service";
+import { supabase } from "./services/supabase-client";
+import LoadingSpinner from "./components/LoadingSpinner";
 import { Routes, Route } from "react-router-dom";
 import PublicShopProfile from "./pages/PublicShopProfile";
 import { useOfflineEventQueue } from "./hooks/useOfflineEventQueue";
@@ -199,7 +201,6 @@ export default function App() {
       <Route path="/menu-manager" element={<Navigate to="/a/settings" replace />} />
       <Route path="/qr-generator" element={<Navigate to="/a/qrs" replace />} />
       <Route path="/plans" element={<Navigate to="/a/settings" replace />} />
-      <Route path="/admin/*" element={<Navigate to="/a" replace />} />
 
       {/* === ADMIN ROUTES (Now nested under /a/ if possible, or kept separate but gated) === */}
       {/* For now, keeping them simple but they should ideally be inside DashboardRoutes or prefixed with /a/admin */}
