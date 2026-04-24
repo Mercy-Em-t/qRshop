@@ -19,28 +19,38 @@ export default function OfflineMenuProvider({ shopId, children }) {
     }
 
     async function fetchMenu() {
-      setLoading(true);
+      // 1. Initial Load: Try to get from cache first to avoid flickering
+      const cached = getCachedMenu(shopId);
+      if (cached && Object.keys(cached).length > 0) {
+        setCategories(cached);
+        setLoading(false);
+        setIsOffline(false); // Assume we'll try network
+      } else {
+        setLoading(true);
+      }
 
       try {
+        // 2. Fetch fresh data from network
         const data = await getMenuItemsByCategory(shopId);
         if (data && Object.keys(data).length > 0) {
           setCategories(data);
           cacheMenu(shopId, data);
           setIsOffline(false);
-        } else {
-          // Network returned empty — try cache
-          const cached = getCachedMenu(shopId);
-          if (cached) {
-            setCategories(cached);
-            setIsOffline(true);
-          }
+        } else if (!cached) {
+          // If network empty AND no cache, we truly have nothing
+          setCategories({});
         }
-      } catch {
-        // Network error — try cache
-        const cached = getCachedMenu(shopId);
-        if (cached) {
-          setCategories(cached);
-          setIsOffline(true);
+      } catch (err) {
+        console.warn("OfflineMenuProvider: Network fetch failed, relying on cache.", err);
+        // Network error — if we don't have cached data yet, try to get it now
+        if (!cached) {
+           const finalCached = getCachedMenu(shopId);
+           if (finalCached) {
+             setCategories(finalCached);
+             setIsOffline(true);
+           }
+        } else {
+           setIsOffline(true);
         }
       } finally {
         setLoading(false);

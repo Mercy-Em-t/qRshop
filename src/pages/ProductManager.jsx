@@ -82,7 +82,11 @@ export default function ProductManager() {
   };
 
   const fetchItems = async () => {
-    setLoading(true);
+    // Only show full loading state if we have no items (prevent flickering on refresh)
+    if (items.length === 0) {
+      setLoading(true);
+    }
+    
     const { data, error } = await supabase
       .from("menu_items")
       .select("*, product_images(url)")

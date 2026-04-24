@@ -24,7 +24,16 @@ export default function ProductGrid({ items = [], shopId }) {
             onClick={() => handleProductClick(item.name)}
           >
             <div className="product-card__image">
-              <span className="product-card__emoji">{item.emoji || '📦'}</span>
+               {item.image_url ? (
+                  <img 
+                    src={item.image_url} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover transition-opacity duration-300"
+                    onLoad={(e) => e.target.classList.remove('opacity-0')}
+                  />
+               ) : (
+                  <span className="product-card__emoji">{item.emoji || '📦'}</span>
+               )}
             </div>
             <div className="product-card__info">
               <h3 className="product-card__name">{item.name}</h3>
