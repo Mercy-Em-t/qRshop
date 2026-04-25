@@ -1,4 +1,8 @@
 import { supabase } from "./supabase-client";
+import { getProfile, getShopMemberships } from "./profile-service";
+
+// Internal cache for the session user
+let cachedUser = null;
 
 // This securely verifies a user against Supabase Native Auth and returns their active shop_id and role
 export async function authenticateUser(email, password) {
@@ -8,13 +12,14 @@ export async function authenticateUser(email, password) {
   console.log("Auth: Clearing stale session before login handshake...");
   await supabase.auth.signOut();
   localStorage.removeItem("savannah_session");
+  cachedUser = null;
 
   // Phase 1: Authenticate natively against Supabase Auth (with Timeout Guard)
   console.log("Auth: Initiating native signIn for", email.trim());
   
   const authPromise = supabase.auth.signInWithPassword({
     email: email.trim(),
-    password: password, // Do NOT trim passwords, they may contain spaces
+    password: password, 
   });
 
   const timeoutPromise = new Promise((_, reject) => 
@@ -37,54 +42,53 @@ export async function authenticateUser(email, password) {
     return { error: authError?.message || "Invalid credentials." };
   }
 
-  console.log("Auth: Native success, fetching shop_user profiles for ID:", authData.user.id);
+  console.log("Auth: Native success, fetching V2 profiles for ID:", authData.user.id);
 
-  // Phase 2: Fetch all linked shops (support for multi-shop accounts)
-  // We use an explicit join syntax that is more resilient to column renames
-  const { data: profiles, error: suError } = await supabase
-    .from("shop_users")
-    .select(`
-      email, 
-      role, 
-      shop_id, 
-      shops!shop_id (
-        name, 
-        subdomain
-      )
-    `)
-    .eq("id", authData.user.id);
+  // Phase 2: Fetch V2 Profile and Shop Memberships
+  const [profile, memberships] = await Promise.all([
+    getProfile(authData.user.id),
+    getShopMemberships(authData.user.id)
+  ]);
 
-  if (suError || !profiles || profiles.length === 0) {
-    console.error("Auth: Profile fetch failed", suError);
+  if (!profile) {
+    console.error("Auth: Profile missing for authenticated user.");
     await supabase.auth.signOut();
-    return { error: "User profile missing or access denied." };
+    return { error: "User profile missing. Contact support." };
   }
 
-  console.log(`Auth: ${profiles.length} profiles found for user.`);
+  console.log(`Auth: Profile found (role: ${profile.system_role}). ${memberships.length} shop memberships.`);
 
   // If multiple shops, we return them all and let the UI handle selection
-  if (profiles.length > 1) {
+  if (memberships.length > 1) {
     return { 
-      user: { id: authData.user.id, email: authData.user.email }, 
-      profiles: profiles.map(p => ({
-        shop_id: p.shop_id,
-        email: p.email,
-        role: p.role,
-        shop_name: p.shops?.name,
-        subdomain: p.shops?.subdomain
+      user: { 
+        id: authData.user.id, 
+        email: authData.user.email,
+        display_name: profile.display_name,
+        system_role: profile.system_role
+      }, 
+      profiles: memberships.map(m => ({
+        shop_id: m.shop_id,
+        email: authData.user.email,
+        role: m.role,
+        shop_name: m.shops?.name,
+        subdomain: m.shops?.subdomain,
+        is_v2: true
       })),
       requiresSelection: true 
     };
   }
 
-  // Single shop case (Legacy compatibility)
-  const shopUser = profiles[0];
+  // Handle single shop or no shop cases
+  const membership = memberships[0] || null;
   const sessionUser = {
     id: authData.user.id,
-    email: shopUser.email,
-    role: shopUser.role,
-    shop_id: shopUser.shop_id,
-    shop_name: shopUser.shops?.name
+    email: authData.user.email,
+    display_name: profile.display_name,
+    role: membership?.role || 'user',
+    system_role: profile.system_role,
+    shop_id: membership?.shop_id || null,
+    shop_name: membership?.shops?.name || null
   };
 
   localStorage.setItem("savannah_session", JSON.stringify(sessionUser));
