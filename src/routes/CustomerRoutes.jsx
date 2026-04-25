@@ -8,6 +8,7 @@ import Campaign from "../pages/Campaign";
 import TrackOrder from "../pages/TrackOrder";
 import EditOrder from "../pages/EditOrder";
 import MyOrders from "../pages/MyOrders";
+import ProductDetails from "../pages/ProductDetails";
 
 export default function CustomerRoutes() {
   return (
@@ -67,6 +68,14 @@ export default function CustomerRoutes() {
         element={
           <QrAccessGuard>
             <MyOrders />
+          </QrAccessGuard>
+        }
+      />
+      <Route
+        path="/product/:productId"
+        element={
+          <QrAccessGuard>
+            <ProductDetails />
           </QrAccessGuard>
         }
       />

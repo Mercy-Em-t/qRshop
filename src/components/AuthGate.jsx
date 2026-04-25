@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { getCurrentUser } from "../services/auth-service";
 import LoadingSpinner from "./LoadingSpinner";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 /**
  * Strict Authentication Gate.
@@ -26,11 +26,17 @@ export default function AuthGate({ children }) {
     checkAuth();
   }, []);
 
+  const isDebug = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('debug') === 'true' || localStorage.getItem('tms_debug') === 'true';
+  }, []);
+
   if (loading) {
     return (
       <LoadingSpinner 
-        showLogo={false} 
-        message="Validating Secure Session..." 
+        showLogo={true} 
+        message={isDebug ? "Validating Secure Session..." : "Securing Connection..."} 
         fullPage={true} 
       />
     );

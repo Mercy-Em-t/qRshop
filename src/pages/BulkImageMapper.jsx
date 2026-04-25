@@ -1,30 +1,86 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, memo, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
 import LoadingSpinner from "../components/LoadingSpinner";
+
+const ImageRow = memo(({ img, products, processing, handleMatchChange, removeImage, cleanName }) => {
+  return (
+    <tr key={img.id} className="group hover:bg-slate-50/50 transition-colors">
+      <td className="px-6 py-4">
+        <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm">
+          <img src={img.preview} alt="" className="w-full h-full object-cover" />
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        <p className="text-xs font-bold text-slate-700 truncate max-w-[150px]" title={img.file.name}>
+          {img.file.name}
+        </p>
+        <p className="text-[10px] text-slate-400 font-medium">{(img.file.size / 1024).toFixed(1)} KB</p>
+      </td>
+      <td className="px-6 py-4">
+        <select
+          value={img.matchedProductId || ""}
+          onChange={(e) => handleMatchChange(img.id, e.target.value)}
+          disabled={img.status === "success" || processing}
+          className={`w-full text-xs font-bold p-2.5 rounded-xl border-2 transition-all outline-none ${
+            img.matchedProductId === "CREATE_NEW"
+              ? "border-indigo-100 bg-indigo-50/20 text-indigo-700 focus:border-indigo-500"
+              : img.matchedProductId 
+              ? "border-green-100 bg-white text-slate-900 focus:border-green-500" 
+              : "border-red-50 bg-red-50/30 text-red-400 focus:border-red-200"
+          }`}
+        >
+          <option value="">-- No Product Matched --</option>
+          <optgroup label="Actions">
+             <option value="CREATE_NEW">✨ Create as New Product: "{cleanName(img.file.name)}"</option>
+          </optgroup>
+          <optgroup label="Existing Products">
+             {products.map(p => (
+               <option key={p.id} value={p.id}>{p.name}</option>
+             ))}
+          </optgroup>
+        </select>
+      </td>
+      <td className="px-6 py-4 text-center">
+        {img.status === "pending" && <span className="text-[10px] font-black text-slate-400 uppercase">Pending</span>}
+        {img.status === "uploading" && <span className="text-[10px] font-black text-blue-500 uppercase animate-pulse">Uploading...</span>}
+        {img.status === "success" && <span className="text-xl" title="Success">✅</span>}
+        {img.status === "error" && (
+          <span className="text-[10px] font-black text-red-500 uppercase underline cursor-help" title={img.error}>Error</span>
+        )}
+      </td>
+      <td className="px-6 py-4 text-right">
+        <button
+          onClick={() => removeImage(img.id)}
+          disabled={processing || img.status === "success"}
+          className="p-2 text-slate-300 hover:text-red-500 transition-colors disabled:opacity-0"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </td>
+    </tr>
+  );
+});
 
 export default function BulkImageMapper() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pendingImages, setPendingImages] = useState([]);
   const [processing, setProcessing] = useState(false);
-  const [stats, setStats] = useState({ total: 0, matched: 0, uploaded: 0 });
   
   const navigate = useNavigate();
   const user = getCurrentUser();
   const SHOP_ID = user?.shop_id;
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    fetchProducts();
-  }, [user, navigate]);
+  const stats = useMemo(() => ({
+    total: pendingImages.length,
+    matched: pendingImages.filter(i => i.matchedProductId).length,
+    uploaded: pendingImages.filter(i => i.status === "success").length
+  }), [pendingImages]);
 
-  const fetchProducts = async () => {
-    setLoading(true);
+  const fetchProducts = useCallback(async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
     const { data, error } = await supabase
       .from("menu_items")
       .select("id, name, image_url, category")
@@ -34,17 +90,25 @@ export default function BulkImageMapper() {
     if (!error && data) {
       setProducts(data);
     }
-    setLoading(false);
-  };
+    if (!isSilent) setLoading(false);
+  }, [SHOP_ID]);
 
-  const cleanName = (name) => {
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    fetchProducts();
+  }, [user, navigate, fetchProducts]);
+
+  const cleanName = useCallback((name) => {
     return name?.toLowerCase()
       .replace(/\.[^/.]+$/, "") // Remove extension
       .replace(/[^a-z0-9]/g, " ") // Replace non-alphanum with space
       .trim();
-  };
+  }, []);
 
-  const findBestMatch = (filename, productList) => {
+  const findBestMatch = useCallback((filename, productList) => {
     const cleanedFile = cleanName(filename);
     if (!cleanedFile) return null;
 
@@ -59,7 +123,7 @@ export default function BulkImageMapper() {
     });
     
     return partialMatch ? partialMatch.id : null;
-  };
+  }, [cleanName]);
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
@@ -78,30 +142,17 @@ export default function BulkImageMapper() {
     });
 
     setPendingImages(prev => [...prev, ...newImages]);
-    updateStats([...pendingImages, ...newImages]);
   };
 
-  const updateStats = (list) => {
-    setStats({
-      total: list.length,
-      matched: list.filter(i => i.matchedProductId).length,
-      uploaded: list.filter(i => i.status === "success").length
-    });
-  };
-
-  const handleMatchChange = (imageId, productId) => {
-    const updated = pendingImages.map(img => 
+  const handleMatchChange = useCallback((imageId, productId) => {
+    setPendingImages(prev => prev.map(img => 
       img.id === imageId ? { ...img, matchedProductId: productId } : img
-    );
-    setPendingImages(updated);
-    updateStats(updated);
-  };
+    ));
+  }, []);
 
-  const removeImage = (id) => {
-    const filtered = pendingImages.filter(img => img.id !== id);
-    setPendingImages(filtered);
-    updateStats(filtered);
-  };
+  const removeImage = useCallback((id) => {
+    setPendingImages(prev => prev.filter(img => img.id !== id));
+  }, []);
 
   const processImages = async () => {
     const toUpload = pendingImages.filter(img => img.matchedProductId && img.status !== "success");
@@ -183,9 +234,8 @@ export default function BulkImageMapper() {
     }
 
     setProcessing(false);
-    updateStats(pendingImages);
     alert(`Successfully processed ${successCount} items.`);
-    fetchProducts(); // Refresh product list
+    fetchProducts(true); // Silent refresh
   };
 
   if (loading) return <LoadingSpinner message="Loading Product Catalog..." fullPage={true} />;
@@ -211,10 +261,10 @@ export default function BulkImageMapper() {
               </div>
             </div>
             <button
-              disabled={processing || stats.matched === 0}
+              disabled={processing || stats.total === 0 || stats.matched === 0}
               onClick={processImages}
               className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition shadow-lg ${
-                processing || stats.matched === 0 
+                processing || stats.total === 0 || stats.matched === 0 
                 ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
                 : "bg-green-600 text-white hover:bg-green-700 shadow-green-100"
               }`}
@@ -295,60 +345,15 @@ export default function BulkImageMapper() {
                   </thead>
                   <tbody className="divide-y divide-slate-50">
                     {pendingImages.map((img) => (
-                      <tr key={img.id} className="group hover:bg-slate-50/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shadow-sm">
-                            <img src={img.preview} alt="" className="w-full h-full object-cover" />
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <p className="text-xs font-bold text-slate-700 truncate max-w-[150px]" title={img.file.name}>
-                            {img.file.name}
-                          </p>
-                          <p className="text-[10px] text-slate-400 font-medium">{(img.file.size / 1024).toFixed(1)} KB</p>
-                        </td>
-                        <td className="px-6 py-4">
-                          <select
-                            value={img.matchedProductId || ""}
-                            onChange={(e) => handleMatchChange(img.id, e.target.value)}
-                            disabled={img.status === "success" || processing}
-                            className={`w-full text-xs font-bold p-2.5 rounded-xl border-2 transition-all outline-none ${
-                              img.matchedProductId === "CREATE_NEW"
-                                ? "border-indigo-100 bg-indigo-50/20 text-indigo-700 focus:border-indigo-500"
-                                : img.matchedProductId 
-                                ? "border-green-100 bg-white text-slate-900 focus:border-green-500" 
-                                : "border-red-50 bg-red-50/30 text-red-400 focus:border-red-200"
-                            }`}
-                          >
-                            <option value="">-- No Product Matched --</option>
-                            <optgroup label="Actions">
-                               <option value="CREATE_NEW">✨ Create as New Product: "{cleanName(img.file.name)}"</option>
-                            </optgroup>
-                            <optgroup label="Existing Products">
-                               {products.map(p => (
-                                 <option key={p.id} value={p.id}>{p.name}</option>
-                               ))}
-                            </optgroup>
-                          </select>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          {img.status === "pending" && <span className="text-[10px] font-black text-slate-400 uppercase">Pending</span>}
-                          {img.status === "uploading" && <span className="text-[10px] font-black text-blue-500 uppercase animate-pulse">Uploading...</span>}
-                          {img.status === "success" && <span className="text-xl" title="Success">✅</span>}
-                          {img.status === "error" && (
-                            <span className="text-[10px] font-black text-red-500 uppercase underline cursor-help" title={img.error}>Error</span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => removeImage(img.id)}
-                            disabled={processing || img.status === "success"}
-                            className="p-2 text-slate-300 hover:text-red-500 transition-colors disabled:opacity-0"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                        </td>
-                      </tr>
+                      <ImageRow 
+                        key={img.id}
+                        img={img}
+                        products={products}
+                        processing={processing}
+                        handleMatchChange={handleMatchChange}
+                        removeImage={removeImage}
+                        cleanName={cleanName}
+                      />
                     ))}
                   </tbody>
                 </table>

@@ -65,3 +65,23 @@ export async function getMenuItemsByCategory(shopId) {
 
   return categories;
 }
+
+export async function getRelatedItems(shopId, category, excludeId) {
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("*, product_images(url)")
+    .eq("shop_id", shopId)
+    .eq("category", category)
+    .neq("id", excludeId)
+    .neq("is_active", false)
+    .limit(10);
+
+  if (error) {
+    console.error("Error fetching related items:", error);
+    return [];
+  }
+
+  return data || [];
+}

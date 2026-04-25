@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { getMenuItemById } from "../services/menu-service";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { getMenuItemById, getRelatedItems } from "../services/menu-service";
 import { useCart } from "../hooks/use-cart";
 import { getQrSession } from "../utils/qr-session";
 import { resolveShopIdentifier } from "../services/shop-service";
@@ -11,6 +10,7 @@ export default function ProductDetails() {
   const { addItem } = useCart();
   const [item, setItem] = useState(null);
   const [shop, setShop] = useState(null);
+  const [relatedItems, setRelatedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [added, setAdded] = useState(false);
 
@@ -24,8 +24,13 @@ export default function ProductDetails() {
         }
         setItem(itemData);
 
-        const shopData = await resolveShopIdentifier(itemData.shop_id);
+        const [shopData, related] = await Promise.all([
+          resolveShopIdentifier(itemData.shop_id),
+          getRelatedItems(itemData.shop_id, itemData.category, productId)
+        ]);
+        
         setShop(shopData);
+        setRelatedItems(related);
       } catch (err) {
         console.error("Error loading product details:", err);
       } finally {
@@ -33,6 +38,7 @@ export default function ProductDetails() {
       }
     }
     loadData();
+    window.scrollTo(0, 0);
   }, [productId]);
 
   const handleAddToCart = () => {
@@ -162,6 +168,38 @@ export default function ProductDetails() {
               </div>
            </div>
         </div>
+
+        {/* Related Products Scroller */}
+        {relatedItems.length > 0 && (
+          <section className="pt-8 border-t border-gray-100 dark:border-slate-800">
+            <div className="flex justify-between items-end mb-6">
+               <div>
+                  <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Customers also bought</h2>
+                  <h3 className="text-xl font-black text-gray-800 dark:text-gray-100 italic">Complete the set</h3>
+               </div>
+               <Link to="/menu" className="text-xs font-bold text-theme-secondary underline decoration-2 underline-offset-4">View All</Link>
+            </div>
+            <div className="flex overflow-x-auto gap-4 pb-4 -mx-6 px-6 no-scrollbar snap-x">
+              {relatedItems.map((rItem) => (
+                <Link 
+                  key={rItem.id} 
+                  to={`/product/${rItem.id}`}
+                  className="flex-shrink-0 w-40 snap-start group"
+                >
+                  <div className="aspect-square rounded-3xl overflow-hidden mb-3 shadow-sm border border-gray-100 dark:border-slate-800">
+                    <img 
+                      src={rItem.product_images?.[0]?.url || rItem.image_url} 
+                      alt={rItem.name}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                    />
+                  </div>
+                  <h4 className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate">{rItem.name}</h4>
+                  <p className="text-sm font-black text-theme-secondary mt-0.5">KSh {rItem.price}</p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </div>
 
       {/* Floating Bottom Navigator for Cart */}

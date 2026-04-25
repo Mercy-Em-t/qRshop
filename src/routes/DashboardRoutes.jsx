@@ -16,6 +16,7 @@ import DeliveryWorker from "../pages/DeliveryWorker";
 import DeliveryDashboard from "../pages/DeliveryDashboard";
 import TemplateSettings from "../pages/TemplateSettings";
 import ProductManager from "../pages/ProductManager";
+import ManageAttributes from "../pages/ManageAttributes";
 
 export default function DashboardRoutes() {
   return (
@@ -38,6 +39,7 @@ export default function DashboardRoutes() {
         <Route path="delivery/manager" element={<DeliveryDashboard />} />
         <Route path="templates" element={<TemplateSettings />} />
         <Route path="products" element={<ProductManager />} />
+        <Route path="attributes" element={<ManageAttributes />} />
       </Routes>
     </OnboardingGate>
   );

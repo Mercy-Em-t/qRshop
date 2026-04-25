@@ -97,9 +97,22 @@ export default function AutoCart() {
           }
         }
 
-        // 6. Store promo code if provided
+        // 6. Store & Activate Promo
         if (promoCode) {
           localStorage.setItem("qr_promo_code", promoCode);
+          
+          // Pre-resolve the promotion so useCart picks it up immediately without a manual refresh
+          const { data: promoData } = await supabase
+            .from('promotions')
+            .select('*, promotion_items(menu_item_id)')
+            .eq('shop_id', currentShopId)
+            .eq('coupon_code', promoCode)
+            .eq('is_active', true)
+            .maybeSingle();
+          
+          if (promoData) {
+            localStorage.setItem(`qr_active_coupon_${currentShopId}`, JSON.stringify(promoData));
+          }
         }
 
         setLoadedItems(seeded);

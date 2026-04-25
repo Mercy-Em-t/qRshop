@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
-import { logEvent } from "../services/telemetry-service";
-import { getQrSession } from "../utils/qr-session";
+import { logEvent } from "../services/telemetry-service.js";
+import { getQrSession } from "../utils/qr-session.js";
 
 export interface CartItem {
   id: string;
@@ -9,6 +9,8 @@ export interface CartItem {
   quantity: number;
   image_url?: string;
   is_bundled?: boolean;
+  selected_options?: Record<string, string>;
+  instance_id?: string; // Unique ID for this specific variant combo
 }
 
 export interface Coupon {
@@ -84,30 +86,48 @@ export function useCart() {
     setActiveCoupon(null);
   }, []);
 
-  const addItem = useCallback((menuItem: Omit<CartItem, 'quantity'>) => {
+  const generateInstanceId = (id: string, options?: Record<string, string>) => {
+    if (!options || Object.keys(options).length === 0) return id;
+    const optionsHash = Object.entries(options)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([k, v]) => `${k}:${v}`)
+      .join('|');
+    return `${id}-${optionsHash}`;
+  };
+
+  const addItem = useCallback((menuItem: Omit<CartItem, 'quantity' | 'instance_id'>) => {
+    const instanceId = generateInstanceId(menuItem.id, menuItem.selected_options);
+    
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === menuItem.id);
+      const existing = prev.find((i) => i.instance_id === instanceId);
       if (existing) {
         return prev.map((i) =>
-          i.id === menuItem.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.instance_id === instanceId ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
-      return [...prev, { ...menuItem, quantity: 1 } as CartItem];
+      return [...prev, { ...menuItem, quantity: 1, instance_id: instanceId } as CartItem];
     });
 
     const currentSession = getQrSession();
     if (currentSession) {
       logEvent("item_added_to_cart", "N/A", currentSession.shop_id, navigator.userAgent, {
         item_id: menuItem.id,
+        instance_id: instanceId,
         item_name: menuItem.name,
-        price: menuItem.price
+        price: menuItem.price,
+        options: menuItem.selected_options
       });
     }
   }, []);
 
-  const addBundle = useCallback((promo: Coupon, bundleItems: Omit<CartItem, 'quantity'>[]) => {
+  const addBundle = useCallback((promo: Coupon, bundleItems: Omit<CartItem, 'quantity' | 'instance_id'>[]) => {
     // 1. Clear cart to avoid mixing bundle pricing with individual items
-    setItems(bundleItems.map(item => ({ ...item, quantity: 1, is_bundled: true } as CartItem)));
+    setItems(bundleItems.map(item => ({ 
+      ...item, 
+      quantity: 1, 
+      is_bundled: true, 
+      instance_id: generateInstanceId(item.id, item.selected_options) 
+    } as CartItem)));
     
     // 2. Apply the promotion automatically
     setActiveCoupon(promo);
@@ -121,21 +141,21 @@ export function useCart() {
     }
   }, []);
 
-  const removeItem = useCallback((itemId: string) => {
+  const removeItem = useCallback((instanceId: string) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === itemId);
+      const existing = prev.find((i) => i.instance_id === instanceId);
       if (existing && existing.quantity > 1) {
         return prev.map((i) =>
-          i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i
+          i.instance_id === instanceId ? { ...i, quantity: i.quantity - 1 } : i
         );
       }
-      return prev.filter((i) => i.id !== itemId);
+      return prev.filter((i) => i.instance_id !== instanceId);
     });
     
     const currentSession = getQrSession();
     if (currentSession) {
       logEvent("item_removed_from_cart", "N/A", currentSession.shop_id, navigator.userAgent, {
-        item_id: itemId
+        instance_id: instanceId
       });
     }
   }, []);
@@ -190,8 +210,13 @@ export function useCart() {
       } else if (discount_type === 'flat') {
         discountAmount = Math.min(subtotal, discount_value || 0);
       } else if (discount_type === 'bundle_price') {
-        // Only apply if bundle items are actually in the cart
-        discountAmount = Math.max(0, subtotal - (bundle_price || subtotal));
+        const bundleItemsValue = items.reduce((sum, item) => {
+           if (requiredProductIds.has('ALL') || requiredProductIds.has(item.id)) {
+              return sum + (item.price * item.quantity);
+           }
+           return sum;
+        }, 0);
+        discountAmount = Math.max(0, bundleItemsValue - (bundle_price || bundleItemsValue));
       }
     }
   }

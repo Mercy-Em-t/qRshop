@@ -149,8 +149,18 @@ export default function OnboardingGate({ children }) {
      }
   };
 
+  const isDebug = (typeof window !== 'undefined') && (
+    new URLSearchParams(window.location.search).get('debug') === 'true' || 
+    localStorage.getItem('tms_debug') === 'true'
+  );
+
   if (loading) {
-     return <LoadingSpinner message="Authenticating..." />;
+     return (
+       <LoadingSpinner 
+         showLogo={true} 
+         message={isDebug ? "Authenticating..." : "Synchronizing Wallet..."} 
+       />
+     );
   }
 
   // Strict Security Checks

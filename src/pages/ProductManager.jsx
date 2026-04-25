@@ -62,6 +62,7 @@ export default function ProductManager() {
   const [availableTemplates, setAvailableTemplates] = useState([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [customFields, setCustomFields] = useState({});
+  const [shopSchema, setShopSchema] = useState([]);
 
   useEffect(() => {
     if (!user) {
@@ -70,7 +71,21 @@ export default function ProductManager() {
     }
     fetchItems();
     loadTemplates();
+    fetchShopSchema();
   }, [user, navigate]);
+
+  const fetchShopSchema = async () => {
+    if (!SHOP_ID) return;
+    const { data } = await supabase
+       .from("shops")
+       .select("custom_attributes_schema")
+       .eq("shop_id", SHOP_ID)
+       .single();
+    
+    if (data?.custom_attributes_schema) {
+       setShopSchema(data.custom_attributes_schema);
+    }
+  };
 
   const loadTemplates = async () => {
      try {
@@ -132,15 +147,6 @@ export default function ProductManager() {
       sku: sku || null,
       product_link: productLink || null,
       tags: parsedTags,
-      // Extended attributes for Sales Magazine
-      benefits,
-      usage_instructions: usageInstructions,
-      origin,
-      processing,
-      nutrition_info: nutritionInfo,
-      recipe,
-      brand,
-      diet_tags: dietTags ? dietTags.split(',').map(d => d.trim()).filter(Boolean) : [],
       // Template data
       template_id: selectedTemplateId || null,
       attributes: {
@@ -148,12 +154,15 @@ export default function ProductManager() {
             acc[normalizeAttributeKey(key)] = customFields[key];
             return acc;
          }, {}),
-         // We still keep the specific fields for backward compatibility with the Magazine
+         // Store extended attributes here instead of top-level columns
          benefits,
+         usage_instructions: usageInstructions,
          origin,
          processing,
          nutrition_info: nutritionInfo,
-         recipe
+         recipe,
+         brand,
+         diet_tags: dietTags ? dietTags.split(',').map(d => d.trim()).filter(Boolean) : []
       }
     };
 
@@ -258,15 +267,15 @@ export default function ProductManager() {
      setProductLink(item.product_link || "");
      setTags(item.tags ? item.tags.join(", ") : "");
       
-     // Load extended attributes
-     setBenefits(item.benefits || "");
-     setUsageInstructions(item.usage_instructions || "");
-     setOrigin(item.origin || "");
-     setProcessing(item.processing || "");
-     setNutritionInfo(item.nutrition_info || "");
-     setRecipe(item.recipe || "");
-     setBrand(item.brand || "");
-     setDietTags(item.diet_tags ? item.diet_tags.join(", ") : "");
+     // Load extended attributes from JSONB
+     setBenefits(item.attributes?.benefits || "");
+     setUsageInstructions(item.attributes?.usage_instructions || "");
+     setOrigin(item.attributes?.origin || "");
+     setProcessing(item.attributes?.processing || "");
+     setNutritionInfo(item.attributes?.nutrition_info || "");
+     setRecipe(item.attributes?.recipe || "");
+     setBrand(item.attributes?.brand || "");
+     setDietTags(item.attributes?.diet_tags ? item.attributes.diet_tags.join(", ") : "");
      
      setSelectedTemplateId(item.template_id || "");
      setCustomFields(item.attributes || {});
@@ -843,6 +852,28 @@ export default function ProductManager() {
                    ))}
                 </select>
              </div>
+
+             {/* DYNAMIC SHOP-SPECIFIC ATTRIBUTES */}
+             {shopSchema.length > 0 && (
+               <div className="md:col-span-2 pt-4 border-t border-gray-100 mt-2">
+                  <h3 className="text-sm font-bold text-orange-600 uppercase tracking-widest mb-1">Custom Shop Attributes</h3>
+                  <p className="text-[10px] text-gray-400 mb-4">Fields defined in your Attribute Manager.</p>
+                  <div className="grid md:grid-cols-2 gap-4 p-5 bg-orange-50/20 rounded-2xl border border-orange-100/50">
+                     {shopSchema.map(field => (
+                       <div key={field.key}>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{field.label}</label>
+                          <input 
+                             type="text"
+                             value={customFields[field.key] || ""}
+                             onChange={e => setCustomFields({...customFields, [field.key]: e.target.value})}
+                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
+                             placeholder={`Enter ${field.label}...`}
+                          />
+                       </div>
+                     ))}
+                  </div>
+               </div>
+             )}
 
              {/* DYNAMIC TEMPLATE FIELDS */}
              {selectedTemplateId && (

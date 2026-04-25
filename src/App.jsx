@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getShopBySubdomain } from "./services/shop-service";
 import { supabase } from "./services/supabase-client";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -137,11 +137,17 @@ export default function App() {
     initializeSystem();
   }, []);
 
+  const isDebug = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('debug') === 'true' || localStorage.getItem('tms_debug') === 'true';
+  }, []);
+
   if (systemState.resolving) {
     return (
       <LoadingSpinner 
-        showLogo={false} 
-        message="Establishing Secure Connection..." 
+        showLogo={true} 
+        message={isDebug ? "Establishing Secure Connection..." : "Synchronizing Platform..."} 
         fullPage={true} 
       />
     );

@@ -1,88 +1,96 @@
-import { memo } from "react";
 import { Link } from "react-router-dom";
 
-const MenuItem = memo(function MenuItem({ item, onAdd, isShopOnline = true }) {
-  return (
-    <div className="border border-gray-100 rounded-2xl p-4 flex gap-4 bg-white shadow-sm hover:shadow-md transition">
-      
-      {/* Thumbnail */}
-      <Link to={`/product/${item.id}`} className="block">
-        {item.product_images && item.product_images.length > 0 ? (
-           <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-xl overflow-hidden relative border border-gray-100">
-              <img src={item.product_images[0].url} alt={item.name} className="w-full h-full object-cover" />
-           </div>
-        ) : (
-           <div className="w-24 h-24 flex-shrink-0 bg-gray-100 rounded-xl flex items-center justify-center border border-gray-100 text-gray-400">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-           </div>
-        )}
-      </Link>
+export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
+  const { id, name, price, image_url, attributes } = item;
+  const size = attributes?.size || attributes?.weight || "";
 
-      <div className="flex-1 flex flex-col justify-between">
-         <div>
-            <div className="flex justify-between items-start gap-2">
-               <Link to={`/product/${item.id}`} className="hover:text-theme-secondary transition-colors">
-                  <h3 className="text-lg font-bold text-gray-800 leading-tight">{item.name}</h3>
-               </Link>
-               {item.product_link && (
-                  <a href={item.product_link} target="_blank" rel="noreferrer" className="text-theme-secondary hover:bg-theme-secondary/10 border-theme-secondary/20 flex-shrink-0">
-                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                       <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-                       <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-                     </svg>
-                  </a>
-               )}
-            </div>
-            {item.description && (
-               <p className="text-sm text-gray-500 mt-1 line-clamp-2">{item.description}</p>
-            )}
-
-            {/* Custom Attributes (Mama Rosy specialized fields) */}
-            {item.attributes && Object.keys(item.attributes).length > 0 && (
-               <div className="flex flex-wrap gap-2 mt-2">
-                  {Object.entries(item.attributes).map(([key, value]) => (
-                     <div key={key} className="flex items-center gap-1 bg-theme-accent/5 px-2 py-1 rounded-lg border border-theme-accent/10">
-                        <span className="text-[10px] font-bold text-theme-main uppercase opacity-60">{key}:</span>
-                        <span className="text-[11px] font-bold text-gray-700">{String(value)}</span>
-                     </div>
-                  ))}
-               </div>
-            )}
-
-            {/* Tags / Variants UI */}
-            {(item.tags?.length > 0 || (item.variant_options && Object.keys(item.variant_options).length > 0)) && (
-               <div className="flex flex-wrap gap-1.5 mt-2 mb-2">
-                  {item.tags?.map((t, idx) => (
-                     <span key={idx} className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded tracking-wide uppercase border border-gray-200">{t}</span>
-                  ))}
-                  {item.variant_options && Object.keys(item.variant_options).slice(0, 2).map((vKey, idx) => (
-                     <span key={`v-${idx}`} className="bg-theme-accent/10 text-theme-secondary border-theme-accent/20 flex items-center gap-1">
-                        Select {vKey}
-                     </span>
-                  ))}
-               </div>
-            )}
-
-         </div>
-
-         <div className="flex items-end justify-between mt-3">
-            <span className="text-theme-secondary font-black underline decoration-theme-accent/50 decoration-2 underline-offset-4">
-               KSh {item.price}
+  if (isGridView) {
+    return (
+      <div className="bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col group transition-all hover:shadow-md">
+        <Link to={`/product/${id}`} className="relative h-40 overflow-hidden">
+          <img
+            src={image_url || "/placeholder-product.png"}
+            alt={name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+          />
+          {size && (
+            <span className="absolute top-3 left-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-400">
+              {size}
+            </span>
+          )}
+        </Link>
+        <div className="p-4 flex-1 flex flex-col justify-between">
+          <div>
+            <Link to={`/product/${id}`}>
+               <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 line-clamp-1 leading-tight hover:text-theme-secondary transition-colors">
+                  {name}
+               </h3>
+            </Link>
+          </div>
+          <div className="flex items-center justify-between mt-3">
+            <span className="text-sm font-black text-theme-secondary dark:text-blue-400">
+              KSh {price}
             </span>
             <button
-               onClick={() => isShopOnline && onAdd(item)}
-               disabled={!isShopOnline}
-               className={`px-4 py-2 rounded-xl transition-all shadow-xl font-black uppercase text-xs tracking-widest ${!isShopOnline ? 'bg-slate-300 text-slate-500 cursor-not-allowed' : 'bg-theme-main text-white hover:bg-theme-secondary active:scale-95'}`}
+              onClick={() => onAdd(item)}
+              disabled={!isShopOnline}
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all shadow-sm ${
+                isShopOnline
+                  ? "bg-theme-secondary text-white hover:bg-theme-main active:scale-90"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              }`}
             >
-               <span>Add</span>
-               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
-               </svg>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
+              </svg>
             </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // List View (Horizontal)
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-3xl p-3 shadow-sm border border-gray-100 dark:border-slate-800 flex items-center gap-4 transition-all hover:shadow-md group">
+      <Link to={`/product/${id}`} className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
+        <img
+          src={image_url || "/placeholder-product.png"}
+          alt={name}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+      </Link>
+      <div className="flex-1 min-w-0">
+         <div className="flex justify-between items-start">
+            <Link to={`/product/${id}`} className="flex-1 min-w-0">
+               <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 truncate hover:text-theme-secondary transition-colors">
+                  {name}
+               </h3>
+               <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
+                  {size || "Standard Size"}
+               </p>
+            </Link>
+            <div className="text-right">
+               <p className="text-base font-black text-theme-secondary dark:text-blue-400">
+                  {price}
+               </p>
+               <p className="text-[8px] font-black text-slate-500 uppercase tracking-tighter">KSh</p>
+            </div>
          </div>
       </div>
+      <button
+        onClick={() => onAdd(item)}
+        disabled={!isShopOnline}
+        className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all shadow-sm ${
+          isShopOnline
+            ? "bg-theme-secondary text-white hover:bg-theme-main active:scale-95"
+            : "bg-gray-100 text-gray-400 cursor-not-allowed"
+        }`}
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
+        </svg>
+      </button>
     </div>
   );
-});
-
-export default MenuItem;
+}

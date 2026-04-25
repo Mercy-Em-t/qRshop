@@ -27,8 +27,8 @@ export default function Menu() {
   const [upsellItems, setUpsellItems] = useState([]);
   const [lastAddedItemId, setLastAddedItemId] = useState(null);
   const [showUpsell, setShowUpsell] = useState(false);
-  const [activeCategory, setActiveCategory] = useState(null);
   const [bundles, setBundles] = useState([]);
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem('qr_menu_view_mode') || 'grid');
 
   const terms = useNomenclature(session?.shop_id);
   const { campaigns } = useCampaigns(session?.shop_id);
@@ -208,27 +208,42 @@ export default function Menu() {
           </div>
         </div>
 
-        {/* Category Tab Bar */}
-        {categoryNames.length > 1 && (
-          <div className="flex overflow-x-auto gap-2 px-4 pb-2.5 scrollbar-hide">
-            {categoryNames.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setActiveCategory(cat);
-                  document.getElementById(`cat-${cat}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
-                  activeCat === cat
-                    ? "bg-theme-secondary text-white shadow-sm"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                }`}
+        {/* Category & View Toggle Bar */}
+        <div className="max-w-lg mx-auto flex items-center justify-between px-4 pb-2.5">
+           <div className="flex overflow-x-auto gap-2 scrollbar-hide flex-1 mr-4">
+              {categoryNames.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => {
+                    setActiveCategory(cat);
+                    document.getElementById(`cat-${cat}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }}
+                  className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
+                    activeCat === cat
+                      ? "bg-theme-secondary text-white shadow-sm"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ))}
+           </div>
+           
+           <div className="flex bg-gray-100 p-1 rounded-xl flex-shrink-0 border border-gray-200">
+              <button 
+                onClick={() => { setViewMode('grid'); localStorage.setItem('qr_menu_view_mode', 'grid'); }}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-white text-theme-main shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
               >
-                {cat}
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
               </button>
-            ))}
-          </div>
-        )}
+              <button 
+                onClick={() => { setViewMode('list'); localStorage.setItem('qr_menu_view_mode', 'list'); }}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-white text-theme-main shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
+              </button>
+           </div>
+        </div>
       </header>
 
       {shop?.is_online === false && (
@@ -277,9 +292,15 @@ export default function Menu() {
               <h2 className="text-base font-bold text-gray-700 mb-3 border-b border-gray-200 pb-2 uppercase tracking-wide text-xs">
                 {category}
               </h2>
-              <div className="grid gap-3">
+              <div className={viewMode === "grid" ? "grid grid-cols-2 gap-4" : "grid gap-3"}>
                 {categories[category].map((item) => (
-                  <MenuItem key={item.id} item={item} onAdd={handleAddItem} isShopOnline={shop?.is_online !== false} />
+                  <MenuItem 
+                     key={item.id} 
+                     item={item} 
+                     onAdd={handleAddItem} 
+                     isShopOnline={shop?.is_online !== false} 
+                     isGridView={viewMode === "grid"}
+                  />
                 ))}
               </div>
             </div>
