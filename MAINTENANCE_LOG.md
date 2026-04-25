@@ -33,11 +33,14 @@ This log tracks all infrastructure changes, database migrations, security patche
     - Provisioned account for `amoitwhitney21@gmail.com`.
     - Set temporary password and verified `shop_users` profile existence.
     - Fixed `OnboardingGate` logic to prevent redirect loops for new shops without QR nodes.
+    - **Resolved `ReferenceError: cachedUser is not defined`**: Corrected a scope issue in `auth-service.js` where `cachedUser` was used but not consistently defined in stale bundles. Reconciled `src` with `dist` via a fresh production build.
 - **Status:** ✅ Resolved.
+
 
 ---
 
 ## 📋 Maintenance Guidelines
 1. **Always Log Migrations:** Any change to the Supabase schema must be recorded here with the migration filename.
-2. **Branch Discipline:** Record which branch the maintenance was performed on (`main` vs `v2/scalable-rebuild`).
+2. **Branch Discipline:** Record which branch the maintenance was performed on (`main` vs `v2/scalable-rebuild`). OKAY CAN WE COMPARE THEM SIDE BY SIDE?
+
 3. **Rollback Plans:** For high-risk changes, note the rollback strategy.
