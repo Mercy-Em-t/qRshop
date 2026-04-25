@@ -150,20 +150,20 @@ export default function ProductManager() {
       tags: parsedTags,
       // Template data
       template_id: selectedTemplateId || null,
+      // Extended Top-Level Attributes
+      benefits,
+      usage_instructions: usageInstructions,
+      origin,
+      processing,
+      nutrition_info: nutritionInfo,
+      recipe,
+      brand,
+      diet_tags: dietTags ? dietTags.split(',').map(d => d.trim()).filter(Boolean) : [],
       attributes: {
          ...Object.keys(customFields).reduce((acc, key) => {
             acc[normalizeAttributeKey(key)] = customFields[key];
             return acc;
          }, {}),
-         // Store extended attributes here instead of top-level columns
-         benefits,
-         usage_instructions: usageInstructions,
-         origin,
-         processing,
-         nutrition_info: nutritionInfo,
-         recipe,
-         brand,
-         diet_tags: dietTags ? dietTags.split(',').map(d => d.trim()).filter(Boolean) : []
       }
     };
 
@@ -268,15 +268,15 @@ export default function ProductManager() {
      setProductLink(item.product_link || "");
      setTags(item.tags ? item.tags.join(", ") : "");
       
-     // Load extended attributes from JSONB
-     setBenefits(item.attributes?.benefits || "");
-     setUsageInstructions(item.attributes?.usage_instructions || "");
-     setOrigin(item.attributes?.origin || "");
-     setProcessing(item.attributes?.processing || "");
-     setNutritionInfo(item.attributes?.nutrition_info || "");
-     setRecipe(item.attributes?.recipe || "");
-     setBrand(item.attributes?.brand || "");
-     setDietTags(item.attributes?.diet_tags ? item.attributes.diet_tags.join(", ") : "");
+     // Load extended attributes (Check top-level first, fallback to JSONB attributes for legacy)
+     setBenefits(item.benefits || item.attributes?.benefits || "");
+     setUsageInstructions(item.usage_instructions || item.attributes?.usage_instructions || "");
+     setOrigin(item.origin || item.attributes?.origin || "");
+     setProcessing(item.processing || item.attributes?.processing || "");
+     setNutritionInfo(item.nutrition_info || item.attributes?.nutrition_info || "");
+     setRecipe(item.recipe || item.attributes?.recipe || "");
+     setBrand(item.brand || item.attributes?.brand || "");
+     setDietTags(item.diet_tags ? item.diet_tags.join(", ") : (item.attributes?.diet_tags ? item.attributes.diet_tags.join(", ") : ""));
      
      setSelectedTemplateId(item.template_id || "");
      setCustomFields(item.attributes || {});
@@ -485,7 +485,16 @@ export default function ProductManager() {
            product_link: row.length >= (7 + offset) ? (cleanStr(row[6 + offset]) || null) : null,
            tags: parsedTags,
            variant_options: parsedVariants,
-           image_url: imageUrl
+           image_url: imageUrl,
+           // Sync top-level extended fields if provided in future templates
+           benefits: "", 
+           usage_instructions: "",
+           origin: "",
+           processing: "",
+           nutrition_info: "",
+           recipe: "",
+           brand: "",
+           diet_tags: []
         };
 
         if (id && id.length > 10) {

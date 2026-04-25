@@ -290,15 +290,28 @@ export default function Dashboard() {
 
           <Link
             to="/a/ai-brain"
-            className="bg-slate-900 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-indigo-500 relative overflow-hidden group"
+            className="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-indigo-400 relative overflow-hidden group"
           >
-            <div className="absolute top-0 right-0 bg-indigo-500 w-16 h-16 rounded-bl-full opacity-10 group-hover:scale-125 transition-transform"></div>
+            <div className="absolute top-0 right-0 bg-white/10 w-16 h-16 rounded-bl-full group-hover:scale-125 transition-transform"></div>
             <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
               🧠 Shop Brain
-              <span className="bg-indigo-500 text-[10px] px-1.5 py-0.5 rounded text-white animate-pulse">AI Agent</span>
+              <span className="bg-white/20 text-[10px] px-1.5 py-0.5 rounded text-white animate-pulse">AI Agent</span>
             </h2>
-            <p className="text-slate-400 text-sm">
+            <p className="text-indigo-100/70 text-sm">
               Train your Sales Assistant, set its personality, and manage credits.
+            </p>
+          </Link>
+
+          <Link
+            to="/a/bulk-image-mapper"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-green-100 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
+              📸 Bulk Image Mapper
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Upload images in bulk and auto-map them to your product catalog.
             </p>
           </Link>
 
