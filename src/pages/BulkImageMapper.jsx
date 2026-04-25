@@ -80,9 +80,14 @@ export default function BulkImageMapper() {
   }), [pendingImages]);
 
   const fetchProducts = useCallback(async (isSilent = false) => {
-    if (!SHOP_ID) return;
     if (!isSilent) setLoading(true);
     
+    if (!SHOP_ID) {
+      console.warn("BulkMapper: No SHOP_ID found, skipping fetch.");
+      if (!isSilent) setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("menu_items")
