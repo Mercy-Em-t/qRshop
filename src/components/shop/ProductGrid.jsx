@@ -38,11 +38,6 @@ export default function ProductGrid({ items = [], shopId }) {
             <div className="product-card__info">
               <h3 className="product-card__name">{item.name}</h3>
               <p className="product-card__price">KSh {item.price}</p>
-              <div className="product-card__tags">
-                {item.tags?.map(tag => (
-                  <span key={tag} className="tag">{tag}</span>
-                ))}
-              </div>
             </div>
           </div>
         ))}

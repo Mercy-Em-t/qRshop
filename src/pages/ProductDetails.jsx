@@ -169,27 +169,74 @@ export default function ProductDetails() {
           </p>
         </section>
 
-        {/* Dynamic Attributes Grid */}
-        {item.attributes && Object.keys(item.attributes).length > 0 && (
-          <section>
-            <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Specifications</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              {Object.entries(item.attributes).map(([key, value]) => {
-                if (!value || value === '-') return null;
-                return (
-                  <div key={key} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
-                    <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">
-                      {key.replace('_', ' ')}
-                    </span>
-                    <span className="text-sm font-bold text-gray-800 dark:text-gray-100">
-                      {String(value)}
-                    </span>
+        {/* Details & Specs Grid */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Main Specifications */}
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Specifications</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "Brand", value: item.brand },
+                  { label: "Origin", value: item.origin },
+                  { label: "Processing", value: item.processing },
+                  { label: "Nutrition", value: item.nutrition_info },
+                  { label: "SKU", value: item.sku }
+                ].map(spec => spec.value && (
+                  <div key={spec.label} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
+                    <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">{spec.label}</span>
+                    <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{spec.value}</span>
                   </div>
-                );
-              })}
+                ))}
+                
+                {/* Legacy / Dynamic Attributes */}
+                {item.attributes && Object.entries(item.attributes).map(([key, value]) => {
+                  if (!value || Array.isArray(value) || ['brand', 'origin', 'processing', 'nutrition_info', 'benefits', 'usage_instructions', 'diet_tags'].includes(key.toLowerCase())) return null;
+                  return (
+                    <div key={key} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
+                      <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">{key.replace('_', ' ')}</span>
+                      <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{String(value)}</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </section>
-        )}
+
+            {item.diet_tags && item.diet_tags.length > 0 && (
+              <div>
+                <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Dietary Tags</h2>
+                <div className="flex flex-wrap gap-2">
+                  {item.diet_tags.map(tag => (
+                    <span key={tag} className="px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[10px] font-bold rounded-full border border-green-100 dark:border-green-900/40 uppercase tracking-wider">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Detailed Info (Benefits & Usage) */}
+          <div className="space-y-6">
+            {item.benefits && (
+              <div className="bg-indigo-50 dark:bg-indigo-900/10 p-6 rounded-3xl border border-indigo-100 dark:border-indigo-900/20">
+                <h2 className="text-xs font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-widest mb-3">Key Benefits</h2>
+                <p className="text-sm font-medium text-indigo-900 dark:text-indigo-200 leading-relaxed">
+                  {item.benefits}
+                </p>
+              </div>
+            )}
+            
+            {item.usage_instructions && (
+              <div className="bg-amber-50 dark:bg-amber-900/10 p-6 rounded-3xl border border-amber-100 dark:border-amber-900/20">
+                <h2 className="text-xs font-black text-amber-500 dark:text-amber-400 uppercase tracking-widest mb-3">Usage & Preparation</h2>
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-200 leading-relaxed italic">
+                  "{item.usage_instructions}"
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* Trust Factors */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
