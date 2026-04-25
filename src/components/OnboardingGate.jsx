@@ -33,7 +33,7 @@ export default function OnboardingGate({ children }) {
 
   useEffect(() => {
     // If not logged in, or is a system admin, they don't need this gate
-    if (!user || user.role === "system_admin") {
+    if (!user || user.system_role === "system_admin") {
       setLoading(false);
       return;
     }
@@ -172,7 +172,7 @@ export default function OnboardingGate({ children }) {
   console.log("Gate Diagnostics:", { shopStatus, needsPasswordChange, kycCompleted, hasNodes, loading });
 
   // Let through: system_admin (always)
-  if (user?.role === "system_admin") return children;
+  if (user?.system_role === "system_admin") return children;
 
   // Let through: password done + kyc done (QR step comes after these)
   if (!needsPasswordChange && kycCompleted) {

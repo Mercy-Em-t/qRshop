@@ -37,7 +37,7 @@ export default function MaintenanceGate({ children, preFetchedMaintenance }) {
   // Bypass Logic
   const isActive = maintenance?.is_active === true;
   const allowAdmins = maintenance?.allow_admins === true;
-  const isSystemAdmin = user?.role === "system_admin";
+  const isSystemAdmin = user?.system_role === "system_admin";
 
   if (isActive && !(allowAdmins && isSystemAdmin)) {
     return (
