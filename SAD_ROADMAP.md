@@ -10,7 +10,7 @@
 
 | Week | Deliverable | Status |
 |------|-------------|--------|
-| 2  | Methodology + Stakeholder List + Scope Boundaries | ⬜ Pending |
+| 2  | Methodology + Stakeholder List + Scope Boundaries | ✅ Completed |
 | 3  | Functional & Non-Functional Requirements + Acceptance Criteria | ⬜ Pending |
 | 4  | Use Case Diagram + 1–2 Fully Dressed Use Cases | ⬜ Pending |
 | 5  | As-Is and To-Be Process Models | ⬜ Pending |
@@ -171,6 +171,17 @@
 
 > *To be completed Sprint 11*
 
+- [x] V2 Scalable Rebuild: Auth Layer Consolidation
+  - [x] Audit shops table columns and document bloat
+  - [x] Design v2 identity architecture (profiles + shop_members)
+  - [x] Create migration for `profiles` table
+  - [x] Create migration for `shop_members` table
+  - [x] Implement profile creation trigger (auth.users sync)
+  - [x] Create backfill script for existing users
+  - [x] Update `auth-service.js` to use new model
+  - [x] Update `OnboardingGate.jsx` and `MaintenanceGate.jsx`
+  - [x] Refactor UI pages for `system_role` consistency
+  - [ ] Verify multi-shop support with test accounts
 - [ ] CRUD Matrix (Actor × Entity × Operation)
 - [ ] Logical schema draft
 
