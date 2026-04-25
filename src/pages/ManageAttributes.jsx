@@ -28,6 +28,20 @@ export default function ManageAttributes() {
     fetchSchema();
   }, [shopId]);
 
+  const PRESETS = [
+    { label: "📦 Size", key: "size", type: "variation" },
+    { label: "⚖️ Weight", key: "weight", type: "variation" },
+    { label: "🎨 Color", key: "color", type: "variation" },
+    { label: "🪵 Material", key: "material", type: "text" },
+    { label: "🍇 Flavor", key: "flavor", type: "variation" },
+    { label: "📅 Vintage/Year", key: "vintage", type: "text" },
+  ];
+
+  const handleAddPreset = (preset) => {
+    if (fields.some(f => f.key === preset.key)) return;
+    setFields([...fields, { ...preset }]);
+  };
+
   const handleAddField = () => {
     if (!newLabel.trim()) return;
     const key = newLabel.toLowerCase().replace(/[^a-z0-9]/g, "_");
@@ -35,7 +49,7 @@ export default function ManageAttributes() {
       alert("This attribute already exists!");
       return;
     }
-    setFields([...fields, { label: newLabel, key }]);
+    setFields([...fields, { label: newLabel, key, type: "text" }]);
     setNewLabel("");
   };
 
@@ -75,33 +89,72 @@ export default function ManageAttributes() {
          </button>
       </div>
 
-      <div className="space-y-6">
-        <div className="flex gap-3">
-          <input 
-            type="text"
-            value={newLabel}
-            onChange={(e) => setNewLabel(e.target.value)}
-            placeholder="e.g. Vintage, ISBN, Weight"
-            className="flex-1 bg-gray-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-theme-main transition-all font-medium"
-          />
-          <button 
-            onClick={handleAddField}
-            className="bg-theme-main text-white px-8 py-4 rounded-2xl font-bold hover:shadow-lg transition-all"
-          >
-            Add Field
-          </button>
+      <div className="space-y-8">
+        {/* PRESETS SECTION */}
+        <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100/50">
+           <h3 className="text-xs font-black uppercase tracking-widest text-blue-600 mb-4 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+              Standard Attribute Presets
+           </h3>
+           <div className="flex flex-wrap gap-2">
+              {PRESETS.map(p => (
+                <button
+                  key={p.key}
+                  disabled={fields.some(f => f.key === p.key)}
+                  onClick={() => handleAddPreset(p)}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                    fields.some(f => f.key === p.key) 
+                    ? "bg-white text-gray-300 border border-gray-100 cursor-not-allowed" 
+                    : "bg-white text-gray-700 border border-gray-200 hover:border-blue-500 hover:text-blue-600 shadow-sm"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+           </div>
+        </div>
+
+        <div className="space-y-4">
+           <h3 className="text-xs font-black uppercase tracking-widest text-gray-400 px-1">Custom Additions</h3>
+           <div className="flex gap-3">
+             <input 
+               type="text"
+               value={newLabel}
+               onChange={(e) => setNewLabel(e.target.value)}
+               placeholder="e.g. Dimensions, Origin..."
+               className="flex-1 bg-gray-50 border-none rounded-2xl px-5 py-4 focus:ring-2 focus:ring-slate-900 transition-all font-medium"
+             />
+             <button 
+               onClick={handleAddField}
+               className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold hover:shadow-lg transition-all"
+             >
+               Add
+             </button>
+           </div>
         </div>
 
         <div className="grid gap-3">
           {fields.map((field) => (
-            <div key={field.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
-              <div>
-                <p className="font-bold text-gray-800">{field.label}</p>
-                <p className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">{field.key}</p>
+            <div key={field.key} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-gray-100 hover:border-slate-300 transition-colors group">
+              <div className="flex items-center gap-4">
+                <div className={`p-2 rounded-xl ${field.type === 'variation' ? 'bg-orange-50 text-orange-600' : 'bg-gray-50 text-gray-400'}`}>
+                  {field.type === 'variation' ? (
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                  ) : (
+                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" /></svg>
+                  )}
+                </div>
+                <div>
+                  <p className="font-bold text-gray-800 flex items-center gap-2">
+                    {field.label}
+                    {field.type === 'variation' && <span className="bg-orange-600 text-white text-[8px] px-1.5 py-0.5 rounded-full uppercase tracking-tighter">Umbrella Item</span>}
+                  </p>
+                  <p className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">{field.key}</p>
+                </div>
               </div>
               <button 
                 onClick={() => handleRemoveField(field.key)}
-                className="text-red-400 hover:text-red-600 p-2"
+                className="text-red-300 hover:text-red-600 p-2 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
               </button>

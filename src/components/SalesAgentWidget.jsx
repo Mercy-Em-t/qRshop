@@ -8,8 +8,9 @@
  */
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../services/supabase-client";
 
-export default function SalesAgentWidget({ menuItems = [], addItem }) {
+export default function SalesAgentWidget({ menuItems = [], addItem, shopId }) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -68,17 +69,20 @@ export default function SalesAgentWidget({ menuItems = [], addItem }) {
     return `I found ${recs.length} recommendation${recs.length > 1 ? "s" : ""} for you. Hit **Propel** to add to cart:`;
   };
 
-  const handleSend = (customText = null) => {
+  const handleSend = async (customText = null) => {
     const text = (customText || userInput).trim();
     if (!text) return;
 
-    const userMsg = { sender: "user", text };
-    setMessages((prev) => [...prev, userMsg]);
+    const userMsg = { role: "user", content: text };
+    // UI adaptation: keep same sender format for rendering
+    const uiUserMsg = { sender: "user", text };
+    
+    setMessages((prev) => [...prev, uiUserMsg]);
     setUserInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
-      // Checkout Handler
+    try {
+      // 1. Checkout Handler (pre-AI check for speed)
       if (text.toLowerCase().includes("checkout") || text.toLowerCase().includes("pay")) {
         setMessages((prev) => [
           ...prev, 
@@ -94,18 +98,40 @@ export default function SalesAgentWidget({ menuItems = [], addItem }) {
         return;
       }
 
-      const recs = findProducts(text);
-      const reply = buildReply(text, recs);
+      // 2. Call Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('sales-assistant', {
+        body: { 
+          messages: messages.map(m => ({ 
+            role: m.sender === 'ai' ? 'assistant' : 'user', 
+            content: m.text 
+          })).concat([userMsg]),
+          menuItems,
+          shopId
+        }
+      });
+
+      if (error) throw error;
+
+      // 3. Match recommendations in the AI text
+      const aiReply = data.reply;
+      const recs = menuItems.filter(p => aiReply.toLowerCase().includes(p.name.toLowerCase())).slice(0, 3);
       
       const aiResponse = { 
         sender: "ai", 
-        text: reply, 
-        recommendations: Array.isArray(recs) ? recs : [] 
+        text: aiReply, 
+        recommendations: recs 
       };
       
       setMessages((prev) => [...prev, aiResponse]);
+    } catch (err) {
+      console.error("AI Error:", err);
+      // Fallback to simple matching if AI fails (e.g. no API key yet)
+      const recs = findProducts(text);
+      const reply = buildReply(text, recs);
+      setMessages((prev) => [...prev, { sender: "ai", text: `(Offline Mode) ${reply}`, recommendations: Array.isArray(recs) ? recs : [] }]);
+    } finally {
       setIsTyping(false);
-    }, 800);
+    }
   };
 
   const handlePropel = (product) => {

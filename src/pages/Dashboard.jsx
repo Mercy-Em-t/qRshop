@@ -168,6 +168,7 @@ export default function Dashboard() {
             <Link to="/a/orders" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🛎 Live Orders</Link>
             <Link to="/product-manager" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">📋 Product Manager</Link>
             <Link to="/a/campaigns" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🎁 Bundles</Link>
+            <Link to="/a/ai-brain" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🧠 AI Brain</Link>
             <Link to="/a/settings" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">⚙️ Settings</Link>
             <button onClick={() => { logout(); navigate("/login"); }} className="text-sm font-bold text-red-500 text-left">Logout</button>
           </div>
@@ -284,6 +285,20 @@ export default function Dashboard() {
             </h2>
             <p className="text-gray-500 text-sm">
               Define custom product fields like Size, Color, or Vintage.
+            </p>
+          </Link>
+
+          <Link
+            to="/a/ai-brain"
+            className="bg-slate-900 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-indigo-500 relative overflow-hidden group"
+          >
+            <div className="absolute top-0 right-0 bg-indigo-500 w-16 h-16 rounded-bl-full opacity-10 group-hover:scale-125 transition-transform"></div>
+            <h2 className="text-lg font-semibold text-white mb-2 flex items-center gap-2">
+              🧠 Shop Brain
+              <span className="bg-indigo-500 text-[10px] px-1.5 py-0.5 rounded text-white animate-pulse">AI Agent</span>
+            </h2>
+            <p className="text-slate-400 text-sm">
+              Train your Sales Assistant, set its personality, and manage credits.
             </p>
           </Link>
 

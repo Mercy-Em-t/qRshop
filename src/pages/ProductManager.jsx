@@ -8,6 +8,7 @@ import UpgradeModal from "../components/UpgradeModal";
 import { uuidToShort } from "../utils/short-id";
 import { generateSalesContent } from "../services/sales-content-generator";
 import { normalizeAttributeKey } from "../utils/attribute-utils";
+import VariationBuilder from "../components/VariationBuilder";
 
 export default function ProductManager() {
   const [items, setItems] = useState([]);
@@ -854,28 +855,37 @@ export default function ProductManager() {
              </div>
 
              {/* DYNAMIC SHOP-SPECIFIC ATTRIBUTES */}
-             {shopSchema.length > 0 && (
-               <div className="md:col-span-2 pt-4 border-t border-gray-100 mt-2">
-                  <h3 className="text-sm font-bold text-orange-600 uppercase tracking-widest mb-1">Custom Shop Attributes</h3>
-                  <p className="text-[10px] text-gray-400 mb-4">Fields defined in your Attribute Manager.</p>
-                  <div className="grid md:grid-cols-2 gap-4 p-5 bg-orange-50/20 rounded-2xl border border-orange-100/50">
-                     {shopSchema.map(field => (
-                       <div key={field.key}>
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{field.label}</label>
-                          <input 
-                             type="text"
-                             value={customFields[field.key] || ""}
-                             onChange={e => setCustomFields({...customFields, [field.key]: e.target.value})}
-                             className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
-                             placeholder={`Enter ${field.label}...`}
-                          />
-                       </div>
-                     ))}
-                  </div>
-               </div>
-             )}
+              {shopSchema.length > 0 && (
+                <div className="md:col-span-2 pt-4 border-t border-gray-100 mt-2">
+                   <h3 className="text-sm font-bold text-orange-600 uppercase tracking-widest mb-1">Custom Shop Attributes</h3>
+                   <p className="text-[10px] text-gray-400 mb-4">Fields defined in your Attribute Manager.</p>
+                   <div className="grid md:grid-cols-2 gap-4 p-5 bg-orange-50/20 rounded-2xl border border-orange-100/50">
+                      {shopSchema.map(field => (
+                        <div key={field.key} className={field.type === 'variation' ? 'md:col-span-2' : ''}>
+                           <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{field.label}</label>
+                           
+                           {field.type === 'variation' ? (
+                             <VariationBuilder 
+                               field={field} 
+                               value={customFields[field.key]} 
+                               onChange={(val) => setCustomFields({...customFields, [field.key]: val})} 
+                             />
+                           ) : (
+                             <input 
+                                type="text"
+                                value={customFields[field.key] || ""}
+                                onChange={e => setCustomFields({...customFields, [field.key]: e.target.value})}
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                placeholder={"Enter " + field.label + "..."}
+                             />
+                           )}
+                        </div>
+                      ))}
+                   </div>
+                </div>
+              )}
 
-             {/* DYNAMIC TEMPLATE FIELDS */}
+              {/* DYNAMIC TEMPLATE FIELDS */}
              {selectedTemplateId && (
                 <div className="md:col-span-2 p-6 bg-indigo-50/20 rounded-2xl border border-indigo-100/50 space-y-4">
                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 italic">Building based on {availableTemplates.find(t => t.id === selectedTemplateId)?.name} blueprint</p>

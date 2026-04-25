@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { getMenuItemById, getRelatedItems } from "../services/menu-service";
 import { useCart } from "../hooks/use-cart";
@@ -12,6 +13,7 @@ export default function ProductDetails() {
   const [shop, setShop] = useState(null);
   const [relatedItems, setRelatedItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedVariation, setSelectedVariation] = useState(null);
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
@@ -23,6 +25,12 @@ export default function ProductDetails() {
           return;
         }
         setItem(itemData);
+
+        // Auto-select first variation if any exist
+        const varKey = Object.keys(itemData.attributes || {}).find(k => Array.isArray(itemData.attributes[k]));
+        if (varKey && itemData.attributes[varKey].length > 0) {
+          setSelectedVariation({ key: varKey, ...itemData.attributes[varKey][0] });
+        }
 
         const [shopData, related] = await Promise.all([
           resolveShopIdentifier(itemData.shop_id),
@@ -43,7 +51,16 @@ export default function ProductDetails() {
 
   const handleAddToCart = () => {
     if (!item) return;
-    addItem(item);
+    
+    // Create cart item with correct price and name if variation selected
+    const cartItem = {
+      ...item,
+      price: selectedVariation ? selectedVariation.price : item.price,
+      name: selectedVariation ? `${item.name} (${selectedVariation.label})` : item.name,
+      variant_label: selectedVariation?.label // Extra metadata
+    };
+
+    addItem(cartItem);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -108,7 +125,7 @@ export default function ProductDetails() {
               </div>
               <div className="text-right">
                 <span className="text-2xl font-black text-green-400">
-                  KSh {item.price}
+                  KSh {selectedVariation ? selectedVariation.price : item.price}
                 </span>
               </div>
             </div>
@@ -117,6 +134,33 @@ export default function ProductDetails() {
       </div>
 
       <div className="max-w-4xl mx-auto p-6 space-y-8 animate-fade-in">
+        {/* Variation Selector (Umbrella Options) */}
+        {Object.entries(item.attributes || {}).some(([_, v]) => Array.isArray(v)) && (
+          <section className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all">
+            <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Choose your option</h2>
+            <div className="flex flex-wrap gap-3">
+              {Object.entries(item.attributes).map(([key, variations]) => {
+                if (!Array.isArray(variations)) return null;
+                return variations.map((v, i) => (
+                  <button
+                    key={`${key}-${i}`}
+                    onClick={() => setSelectedVariation({ key, ...v })}
+                    className={`px-6 py-3 rounded-2xl font-bold transition-all border-2 text-sm ${
+                      selectedVariation?.label === v.label && selectedVariation?.key === key
+                      ? "bg-slate-900 border-slate-900 text-white shadow-lg scale-105"
+                      : "bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:border-slate-300"
+                    }`}
+                  >
+                    {v.label}
+                    <span className={`block text-[10px] opacity-60 mt-0.5 ${selectedVariation?.label === v.label ? 'text-white' : 'text-gray-400'}`}>
+                      KSh {v.price}
+                    </span>
+                  </button>
+                ));
+              })}
+            </div>
+          </section>
+        )}
         {/* Description */}
         <section>
           <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Product Overview</h2>

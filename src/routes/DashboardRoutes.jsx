@@ -17,6 +17,7 @@ import DeliveryDashboard from "../pages/DeliveryDashboard";
 import TemplateSettings from "../pages/TemplateSettings";
 import ProductManager from "../pages/ProductManager";
 import ManageAttributes from "../pages/ManageAttributes";
+import SalesBrainManager from "../pages/SalesBrainManager";
 
 export default function DashboardRoutes() {
   return (
@@ -40,6 +41,7 @@ export default function DashboardRoutes() {
         <Route path="templates" element={<TemplateSettings />} />
         <Route path="products" element={<ProductManager />} />
         <Route path="attributes" element={<ManageAttributes />} />
+        <Route path="ai-brain" element={<SalesBrainManager />} />
       </Routes>
     </OnboardingGate>
   );

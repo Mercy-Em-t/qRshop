@@ -362,6 +362,7 @@ export default function Menu() {
       <SalesAgentWidget
         menuItems={allMenuItems}
         addItem={handleAddItem}
+        shopId={session?.shop_id}
       />
     </div>
   );
