@@ -1,21 +1,21 @@
 import { supabase } from "./supabase-client";
 import { getProfile, getShopMemberships } from "./profile-service";
 
-// Internal cache for the session user
-let cachedUser = null;
+// Internal cache for the session user (Renamed to force fresh bundle scope)
+let authStaticCache = null;
 
 // This securely verifies a user against Supabase Native Auth and returns their active shop_id and role
 export async function authenticateUser(email, password) {
   if (!supabase) return { error: "Supabase not connected." };
 
   // Phase 0: Clear any existing sessions to prevent hand-off deadlocks
-  console.log("Auth: Clearing stale session before login handshake...");
+  console.log("Auth [v2.4.1-deploy-2015]: Clearing stale session...");
   await supabase.auth.signOut();
   localStorage.removeItem("savannah_session");
-  cachedUser = null;
+  authStaticCache = null;
 
   // Phase 1: Authenticate natively against Supabase Auth (with Timeout Guard)
-  console.log("Auth: Initiating native signIn for", email.trim());
+  console.log("Auth [v2.4.1-deploy-2015]: Initiating native signIn for", email.trim());
   
   const authPromise = supabase.auth.signInWithPassword({
     email: email.trim(),
@@ -42,7 +42,7 @@ export async function authenticateUser(email, password) {
     return { error: authError?.message || "Invalid credentials." };
   }
 
-  console.log("Auth: Native success, fetching V2 profiles for ID:", authData.user.id);
+  console.log("Auth [v2.4.1-deploy-2015]: Native success, fetching V2 profiles for ID:", authData.user.id);
 
   // Phase 2: Fetch V2 Profile and Shop Memberships
   const [profile, memberships] = await Promise.all([
@@ -56,7 +56,7 @@ export async function authenticateUser(email, password) {
     return { error: "User profile missing. Contact support." };
   }
 
-  console.log(`Auth: Profile found (role: ${profile.system_role}). ${memberships.length} shop memberships.`);
+  console.log(`Auth [v2.4.1-deploy-2015]: Profile found for ${profile.display_name}. ${memberships.length} memberships.`);
 
   // If multiple shops, we return them all and let the UI handle selection
   if (memberships.length > 1) {
@@ -92,11 +92,11 @@ export async function authenticateUser(email, password) {
   };
 
   localStorage.setItem("savannah_session", JSON.stringify(sessionUser));
-  cachedUser = sessionUser;
-  return { user: sessionUser };
+  authStaticCache = sessionUser;
 }
 
 export function getCurrentUser() {
+
   try {
     const raw = localStorage.getItem("savannah_session");
     if (!raw) return null;
