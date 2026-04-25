@@ -70,7 +70,7 @@ export default function BulkImageMapper() {
   const [processing, setProcessing] = useState(false);
   
   const navigate = useNavigate();
-  const user = getCurrentUser();
+  const [user] = useState(() => getCurrentUser());
   const SHOP_ID = user?.shop_id;
 
   const stats = useMemo(() => ({
@@ -80,17 +80,25 @@ export default function BulkImageMapper() {
   }), [pendingImages]);
 
   const fetchProducts = useCallback(async (isSilent = false) => {
+    if (!SHOP_ID) return;
     if (!isSilent) setLoading(true);
-    const { data, error } = await supabase
-      .from("menu_items")
-      .select("id, name, image_url, category")
-      .eq("shop_id", SHOP_ID)
-      .order("name", { ascending: true });
+    
+    try {
+      const { data, error } = await supabase
+        .from("menu_items")
+        .select("id, name, image_url, category")
+        .eq("shop_id", SHOP_ID)
+        .order("name", { ascending: true });
 
-    if (!error && data) {
-      setProducts(data);
+      if (error) throw error;
+      if (data) {
+        setProducts(data);
+      }
+    } catch (err) {
+      console.error("BulkMapper: Catalog fetch error:", err);
+    } finally {
+      if (!isSilent) setLoading(false);
     }
-    if (!isSilent) setLoading(false);
   }, [SHOP_ID]);
 
   useEffect(() => {
