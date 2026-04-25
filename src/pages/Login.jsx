@@ -30,7 +30,7 @@ export default function Login() {
       return;
     }
 
-    if (user.role === 'system_admin') {
+    if (user.system_role === 'system_admin') {
       navigate("/admin");
     } else {
       navigate("/a");

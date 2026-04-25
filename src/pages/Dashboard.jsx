@@ -141,7 +141,14 @@ export default function Dashboard() {
             >
               <span>🔗</span> Share Shop
             </button>
-            {user?.role === 'system_admin' && <AppLauncher />}
+            {user?.system_role === 'system_admin' && (
+              <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-4">
+                <p className="text-red-700 text-sm font-bold flex items-center gap-2">
+                  <span>🛡️</span> SYSTEM ADMINISTRATOR MODE
+                </p>
+              </div>
+            )}
+            {user?.system_role === 'system_admin' && <AppLauncher />}
             <button
               onClick={() => { logout(); navigate("/login"); }}
               className="text-sm font-bold text-red-500 hover:text-red-700 transition-colors cursor-pointer"
@@ -444,7 +451,7 @@ export default function Dashboard() {
           )}
 
           {/* B2B / Distribution Section - Restricted to Admins or Verified Wholesalers */}
-          {(user?.role === 'system_admin' || shop?.plan === 'business') && (
+          {(user?.system_role === 'system_admin' || shop?.plan === 'business') && (
             <>
               <Link
                 to="/a/connect-distribution"
@@ -486,7 +493,7 @@ export default function Dashboard() {
             </>
           )}
 
-          {(user?.role === 'system_admin' || user?.role === 'delivery_manager' || user?.role === 'delivery_worker' || shop?.plan === 'business') && (
+          {(user?.system_role === 'system_admin' || user?.role === 'delivery_manager' || user?.role === 'delivery_worker' || shop?.plan === 'business') && (
             <Link
               to="/a/delivery"
               className="bg-slate-900 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-slate-500 relative overflow-hidden group"

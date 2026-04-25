@@ -25,7 +25,7 @@ export default function usePlanAccess() {
     }
 
     // System Admins bypass all locks
-    if (user.role === "system_admin") {
+    if (user.system_role === "system_admin") {
       setAccess({
         isFree: true, isBasic: true, isPro: true,
         isBusiness: true, isEnterprise: true,

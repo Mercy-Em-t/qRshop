@@ -29,7 +29,7 @@ export default function ShopSelection() {
     localStorage.removeItem("pending_selection");
     localStorage.removeItem("pending_user_id");
 
-    if (profile.role === 'system_admin') {
+    if (profile.system_role === 'system_admin') {
       navigate("/admin");
     } else {
       navigate("/a");
