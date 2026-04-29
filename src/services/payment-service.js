@@ -41,23 +41,36 @@ export async function createPayment(orderId, amount, method) {
 }
 
 /**
- * Verify that a payment has been completed.
+ * Trigger an M-Pesa STK Push (Lipa Na M-Pesa Online)
+ * This calls a Supabase Edge Function which handles the Safaricom Daraja API.
  */
-export async function verifyPayment(paymentId) {
+export async function triggerMpesaStkPush(orderId, phone, amount, shopId) {
   if (!supabase) {
-    return { id: paymentId, status: "completed" };
+    console.warn("Supabase not initialized, skipping STK push");
+    return { success: true, message: "Mock STK push triggered" };
   }
 
-  const { data, error } = await supabase
-    .from("payments")
-    .select("*")
-    .eq("id", paymentId)
-    .single();
+  // Format phone: ensure it starts with 254
+  let formattedPhone = phone.replace(/\D/g, '');
+  if (formattedPhone.startsWith('0')) formattedPhone = '254' + formattedPhone.substring(1);
+  if (formattedPhone.startsWith('7')) formattedPhone = '254' + formattedPhone;
+  if (formattedPhone.startsWith('1')) formattedPhone = '254' + formattedPhone;
 
-  if (error) {
-    console.error("Error verifying payment:", error);
-    return null;
+  try {
+    const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
+      body: { 
+        order_id: orderId,
+        phone: formattedPhone,
+        amount: Math.round(amount), // M-Pesa expects integers
+        shop_id: shopId
+      }
+    });
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err) {
+    console.error("STK Push Failed:", err);
+    return { success: false, error: err.message };
   }
-
-  return data;
 }
+

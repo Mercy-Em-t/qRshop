@@ -20,6 +20,7 @@ import PaymentModal from "../components/PaymentModal";
 import SmartReceiptModal from "../components/SmartReceiptModal";
 import { useNomenclature } from "../hooks/use-nomenclature";
 import UpgradeModal from "../components/UpgradeModal";
+import { triggerMpesaStkPush } from "../services/payment-service";
 
 const buildUnstructuredMessage = (shopName, table, items, identity, deliveryFee = 0, orderNumber = null) => {
    const itemList = items.map(i => `${i.quantity}x ${i.name}`).join(", ");
@@ -351,6 +352,12 @@ export default function Order() {
   };
 
   const handleMpesaCheckout = async () => {
+    if (!identity.phone || identity.phone.length < 10) {
+       alert("Please enter a valid phone number to receive the payment prompt.");
+       setCapturingIdentity(true);
+       return;
+    }
+
     setSending(true);
     try {
       const order = await generateDatabaseOrder();
@@ -366,21 +373,12 @@ export default function Order() {
          localStorage.setItem('qr_customer_name', identity.name);
          localStorage.setItem('qr_customer_phone', identity.phone);
          
-         // Trigger STK Push via Edge Function
-         console.log("Triggering M-Pesa STK Push...");
-         const { data, error: pushErr } = await supabase.functions.invoke('mpesa-stk-push', {
-             body: { 
-                 order_id: order.id,
-                 phone: identity.phone,
-                 amount: finalPayableTotal,
-                 shop_id: shop?.id,
-                 is_b2b: false
-             }
-         });
+         // Trigger STK Push
+         const result = await triggerMpesaStkPush(order.id, identity.phone, finalPayableTotal, shop?.id);
 
-         if (pushErr) {
-             console.error("STK Push invocation failed:", pushErr);
-             // We gracefully fall back to just tracking the unpaid order
+         if (!result.success) {
+             console.error("STK Push failed:", result.error);
+             alert("M-Pesa prompt failed to reach your phone. Please check your number or try again.");
          }
 
          clearCart();
@@ -620,17 +618,12 @@ export default function Order() {
               {sending ? (
                 <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
               ) : (
-                "💳 Secure Direct Checkout"
-              )}
-            </button>
-            */}
-
             <button
-              onClick={() => {
-                  setCapturingIdentity(true);
-              }}
-              disabled={sending || shop?.is_online === false}
-              className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-2 shadow-xl transform active:scale-95 ${sending || shop?.is_online === false ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover cursor-pointer'}`}
+               onClick={() => {
+                   setCapturingIdentity(true);
+               }}
+               disabled={sending || shop?.is_online === false}
+               className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-2 shadow-xl transform active:scale-95 ${sending || shop?.is_online === false ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover cursor-pointer'}`}
             >
               {!isOnline 
                  ? "📥 Queue Offline Order" 
@@ -638,6 +631,23 @@ export default function Order() {
                     ? `💬 Place ${terms.order} (WhatsApp)` 
                     : `🛒 Confirm ${terms.order}`}
             </button>
+
+            {isOnline && (shopPlanAccess.isPro || shopPlanAccess.isBusiness) && (
+              <button
+                onClick={handleMpesaCheckout}
+                disabled={sending || shop?.is_online === false}
+                className="w-full bg-[#1e293b] text-white py-5 rounded-2xl font-black text-lg hover:bg-black transition-all flex items-center justify-center gap-3 shadow-2xl shadow-indigo-500/20 border-b-4 border-indigo-600 active:border-b-0 active:translate-y-1"
+              >
+                {sending ? (
+                  <span className="animate-spin rounded-full h-6 w-6 border-4 border-white/30 border-t-white"></span>
+                ) : (
+                  <>
+                    <span className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs">M</span>
+                    Pay Now via M-Pesa
+                  </>
+                )}
+              </button>
+            )}
             
             <a
                href={buildWhatsAppLink(shopPhone, `Hi ${shopName}, I have a question about my order/menu.`)}
