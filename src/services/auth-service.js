@@ -50,24 +50,70 @@ export async function authenticateUser(email, password) {
     getShopMemberships(authData.user.id)
   ]);
 
-  if (!profile) {
-    console.error("Auth: Profile missing for authenticated user.");
+  // Phase 2.5: V1 → V2 Soft Backfill Guard
+  // If profile is missing, the user is a legacy V1 account.
+  // Auto-create their V2 profile + shop_members from shop_users data.
+  let resolvedProfile = profile;
+  let resolvedMemberships = memberships;
+
+  if (!resolvedProfile) {
+    console.warn("Auth: Profile missing — checking for V1 legacy data to backfill...");
+
+    const { data: v1Rows } = await supabase
+      .from("shop_users")
+      .select("shop_id, role, email")
+      .eq("id", authData.user.id);
+
+    if (v1Rows && v1Rows.length > 0) {
+      console.log(`Auth: Found ${v1Rows.length} V1 row(s). Auto-creating V2 identity...`);
+
+      // Create the missing profile row
+      const { data: newProfile } = await supabase
+        .from("profiles")
+        .upsert({
+          id: authData.user.id,
+          display_name: authData.user.email.split('@')[0],
+          system_role: v1Rows.some(r => r.role === 'system_admin') ? 'system_admin' : 'user',
+        }, { onConflict: 'id' })
+        .select()
+        .single();
+
+      // Create shop_members rows from V1 shop_users data
+      for (const row of v1Rows) {
+        await supabase
+          .from("shop_members")
+          .upsert({
+            user_id: authData.user.id,
+            shop_id: row.shop_id,
+            role: row.role || 'owner',
+            is_active: true,
+          }, { onConflict: 'user_id,shop_id' });
+      }
+
+      resolvedProfile = newProfile;
+      resolvedMemberships = await getShopMemberships(authData.user.id);
+      console.log("Auth: V1→V2 backfill complete.");
+    }
+  }
+
+  if (!resolvedProfile) {
+    console.error("Auth: Profile missing and no V1 data found — cannot authenticate.");
     await supabase.auth.signOut();
     return { error: "User profile missing. Contact support." };
   }
 
-  console.log(`Auth [v2.4.1-deploy-2015]: Profile found for ${profile.display_name}. ${memberships.length} memberships.`);
+  console.log(`Auth [v2.4.1-deploy-2015]: Profile found for ${resolvedProfile.display_name}. ${resolvedMemberships.length} memberships.`);
 
-  // If multiple shops, we return them all and let the UI handle selection
-  if (memberships.length > 1) {
-    return { 
-      user: { 
-        id: authData.user.id, 
+  // If multiple shops, return all and let UI handle selection
+  if (resolvedMemberships.length > 1) {
+    return {
+      user: {
+        id: authData.user.id,
         email: authData.user.email,
-        display_name: profile.display_name,
-        system_role: profile.system_role
-      }, 
-      profiles: memberships.map(m => ({
+        display_name: resolvedProfile.display_name,
+        system_role: resolvedProfile.system_role
+      },
+      profiles: resolvedMemberships.map(m => ({
         shop_id: m.shop_id,
         email: authData.user.email,
         role: m.role,
@@ -75,18 +121,18 @@ export async function authenticateUser(email, password) {
         subdomain: m.shops?.subdomain,
         is_v2: true
       })),
-      requiresSelection: true 
+      requiresSelection: true
     };
   }
 
   // Handle single shop or no shop cases
-  const membership = memberships[0] || null;
+  const membership = resolvedMemberships[0] || null;
   const sessionUser = {
     id: authData.user.id,
     email: authData.user.email,
-    display_name: profile.display_name,
+    display_name: resolvedProfile.display_name,
     role: membership?.role || 'user',
-    system_role: profile.system_role,
+    system_role: resolvedProfile.system_role,
     shop_id: membership?.shop_id || null,
     shop_name: membership?.shops?.name || null
   };

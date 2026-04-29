@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../services/supabase-client";
+import { getShopMemberships } from "../services/profile-service";
 import { Link } from "react-router-dom";
 
 export default function MultiShopNoticeboard({ userId }) {
@@ -12,26 +13,22 @@ export default function MultiShopNoticeboard({ userId }) {
 
   const fetchGlobalStatus = async () => {
     try {
-      // 1. Fetch all shops linked to this user
-      const { data: profiles } = await supabase
-        .from("shop_users")
-        .select("shop_id, shops(name)")
-        .eq("id", userId);
-
-      if (!profiles) return;
+      // 1. Fetch all active shop memberships for this user (V2 — shop_members)
+      const memberships = await getShopMemberships(userId);
+      if (!memberships || memberships.length === 0) return;
 
       // 2. Aggregate pending orders for each shop
       const shopStats = await Promise.all(
-        profiles.map(async (p) => {
+        memberships.map(async (m) => {
           const { count } = await supabase
             .from("orders")
             .select("*", { count: "exact", head: true })
-            .eq("shop_id", p.shop_id)
+            .eq("shop_id", m.shop_id)
             .eq("status", "pending");
 
           return {
-            shopId: p.shop_id,
-            shopName: p.shops?.name || "Unnamed Shop",
+            shopId: m.shop_id,
+            shopName: m.shops?.name || "Unnamed Shop",
             pendingCount: count || 0
           };
         })

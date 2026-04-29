@@ -39,28 +39,57 @@ export default function SeedWholesaleUser() {
       }
 
       if (authData.user) {
-        setStatus("AUTH SUCCESS! Attempting Profile Linkage...");
+        const userId = authData.user.id;
+        setStatus("AUTH SUCCESS! Linking to V1 + V2 identity layers...");
 
-        // 4. Try manual linkage
+        // 4a. V1 linkage (legacy - kept for backward compat)
         const { error: linkError } = await supabase
           .from("shop_users")
-          .insert({
-            id: authData.user.id,
+          .upsert({
+            id: userId,
             shop_id: shopId,
             email: email,
             role: 'merchant'
-          });
+          }, { onConflict: 'id,shop_id' });
 
         if (linkError) {
-          console.warn("Linkage Error:", linkError);
-          setStatus(`AUTH OK, but Profile Linkage failed: ${linkError.message}`);
+          console.warn("V1 Linkage warning:", linkError);
+        }
+
+        // 4b. V2 — Upsert into profiles (the trigger may have already created it)
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: userId,
+            display_name: email.split('@')[0],
+            system_role: 'user',
+          }, { onConflict: 'id' });
+
+        if (profileError) {
+          console.warn("V2 Profile upsert warning:", profileError);
+          setStatus(`AUTH OK, but V2 Profile write failed: ${profileError.message}`);
+        }
+
+        // 4c. V2 — Upsert into shop_members
+        const { error: memberError } = await supabase
+          .from("shop_members")
+          .upsert({
+            user_id: userId,
+            shop_id: shopId,
+            role: 'owner',
+            is_active: true,
+          }, { onConflict: 'user_id,shop_id' });
+
+        if (memberError) {
+          console.warn("V2 shop_members upsert warning:", memberError);
+          setStatus(`AUTH OK, V2 Profile OK, but shop_members failed: ${memberError.message}`);
         } else {
-          await supabase.from("shops").update({ 
+          await supabase.from("shops").update({
             needs_password_change: true,
-            kyc_completed: false 
+            kyc_completed: false
           }).eq("shop_id", shopId);
-          
-          setStatus("SUCCESS! Account provisioned natively.");
+
+          setStatus("✅ SUCCESS! Account fully provisioned (V1 + V2 identity layers).");
         }
       }
     } catch (err) {
