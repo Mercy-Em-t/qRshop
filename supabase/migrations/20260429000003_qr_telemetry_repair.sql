@@ -1,10 +1,15 @@
--- 20260429000003_qr_telemetry_repair.sql
--- Repairing the QR scan tracking system: RLS policies and trigger synchronization.
+-- 2. Ensure scan_count column exists
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'qrs' AND column_name = 'scan_count') THEN
+        ALTER TABLE public.qrs ADD COLUMN scan_count INTEGER DEFAULT 0;
+    END IF;
+END $$;
 
--- 1. Enable RLS on events (if not already enabled)
+-- 3. Enable RLS on events (if not already enabled)
 ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
 
--- 2. Allow anonymous inserts for telemetry (Public QR Scans)
+-- 4. Allow anonymous inserts for telemetry (Public QR Scans)
 -- This is critical for tracking scans from customers who are not logged in.
 DROP POLICY IF EXISTS "Anyone can log events" ON public.events;
 CREATE POLICY "Anyone can log events" 
@@ -12,7 +17,7 @@ ON public.events FOR INSERT
 TO anon, authenticated 
 WITH CHECK (true);
 
--- 3. Allow shop owners to view events for their own shops
+-- 5. Allow shop owners to view events for their own shops
 DROP POLICY IF EXISTS "Shop owners can view their events" ON public.events;
 CREATE POLICY "Shop owners can view their events" 
 ON public.events FOR SELECT 
@@ -23,7 +28,7 @@ USING (
   )
 );
 
--- 4. Repair Trigger logic for Alphanumeric IDs
+-- 6. Repair Trigger logic for Alphanumeric IDs
 -- Ensure the increment trigger handles TEXT qr_ids correctly.
 CREATE OR REPLACE FUNCTION increment_scan_count()
 RETURNS trigger AS $$
@@ -43,7 +48,7 @@ CREATE TRIGGER trg_increment_scan_count
 AFTER INSERT ON public.events
 FOR EACH ROW EXECUTE FUNCTION increment_scan_count();
 
--- 5. Seed scan_count if any are missing (Re-synchronize)
+-- 7. Seed scan_count if any are missing (Re-synchronize)
 -- This backfills the scan_count column based on existing event records.
 UPDATE public.qrs q
 SET scan_count = (
