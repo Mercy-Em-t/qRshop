@@ -5,19 +5,35 @@ import LoadingSpinner from "./LoadingSpinner";
 
 export default function MaintenanceGate({ children, preFetchedMaintenance }) {
   const [maintenance, setMaintenance] = useState(preFetchedMaintenance || null);
-  const [loading, setLoading] = useState(!preFetchedMaintenance);
+  
+  const [loading, setLoading] = useState(() => {
+    if (preFetchedMaintenance) return false;
+    
+    // Determine if we should block for maintenance check
+    const publicPaths = ['/', '/pricing', '/login', '/signup', '/terms', '/privacy', '/about', '/contact', '/request-access'];
+    const isPublicPath = typeof window !== 'undefined' && publicPaths.includes(window.location.pathname);
+    
+    // Check if we are on the main domain (not a subdomain)
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const parts = hostname.split('.');
+    const isMainDomain = parts.length < 3 || parts[0] === 'www' || hostname.includes('vercel.app') || hostname === 'localhost';
+
+    // If it's a public path on main domain, don't block
+    return !(isPublicPath && isMainDomain);
+  });
+
   const user = getCurrentUser();
 
   useEffect(() => {
-    if (preFetchedMaintenance) return; // Skip if we already have it
-
+    // We always fetch the latest maintenance status in the background
+    // but only block if 'loading' was initially true
     async function checkMaintenance() {
       try {
         const { data, error } = await supabase
           .from("system_config")
           .select("config_value")
           .eq("config_key", "maintenance_mode")
-          .single();
+          .maybeSingle();
 
         if (!error && data) {
           setMaintenance(data.config_value);
@@ -30,7 +46,7 @@ export default function MaintenanceGate({ children, preFetchedMaintenance }) {
     }
 
     checkMaintenance();
-  }, [preFetchedMaintenance]);
+  }, []); // Run on mount to ensure background sync
 
   if (loading) return <LoadingSpinner message="Checking system status..." />;
 

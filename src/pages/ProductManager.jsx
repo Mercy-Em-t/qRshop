@@ -45,6 +45,8 @@ export default function ProductManager() {
   const [stock, setStock] = useState("");
   const [sku, setSku] = useState("");
   const [productLink, setProductLink] = useState("");
+  const [salesHeadline, setSalesHeadline] = useState("");
+  const [salesScript, setSalesScript] = useState("");
   const [tags, setTags] = useState("");
   
   // Image Upload State
@@ -97,7 +99,7 @@ export default function ProductManager() {
     
     const { data, error } = await supabase
       .from("menu_items")
-      .select("*, product_images(url)")
+      .select("*, product_images(url), product_sales_pages(*)")
       .eq("shop_id", SHOP_ID)
       .order("category", { ascending: true })
       .order("created_at", { ascending: false });
@@ -166,75 +168,101 @@ export default function ProductManager() {
     }
 
     if (!error) {
-       if (imageFile && newProductId) {
-          try {
-             setUploadProgress(10);
-             const fileExt = imageFile.name.split('.').pop();
-             const fileName = `${SHOP_ID}/${newProductId}-${Date.now()}.${fileExt}`;
-             
-             setUploadProgress(40);
-             const { error: uploadError } = await supabase.storage
-                .from('product-images')
-                .upload(fileName, imageFile);
-                
-             if (uploadError) throw uploadError;
-             
-             setUploadProgress(80);
-             const { data: publicUrlData } = supabase.storage
-                .from('product-images')
-                .getPublicUrl(fileName);
-                
-             const publicUrl = publicUrlData.publicUrl;
-             
-             await supabase.from("product_images").insert({
-                 product_id: newProductId,
-                 url: publicUrl,
-                 position: 0
-             });
-             
-             await supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", newProductId);
-             
-             setUploadProgress(100);
-          } catch (imgErr) {
-             console.error("Image upload failed:", imgErr);
-             alert("Product saved, but image upload failed: " + imgErr.message);
-          }
+       // 1. Core save is successful - Update local state immediately for fast feedback
+       if (editingId) {
+          setItems(prev => prev.map(item => item.id === editingId ? { ...item, ...payload } : item));
        }
 
-       try {
-          const salesContent = generateSalesContent({
-             name,
-             benefits: customFields.benefits || "",
-             processing: customFields.processing || "",
-             origin: customFields.origin || "",
-             nutrition_info: customFields.nutrition_info || "",
-             recipe: customFields.recipe || "",
-             category,
-             brand: customFields.brand || "",
-             diet_tags: typeof customFields.diet_tags === 'string' ? customFields.diet_tags.split(',').map(d => d.trim()).filter(Boolean) : (Array.isArray(customFields.diet_tags) ? customFields.diet_tags : [])
-          });
-
-          await supabase.from("product_sales_pages").upsert({
-             product_id: newProductId,
-             headline: salesContent.headline,
-             sales_script: salesContent.sales_script,
-             benefits_summary: salesContent.benefits_summary,
-             recipe_suggestions: salesContent.recipe_suggestions,
-             is_published: true
-          }, { onConflict: 'product_id' });
+       // 2. Secondary Operations (Parallel & Background)
+       const handleSecondaryOps = async () => {
+          let imageUrl = null;
           
-          console.log("Sales content auto-generated successfully.");
-       } catch (salesErr) {
-          console.error("Failed to generate sales content:", salesErr);
-       }
+          // Image Flow
+          if (imageFile && newProductId) {
+             try {
+                setUploadProgress(10);
+                const fileExt = imageFile.name.split('.').pop();
+                const fileName = `${SHOP_ID}/${newProductId}-${Date.now()}.${fileExt}`;
+                
+                setUploadProgress(40);
+                const { error: uploadError } = await supabase.storage
+                   .from('product-images')
+                   .upload(fileName, imageFile);
+                   
+                if (uploadError) throw uploadError;
+                
+                const { data: publicUrlData } = supabase.storage
+                   .from('product-images')
+                   .getPublicUrl(fileName);
+                   
+                imageUrl = publicUrlData.publicUrl;
+                
+                // Parallelize secondary image records
+                await Promise.all([
+                   supabase.from("product_images").insert({
+                       product_id: newProductId,
+                       url: imageUrl,
+                       position: 0
+                   }),
+                   supabase.from("menu_items").update({ image_url: imageUrl }).eq("id", newProductId)
+                ]);
+                
+                setUploadProgress(100);
+             } catch (imgErr) {
+                console.error("Secondary image processing failed:", imgErr);
+             }
+          }
 
-       handleCancelEdit();
-       fetchItems();
+          // Background: AI Sales Content (Prioritize manual edits)
+          try {
+             let finalHeadline = salesHeadline;
+             let finalScript = salesScript;
+
+             // Auto-generate only if fields are empty
+             if (!finalHeadline || !finalScript) {
+                const generated = generateSalesContent({
+                   name,
+                   benefits: customFields.benefits || "",
+                   processing: customFields.processing || "",
+                   origin: customFields.origin || "",
+                   nutrition_info: customFields.nutrition_info || "",
+                   recipe: customFields.recipe || "",
+                   category,
+                   brand: customFields.brand || "",
+                   diet_tags: Array.isArray(customFields.diet_tags) ? customFields.diet_tags : []
+                });
+                
+                if (!finalHeadline) finalHeadline = generated.headline;
+                if (!finalScript) finalScript = generated.sales_script;
+             }
+
+             await supabase.from("product_sales_pages").upsert({
+                product_id: newProductId,
+                headline: finalHeadline,
+                sales_script: finalScript,
+                is_published: true
+             }, { onConflict: 'product_id' });
+          } catch (salesErr) {
+             console.warn("Background sales content processing failed:", salesErr);
+          }
+          
+          // Final Refresh if we are adding new
+          if (!editingId) fetchItems();
+       };
+
+       // Run secondary ops in parallel to the UI completion
+       handleSecondaryOps();
+
+       // 3. Immediate UI Completion
+       setIsAdding(false);
+       setShowAddForm(false);
+       resetForm();
+       if (editingId) setEditingId(null);
     } else {
-      console.error("Failed to save item", error);
-      alert("Error saving item: " + error.message);
+       console.error("Save error:", error);
+       alert("Error saving product: " + error.message);
+       setIsAdding(false);
     }
-    setIsAdding(false);
     setUploadProgress(0);
   };
 
@@ -273,6 +301,10 @@ export default function ProductManager() {
 
       setCustomFields(unifiedAttributes);
       setSelectedTemplateId(item.template_id || "");
+      
+      const sp = item.product_sales_pages?.[0];
+      setSalesHeadline(sp?.headline || "");
+      setSalesScript(sp?.sales_script || "");
 
      setImageFile(null);
      setImagePreview(null);
@@ -854,9 +886,38 @@ export default function ProductManager() {
                />
             </div>
 
-             <div className="md:col-span-2 py-6">
-                <AttributePanel 
-                  category={category}
+              <div className="md:col-span-2 py-6 border-t border-gray-100">
+                 <h3 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    ✨ Marketing AI Copy
+                    <span className="text-[10px] font-normal text-gray-400 normal-case tracking-normal">(Auto-generated if left blank)</span>
+                 </h3>
+                 <div className="space-y-4">
+                    <div>
+                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Marketing Headline</label>
+                       <input 
+                          type="text"
+                          value={salesHeadline}
+                          onChange={e => setSalesHeadline(e.target.value)}
+                          placeholder="e.g. Experience the purest organic blend..."
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                       />
+                    </div>
+                    <div>
+                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sales Script / Hook</label>
+                       <textarea 
+                          rows={3}
+                          value={salesScript}
+                          onChange={e => setSalesScript(e.target.value)}
+                          placeholder="Write a compelling story or hook for this product..."
+                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+                       />
+                    </div>
+                 </div>
+              </div>
+
+              <div className="md:col-span-2 py-6 border-t border-gray-100">
+                 <AttributePanel 
+                   category={category}
                   currentAttributes={customFields}
                   onChange={setCustomFields}
                   shopSchema={shopSchema}
@@ -940,6 +1001,58 @@ export default function ProductManager() {
                                 <img src={item.image_url} alt="" className="w-full h-full object-cover" />
                              ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-300 text-[9px] font-bold uppercase tracking-tighter">No Pic</div>
+             )}
+             
+             <div className="md:col-span-2 flex items-center gap-4">
+                {imagePreview ? (
+                   <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm">
+                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => {setImageFile(null); setImagePreview(null);}} className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-bl-lg text-xs font-bold">×</button>
+                   </div>
+                ) : (
+                   <div className="w-16 h-16 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 font-bold">📷</div>
+                )}
+                <label className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 cursor-pointer transition">
+                   Upload Image
+                   <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImageSelect} className="hidden" />
+                </label>
+             </div>
+
+            <div className="flex items-end gap-2 md:col-span-1">
+              <button
+                type="submit"
+                disabled={isAdding}
+                className="w-full bg-green-600 text-white font-black py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 uppercase tracking-widest text-xs"
+              >
+                {isAdding ? "Saving..." : editingId ? "Update Product" : "Save Product"}
+              </button>
+            </div>
+          </form>
+        </section>
+        )}
+
+        <section>
+          {loading ? (
+             <div className="space-y-4">
+                {[1, 2, 3].map(i => <div key={i} className="bg-white h-24 rounded-xl animate-pulse"></div>)}
+             </div>
+          ) : filteredItems.length === 0 ? (
+             <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100 italic text-gray-400">
+                No products discovered in this category.
+             </div>
+          ) : viewMode === "list" ? (
+             <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden">
+                {currentItems.map((item) => (
+                   <div key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${item.is_active === false ? 'bg-gray-50/50 opacity-60' : 'hover:bg-gray-50/30'}`}>
+                       <div className="flex items-center gap-3 min-w-0">
+                          {/* Item Thumbnail */}
+                          <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
+                             {item.product_images && item.product_images.length > 0 ? (
+                                <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
+                             ) : item.image_url ? (
+                                <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                             ) : (
+                                <div className="w-full h-full flex items-center justify-center text-gray-300 text-[9px] font-bold uppercase tracking-tighter">No Pic</div>
                              )}
                           </div>
                           
@@ -951,13 +1064,29 @@ export default function ProductManager() {
                                </span>
                              </div>
                              <p className="text-[10px] text-gray-500 mt-0.5 font-mono">SKU: {item.sku || 'N/A'}</p>
-                             <p className="text-sm font-black text-gray-900 mt-1">KSh {item.price}</p>
+                             <div className="flex items-center gap-2 mt-1">
+                                <p className="text-sm font-black text-gray-900">KSh {item.price}</p>
+                                {item.product_sales_pages && item.product_sales_pages.length > 0 && (
+                                   <span className="text-[8px] font-black bg-indigo-50 text-indigo-500 px-1.5 py-0.5 rounded border border-indigo-100 flex items-center gap-1">
+                                      ✨ MARKETING READY
+                                   </span>
+                                )}
+                             </div>
                           </div>
                        </div>
                        <div className="flex items-center gap-2 shrink-0">
                           <button onClick={() => generateAdLink(item)} className="p-2 text-indigo-500 hover:bg-indigo-50 rounded-lg hover:rotate-12 transition-all" title="Get Share Link">
                              🔗
                           </button>
+                          {item.product_sales_pages?.[0]?.id && (
+                              <button 
+                                onClick={() => window.open(`/product/${item.id}`, '_blank')}
+                                className="p-2 text-purple-500 hover:bg-purple-50 rounded-lg" 
+                                title="View Sales Script"
+                              >
+                                📄
+                              </button>
+                           )}
                           <button onClick={() => startEdit(item)} className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors" title="Edit Metadata">
                              ✏️
                           </button>
@@ -965,39 +1094,44 @@ export default function ProductManager() {
                              {item.is_active === false ? '👁️' : '🚫'}
                           </button>
                        </div>
-                   </div>
-                ))}
-             </div>
-          ) : (
-             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {currentItems.map((item) => (
-                   <div key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-md ${item.is_active === false ? 'opacity-60' : ''}`}>
-                      <div className="aspect-square bg-gray-100 relative group">
-                         {item.product_images && item.product_images.length > 0 ? (
-                             <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
-                         ) : item.image_url ? (
-                             <img src={item.image_url} alt="" className="w-full h-full object-cover" />
-                         ) : (
-                             <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-bold uppercase">No Image</div>
-                         )}
-                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            <button onClick={() => generateAdLink(item)} className="p-2 bg-white rounded-full text-indigo-600 shadow-sm hover:scale-110 transition-transform">🔗</button>
-                            <button onClick={() => startEdit(item)} className="p-2 bg-white rounded-full text-slate-600 shadow-sm hover:scale-110 transition-transform">✏️</button>
-                         </div>
-                      </div>
-                      <div className="p-3 flex-1 flex flex-col">
-                         <div className="flex items-start justify-between gap-1 mb-1">
-                            <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{item.name}</h3>
-                            <button onClick={() => handleToggleActive(item.id, item.is_active)} className="text-xs">{item.is_active === false ? '👁️' : '🚫'}</button>
-                         </div>
-                         <p className="text-[10px] text-gray-500 mb-2">{item.category}</p>
-                         <p className="mt-auto font-black text-green-700">KSh {item.price}</p>
-                      </div>
-                   </div>
-                ))}
-             </div>
-          )}
-          
+                    </div>
+                 ))}
+              </div>
+           ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                 {currentItems.map((item) => (
+                    <div key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-md ${item.is_active === false ? 'opacity-60' : ''}`}>
+                       <div className="aspect-square bg-gray-100 relative group">
+                          {item.product_images && item.product_images.length > 0 ? (
+                              <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
+                          ) : item.image_url ? (
+                              <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-bold uppercase">No Image</div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                             <button onClick={() => generateAdLink(item)} className="p-2 bg-white rounded-full text-indigo-600 shadow-sm hover:scale-110 transition-transform">🔗</button>
+                             <button onClick={() => startEdit(item)} className="p-2 bg-white rounded-full text-slate-600 shadow-sm hover:scale-110 transition-transform">✏️</button>
+                          </div>
+                       </div>
+                       <div className="p-3 flex-1 flex flex-col">
+                          <div className="flex items-start justify-between gap-1 mb-1">
+                             <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{item.name}</h3>
+                             <button onClick={() => handleToggleActive(item.id, item.is_active)} className="text-xs">{item.is_active === false ? '👁️' : '🚫'}</button>
+                          </div>
+                          <p className="text-[10px] text-gray-500 mb-2">{item.category}</p>
+                          <div className="flex items-center justify-between mt-auto">
+                             <p className="font-black text-green-700 text-sm">KSh {item.price}</p>
+                             {item.product_sales_pages && item.product_sales_pages.length > 0 && (
+                                <span className="text-[8px] font-black text-indigo-400 bg-indigo-50 px-1 rounded" title="AI Script Generated">✨ AI</span>
+                             )}
+                          </div>
+                       </div>
+                    </div>
+                 ))}
+              </div>
+           )}
+
           {totalPages > 1 && (
              <div className="flex items-center justify-center gap-4 mt-8">
                 <button onClick={goToPrevPage} disabled={currentPage === 1} className="p-2 rounded-full hover:bg-white disabled:opacity-30">←</button>

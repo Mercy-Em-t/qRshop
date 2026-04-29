@@ -81,10 +81,24 @@ import SeedWholesaleUser from "./pages/SeedWholesaleUser";
 import ProductDetails from "./pages/ProductDetails";
 
 export default function App() {
-  const [systemState, setSystemState] = useState({
-    maintenance: null,
-    resolving: true,
-    subdomainShopId: null
+  const [systemState, setSystemState] = useState(() => {
+    // Determine if we can "Hotload" this page
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
+    const parts = hostname.split('.');
+    const isSubdomain = parts.length >= 3 && parts[0] !== 'www' && !hostname.includes('vercel.app');
+    const isLocalSubdomain = hostname === 'localhost' ? false : (hostname.includes('localhost') && parts.length >= 2);
+    
+    const publicPaths = ['/', '/pricing', '/login', '/signup', '/terms', '/privacy', '/about', '/contact', '/request-access'];
+    const isPublicPath = typeof window !== 'undefined' && publicPaths.includes(window.location.pathname);
+    
+    // If it's a public path on the main domain, we don't need to block for resolution
+    const canHotload = isPublicPath && !isSubdomain && !isLocalSubdomain;
+
+    return {
+      maintenance: null,
+      resolving: !canHotload,
+      subdomainShopId: null
+    };
   });
 
   useOfflineEventQueue();
@@ -105,14 +119,14 @@ export default function App() {
       try {
         // Parallelized System Checks
         const [maintenanceRes, shopRes] = await Promise.all([
-          // 1. Maintenance Check
+          // 1. Maintenance Check (Background)
           supabase
             .from("system_config")
             .select("config_value")
             .eq("config_key", "maintenance_mode")
             .maybeSingle(),
           
-          // 2. Subdomain Resolution (Conditional)
+          // 2. Subdomain Resolution (Background)
           subdomain && subdomain !== 'www' 
             ? getShopBySubdomain(subdomain)
             : Promise.resolve(null)

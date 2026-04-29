@@ -8,14 +8,9 @@ let authStaticCache = null;
 export async function authenticateUser(email, password) {
   if (!supabase) return { error: "Supabase not connected." };
 
-  // Phase 0: Clear any existing sessions to prevent hand-off deadlocks
-  console.log("Auth [v2.4.1-deploy-2015]: Clearing stale session...");
-  await supabase.auth.signOut();
-  localStorage.removeItem("savannah_session");
-  authStaticCache = null;
-
   // Phase 1: Authenticate natively against Supabase Auth (with Timeout Guard)
-  console.log("Auth [v2.4.1-deploy-2015]: Initiating native signIn for", email.trim());
+  // We no longer force signOut() here; Supabase handles session transition natively.
+  console.log("Auth: Initiating native signIn for", email.trim());
   
   const authPromise = supabase.auth.signInWithPassword({
     email: email.trim(),
@@ -42,62 +37,52 @@ export async function authenticateUser(email, password) {
     return { error: authError?.message || "Invalid credentials." };
   }
 
-  console.log("Auth [v2.4.1-deploy-2015]: Native success, fetching V2 profiles for ID:", authData.user.id);
-
-  // Phase 2: Fetch V2 Profile and Shop Memberships
-  const [profile, memberships] = await Promise.all([
-    getProfile(authData.user.id),
+  // Phase 2: Fetch Profile and Shop Memberships in parallel
+  const [profileRes, membershipsRes] = await Promise.all([
+    supabase.from("profiles").select("*").eq("id", authData.user.id).maybeSingle(),
     getShopMemberships(authData.user.id)
   ]);
 
+  let resolvedProfile = profileRes.data;
+  let resolvedMemberships = membershipsRes;
+
   // Phase 2.5: V1 → V2 Soft Backfill Guard
-  // If profile is missing, the user is a legacy V1 account.
-  // Auto-create their V2 profile + shop_members from shop_users data.
-  let resolvedProfile = profile;
-  let resolvedMemberships = memberships;
-
   if (!resolvedProfile) {
-    console.warn("Auth: Profile missing — checking for V1 legacy data to backfill...");
-
+    console.warn("Auth: Profile missing — checking for V1 legacy data...");
     const { data: v1Rows } = await supabase
       .from("shop_users")
-      .select("shop_id, role, email")
+      .select("shop_id, role")
       .eq("id", authData.user.id);
 
     if (v1Rows && v1Rows.length > 0) {
-      console.log(`Auth: Found ${v1Rows.length} V1 row(s). Auto-creating V2 identity...`);
-
-      // Create the missing profile row
+      // 1. Bulk create profile
       const { data: newProfile } = await supabase
         .from("profiles")
         .upsert({
           id: authData.user.id,
           display_name: authData.user.email.split('@')[0],
           system_role: v1Rows.some(r => r.role === 'system_admin') ? 'system_admin' : 'user',
-        }, { onConflict: 'id' })
+        })
         .select()
         .single();
 
-      // Create shop_members rows from V1 shop_users data
-      for (const row of v1Rows) {
-        await supabase
-          .from("shop_members")
-          .upsert({
-            user_id: authData.user.id,
-            shop_id: row.shop_id,
-            role: row.role || 'owner',
-            is_active: true,
-          }, { onConflict: 'user_id,shop_id' });
-      }
+      // 2. Bulk create shop_members
+      const newMemberships = v1Rows.map(row => ({
+        user_id: authData.user.id,
+        shop_id: row.shop_id,
+        role: row.role || 'owner',
+        is_active: true,
+      }));
 
+      await supabase.from("shop_members").upsert(newMemberships, { onConflict: 'user_id,shop_id' });
+      
       resolvedProfile = newProfile;
       resolvedMemberships = await getShopMemberships(authData.user.id);
-      console.log("Auth: V1→V2 backfill complete.");
     }
   }
 
   if (!resolvedProfile) {
-    console.error("Auth: Profile missing and no V1 data found — cannot authenticate.");
+    console.error("Auth: Profile missing after backfill attempt.");
     await supabase.auth.signOut();
     return { error: "User profile missing. Contact support." };
   }
