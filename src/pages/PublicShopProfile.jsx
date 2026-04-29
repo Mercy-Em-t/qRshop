@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { resolveShopIdentifier } from "../services/shop-service";
 import { getMenuItems } from "../services/menu-service";
 import { getCurrentUser } from "../services/auth-service";
+import { logEvent } from "../services/telemetry-service";
 import MetaTags from "../components/MetaTags";
 import { createPublicSession } from "../utils/qr-session";
 
@@ -34,25 +35,14 @@ export default function PublicShopProfile({ directShopId }) {
 
         const items = await getMenuItems(shopData.id);
 
-
-        if (!shopData) {
-          setError("Shop not found");
-          return;
-        }
-
-        // Legacy Feature Gate: Savannah Atelier Exclusive Access (REMOVED to restore public customer flow)
-        /* 
-        if (shopData.subdomain?.toLowerCase() === 'atelier' || shopData.name.toLowerCase().includes('atelier')) {
-           const user = getCurrentUser();
-           if (!user) {
-              sessionStorage.setItem('return_to', window.location.pathname);
-              navigate('/login?exclusive=true');
-              return;
-           }
-        }
-        */
-
         setShop(shopData);
+        
+        // Log Telemetry: Direct Visit (Link in Bio / Share)
+        // We log this as a general view event.
+        logEvent("shop_profile_view", {
+           shop_id: shopData.id,
+           is_direct: !params.qrId // If there is no QR ID in the URL, it's a direct link
+        });
         
         // Canonical Redirect: If accessed via UUID or old link, redirect to the current slug
         if (shopIdentifier !== shopData.slug && !directShopId) {
