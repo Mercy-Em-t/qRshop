@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { fetchTemplates } from "../services/template-service";
@@ -9,6 +10,7 @@ import { uuidToShort } from "../utils/short-id";
 import { generateSalesContent } from "../services/sales-content-generator";
 import { normalizeAttributeKey } from "../utils/attribute-utils";
 import VariationBuilder from "../components/VariationBuilder";
+import AttributePanel from "../components/AttributePanel";
 
 export default function ProductManager() {
   const [items, setItems] = useState([]);
@@ -37,6 +39,7 @@ export default function ProductManager() {
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Main");
+  const [subcategory, setSubcategory] = useState("");
   
   // eCommerce New Fields
   const [stock, setStock] = useState("");
@@ -48,16 +51,6 @@ export default function ProductManager() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
-
-  // Extended Sales Attributes
-  const [benefits, setBenefits] = useState("");
-  const [usageInstructions, setUsageInstructions] = useState("");
-  const [origin, setOrigin] = useState("");
-  const [processing, setProcessing] = useState("");
-  const [nutritionInfo, setNutritionInfo] = useState("");
-  const [recipe, setRecipe] = useState("");
-  const [brand, setBrand] = useState("");
-  const [dietTags, setDietTags] = useState("");
 
   // Template State
   const [availableTemplates, setAvailableTemplates] = useState([]);
@@ -98,7 +91,6 @@ export default function ProductManager() {
   };
 
   const fetchItems = async () => {
-    // Only show full loading state if we have no items (prevent flickering on refresh)
     if (items.length === 0) {
       setLoading(true);
     }
@@ -144,21 +136,12 @@ export default function ProductManager() {
       description,
       price: parseFloat(price),
       category,
+      subcategory: subcategory || null,
       stock: stock ? parseInt(stock) : -1,
       sku: sku || null,
       product_link: productLink || null,
       tags: parsedTags,
-      // Template data
       template_id: selectedTemplateId || null,
-      // Extended Top-Level Attributes
-      benefits,
-      usage_instructions: usageInstructions,
-      origin,
-      processing,
-      nutrition_info: nutritionInfo,
-      recipe,
-      brand,
-      diet_tags: dietTags ? dietTags.split(',').map(d => d.trim()).filter(Boolean) : [],
       attributes: {
          ...Object.keys(customFields).reduce((acc, key) => {
             acc[normalizeAttributeKey(key)] = customFields[key];
@@ -209,7 +192,6 @@ export default function ProductManager() {
                  position: 0
              });
              
-             // Direct sync to menu_items to ensure immediate visibility across all components
              await supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", newProductId);
              
              setUploadProgress(100);
@@ -219,18 +201,17 @@ export default function ProductManager() {
           }
        }
 
-       // Auto-generate Sales Magazine Content
        try {
           const salesContent = generateSalesContent({
              name,
-             benefits,
-             processing,
-             origin,
-             nutrition_info: nutritionInfo,
-             recipe,
+             benefits: customFields.benefits || "",
+             processing: customFields.processing || "",
+             origin: customFields.origin || "",
+             nutrition_info: customFields.nutrition_info || "",
+             recipe: customFields.recipe || "",
              category,
-             brand,
-             diet_tags: dietTags ? dietTags.split(',').map(d => d.trim()).filter(Boolean) : []
+             brand: customFields.brand || "",
+             diet_tags: typeof customFields.diet_tags === 'string' ? customFields.diet_tags.split(',').map(d => d.trim()).filter(Boolean) : (Array.isArray(customFields.diet_tags) ? customFields.diet_tags : [])
           });
 
           await supabase.from("product_sales_pages").upsert({
@@ -259,27 +240,39 @@ export default function ProductManager() {
 
   const startEdit = (item) => {
      setEditingId(item.id);
-     setName(item.name);
+     setName(item.name || "");
      setDescription(item.description || "");
-     setPrice(item.price);
-     setCategory(item.category);
-     setStock(item.stock === -1 ? "" : item.stock);
+     setPrice(item.price || "");
+     setCategory(item.category || "Main");
+     setSubcategory(item.subcategory || "");
+     setStock(item.stock === -1 ? "" : (item.stock || ""));
      setSku(item.sku || "");
      setProductLink(item.product_link || "");
      setTags(item.tags ? item.tags.join(", ") : "");
       
-     // Load extended attributes (Check top-level first, fallback to JSONB attributes for legacy)
-     setBenefits(item.benefits || item.attributes?.benefits || "");
-     setUsageInstructions(item.usage_instructions || item.attributes?.usage_instructions || "");
-     setOrigin(item.origin || item.attributes?.origin || "");
-     setProcessing(item.processing || item.attributes?.processing || "");
-     setNutritionInfo(item.nutrition_info || item.attributes?.nutrition_info || "");
-     setRecipe(item.recipe || item.attributes?.recipe || "");
-     setBrand(item.brand || item.attributes?.brand || "");
-     setDietTags(item.diet_tags ? item.diet_tags.join(", ") : (item.attributes?.diet_tags ? item.attributes.diet_tags.join(", ") : ""));
-     
-     setSelectedTemplateId(item.template_id || "");
-     setCustomFields(item.attributes || {});
+      const finalSubcat = item.subcategory || item.attributes?.subcategory || "";
+      setSubcategory(finalSubcat);
+      
+      const unifiedAttributes = {
+        ...(item.attributes || {}),
+        benefits: item.benefits || item.attributes?.benefits || "",
+        usage_instructions: item.usage_instructions || item.attributes?.usage_instructions || "",
+        origin: item.origin || item.attributes?.origin || "",
+        processing: item.processing || item.attributes?.processing || "",
+        nutrition_info: item.nutrition_info || item.attributes?.nutrition_info || "",
+        recipe: item.recipe || item.attributes?.recipe || "",
+        brand: item.brand || item.attributes?.brand || "",
+        diet_tags: item.diet_tags || item.attributes?.diet_tags || []
+      };
+
+      Object.keys(unifiedAttributes).forEach(k => {
+        if (unifiedAttributes[k] === null || unifiedAttributes[k] === undefined) {
+          delete unifiedAttributes[k];
+        }
+      });
+
+      setCustomFields(unifiedAttributes);
+      setSelectedTemplateId(item.template_id || "");
 
      setImageFile(null);
      setImagePreview(null);
@@ -293,18 +286,11 @@ export default function ProductManager() {
      setDescription("");
      setPrice("");
      setCategory("Main");
+     setSubcategory("");
      setStock("");
      setSku("");
      setProductLink("");
      setTags("");
-     setBenefits("");
-     setUsageInstructions("");
-     setOrigin("");
-     setProcessing("");
-     setNutritionInfo("");
-     setRecipe("");
-     setBrand("");
-     setDietTags("");
      setSelectedTemplateId("");
      setCustomFields({});
      setImageFile(null);
@@ -330,18 +316,20 @@ export default function ProductManager() {
       return;
     }
     
-     const headers = ["ID", "Name", "Category", "Price", "Description", "Stock", "SKU", "Product_Link", "Tags", "Variant_Options", "Image_URL"];
+     const headers = ["ID", "Name", "Category", "Sub-category", "Price", "Description", "Stock", "SKU", "Product_Link", "Tags", "Variant_Options", "Image_URL", "Attributes"];
      const csvRows = [headers.join(",")];
      
      for (const item of items) {
        const escapeCell = (str) => `"${String(str || "").replace(/"/g, '""')}"`;
        const tagsStr = Array.isArray(item.tags) ? item.tags.join(",") : "";
        const variantStr = (item.variant_options && Object.keys(item.variant_options).length > 0) ? JSON.stringify(item.variant_options) : "";
+       const attributesStr = (item.attributes && Object.keys(item.attributes).length > 0) ? JSON.stringify(item.attributes) : "";
        
        const row = [
          item.id,
          escapeCell(item.name),
          escapeCell(item.category),
+         escapeCell(item.subcategory),
          item.price || 0,
          escapeCell(item.description),
          item.stock || "",
@@ -349,7 +337,8 @@ export default function ProductManager() {
          escapeCell(item.product_link),
          escapeCell(tagsStr),
          escapeCell(variantStr),
-         item.image_url || ""
+         item.image_url || "",
+         escapeCell(attributesStr)
        ];
        csvRows.push(row.join(","));
      }
@@ -369,10 +358,10 @@ export default function ProductManager() {
   };
 
   const handleDownloadTemplate = () => {
-    const templateContent = [
-      "ID,Name,Category,Price,Description,Stock,SKU,Product_Link,Tags,Variant_Options,Image_URL",
-      ",Signature Item,Main,750,High quality product description,50,SAV-01,,tag1,tag2,\"{\"\"size\"\":[\"\"Small\"\",\"\"Large\"\"]}\",https://example.com/p1.jpg"
-    ].join("\n");
+     const templateContent = [
+       "ID,Name,Category,Sub-category,Price,Description,Stock,SKU,Product_Link,Tags,Variant_Options,Image_URL,Attributes",
+       ",Signature Item,Main,Premium,750,High quality product description,50,SAV-01,,tag1,tag2,\"{\"\"size\"\":[\"\"Small\"\",\"\"Large\"\"]}\",https://example.com/p1.jpg,\"{\"\"brand\"\":\"\"Savannah\"\",\"\"origin\"\":\"\"Kenya\"\"}\""
+     ].join("\n");
     
     const blob = new Blob([templateContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -437,8 +426,7 @@ export default function ProductManager() {
         if (rows[i].trim() === "") continue;
         
         const row = parseCSVRow(rows[i]);
-        // Support both old (10 cols) and new (11 cols with ID)
-        const hasId = row.length >= 11;
+        const hasId = row.length >= 12;
         const offset = hasId ? 1 : 0;
 
         if (row.length < (3 + offset)) {
@@ -448,7 +436,9 @@ export default function ProductManager() {
 
         const id = hasId ? cleanStr(row[0]) : null;
         const name = cleanStr(row[0 + offset]);
-        const priceRaw = cleanStr(row[2 + offset]);
+        const category = cleanStr(row[1 + offset]) || "Main";
+        const subcategory = cleanStr(row[2 + offset]) || "";
+        const priceRaw = cleanStr(row[3 + offset]);
 
         if (!name) {
             validationErrors.push(`Row ${i + 1}: Product name is required.`);
@@ -462,39 +452,41 @@ export default function ProductManager() {
         }
 
         let parsedVariants = {};
-        if (row.length >= (9 + offset) && cleanStr(row[8 + offset])) {
-           try { parsedVariants = JSON.parse(cleanStr(row[8 + offset])); } 
+        if (row.length >= (10 + offset) && cleanStr(row[9 + offset])) {
+           try { parsedVariants = JSON.parse(cleanStr(row[9 + offset])); } 
            catch(err) { console.warn("Invalid variants JSON for item: " + name) }
         }
 
         let parsedTags = [];
-        if (row.length >= (8 + offset) && cleanStr(row[7 + offset])) {
-           parsedTags = cleanStr(row[7 + offset]).split(',').map(t=>t.trim()).filter(Boolean);
+        if (row.length >= (9 + offset) && cleanStr(row[8 + offset])) {
+           parsedTags = cleanStr(row[8 + offset]).split(',').map(t=>t.trim()).filter(Boolean);
         }
         
-        const imageUrl = (row.length >= (10 + offset) && cleanStr(row[9 + offset])) ? cleanStr(row[9 + offset]) : null;
+        let parsedAttributes = {};
+        if (row.length >= (13 + offset) && cleanStr(row[12 + offset])) {
+           try { 
+              const rawAttr = cleanStr(row[12 + offset]);
+              parsedAttributes = JSON.parse(rawAttr); 
+           } 
+           catch(err) { console.warn("Invalid attributes JSON for item: " + name) }
+        }
+        
+        const imageUrl = (row.length >= (11 + offset) && cleanStr(row[10 + offset])) ? cleanStr(row[10 + offset]) : null;
 
         const itemData = {
            shop_id: SHOP_ID,
            name: name,
-           category: cleanStr(row[1 + offset]) || "Main",
+           category: category,
+           subcategory: subcategory || null,
            price: parsedPrice,
-           description: row.length >= (4 + offset) ? cleanStr(row[3 + offset]) : "",
-           stock: (row.length >= (5 + offset) && cleanStr(row[4 + offset])) ? parseInt(row[4 + offset]) : -1,
-           sku: row.length >= (6 + offset) ? (cleanStr(row[5 + offset]) || null) : null,
-           product_link: row.length >= (7 + offset) ? (cleanStr(row[6 + offset]) || null) : null,
+           description: row.length >= (5 + offset) ? cleanStr(row[4 + offset]) : "",
+           stock: (row.length >= (6 + offset) && cleanStr(row[5 + offset])) ? parseInt(row[5 + offset]) : -1,
+           sku: row.length >= (7 + offset) ? (cleanStr(row[6 + offset]) || null) : null,
+           product_link: row.length >= (8 + offset) ? (cleanStr(row[7 + offset]) || null) : null,
            tags: parsedTags,
            variant_options: parsedVariants,
            image_url: imageUrl,
-           // Sync top-level extended fields if provided in future templates
-           benefits: "", 
-           usage_instructions: "",
-           origin: "",
-           processing: "",
-           nutrition_info: "",
-           recipe: "",
-           brand: "",
-           diet_tags: []
+           attributes: parsedAttributes
         };
 
         if (id && id.length > 10) {
@@ -765,16 +757,34 @@ export default function ProductManager() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <select
+              <input
+                type="text"
+                required
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 bg-white"
-              >
-                <option value="Main">Primary Collection</option>
-                <option value="Accessories">Accessories</option>
-                <option value="Apparel">Apparel</option>
-                <option value="Other">Other</option>
-              </select>
+                placeholder="e.g. Apparel, Food, Electronics"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+                list="category-suggestions"
+              />
+              <datalist id="category-suggestions">
+                <option value="Food" />
+                <option value="Drink" />
+                <option value="Apparel" />
+                <option value="Accessories" />
+                <option value="Home & Decor" />
+                <option value="Digital" />
+                <option value="Services" />
+              </datalist>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Sub-category</label>
+              <input
+                type="text"
+                value={subcategory}
+                onChange={(e) => setSubcategory(e.target.value)}
+                placeholder="e.g. Men's Wear, Organic, PDF"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+              />
             </div>
             <div className="md:col-span-2">
                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
@@ -843,58 +853,17 @@ export default function ProductManager() {
                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50"
                />
             </div>
-            
-             <div className="md:col-span-2 pt-4 border-t border-gray-100 mt-4">
-                <h3 className="text-sm font-bold text-indigo-600 uppercase tracking-widest">Product Structure</h3>
-                <p className="text-[10px] text-gray-400">Choose a blueprint to define custom fields for this item.</p>
+
+             <div className="md:col-span-2 py-6">
+                <AttributePanel 
+                  category={category}
+                  currentAttributes={customFields}
+                  onChange={setCustomFields}
+                  shopSchema={shopSchema}
+                />
              </div>
 
-             <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Select Blueprint / Template</label>
-                <select 
-                  value={selectedTemplateId}
-                  onChange={(e) => setSelectedTemplateId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-600 outline-none transition"
-                >
-                   <option value="">Generic (Standard Fields)</option>
-                   {availableTemplates.map(t => (
-                      <option key={t.id} value={t.id}>{t.name}</option>
-                   ))}
-                </select>
-             </div>
-
-             {/* DYNAMIC SHOP-SPECIFIC ATTRIBUTES */}
-              {shopSchema.length > 0 && (
-                <div className="md:col-span-2 pt-4 border-t border-gray-100 mt-2">
-                   <h3 className="text-sm font-bold text-orange-600 uppercase tracking-widest mb-1">Custom Shop Attributes</h3>
-                   <p className="text-[10px] text-gray-400 mb-4">Fields defined in your Attribute Manager.</p>
-                   <div className="grid md:grid-cols-2 gap-4 p-5 bg-orange-50/20 rounded-2xl border border-orange-100/50">
-                      {shopSchema.map(field => (
-                        <div key={field.key} className={field.type === 'variation' ? 'md:col-span-2' : ''}>
-                           <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{field.label}</label>
-                           
-                           {field.type === 'variation' ? (
-                             <VariationBuilder 
-                               field={field} 
-                               value={customFields[field.key]} 
-                               onChange={(val) => setCustomFields({...customFields, [field.key]: val})} 
-                             />
-                           ) : (
-                             <input 
-                                type="text"
-                                value={customFields[field.key] || ""}
-                                onChange={e => setCustomFields({...customFields, [field.key]: e.target.value})}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
-                                placeholder={"Enter " + field.label + "..."}
-                             />
-                           )}
-                        </div>
-                      ))}
-                   </div>
-                </div>
-              )}
-
-              {/* DYNAMIC TEMPLATE FIELDS */}
+             {/* DYNAMIC TEMPLATE FIELDS (STILL SUPPORTED) */}
              {selectedTemplateId && (
                 <div className="md:col-span-2 p-6 bg-indigo-50/20 rounded-2xl border border-indigo-100/50 space-y-4">
                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 italic">Building based on {availableTemplates.find(t => t.id === selectedTemplateId)?.name} blueprint</p>
@@ -920,78 +889,6 @@ export default function ProductManager() {
                       ))}
                    </div>
                 </div>
-             )}
-
-             {/* FALLBACK STATIC FIELDS (Only shown if no template) */}
-             {!selectedTemplateId && (
-                <>
-                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
-                      <input
-                        type="text"
-                        value={brand}
-                        onChange={(e) => setBrand(e.target.value)}
-                        placeholder="e.g. Mama Rosy"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
-                      />
-                   </div>
-                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Origin</label>
-                      <input
-                        type="text"
-                        value={origin}
-                        onChange={(e) => setOrigin(e.target.value)}
-                        placeholder="e.g. Kenya (Makueni)"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
-                      />
-                   </div>
-                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Processing</label>
-                      <input
-                        type="text"
-                        value={processing}
-                        onChange={(e) => setProcessing(e.target.value)}
-                        placeholder="e.g. Cold-pressed, Organic"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
-                      />
-                   </div>
-                   <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Nutrition Focus</label>
-                      <input
-                        type="text"
-                        value={nutritionInfo}
-                        onChange={(e) => setNutritionInfo(e.target.value)}
-                        placeholder="e.g. High Protein, Vitamin C"
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
-                      />
-                   </div>
-                   <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Product Benefits (Key Selling Points)</label>
-                      <textarea
-                        rows={2}
-                        value={benefits}
-                        onChange={(e) => setBenefits(e.target.value)}
-                        placeholder="e.g. Supports focus and energy without the crash..."
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
-                      />
-                   </div>
-                   <div className="md:col-span-2">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Usage Instructions / Recipe</label>
-                      <textarea
-                        rows={2}
-                        value={usageInstructions}
-                        onChange={(e) => setUsageInstructions(e.target.value)}
-                        placeholder="e.g. Add 1 scoop to hot water, whisk until frothy."
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-indigo-50/30"
-                      />
-                   </div>
-                </>
-             )}
-
-            <div className="md:col-span-2 mt-4 flex gap-6 items-end">
-               <div className="flex-1">
-                 <label className="block text-sm font-medium text-gray-700 mb-2">Product Image (Max 5MB)</label>
-                 <div className="flex items-center gap-4">
                     {imagePreview ? (
                        <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm">
                           <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />

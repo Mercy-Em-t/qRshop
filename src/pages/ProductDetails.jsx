@@ -24,17 +24,31 @@ export default function ProductDetails() {
           setLoading(false);
           return;
         }
-        setItem(itemData);
+
+        // Unify attributes (Check top-level first, fallback to JSONB attributes)
+        const unified = {
+          ...itemData,
+          brand: itemData.brand || itemData.attributes?.brand,
+          origin: itemData.origin || itemData.attributes?.origin,
+          processing: itemData.processing || itemData.attributes?.processing,
+          nutrition_info: itemData.nutrition_info || itemData.attributes?.nutrition_info,
+          benefits: itemData.benefits || itemData.attributes?.benefits,
+          usage_instructions: itemData.usage_instructions || itemData.attributes?.usage_instructions,
+          recipe: itemData.recipe || itemData.attributes?.recipe,
+          diet_tags: itemData.diet_tags && itemData.diet_tags.length > 0 ? itemData.diet_tags : (itemData.attributes?.diet_tags || [])
+        };
+        
+        setItem(unified);
 
         // Auto-select first variation if any exist
-        const varKey = Object.keys(itemData.attributes || {}).find(k => Array.isArray(itemData.attributes[k]));
-        if (varKey && itemData.attributes[varKey].length > 0) {
-          setSelectedVariation({ key: varKey, ...itemData.attributes[varKey][0] });
+        const varKey = Object.keys(unified.attributes || {}).find(k => Array.isArray(unified.attributes[k]));
+        if (varKey && unified.attributes[varKey].length > 0) {
+          setSelectedVariation({ key: varKey, ...unified.attributes[varKey][0] });
         }
 
         const [shopData, related] = await Promise.all([
-          resolveShopIdentifier(itemData.shop_id),
-          getRelatedItems(itemData.shop_id, itemData.category, productId)
+          resolveShopIdentifier(unified.shop_id),
+          getRelatedItems(unified.shop_id, unified.category, productId)
         ]);
         
         setShop(shopData);
@@ -117,7 +131,7 @@ export default function ProductDetails() {
             <div className="flex justify-between items-start gap-4">
               <div>
                 <span className="text-[10px] font-black text-white/60 uppercase tracking-[0.2em] mb-1 block">
-                  {item.category}
+                  {item.category}{item.subcategory ? ` • ${item.subcategory}` : ""}
                 </span>
                 <h1 className="text-3xl font-black text-white leading-tight">
                   {item.name}
