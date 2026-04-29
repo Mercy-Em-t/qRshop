@@ -631,23 +631,6 @@ export default function Order() {
                     ? `💬 Place ${terms.order} (WhatsApp)` 
                     : `🛒 Confirm ${terms.order}`}
             </button>
-
-            {isOnline && (shopPlanAccess.isPro || shopPlanAccess.isBusiness) && (
-              <button
-                onClick={handleMpesaCheckout}
-                disabled={sending || shop?.is_online === false}
-                className="w-full bg-[#1e293b] text-white py-5 rounded-2xl font-black text-lg hover:bg-black transition-all flex items-center justify-center gap-3 shadow-2xl shadow-indigo-500/20 border-b-4 border-indigo-600 active:border-b-0 active:translate-y-1"
-              >
-                {sending ? (
-                  <span className="animate-spin rounded-full h-6 w-6 border-4 border-white/30 border-t-white"></span>
-                ) : (
-                  <>
-                    <span className="bg-green-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs">M</span>
-                    Pay Now via M-Pesa
-                  </>
-                )}
-              </button>
-            )}
             
             <a
                href={buildWhatsAppLink(shopPhone, `Hi ${shopName}, I have a question about my order/menu.`)}

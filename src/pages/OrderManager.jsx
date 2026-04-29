@@ -4,6 +4,7 @@ import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
 import { updateOrderStatus } from "../services/order-service";
 import { useShopAgent } from "../hooks/use-shop-agent";
+import { triggerMpesaStkPush } from "../services/payment-service";
 
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
@@ -107,11 +108,39 @@ export default function OrderManager() {
         return;
       }
 
+      // If phone exists, trigger M-Pesa immediately
+      if (editingOrder.client_phone) {
+         triggerMpesaStkPush(editingOrder.id, editingOrder.client_phone, editTotal, SHOP_ID);
+      }
+
       setEditingOrder(null);
       fetchOrders();
     } catch (err) {
       console.error("Unexpected Revision Error:", err);
       alert("An unexpected error occurred while saving the revision.");
+    }
+  };
+
+  const handleRequestPayment = async (order) => {
+    if (!order.client_phone) {
+       alert("No phone number found for this customer. Please update order first.");
+       return;
+    }
+
+    try {
+      // 1. Update Status
+      await updateOrderStatus(order.id, 'pending_payment');
+
+      // 2. Trigger STK Push
+      const result = await triggerMpesaStkPush(order.id, order.client_phone, order.total_price, SHOP_ID);
+      
+      if (result.success) {
+         alert(`M-Pesa prompt sent to ${order.client_phone}`);
+      } else {
+         alert("Failed to trigger STK push. Is the phone number valid?");
+      }
+    } catch (err) {
+      console.error("Payment Request Error:", err);
     }
   };
 
@@ -361,11 +390,20 @@ export default function OrderManager() {
                        
                        {['accepted', 'preparing'].includes(order.status) && (
                           <button 
-                             onClick={() => updateOrderStatus(order.id, 'pending_payment')} 
+                             onClick={() => handleRequestPayment(order)} 
                              className="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-md shadow-amber-100 flex items-center justify-center gap-2 mb-2"
                           >
                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                              Request Payment
+                          </button>
+                       )}
+
+                       {order.status === 'pending_payment' && (
+                          <button 
+                             onClick={() => triggerMpesaStkPush(order.id, order.client_phone, order.total_price, SHOP_ID)} 
+                             className="w-full bg-slate-800 hover:bg-black text-white py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 mb-2"
+                          >
+                             🔄 Resend STK Push
                           </button>
                        )}
 
