@@ -15,25 +15,19 @@ export async function logEvent(
   const sessionId = getOrCreateTrackingSession();
 
   const newEvent = {
-    id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7),
+    event_id: crypto.randomUUID ? crypto.randomUUID() : undefined, // Let DB generate if no crypto
     event_type: eventType,
     qr_id: qrId,
     shop_id: shopId,
     session_id: sessionId,
     device_id: deviceId,
-    campaign_id: extraMetadata.campaign_id || null,
-    // Note: user_id and visit_id are not in the base public.events schema
-    // so we pack them safely into device_info until the V3 schema is manually applied
-    device_info: {
-      userAgent: deviceInfo,
+    metadata: {
+      device_info: deviceInfo,
+      campaign_id: extraMetadata.campaign_id || null,
       user_id: extraMetadata.user_id || null,
       visit_id: extraMetadata.visit_id || null,
-      ...Object.fromEntries(
-        Object.entries(extraMetadata).filter(
-          ([key]) => key !== "user_id" && key !== "visit_id" && key !== "campaign_id"
-        )
-      ),
-    },
+      ...extraMetadata
+    }
   };
 
   const enqueueFallback = (evt) => {

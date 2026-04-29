@@ -3,10 +3,11 @@
   flex-direction: column;
   align-items: center;
   padding: 80px 24px 60px;
-  background: radial-gradient(circle at top right, #f0fdf4, #ffffff);
+  background: radial-gradient(circle at top right, rgba(var(--primary-rgb, 99, 102, 241), 0.05), #ffffff);
   text-align: center;
   position: relative;
   overflow: hidden;
+  font-family: var(--font-family), sans-serif;
 }
 
 .hero::after {
@@ -41,7 +42,7 @@
 
 .hero__subtext {
   font-size: 1.1rem;
-  color: #166534;
+  color: var(--primary-color, #166534);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -73,37 +74,54 @@
 }
 
 .btn--primary {
-  background: #166534;
+  background: var(--primary-color, #166534);
   color: white;
-  box-shadow: 0 10px 20px rgba(22, 101, 52, 0.2);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
 .btn--primary:hover {
-  background: #14532d;
+  filter: brightness(0.9);
   transform: translateY(-2px);
-  box-shadow: 0 15px 30px rgba(22, 101, 52, 0.3);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+@media (min-width: 768px) {
+  .hero {
+    padding: 120px 48px 100px;
+  }
+  
+  .hero__heading {
+    font-size: 4rem;
+    max-width: 800px;
+  }
+  
+  .hero__actions {
+    flex-direction: row;
+    max-width: 600px;
+    justify-content: center;
+  }
 }
 
 .btn--secondary {
-  background: rgba(22, 101, 52, 0.05);
-  color: #166534;
-  border: 1.5px solid rgba(22, 101, 52, 0.1);
+  background: rgba(var(--primary-rgb, 99, 102, 241), 0.05);
+  color: var(--primary-color, #166534);
+  border: 1.5px solid var(--primary-color, rgba(22, 101, 52, 0.1));
 }
 
 .btn--secondary:hover {
-  background: rgba(22, 101, 52, 0.1);
+  background: rgba(var(--primary-rgb, 99, 102, 241), 0.1);
   transform: translateY(-2px);
 }
 
 .btn--share {
   background: white;
-  color: #166534;
-  border: 1.5px solid #166534;
+  color: var(--primary-color, #166534);
+  border: 1.5px solid var(--primary-color, #166534);
   font-size: 0.8rem;
   padding: 14px 24px;
 }
 
 .btn--share:hover {
-  background: #f0fdf4;
+  background: rgba(var(--primary-rgb, 99, 102, 241), 0.05);
   transform: translateY(-2px);
 }

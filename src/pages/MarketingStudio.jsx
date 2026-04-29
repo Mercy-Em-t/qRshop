@@ -8,7 +8,14 @@ import { supabase } from "../services/supabase-client";
 export default function MarketingStudio() {
   const [qrs, setQrs] = useState([]);
   const [selectedQr, setSelectedQr] = useState(null);
-  const [activeTab, setActiveTab] = useState("ads"); // "ads" | "promos"
+  const [activeTab, setActiveTab] = useState("ads"); // "ads" | "promos" | "appearance"
+  
+  // Appearance State
+  const [appearanceConfig, setAppearanceConfig] = useState({
+    layout: ["hero", "categories", "featured_grid", "value_props", "cta"],
+    theme: { primary_color: "#6366f1", font_family: "Outfit" }
+  });
+  const [customCss, setCustomCss] = useState("");
   
   // Customization State (Ads)
   const [headline, setHeadline] = useState("Tap to Order Now! 🍔");
@@ -52,7 +59,8 @@ export default function MarketingStudio() {
         await Promise.all([
           fetchQRs(),
           fetchPromotions(),
-          fetchProductPool()
+          fetchProductPool(),
+          fetchAppearanceSettings()
         ]);
       } catch (err) {
         console.error("Initialization Failed:", err);
@@ -83,13 +91,39 @@ export default function MarketingStudio() {
     if (data) setPromotions(data);
   };
 
-  const fetchProductPool = async () => {
-    if (shopId) {
-      const { data } = await supabase.from('menu_items').select('id, name, price, category').eq('shop_id', shopId);
-      if (data) setMenuItems(data);
-    } else if (supplierId) {
-      const { data } = await supabase.from('supplier_items').select('id, name, price, category').eq('supplier_id', supplierId);
-      if (data) setMenuItems(data); // Reusing menuItems state for simplicity in the UI
+  const fetchAppearanceSettings = async () => {
+    if (!shopId) return;
+    const { data, error } = await supabase
+      .from('shops')
+      .select('appearance_config, custom_css')
+      .eq('shop_id', shopId)
+      .single();
+    
+    if (data) {
+      if (data.appearance_config) setAppearanceConfig(data.appearance_config);
+      if (data.custom_css) setCustomCss(data.custom_css);
+    }
+  };
+
+  const saveAppearance = async () => {
+    if (!shopId) return;
+    setIsSubmitting(true);
+    try {
+       const { error } = await supabase
+         .from('shops')
+         .update({
+            appearance_config: appearanceConfig,
+            custom_css: customCss
+         })
+         .eq('shop_id', shopId);
+       
+       if (error) throw error;
+       alert("Appearance settings saved successfully!");
+    } catch (err) {
+       alert("Failed to save: " + err.message);
+    } finally {
+       setIsSubmitting(true);
+       setIsSubmitting(false);
     }
   };
 
@@ -212,7 +246,13 @@ export default function MarketingStudio() {
             onClick={() => setActiveTab("promos")}
             className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'promos' ? 'bg-white text-teal-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            🏷️ Promo Bundles & Deals
+            🏷️ Promo Bundles
+          </button>
+          <button 
+            onClick={() => setActiveTab("appearance")}
+            className={`px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === 'appearance' ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            ✨ Store Appearance
           </button>
         </div>
 
@@ -338,6 +378,136 @@ export default function MarketingStudio() {
                    </div>
                 </div>
             </div>
+          </div>
+        ) : activeTab === 'appearance' ? (
+          <div className="grid md:grid-cols-[1fr_350px] gap-8">
+             <div className="space-y-6">
+                <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+                   <h3 className="text-xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                      🎨 Brand Theming
+                   </h3>
+                   <div className="grid sm:grid-cols-2 gap-6">
+                      <div>
+                         <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Primary Brand Color</label>
+                         <div className="flex gap-2">
+                            <input 
+                               type="color" 
+                               value={appearanceConfig.theme?.primary_color || "#6366f1"} 
+                               onChange={e => setAppearanceConfig({...appearanceConfig, theme: {...appearanceConfig.theme, primary_color: e.target.value}})}
+                               className="w-12 h-12 rounded-xl cursor-pointer border-none p-0"
+                            />
+                            <input 
+                               type="text" 
+                               value={appearanceConfig.theme?.primary_color || ""} 
+                               onChange={e => setAppearanceConfig({...appearanceConfig, theme: {...appearanceConfig.theme, primary_color: e.target.value}})}
+                               className="flex-1 px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-sm uppercase"
+                            />
+                         </div>
+                      </div>
+                      <div>
+                         <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Typography (Font Family)</label>
+                         <select 
+                            value={appearanceConfig.theme?.font_family || "Outfit"}
+                            onChange={e => setAppearanceConfig({...appearanceConfig, theme: {...appearanceConfig.theme, font_family: e.target.value}})}
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                         >
+                            <option value="Outfit">Outfit (Modern)</option>
+                            <option value="Inter">Inter (Clean)</option>
+                            <option value="Roboto">Roboto (Classic)</option>
+                            <option value="Playfair Display">Playfair (Elegant)</option>
+                            <option value="Montserrat">Montserrat (Bold)</option>
+                         </select>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+                   <h3 className="text-xl font-black text-gray-900 mb-2 flex items-center gap-2">
+                      🧩 Page Layout (Plugins)
+                   </h3>
+                   <p className="text-sm text-gray-500 mb-6">Drag components to reorder or click to toggle visibility.</p>
+                   
+                   <div className="space-y-3">
+                      {(appearanceConfig.layout || []).map((section, idx) => (
+                         <div key={section} className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-2xl group">
+                            <div className="flex items-center gap-4">
+                               <span className="text-gray-300 group-hover:text-gray-400 cursor-grab">⠿</span>
+                               <span className="font-bold text-sm text-gray-700 capitalize">{section.replace('_', ' ')}</span>
+                            </div>
+                            <div className="flex gap-2">
+                               <button 
+                                 onClick={() => {
+                                    const next = [...appearanceConfig.layout];
+                                    if (idx > 0) {
+                                       [next[idx], next[idx-1]] = [next[idx-1], next[idx]];
+                                       setAppearanceConfig({...appearanceConfig, layout: next});
+                                    }
+                                 }}
+                                 className="p-2 hover:bg-white rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                               >↑</button>
+                               <button 
+                                 onClick={() => {
+                                    const next = [...appearanceConfig.layout];
+                                    if (idx < next.length - 1) {
+                                       [next[idx], next[idx+1]] = [next[idx+1], next[idx]];
+                                       setAppearanceConfig({...appearanceConfig, layout: next});
+                                    }
+                                 }}
+                                 className="p-2 hover:bg-white rounded-lg text-gray-400 hover:text-gray-600 transition-colors"
+                               >↓</button>
+                               <button 
+                                 onClick={() => {
+                                    const next = appearanceConfig.layout.filter(s => s !== section);
+                                    setAppearanceConfig({...appearanceConfig, layout: next});
+                                 }}
+                                 className="p-2 hover:bg-red-50 rounded-lg text-gray-300 hover:text-red-500 transition-colors"
+                               >✕</button>
+                            </div>
+                         </div>
+                      ))}
+                      
+                      <div className="pt-4 flex flex-wrap gap-2">
+                         {["hero", "categories", "featured_grid", "value_props", "cta", "footer"].filter(s => !appearanceConfig.layout.includes(s)).map(s => (
+                            <button 
+                               key={s}
+                               onClick={() => setAppearanceConfig({...appearanceConfig, layout: [...appearanceConfig.layout, s]})}
+                               className="px-4 py-2 border-2 border-dashed border-gray-200 rounded-xl text-xs font-bold text-gray-400 hover:border-indigo-300 hover:text-indigo-500 transition-all"
+                            >
+                               + Add {s.replace('_', ' ')}
+                            </button>
+                         ))}
+                      </div>
+                   </div>
+                </div>
+
+                <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+                   <h3 className="text-xl font-black text-gray-900 mb-2 flex items-center gap-2">
+                      ⌨️ Custom CSS (Bespoke)
+                   </h3>
+                   <p className="text-sm text-gray-500 mb-4">Add your own CSS overrides for a pixel-perfect design.</p>
+                   <textarea 
+                      rows={6}
+                      value={customCss}
+                      onChange={e => setCustomCss(e.target.value)}
+                      placeholder=".hero { background: #000; } ..."
+                      className="w-full px-4 py-4 bg-gray-900 text-green-400 font-mono text-xs rounded-2xl border-none outline-none focus:ring-2 focus:ring-indigo-500"
+                   />
+                </div>
+             </div>
+
+             <div className="sticky top-24 h-fit">
+                <div className="bg-indigo-600 rounded-3xl p-8 text-white shadow-xl shadow-indigo-500/20">
+                   <h4 className="font-black text-lg mb-2">Publish Changes</h4>
+                   <p className="text-indigo-100 text-sm mb-6">Your store appearance updates in real-time once you save.</p>
+                   <button 
+                      onClick={saveAppearance}
+                      disabled={isSubmitting}
+                      className="w-full bg-white text-indigo-600 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-50 transition shadow-lg disabled:opacity-50"
+                   >
+                      {isSubmitting ? "Saving..." : "💾 Save Appearance"}
+                   </button>
+                </div>
+             </div>
           </div>
         ) : (
           <div className="grid lg:grid-cols-[2fr_1fr] gap-8">

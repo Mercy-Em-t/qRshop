@@ -70,53 +70,70 @@ export default function PublicShopProfile({ directShopId }) {
     loadShopData();
   }, [shopIdentifier, navigate]);
 
-  const shopId = shop?.id;
+  // 1. Section Registry
+  const SectionRegistry = {
+    hero: (s, items) => <ShopHero key="hero" shop={s} />,
+    categories: (s, items) => {
+       const cats = Array.from(new Set(items.map(i => i.category))).map(cat => ({
+         id: cat,
+         name: cat,
+         emoji: "📦"
+       }));
+       return <div key="categories" className="py-8"><CategoryScroller categories={cats} shopId={s.id} /></div>;
+    },
+    featured_grid: (s, items) => <ProductGrid key="grid" items={items} shopId={s.id} />,
+    value_props: () => <ValueProps key="props" />,
+    cta: (s) => (
+      <div key="cta" className="text-center py-20 px-6 bg-slate-50 dark:bg-slate-900/50">
+          <h2 className="text-3xl font-black mb-6 dark:text-white">Ready to explore?</h2>
+          <button 
+              onClick={() => {
+                 if (s.id) {
+                    createPublicSession(s.id);
+                    navigate(`/menu`);
+                 }
+              }}
+              className="bg-theme-secondary text-white px-12 py-5 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-indigo-500/20"
+          >
+              Enter Full Store
+          </button>
+      </div>
+    ),
+    footer: (s) => <ShopFooter key="footer" shop={s} />
+  };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-theme-secondary"></div></div>;
+  // 2. Loading / Error States
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>;
   if (error || !shop) return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-4"><h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Shop Not Found</h1><button onClick={() => navigate("/")} className="mt-4 text-theme-secondary font-bold">Go Home</button></div>;
 
-  // Extract unique categories for the scroller
-  const categories = Array.from(new Set(featuredItems.map(i => i.category))).map(cat => ({
-    id: cat,
-    name: cat,
-    emoji: "📦" // Default emoji, can be mapped later
-  }));
+  // 3. Extract Dynamic Layout
+  const config = shop.appearance_config || { layout: ["hero", "categories", "featured_grid", "value_props", "cta"] };
+  const layout = config.layout || ["hero", "categories", "featured_grid", "value_props", "cta"];
+  const theme = config.theme || {};
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white selection:bg-indigo-500 selection:text-white" style={{
+       '--primary-color': theme.primary_color || '#6366f1',
+       '--secondary-color': theme.secondary_color || '#10b981',
+       '--font-family': theme.font_family || 'Outfit'
+    }}>
       <MetaTags 
-        title={`${shop.name} | Modern Savannah`} 
-        description={shop.tagline || "Shop our exclusive collection online."} 
+        title={`${shop.name} | ${shop.tagline || 'Shop Online'}`} 
+        description={shop.tagline || `Welcome to ${shop.name}. Browse our products and order online.`} 
       />
 
-      <main>
-        <ShopHero shop={shop} />
-        
-        <div style={{ padding: '20px 0' }}>
-            <CategoryScroller categories={categories} shopId={shopId} />
-        </div>
+      {/* Power User CSS Injection */}
+      {shop.custom_css && <style>{shop.custom_css}</style>}
 
-        <ProductGrid items={featuredItems} shopId={shopId} />
-        
-        <ValueProps />
-
-        <div className="text-center py-16 px-4 bg-slate-50 dark:bg-slate-950">
-            <h2 className="text-2xl font-black mb-4 dark:text-white">Ready to browse everything?</h2>
-            <button 
-                onClick={() => {
-                   if (shopId) {
-                      createPublicSession(shopId);
-                      navigate(`/menu`);
-                   }
-                }}
-                className="bg-theme-secondary text-white px-10 py-4 rounded-full font-black uppercase tracking-widest hover:bg-theme-secondary/90 transition shadow-xl"
-            >
-                View Full Menu
-            </button>
-        </div>
+      <main className="relative">
+        {layout.map(sectionName => {
+           const render = SectionRegistry[sectionName];
+           return render ? render(shop, featuredItems) : null;
+        })}
       </main>
 
-      <ShopFooter shop={shop} />
+      {/* Persistent Footer if not in layout */}
+      {!layout.includes('footer') && <ShopFooter shop={shop} />}
     </div>
   );
 }
