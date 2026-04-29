@@ -17,6 +17,8 @@ export default function TrackOrder() {
   const [isSubmittingRating, setIsSubmittingRating] = useState(false);
   const [ratingSaved, setRatingSaved] = useState(false);
   const [confirmingReceipt, setConfirmingReceipt] = useState(false);
+  const [mpesaCode, setMpesaCode] = useState("");
+  const [savingMpesaCode, setSavingMpesaCode] = useState(false);
   
   const terms = useNomenclature(order?.shop_id);
 
@@ -92,6 +94,27 @@ export default function TrackOrder() {
       if (!order) setError("Could not find order. It may have been deleted.");
     } finally {
       if (loading) setLoading(false);
+    }
+  };
+
+  const handleSaveMpesaCode = async () => {
+    if (!mpesaCode || mpesaCode.length < 5) {
+       alert("Please enter a valid M-Pesa transaction code.");
+       return;
+    }
+    setSavingMpesaCode(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ mpesa_code: mpesaCode.toUpperCase() })
+        .eq("id", orderId);
+      if (error) throw error;
+      setOrder(prev => ({ ...prev, mpesa_code: mpesaCode.toUpperCase() }));
+      alert("Payment code submitted! The shop will verify and update your status shortly.");
+    } catch (err) {
+      alert("Failed to submit code. Please try again.");
+    } finally {
+      setSavingMpesaCode(false);
     }
   };
 
@@ -315,69 +338,60 @@ export default function TrackOrder() {
             )}
          </section>
 
-        {/* Payment Module */}
+        {/* Manual Payment Module */}
         {order.status === 'pending_payment' && (
            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 p-6 rounded-2xl shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div className="flex items-center gap-3 mb-4">
                  <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-xl shadow-md shadow-green-200">📲</div>
                  <div>
-                    <h3 className="font-black text-gray-900 uppercase tracking-tight">M-Pesa Payment</h3>
-                    <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest">Secure Daraja Checkout</p>
+                    <h3 className="font-black text-gray-900 uppercase tracking-tight">Manual Payment</h3>
+                    <p className="text-[10px] font-bold text-green-600 uppercase tracking-widest">Pay to Till Number</p>
                  </div>
               </div>
 
               <div className="space-y-4">
-                 <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Phone Number</label>
-                    <input 
-                       type="tel"
-                       value={pin} // Reusing pin state for phone number to avoid new state
-                       onChange={(e) => setPin(e.target.value)}
-                       placeholder="e.g. 0712345678"
-                       className="w-full bg-white border border-green-100 rounded-xl px-4 py-3 text-lg font-bold focus:ring-2 focus:ring-green-500 outline-none transition-all"
-                    />
-                 </div>
-
-                 <button 
-                    onClick={async () => {
-                       if (!pin) return alert("Please enter your phone number.");
-                       setProcessingPin(true);
-                       try {
-                          const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
-                             body: { 
-                                order_id: order.id, 
-                                phone: pin, 
-                                amount: order.total_price,
-                                shop_id: order.shop_id,
-                                is_b2b: false
-                             }
-                          });
-                          if (error) throw error;
-                          alert("Prompt sent! Check your phone to enter PIN.");
-                       } catch (err) {
-                          alert("Automatic prompt failed. Please use manual payment below.");
-                       } finally {
-                          setProcessingPin(false);
-                       }
-                    }}
-                    disabled={processingPin}
-                    className={`w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-xl shadow-green-100 transition-all flex items-center justify-center gap-2 ${processingPin ? 'opacity-50' : ''}`}
-                 >
-                    {processingPin ? '🚀 Triggering...' : '💸 Pay Now'}
-                 </button>
-
-                 <div className="pt-4 border-t border-green-200/50">
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">Manual Payment Alternative</p>
-                    <div className="bg-white/60 rounded-xl p-4 border border-green-100">
-                       <p className="text-xs text-gray-600 mb-2">Send <b>KSh {order.total_price}</b> to:</p>
-                       <div className="flex justify-between items-center bg-green-50 px-3 py-2 rounded-lg border border-green-100">
-                          <span className="text-[10px] font-bold text-green-700 underline uppercase tracking-widest cursor-pointer" onClick={() => { navigator.clipboard.writeText(order?.shops?.phone || order?.shops?.whatsapp_number || ""); alert("Copied!"); }}>
-                             {order?.shops?.phone || order?.shops?.whatsapp_number || "Contact Shop"}
-                          </span>
-                          <span className="text-[8px] font-black bg-white px-1.5 py-0.5 rounded shadow-sm text-green-600">COPY</span>
-                       </div>
+                 <div className="bg-white/80 rounded-xl p-5 border border-green-100 text-center">
+                    <p className="text-xs text-gray-500 uppercase font-black tracking-widest mb-1">Order Amount</p>
+                    <p className="text-3xl font-black text-gray-900">KSh {order.total_price}</p>
+                    
+                    <div className="mt-4 pt-4 border-t border-dashed border-green-200">
+                       <p className="text-xs text-gray-500 mb-2 font-medium">Lipa na M-Pesa <b>Buy Goods</b> Till:</p>
+                       <p className="text-2xl font-black text-green-700 tracking-tighter">
+                          {order?.shops?.mpesa_till_number || order?.shops?.phone || "Contact Shop"}
+                       </p>
                     </div>
                  </div>
+
+                 {order.mpesa_code ? (
+                    <div className="bg-green-600 text-white p-4 rounded-xl text-center shadow-lg">
+                       <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Submitted Code</p>
+                       <p className="text-xl font-black tracking-widest">{order.mpesa_code}</p>
+                       <p className="text-[10px] mt-2 italic opacity-90">Awaiting shop verification...</p>
+                    </div>
+                 ) : (
+                    <div className="space-y-3">
+                       <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block text-center">Once paid, enter transaction code below:</label>
+                       <input 
+                          type="text"
+                          value={mpesaCode}
+                          onChange={(e) => setMpesaCode(e.target.value.toUpperCase())}
+                          placeholder="e.g. SBL234X56"
+                          className="w-full bg-white border border-green-100 rounded-xl px-4 py-3 text-lg font-black text-center tracking-widest focus:ring-2 focus:ring-green-500 outline-none transition-all uppercase placeholder:font-normal placeholder:tracking-normal"
+                       />
+                       <button 
+                          onClick={handleSaveMpesaCode}
+                          disabled={savingMpesaCode}
+                          className={`w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-xl shadow-green-100 transition-all flex items-center justify-center gap-2 ${savingMpesaCode ? 'opacity-50' : ''}`}
+                       >
+                          {savingMpesaCode ? '⌛ Submitting...' : '✅ Confirm Payment'}
+                       </button>
+                    </div>
+                 )}
+
+                 <p className="text-[9px] text-center text-slate-400 px-4 leading-relaxed uppercase font-bold">
+                    Need help? Contact the shop directly at <br/>
+                    <a href={`tel:${order?.shops?.phone}`} className="text-green-600">{order?.shops?.phone}</a>
+                 </p>
               </div>
            </div>
         )}

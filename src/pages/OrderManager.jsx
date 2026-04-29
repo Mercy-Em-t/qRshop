@@ -333,6 +333,13 @@ export default function OrderManager() {
                        <p className="text-lg font-bold text-gray-900">KSh {order.total_price}</p>
                     </div>
 
+                    {order.mpesa_code && (
+                       <div className="mb-4 p-3 bg-green-50 border border-green-100 rounded-xl">
+                          <p className="text-[9px] font-bold text-green-600 uppercase tracking-widest mb-1">M-Pesa Transaction Code</p>
+                          <p className="text-sm font-black text-gray-900 tracking-widest">{order.mpesa_code}</p>
+                       </div>
+                    )}
+
                     {order.notes && (
                       <p className="text-[10px] text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mb-4 font-medium italic">📝 {order.notes}</p>
                     )}
