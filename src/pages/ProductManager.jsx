@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+// Build Verification: 2026-04-30-13-57
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { fetchTemplates } from "../services/template-service";
