@@ -121,3 +121,10 @@ CREATE POLICY "Public Select"
 ON public.menu_items FOR SELECT
 TO anon, authenticated
 USING (is_active = true);
+
+-- 5. CRITICAL BACKFILL (V1 -> V2)
+-- Ensure all legacy shop_users are registered in shop_members so they pass RLS checks
+INSERT INTO public.shop_members (user_id, shop_id, role, is_active)
+SELECT id, shop_id, role, true
+FROM public.shop_users
+ON CONFLICT (user_id, shop_id) DO NOTHING;
