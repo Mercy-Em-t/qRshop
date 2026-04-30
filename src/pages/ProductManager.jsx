@@ -543,9 +543,7 @@ export default function ProductManager() {
         }
         
         const isUpdate = bulkItems.some(item => item.id);
-        const msg = isUpdate 
-           ? `Are you sure you want to Sync/Update ${bulkItems.length} products?`
-           : `Are you sure you want to import ${bulkItems.length} new products?`;
+        const msg = isUpdate ? `Are you sure you want to Sync/Update ${bulkItems.length} products?` : `Are you sure you want to import ${bulkItems.length} new products?`;
 
         if (!window.confirm(msg)) return;
 

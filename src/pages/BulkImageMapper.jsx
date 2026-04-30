@@ -23,13 +23,7 @@ const ImageRow = memo(({ img, products, processing, handleMatchChange, removeIma
           value={img.matchedProductId || ""}
           onChange={(e) => handleMatchChange(img.id, e.target.value)}
           disabled={img.status === "success" || processing}
-          className={`w-full text-xs font-bold p-2.5 rounded-xl border-2 transition-all outline-none ${
-            img.matchedProductId === "CREATE_NEW"
-              ? "border-indigo-100 bg-indigo-50/20 text-indigo-700 focus:border-indigo-500"
-              : img.matchedProductId 
-              ? "border-green-100 bg-white text-slate-900 focus:border-green-500" 
-              : "border-red-50 bg-red-50/30 text-red-400 focus:border-red-200"
-          }`}
+          className={`w-full text-xs font-bold p-2.5 rounded-xl border-2 transition-all outline-none ${img.matchedProductId === "CREATE_NEW" ? "border-indigo-100 bg-indigo-50/20 text-indigo-700 focus:border-indigo-500" : img.matchedProductId ? "border-green-100 bg-white text-slate-900 focus:border-green-500" : "border-red-50 bg-red-50/30 text-red-400 focus:border-red-200"}`}
         >
           <option value="">-- No Product Matched --</option>
           <optgroup label="Actions">
@@ -293,11 +287,7 @@ export default function BulkImageMapper() {
             <button
               disabled={processing || stats.total === 0 || stats.matched === 0}
               onClick={processImages}
-              className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition shadow-lg ${
-                processing || stats.total === 0 || stats.matched === 0 
-                ? "bg-slate-200 text-slate-400 cursor-not-allowed" 
-                : "bg-green-600 text-white hover:bg-green-700 shadow-green-100"
-              }`}
+              className={`px-6 py-2.5 rounded-xl font-black text-xs uppercase tracking-widest transition shadow-lg ${processing || stats.total === 0 || stats.matched === 0 ? "bg-slate-200 text-slate-400 cursor-not-allowed" : "bg-green-600 text-white hover:bg-green-700 shadow-green-100"}`}
             >
               {processing ? "Processing..." : "Process All →"}
             </button>
