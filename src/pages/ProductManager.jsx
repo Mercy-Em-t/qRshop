@@ -1028,7 +1028,7 @@ export default function ProductManager() {
                           </button>
                           {item.product_sales_pages?.[0]?.id && (
                               <button 
-                                onClick={() => window.open(`/product/${item.id}`, \'_blank\')}
+                                onClick={() => window.open(`/product/${item.id}`, '_blank')}
                                 className="p-2 text-purple-500 hover:bg-purple-50 rounded-lg" 
                                 title="View Sales Script"
                               >
@@ -1039,7 +1039,7 @@ export default function ProductManager() {
                              ✏️
                           </button>
                           <button onClick={() => handleToggleActive(item.id, item.is_active)} className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-red-50'}`} title={item.is_active === false ? "Live" : "Archive"}>
-                             {item.is_active === false ? \'👁️\' : \'🚫\'}
+                             {item.is_active === false ? '👁️' : '🚫'}
                           </button>
                        </div>
                     </div>
@@ -1048,7 +1048,7 @@ export default function ProductManager() {
            ) : (
                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   {currentItems.map((item) => (
-                     <div key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-md ${item.is_active === false ? \'opacity-60\' : \'\'}`}>
+                     <div key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-md ${item.is_active === false ? 'opacity-60' : ''}`}>
                         <div className="aspect-square bg-gray-100 relative group">
                            {item.product_images && item.product_images.length > 0 ? (
                                <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
@@ -1065,7 +1065,7 @@ export default function ProductManager() {
                         <div className="p-3 flex-1 flex flex-col">
                            <div className="flex items-start justify-between gap-1 mb-1">
                               <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{item.name}</h3>
-                              <button onClick={() => handleToggleActive(item.id, item.is_active)} className="text-xs">{item.is_active === false ? \'👁️\' : \'🚫\'}</button>
+                              <button onClick={() => handleToggleActive(item.id, item.is_active)} className="text-xs">{item.is_active === false ? '👁️' : '🚫'}</button>
                            </div>
                            <p className="text-[10px] text-gray-500 mb-2">{item.category}</p>
                            <div className="flex items-center justify-between mt-auto">
