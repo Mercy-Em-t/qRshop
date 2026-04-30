@@ -80,14 +80,14 @@ export default function BulkImageMapper() {
   }), [pendingImages]);
 
   const fetchProducts = useCallback(async (isSilent = false) => {
-    if (!isSilent) setLoading(true);
-    
     if (!SHOP_ID) {
       console.warn("BulkMapper: No SHOP_ID found, skipping fetch.");
-      if (!isSilent) setLoading(false);
+      setLoading(false);
       return;
     }
 
+    if (!isSilent) setLoading(true);
+    
     try {
       const { data, error } = await supabase
         .from("menu_items")
@@ -102,7 +102,7 @@ export default function BulkImageMapper() {
     } catch (err) {
       console.error("BulkMapper: Catalog fetch error:", err);
     } finally {
-      if (!isSilent) setLoading(false);
+      setLoading(false);
     }
   }, [SHOP_ID]);
 
@@ -111,8 +111,13 @@ export default function BulkImageMapper() {
       navigate("/login");
       return;
     }
-    fetchProducts();
-  }, [user, navigate, fetchProducts]);
+    // Only fetch if we have a shop ID, otherwise handle the error
+    if (SHOP_ID) {
+      fetchProducts();
+    } else {
+      setLoading(false);
+    }
+  }, [user, navigate, fetchProducts, SHOP_ID]);
 
   const cleanName = useCallback((name) => {
     return name?.toLowerCase()
@@ -183,7 +188,6 @@ export default function BulkImageMapper() {
 
         let productId = item.matchedProductId;
         
-        // --- NEW DRAFT CREATION LOGIC ---
         if (productId === "CREATE_NEW") {
            const productFriendlyName = cleanName(item.file.name)
               .split(' ')
@@ -253,6 +257,19 @@ export default function BulkImageMapper() {
 
   if (loading) return <LoadingSpinner message="Loading Product Catalog..." fullPage={true} />;
 
+  if (!SHOP_ID) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xl max-w-md text-center">
+          <div className="text-4xl mb-4">🏪</div>
+          <h2 className="text-xl font-black text-slate-900 uppercase">Shop ID Missing</h2>
+          <p className="text-sm text-slate-500 mt-2 mb-6">We couldn't determine which shop you're managing. Please select a shop from your dashboard first.</p>
+          <Link to="/a" className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition">Back to Dashboard</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
@@ -291,7 +308,6 @@ export default function BulkImageMapper() {
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-8">
           
-          {/* Sidebar: Upload & Instructions */}
           <aside className="space-y-6">
             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
               <h2 className="text-lg font-black text-slate-900 mb-2">1. Upload Folder / Files</h2>
@@ -336,7 +352,6 @@ export default function BulkImageMapper() {
             </div>
           </aside>
 
-          {/* Main Area: Mapping Table */}
           <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
             {pendingImages.length === 0 ? (
               <div className="p-20 text-center">

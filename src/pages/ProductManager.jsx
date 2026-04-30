@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { fetchTemplates } from "../services/template-service";
@@ -266,6 +265,24 @@ export default function ProductManager() {
     setUploadProgress(0);
   };
 
+  const resetForm = () => {
+     setName("");
+     setDescription("");
+     setPrice("");
+     setCategory("Main");
+     setSubcategory("");
+     setStock("");
+     setSku("");
+     setProductLink("");
+     setTags("");
+     setSelectedTemplateId("");
+     setCustomFields({});
+     setImageFile(null);
+     setImagePreview(null);
+     setSalesHeadline("");
+     setSalesScript("");
+  };
+
   const startEdit = (item) => {
      setEditingId(item.id);
      setName(item.name || "");
@@ -277,9 +294,6 @@ export default function ProductManager() {
      setSku(item.sku || "");
      setProductLink(item.product_link || "");
      setTags(item.tags ? item.tags.join(", ") : "");
-      
-      const finalSubcat = item.subcategory || item.attributes?.subcategory || "";
-      setSubcategory(finalSubcat);
       
       const unifiedAttributes = {
         ...(item.attributes || {}),
@@ -314,19 +328,7 @@ export default function ProductManager() {
 
   const handleCancelEdit = () => {
      setEditingId(null);
-     setName("");
-     setDescription("");
-     setPrice("");
-     setCategory("Main");
-     setSubcategory("");
-     setStock("");
-     setSku("");
-     setProductLink("");
-     setTags("");
-     setSelectedTemplateId("");
-     setCustomFields({});
-     setImageFile(null);
-     setImagePreview(null);
+     resetForm();
      setShowAddForm(false);
   };
   
@@ -712,8 +714,8 @@ export default function ProductManager() {
                 </div>
                 <button 
                   onClick={() => {
-                     handleCancelEdit();
-                     setShowAddForm(!showAddForm);
+                     if (showAddForm) handleCancelEdit();
+                     else setShowAddForm(true);
                   }}
                   className="bg-green-600 text-white font-bold text-sm px-5 py-2 rounded-lg shadow-sm hover:bg-green-700 transition"
                 >
@@ -761,7 +763,6 @@ export default function ProductManager() {
                       className={`px-3 py-2 text-xs font-bold transition-colors ${viewMode === 'grid' ? 'bg-green-600 text-white shadow-inner' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
                       title="Grid View"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 12h16M4 18h16M4 6h16M4 12zm0 0h16M4 18h16" /></svg>
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
                     </button>
                   </div>
@@ -917,14 +918,13 @@ export default function ProductManager() {
 
               <div className="md:col-span-2 py-6 border-t border-gray-100">
                  <AttributePanel 
-                   category={category}
-                  currentAttributes={customFields}
-                  onChange={setCustomFields}
-                  shopSchema={shopSchema}
-                />
-             </div>
+                    category={category}
+                    currentAttributes={customFields}
+                    onChange={setCustomFields}
+                    shopSchema={shopSchema}
+                 />
+              </div>
 
-             {/* DYNAMIC TEMPLATE FIELDS (STILL SUPPORTED) */}
              {selectedTemplateId && (
                 <div className="md:col-span-2 p-6 bg-indigo-50/20 rounded-2xl border border-indigo-100/50 space-y-4">
                    <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 italic">Building based on {availableTemplates.find(t => t.id === selectedTemplateId)?.name} blueprint</p>
@@ -950,60 +950,9 @@ export default function ProductManager() {
                       ))}
                    </div>
                 </div>
-                    {imagePreview ? (
-                       <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm">
-                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                          <button type="button" onClick={() => {setImageFile(null); setImagePreview(null);}} className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-bl-lg text-xs font-bold">×</button>
-                       </div>
-                    ) : (
-                       <div className="w-16 h-16 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 font-bold">📷</div>
-                    )}
-                    <label className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 cursor-pointer transition">
-                       Upload Image
-                       <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImageSelect} className="hidden" />
-                    </label>
-                 </div>
-               </div>
-            </div>
-
-            <div className="flex items-end gap-2 md:col-span-1">
-              <button
-                type="submit"
-                disabled={isAdding}
-                className="w-full bg-green-600 text-white font-black py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 uppercase tracking-widest text-xs"
-              >
-                {isAdding ? "Saving..." : editingId ? "Update Product" : "Save Product"}
-              </button>
-            </div>
-          </form>
-        </section>
-        )}
-
-        <section>
-          {loading ? (
-             <div className="space-y-4">
-                {[1, 2, 3].map(i => <div key={i} className="bg-white h-24 rounded-xl animate-pulse"></div>)}
-             </div>
-          ) : filteredItems.length === 0 ? (
-             <div className="bg-white rounded-xl shadow-sm p-12 text-center border border-gray-100 italic text-gray-400">
-                No products discovered in this category.
-             </div>
-          ) : viewMode === "list" ? (
-             <div className="bg-white rounded-xl shadow-sm border border-gray-100 divide-y overflow-hidden">
-                {currentItems.map((item) => (
-                   <div key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${item.is_active === false ? 'bg-gray-50/50 opacity-60' : 'hover:bg-gray-50/30'}`}>
-                       <div className="flex items-center gap-3 min-w-0">
-                          {/* Item Thumbnail */}
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
-                             {item.product_images && item.product_images.length > 0 ? (
-                                <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
-                             ) : item.image_url ? (
-                                <img src={item.image_url} alt="" className="w-full h-full object-cover" />
-                             ) : (
-                                <div className="w-full h-full flex items-center justify-center text-gray-300 text-[9px] font-bold uppercase tracking-tighter">No Pic</div>
              )}
-             
-             <div className="md:col-span-2 flex items-center gap-4">
+
+             <div className="md:col-span-2 flex items-center gap-4 py-4">
                 {imagePreview ? (
                    <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm">
                       <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
@@ -1018,11 +967,11 @@ export default function ProductManager() {
                 </label>
              </div>
 
-            <div className="flex items-end gap-2 md:col-span-1">
+            <div className="flex items-end gap-2 md:col-span-1 pt-4">
               <button
                 type="submit"
                 disabled={isAdding}
-                className="w-full bg-green-600 text-white font-black py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 uppercase tracking-widest text-xs"
+                className="w-full bg-green-600 text-white font-black py-4 rounded-xl hover:bg-green-700 transition disabled:opacity-50 uppercase tracking-widest text-xs shadow-lg shadow-green-100"
               >
                 {isAdding ? "Saving..." : editingId ? "Update Product" : "Save Product"}
               </button>
@@ -1045,7 +994,6 @@ export default function ProductManager() {
                 {currentItems.map((item) => (
                    <div key={item.id} className={`p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-colors ${item.is_active === false ? 'bg-gray-50/50 opacity-60' : 'hover:bg-gray-50/30'}`}>
                        <div className="flex items-center gap-3 min-w-0">
-                          {/* Item Thumbnail */}
                           <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
                              {item.product_images && item.product_images.length > 0 ? (
                                 <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
@@ -1080,7 +1028,7 @@ export default function ProductManager() {
                           </button>
                           {item.product_sales_pages?.[0]?.id && (
                               <button 
-                                onClick={() => window.open(`/product/${item.id}`, '_blank')}
+                                onClick={() => window.open(`/product/${item.id}`, \'_blank\')}
                                 className="p-2 text-purple-500 hover:bg-purple-50 rounded-lg" 
                                 title="View Sales Script"
                               >
@@ -1091,45 +1039,45 @@ export default function ProductManager() {
                              ✏️
                           </button>
                           <button onClick={() => handleToggleActive(item.id, item.is_active)} className={`p-2 rounded-lg transition-colors ${item.is_active === false ? 'text-green-500 hover:bg-green-50' : 'text-gray-400 hover:bg-red-50'}`} title={item.is_active === false ? "Live" : "Archive"}>
-                             {item.is_active === false ? '👁️' : '🚫'}
+                             {item.is_active === false ? \'👁️\' : \'🚫\'}
                           </button>
                        </div>
                     </div>
-                 ))}
-              </div>
+                ))}
+             </div>
            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                 {currentItems.map((item) => (
-                    <div key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-md ${item.is_active === false ? 'opacity-60' : ''}`}>
-                       <div className="aspect-square bg-gray-100 relative group">
-                          {item.product_images && item.product_images.length > 0 ? (
-                              <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
-                          ) : item.image_url ? (
-                              <img src={item.image_url} alt="" className="w-full h-full object-cover" />
-                          ) : (
-                              <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-bold uppercase">No Image</div>
-                          )}
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                             <button onClick={() => generateAdLink(item)} className="p-2 bg-white rounded-full text-indigo-600 shadow-sm hover:scale-110 transition-transform">🔗</button>
-                             <button onClick={() => startEdit(item)} className="p-2 bg-white rounded-full text-slate-600 shadow-sm hover:scale-110 transition-transform">✏️</button>
-                          </div>
-                       </div>
-                       <div className="p-3 flex-1 flex flex-col">
-                          <div className="flex items-start justify-between gap-1 mb-1">
-                             <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{item.name}</h3>
-                             <button onClick={() => handleToggleActive(item.id, item.is_active)} className="text-xs">{item.is_active === false ? '👁️' : '🚫'}</button>
-                          </div>
-                          <p className="text-[10px] text-gray-500 mb-2">{item.category}</p>
-                          <div className="flex items-center justify-between mt-auto">
-                             <p className="font-black text-green-700 text-sm">KSh {item.price}</p>
-                             {item.product_sales_pages && item.product_sales_pages.length > 0 && (
-                                <span className="text-[8px] font-black text-indigo-400 bg-indigo-50 px-1 rounded" title="AI Script Generated">✨ AI</span>
-                             )}
-                          </div>
-                       </div>
-                    </div>
-                 ))}
-              </div>
+               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {currentItems.map((item) => (
+                     <div key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-md ${item.is_active === false ? \'opacity-60\' : \'\'}`}>
+                        <div className="aspect-square bg-gray-100 relative group">
+                           {item.product_images && item.product_images.length > 0 ? (
+                               <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
+                           ) : item.image_url ? (
+                               <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                           ) : (
+                               <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-bold uppercase">No Image</div>
+                           )}
+                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                              <button onClick={() => generateAdLink(item)} className="p-2 bg-white rounded-full text-indigo-600 shadow-sm hover:scale-110 transition-transform">🔗</button>
+                              <button onClick={() => startEdit(item)} className="p-2 bg-white rounded-full text-slate-600 shadow-sm hover:scale-110 transition-transform">✏️</button>
+                           </div>
+                        </div>
+                        <div className="p-3 flex-1 flex flex-col">
+                           <div className="flex items-start justify-between gap-1 mb-1">
+                              <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{item.name}</h3>
+                              <button onClick={() => handleToggleActive(item.id, item.is_active)} className="text-xs">{item.is_active === false ? \'👁️\' : \'🚫\'}</button>
+                           </div>
+                           <p className="text-[10px] text-gray-500 mb-2">{item.category}</p>
+                           <div className="flex items-center justify-between mt-auto">
+                              <p className="font-black text-green-700 text-sm">KSh {item.price}</p>
+                              {item.product_sales_pages && item.product_sales_pages.length > 0 && (
+                                 <span className="text-[8px] font-black text-indigo-400 bg-indigo-50 px-1 rounded" title="AI Script Generated">✨ AI</span>
+                              )}
+                           </div>
+                        </div>
+                     </div>
+                  ))}
+               </div>
            )}
 
           {totalPages > 1 && (
