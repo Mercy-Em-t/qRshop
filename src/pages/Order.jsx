@@ -609,15 +609,6 @@ export default function Order() {
         {/* Split Checkouts: Pure Web vs WhatsApp Hybrid */}
         {shopPhone || !isOnline ? (
           <div className="mt-8 space-y-3">
-            {/* TEMPORARILY DISABLED FOR LIVE M-PESA API PENDING 
-            <button
-              onClick={() => setShowPayment(true)}
-              disabled={sending}
-              className="w-full bg-green-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {sending ? (
-                <span className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
-              ) : (
             <button
                onClick={() => {
                    setCapturingIdentity(true);
@@ -868,5 +859,5 @@ export default function Order() {
          />
       )}
     </div>
-  );
+  ):
 }
