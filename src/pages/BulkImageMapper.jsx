@@ -41,7 +41,12 @@ const ImageRow = memo(({ img, products, processing, handleMatchChange, removeIma
         {img.status === "uploading" && <span className="text-[10px] font-black text-blue-500 uppercase animate-pulse">Uploading...</span>}
         {img.status === "success" && <span className="text-xl" title="Success">✅</span>}
         {img.status === "error" && (
-          <span className="text-[10px] font-black text-red-500 uppercase underline cursor-help" title={img.error}>Error</span>
+          <div className="flex flex-col items-center">
+            <span className="text-[10px] font-black text-red-500 uppercase">Error</span>
+            <span className="text-[9px] text-red-400 font-bold max-w-[120px] break-words text-center leading-tight mt-1" title={img.error}>
+              {img.error}
+            </span>
+          </div>
         )}
       </td>
       <td className="px-6 py-4 text-right">
@@ -175,9 +180,12 @@ export default function BulkImageMapper() {
 
     setProcessing(true);
     let successCount = 0;
+    let errorCount = 0;
+    let lastErrorMessage = "";
 
     for (const item of toUpload) {
       try {
+        console.log(`BulkMapper: Starting upload for ${item.file.name}`);
         setPendingImages(prev => prev.map(img => img.id === item.id ? { ...img, status: "uploading" } : img));
 
         let productId = item.matchedProductId;
@@ -238,11 +246,13 @@ export default function BulkImageMapper() {
           img.id === item.id ? { ...img, status: "success", matchedProductId: productId } : img
         ));
       } catch (err) {
-        console.error(`Failed to process ${item.file.name}:`, err);
+        console.error(`BulkMapper: Failed to process ${item.file.name}:`, err);
+        errorCount++;
         let errorMsg = err?.message || err?.error_description || err?.error || "Unknown error during processing";
         if (typeof err === "object" && !err.message) {
           errorMsg = JSON.stringify(err);
         }
+        lastErrorMessage = errorMsg;
         setPendingImages(prev => prev.map(img => 
           img.id === item.id ? { ...img, status: "error", error: errorMsg } : img
         ));
@@ -250,7 +260,11 @@ export default function BulkImageMapper() {
     }
 
     setProcessing(false);
-    alert(`Successfully processed ${successCount} items.`);
+    if (errorCount > 0) {
+      alert(`Processed: ${successCount} successful, ${errorCount} failed.\nLast Error: ${lastErrorMessage}`);
+    } else {
+      alert(`Successfully processed ${successCount} items.`);
+    }
     fetchProducts(true); // Silent refresh
   };
 
