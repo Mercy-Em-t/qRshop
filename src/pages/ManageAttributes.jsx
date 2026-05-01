@@ -45,7 +45,7 @@ export default function ManageAttributes() {
       if (!shopId) return;
       const { data } = await supabase
         .from("shops")
-        .select("custom_attributes_schema, category_attribute_defaults")
+        .select("*")
         .eq("shop_id", shopId)
         .single();
       
