@@ -423,6 +423,36 @@ export default function MarketingStudio() {
 
                 <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
                    <h3 className="text-xl font-black text-gray-900 mb-2 flex items-center gap-2">
+                      📝 Page Content (Custom Wordings)
+                   </h3>
+                   <p className="text-sm text-gray-500 mb-6">Set specific wording for your shop components to make it uniquely yours.</p>
+                   
+                   <div className="space-y-4">
+                      <div>
+                         <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Hero Title</label>
+                         <input 
+                            type="text" 
+                            value={appearanceConfig.wordings?.hero_title || ""} 
+                            onChange={e => setAppearanceConfig({...appearanceConfig, wordings: {...(appearanceConfig.wordings || {}), hero_title: e.target.value}})}
+                            placeholder="e.g. Welcome to Mama Rosy's"
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                         />
+                      </div>
+                      <div>
+                         <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-1.5">Hero Subtitle</label>
+                         <input 
+                            type="text" 
+                            value={appearanceConfig.wordings?.hero_subtitle || ""} 
+                            onChange={e => setAppearanceConfig({...appearanceConfig, wordings: {...(appearanceConfig.wordings || {}), hero_subtitle: e.target.value}})}
+                            placeholder="e.g. Fresh, Organic, Direct from Farm"
+                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                         />
+                      </div>
+                   </div>
+                </div>
+
+                <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm">
+                   <h3 className="text-xl font-black text-gray-900 mb-2 flex items-center gap-2">
                       🧩 Page Layout (Plugins)
                    </h3>
                    <p className="text-sm text-gray-500 mb-6">Drag components to reorder or click to toggle visibility.</p>

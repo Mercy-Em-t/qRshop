@@ -39,6 +39,11 @@ export default function ShopHero({ shop }) {
     }
   };
   
+  const customTitle = shop?.appearance_config?.wordings?.hero_title || shop?.name || "Welcome to our Shop";
+  const customSubtext = shop?.appearance_config?.wordings?.hero_subtitle || shop?.tagline || "Fresh • Affordable • Trusted";
+  const trustScore = shop?.trust_score || 5;
+  const stars = "⭐".repeat(Math.round(trustScore));
+
   return (
     <section className="hero">
       <div className="hero__logo">
@@ -48,8 +53,15 @@ export default function ShopHero({ shop }) {
           initial
         )}
       </div>
-      <h1 className="hero__heading">{shop?.name || "Welcome to our Shop"}</h1>
-      <p className="hero__subtext">{shop?.tagline || "Fresh • Affordable • Trusted"}</p>
+      <h1 className="hero__heading">{customTitle}</h1>
+      <p className="hero__subtext">{customSubtext}</p>
+      
+      <div className="flex items-center gap-1.5 justify-center mb-6 bg-slate-50 border border-slate-100 rounded-full px-4 py-1.5 w-fit mx-auto mt-2">
+         <span className="text-[10px] font-black uppercase tracking-wider text-slate-500">Merchant Trust Score:</span>
+         <span className="text-xs">{stars}</span>
+         <span className="text-xs font-black text-slate-700">{trustScore}/5</span>
+      </div>
+
       <div className="hero__actions">
         <button onClick={handleStartOrdering} className="btn btn--primary cursor-pointer">Start Ordering</button>
         <button onClick={handleViewOffers} className="btn btn--secondary cursor-pointer">View Offers</button>
