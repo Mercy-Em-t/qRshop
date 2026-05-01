@@ -6,14 +6,18 @@ import { supabase } from "./supabase-client";
 export async function trackUpsell(itemId, upsellId, accepted) {
   if (!supabase) return;
 
-  const { error } = await supabase.from("analytics_upsells").insert({
-    item_id: itemId,
-    upsell_id: upsellId,
-    accepted,
-  });
+  try {
+    const { error } = await supabase.from("analytics_upsells").insert({
+      item_id: itemId,
+      upsell_id: upsellId,
+      accepted,
+    });
 
-  if (error) {
-    console.error("Error tracking upsell:", error);
+    if (error) {
+      console.warn("Analytics upsells table is not initialized yet.");
+    }
+  } catch (err) {
+    // Fail silently
   }
 }
 
@@ -106,21 +110,24 @@ export async function getUpsellStats(shopId) {
     return { total: 0, accepted: 0, rate: 0 };
   }
 
-  const menuItemIds = menuItems.map((i) => i.id);
+  try {
+    const menuItemIds = menuItems.map((i) => i.id);
 
-  const { data, error } = await supabase
-    .from("analytics_upsells")
-    .select("*")
-    .in("item_id", menuItemIds);
+    const { data, error } = await supabase
+      .from("analytics_upsells")
+      .select("*")
+      .in("item_id", menuItemIds);
 
-  if (error) {
-    console.error("Error fetching upsell stats:", error);
+    if (error) {
+      return { total: 0, accepted: 0, rate: 0 };
+    }
+
+    const total = (data || []).length;
+    const accepted = (data || []).filter((u) => u.accepted).length;
+    const rate = total > 0 ? Math.round((accepted / total) * 100) : 0;
+
+    return { total, accepted, rate };
+  } catch (err) {
     return { total: 0, accepted: 0, rate: 0 };
   }
-
-  const total = (data || []).length;
-  const accepted = (data || []).filter((u) => u.accepted).length;
-  const rate = total > 0 ? Math.round((accepted / total) * 100) : 0;
-
-  return { total, accepted, rate };
 }

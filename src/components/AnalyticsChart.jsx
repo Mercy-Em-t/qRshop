@@ -31,8 +31,8 @@ export default function AnalyticsChart({
   }));
 
   return (
-    <div className="h-72 w-full pt-4">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-72 w-full pt-4" style={{ minWidth: 200, minHeight: 200 }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={100} minHeight={100}>
         <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
           <CartesianGrid stroke="#f1f5f9" strokeDasharray="4 4" vertical={false} />
           <XAxis 
