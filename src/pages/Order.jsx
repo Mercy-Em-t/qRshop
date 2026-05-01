@@ -93,7 +93,9 @@ export default function Order() {
     try {
       const stored = localStorage.getItem("qr_saved_coupon");
       if (stored) setSavedCoupon(JSON.parse(stored));
-    } catch {}
+    } catch {
+      // ignore parsing error
+    }
   }, []);
 
   // Track online/offline status
@@ -243,7 +245,7 @@ export default function Order() {
       );
   };
 
-  const processPaymentSuccess = async ({ method, phone }) => {
+  const processPaymentSuccess = async ({ phone }) => {
       // Store phone for tracking simulation
       if (phone) localStorage.setItem("customer_phone", phone);
       setShowPayment(false);
@@ -624,7 +626,7 @@ export default function Order() {
             </button>
             
             <a
-               href={buildWhatsAppLink(shopPhone, `Hi ${shopName}, I have a question about my order/menu.`)}
+               href={buildWhatsAppLink(shopPhone, `Hi ${shopName}, I have a question about my order/menu.`)}//we should also allow the syste m
                target="_blank"
                rel="noopener noreferrer"
                className={`w-full py-4 rounded-xl font-bold text-lg border-2 transition-colors flex items-center justify-center gap-2 shadow-sm ${shop?.is_online === false ? 'border-gray-300 text-gray-400 cursor-not-allowed pointer-events-none' : 'border-green-600 bg-white text-green-700 hover:bg-green-50 z-10'}`}
@@ -859,5 +861,5 @@ export default function Order() {
          />
       )}
     </div>
-  ):
+  );
 }
