@@ -15,7 +15,7 @@ export default function Login() {
     setLoading(true);
     setError(null);
 
-    const { user, profiles, requiresSelection, error: authError } = await authenticateUser(email, password);
+    const { user, profiles, requiresSelection, error: authError } = await authenticateUser(email, password) || {};
     setLoading(false);
 
     if (authError) {
