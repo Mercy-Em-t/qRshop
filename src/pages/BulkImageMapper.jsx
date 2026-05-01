@@ -196,32 +196,40 @@ export default function BulkImageMapper() {
               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
               .join(' ');
 
-           const { data: newProd, error: prodErr } = await supabase
-              .from("menu_items")
-              .insert({
-                 shop_id: SHOP_ID,
-                 name: productFriendlyName || "Unnamed Product",
-                 price: 0,
-                 is_active: false,
-                 category: "Main",
-                 description: "Auto-created from bulk image upload."
-              })
-              .select();
-           
-           if (prodErr) throw prodErr;
-           if (!newProd || newProd.length === 0) throw new Error("Could not create product");
-           productId = newProd[0].id;
+           try {
+             const { data: newProd, error: prodErr } = await supabase
+                .from("menu_items")
+                .insert({
+                   shop_id: SHOP_ID,
+                   name: productFriendlyName || "Unnamed Product",
+                   price: 0,
+                   is_active: false,
+                   category: "Main",
+                   description: "Auto-created from bulk image upload."
+                })
+                .select();
+             
+             if (prodErr) throw prodErr;
+             if (!newProd || newProd.length === 0) throw new Error("Could not create product");
+             productId = newProd[0].id;
+           } catch (e) {
+             throw new Error(`Catalog creation failed: ${e.message || "Network error"}`);
+           }
         }
 
         const fileExt = item.file.name.split('.').pop();
         const fileName = `${SHOP_ID}/${productId}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
 
         // 1. Upload to Storage
-        const { error: uploadError } = await supabase.storage
-          .from("product-images")
-          .upload(fileName, item.file);
+        try {
+          const { error: uploadError } = await supabase.storage
+            .from("product-images")
+            .upload(fileName, item.file);
 
-        if (uploadError) throw uploadError;
+          if (uploadError) throw uploadError;
+        } catch (e) {
+          throw new Error(`Storage upload failed: ${e.message || "Network error"}`);
+        }
 
         // 2. Get Public URL
         const { data: publicUrlData } = supabase.storage
@@ -231,15 +239,23 @@ export default function BulkImageMapper() {
         const publicUrl = publicUrlData.publicUrl;
 
         // 3. Update Database sequentially to catch exact errors
-        const { error: imgInsertErr } = await supabase.from("product_images").insert({
-          product_id: productId,
-          url: publicUrl,
-          position: 0
-        });
-        if (imgInsertErr) throw imgInsertErr;
+        try {
+          const { error: imgInsertErr } = await supabase.from("product_images").insert({
+            product_id: productId,
+            url: publicUrl,
+            position: 0
+          });
+          if (imgInsertErr) throw imgInsertErr;
+        } catch (e) {
+          throw new Error(`Image insertion failed: ${e.message || "Network error"}`);
+        }
 
-        const { error: itemUpdateErr } = await supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", productId);
-        if (itemUpdateErr) throw itemUpdateErr;
+        try {
+          const { error: itemUpdateErr } = await supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", productId);
+          if (itemUpdateErr) throw itemUpdateErr;
+        } catch (e) {
+          throw new Error(`Product update failed: ${e.message || "Network error"}`);
+        }
 
         successCount++;
         setPendingImages(prev => prev.map(img => 
