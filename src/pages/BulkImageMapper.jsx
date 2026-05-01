@@ -70,7 +70,7 @@ export default function BulkImageMapper() {
   
   const navigate = useNavigate();
   const [user] = useState(() => getCurrentUser());
-  const [resolvedShopId, setResolvedShopId] = useState(user?.shop_id || null);
+  const [resolvedShopId, setResolvedShopId] = useState(null);
   const SHOP_ID = resolvedShopId;
 
   const stats = useMemo(() => ({
@@ -113,29 +113,32 @@ export default function BulkImageMapper() {
     }
 
     async function resolveShop() {
-      if (!resolvedShopId) {
-        try {
-          const { data: members } = await supabase
-            .from("shop_members")
-            .select("shop_id")
-            .eq("user_id", user.id)
-            .limit(1);
+      try {
+        const { data: members } = await supabase
+          .from("shop_members")
+          .select("shop_id")
+          .eq("user_id", user.id)
+          .limit(1);
 
-          if (members && members.length > 0) {
-            setResolvedShopId(members[0].shop_id);
+        if (members && members.length > 0) {
+          setResolvedShopId(members[0].shop_id);
+        } else {
+          if (user?.shop_id) {
+            setResolvedShopId(user.shop_id);
           } else {
             const { data: shops } = await supabase.from("shops").select("shop_id").limit(1);
             if (shops && shops.length > 0) {
               setResolvedShopId(shops[0].shop_id);
             }
           }
-        } catch (err) {
-          console.warn(err);
         }
+      } catch (err) {
+        console.warn(err);
+        if (user?.shop_id) setResolvedShopId(user.shop_id);
       }
     }
     resolveShop();
-  }, [user, resolvedShopId, navigate]);
+  }, [user, navigate]);
 
   useEffect(() => {
     if (SHOP_ID) {
