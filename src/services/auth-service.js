@@ -126,6 +126,7 @@ export async function authenticateUser(email, password) {
 
   localStorage.setItem("savannah_session", JSON.stringify(sessionUser));
   _authStaticCache = sessionUser;
+  return { user: sessionUser };
 }
 
 export function getCurrentUser() {
