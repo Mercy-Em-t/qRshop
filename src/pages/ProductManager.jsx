@@ -1,5 +1,5 @@
 // Build Verification: 2026-04-30-13-57
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { fetchTemplates } from "../services/template-service";
@@ -52,7 +52,7 @@ export default function ProductManager() {
   // Image Upload State
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [_uploadProgress, setUploadProgress] = useState(0);
 
   // Template State
   const [availableTemplates, setAvailableTemplates] = useState([]);
@@ -72,14 +72,18 @@ export default function ProductManager() {
 
   const fetchShopSchema = async () => {
     if (!SHOP_ID) return;
-    const { data } = await supabase
-       .from("shops")
-       .select("custom_attributes_schema")
-       .eq("shop_id", SHOP_ID)
-       .single();
-    
-    if (data?.custom_attributes_schema) {
-       setShopSchema(data.custom_attributes_schema);
+    try {
+      const { data } = await supabase
+         .from("shops")
+         .select("*")
+         .eq("shop_id", SHOP_ID)
+         .single();
+      
+      if (data && data.custom_attributes_schema) {
+         setShopSchema(data.custom_attributes_schema);
+      }
+    } catch (err) {
+      console.warn("Custom attributes schema is not available:", err);
     }
   };
 
@@ -99,13 +103,29 @@ export default function ProductManager() {
     
     const { data, error } = await supabase
       .from("menu_items")
-      .select("*, product_images(url), product_sales_pages(*)")
+      .select("*, product_images(url)")
       .eq("shop_id", SHOP_ID)
       .order("category", { ascending: true })
       .order("created_at", { ascending: false });
 
     if (!error && data) {
       setItems(data);
+
+      try {
+        const { data: salesPages } = await supabase
+          .from("product_sales_pages")
+          .select("*")
+          .in("product_id", data.map(item => item.id));
+
+        if (salesPages && salesPages.length > 0) {
+          setItems(prev => prev.map(item => {
+            const page = salesPages.filter(sp => sp.product_id === item.id);
+            return { ...item, product_sales_pages: page };
+          }));
+        }
+      } catch (err) {
+        console.warn("Product sales pages are not available:", err);
+      }
     }
     setLoading(false);
   };
@@ -489,7 +509,7 @@ export default function ProductManager() {
         let parsedVariants = {};
         if (row.length >= (10 + offset) && cleanStr(row[9 + offset])) {
            try { parsedVariants = JSON.parse(cleanStr(row[9 + offset])); } 
-           catch(err) { console.warn("Invalid variants JSON for item: " + name) }
+           catch { console.warn("Invalid variants JSON for item: " + name) }
         }
 
         let parsedTags = [];
@@ -503,7 +523,7 @@ export default function ProductManager() {
               const rawAttr = cleanStr(row[12 + offset]);
               parsedAttributes = JSON.parse(rawAttr); 
            } 
-           catch(err) { console.warn("Invalid attributes JSON for item: " + name) }
+           catch { console.warn("Invalid attributes JSON for item: " + name) }
         }
         
         const imageUrl = (row.length >= (11 + offset) && cleanStr(row[10 + offset])) ? cleanStr(row[10 + offset]) : null;
@@ -582,7 +602,7 @@ export default function ProductManager() {
     try {
       const shortId = Math.random().toString(36).substring(7).toUpperCase();
       const nodeId = `AL-${shortId}`;
-      const { data: qrNode, error: qrError } = await supabase
+      const { data: _qrNode, error: qrError } = await supabase
         .from('qrs')
         .insert([{
           qr_id: nodeId,
