@@ -32,7 +32,8 @@ export default function ProductManager() {
   const planAccess = usePlanAccess();
 
   const user = getCurrentUser();
-  const SHOP_ID = user?.shop_id;
+  const [resolvedShopId, setResolvedShopId] = useState(user?.shop_id || null);
+  const SHOP_ID = resolvedShopId;
 
   // Form State
   const [name, setName] = useState("");
@@ -65,10 +66,38 @@ export default function ProductManager() {
       navigate('/login');
       return;
     }
-    fetchItems();
-    loadTemplates();
-    fetchShopSchema();
-  }, [user, navigate]);
+    async function resolveShop() {
+      if (!resolvedShopId) {
+        try {
+          const { data: members } = await supabase
+            .from("shop_members")
+            .select("shop_id")
+            .eq("user_id", user.id)
+            .limit(1);
+
+          if (members && members.length > 0) {
+            setResolvedShopId(members[0].shop_id);
+          } else {
+            const { data: shops } = await supabase.from("shops").select("shop_id").limit(1);
+            if (shops && shops.length > 0) {
+              setResolvedShopId(shops[0].shop_id);
+            }
+          }
+        } catch (err) {
+          console.warn(err);
+        }
+      }
+    }
+    resolveShop();
+  }, [user, resolvedShopId, navigate]);
+
+  useEffect(() => {
+    if (resolvedShopId) {
+      fetchItems();
+      loadTemplates();
+      fetchShopSchema();
+    }
+  }, [resolvedShopId]);
 
   const fetchShopSchema = async () => {
     if (!SHOP_ID) return;

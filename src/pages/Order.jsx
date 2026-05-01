@@ -486,6 +486,14 @@ export default function Order() {
       )}
 
       <main className="max-w-lg mx-auto px-4 py-6">
+        <div className="mb-4 flex justify-between items-center">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="text-gray-600 font-medium hover:text-gray-800 flex items-center gap-1 transition-colors bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100"
+          >
+            ← Back
+          </button>
+        </div>
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-800 mb-1">
             {shopName}
