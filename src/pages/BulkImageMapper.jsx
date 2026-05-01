@@ -117,11 +117,16 @@ export default function BulkImageMapper() {
         const { data: members } = await supabase
           .from("shop_members")
           .select("shop_id")
-          .eq("user_id", user.id)
-          .limit(1);
+          .eq("user_id", user.id);
 
         if (members && members.length > 0) {
-          setResolvedShopId(members[0].shop_id);
+          const validShopIds = members.map(m => m.shop_id);
+          
+          if (user?.shop_id && validShopIds.includes(user.shop_id)) {
+             setResolvedShopId(user.shop_id);
+          } else {
+             setResolvedShopId(members[0].shop_id);
+          }
         } else {
           if (user?.shop_id) {
             setResolvedShopId(user.shop_id);
