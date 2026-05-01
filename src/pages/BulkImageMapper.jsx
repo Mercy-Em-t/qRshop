@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, memo, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -69,8 +69,9 @@ export default function BulkImageMapper() {
   const [processing, setProcessing] = useState(false);
   
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [user] = useState(() => getCurrentUser());
-  const [resolvedShopId, setResolvedShopId] = useState(null);
+  const [resolvedShopId, setResolvedShopId] = useState(() => searchParams.get("shop_id") || null);
   const SHOP_ID = resolvedShopId;
 
   const stats = useMemo(() => ({
@@ -113,6 +114,12 @@ export default function BulkImageMapper() {
     }
 
     async function resolveShop() {
+      const urlShopId = searchParams.get("shop_id");
+      if (urlShopId) {
+         setResolvedShopId(urlShopId);
+         return;
+      }
+
       try {
         const { data: members } = await supabase
           .from("shop_members")
@@ -143,7 +150,7 @@ export default function BulkImageMapper() {
       }
     }
     resolveShop();
-  }, [user, navigate]);
+  }, [user, navigate, searchParams]);
 
   useEffect(() => {
     if (SHOP_ID) {

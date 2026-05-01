@@ -326,7 +326,7 @@ export default function Dashboard() {
           </Link>
 
           <Link
-            to="/a/bulk-image-mapper"
+            to={`/a/bulk-image-mapper?shop_id=${shopId}`}
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-green-100 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-10"></div>

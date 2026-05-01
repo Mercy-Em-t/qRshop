@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
+import { supabase } from "../services/supabase-client";
+import { getCurrentUser } from "../services/auth-service";
 
 export default function ShopSelection() {
   const [profiles, setProfiles] = useState([]);
@@ -8,11 +10,44 @@ export default function ShopSelection() {
 
   useEffect(() => {
     const pending = localStorage.getItem("pending_selection");
-    if (!pending) {
-      navigate("/login");
-      return;
+    if (pending) {
+      setProfiles(JSON.parse(pending));
+    } else {
+      const user = getCurrentUser();
+      if (!user) {
+        navigate("/login");
+        return;
+      }
+
+      async function fetchMyNodes() {
+        try {
+          const { data: members, error } = await supabase
+            .from("shop_members")
+            .select("*, shops(*, id:shop_id)")
+            .eq("user_id", user.id);
+
+          if (error) throw error;
+
+          if (members && members.length > 0) {
+            const profilesList = members.map(m => ({
+              user_id: m.user_id,
+              role: m.role,
+              shop_id: m.shop_id,
+              shop_name: m.shops?.name || "Unnamed Shop",
+              subdomain: m.shops?.subdomain,
+              slug: m.shops?.slug
+            }));
+            setProfiles(profilesList);
+          } else {
+            navigate("/login");
+          }
+        } catch (err) {
+          console.error("Error loading nodes:", err);
+          navigate("/login");
+        }
+      }
+      fetchMyNodes();
     }
-    setProfiles(JSON.parse(pending));
   }, [navigate]);
 
   const handleSelect = (profile) => {
