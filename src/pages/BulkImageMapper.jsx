@@ -198,15 +198,15 @@ export default function BulkImageMapper() {
                  category: "Main",
                  description: "Auto-created from bulk image upload."
               })
-              .select()
-              .single();
+              .select();
            
            if (prodErr) throw prodErr;
-           productId = newProd.id;
+           if (!newProd || newProd.length === 0) throw new Error("Could not create product");
+           productId = newProd[0].id;
         }
 
         const fileExt = item.file.name.split('.').pop();
-        const fileName = `${SHOP_ID}/${productId}-${Date.now()}.${fileExt}`;
+        const fileName = `${SHOP_ID}/${productId}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
 
         // 1. Upload to Storage
         const { error: uploadError } = await supabase.storage
@@ -222,15 +222,16 @@ export default function BulkImageMapper() {
 
         const publicUrl = publicUrlData.publicUrl;
 
-        // 3. Update Database (Parallel)
-        await Promise.all([
-          supabase.from("product_images").insert({
-            product_id: productId,
-            url: publicUrl,
-            position: 0
-          }),
-          supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", productId)
-        ]);
+        // 3. Update Database sequentially to catch exact errors
+        const { error: imgInsertErr } = await supabase.from("product_images").insert({
+          product_id: productId,
+          url: publicUrl,
+          position: 0
+        });
+        if (imgInsertErr) throw imgInsertErr;
+
+        const { error: itemUpdateErr } = await supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", productId);
+        if (itemUpdateErr) throw itemUpdateErr;
 
         successCount++;
         setPendingImages(prev => prev.map(img => 
@@ -238,8 +239,12 @@ export default function BulkImageMapper() {
         ));
       } catch (err) {
         console.error(`Failed to process ${item.file.name}:`, err);
+        let errorMsg = err?.message || err?.error_description || err?.error || "Unknown error during processing";
+        if (typeof err === "object" && !err.message) {
+          errorMsg = JSON.stringify(err);
+        }
         setPendingImages(prev => prev.map(img => 
-          img.id === item.id ? { ...img, status: "error", error: err.message } : img
+          img.id === item.id ? { ...img, status: "error", error: errorMsg } : img
         ));
       }
     }
