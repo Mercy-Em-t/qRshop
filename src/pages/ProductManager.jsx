@@ -61,8 +61,9 @@ export default function ProductManager() {
   const [customFields, setCustomFields] = useState({});
   const [shopSchema, setShopSchema] = useState([]);
 
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       navigate('/login');
       return;
     }
@@ -72,7 +73,7 @@ export default function ProductManager() {
           const { data: members } = await supabase
             .from("shop_members")
             .select("shop_id")
-            .eq("user_id", user.id)
+            .eq("user_id", userId)
             .limit(1);
 
           if (members && members.length > 0) {
@@ -89,7 +90,7 @@ export default function ProductManager() {
       }
     }
     resolveShop();
-  }, [user, resolvedShopId, navigate]);
+  }, [userId, resolvedShopId, navigate]);
 
   useEffect(() => {
     if (resolvedShopId) {
