@@ -3,19 +3,32 @@ import { supabase } from "./supabase-client";
 export async function getMenuItems(shopId) {
   if (!supabase) return [];
 
-  const { data, error } = await supabase
-    .from("menu_items")
-    .select("*, product_images(url, position)")
-    .eq("shop_id", shopId)
-    .neq("is_active", false)
-    .order("category", { ascending: true });
+  try {
+    const { data, error } = await supabase
+      .from("menu_items")
+      .select("*, product_images(url, position)")
+      .eq("shop_id", shopId)
+      .neq("is_active", false)
+      .order("category", { ascending: true });
 
-  if (error) {
-    console.error("Error fetching menu items:", error);
+    if (!error && data) return data;
+
+    const { data: fallbackData, error: fallbackErr } = await supabase
+      .from("menu_items")
+      .select("*")
+      .eq("shop_id", shopId)
+      .neq("is_active", false)
+      .order("category", { ascending: true });
+
+    if (fallbackErr) {
+      console.error("Error fetching menu items fallback:", fallbackErr);
+      return [];
+    }
+    return fallbackData || [];
+  } catch (err) {
+    console.error("Error in getMenuItems:", err);
     return [];
   }
-
-  return data || [];
 }
 
 export async function getUpsellItems(itemId) {
@@ -37,18 +50,30 @@ export async function getUpsellItems(itemId) {
 export async function getMenuItemById(itemId) {
   if (!supabase) return null;
 
-  const { data, error } = await supabase
-    .from("menu_items")
-    .select("*, product_images(url, position)")
-    .eq("id", itemId)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("menu_items")
+      .select("*, product_images(url, position)")
+      .eq("id", itemId)
+      .single();
 
-  if (error) {
-    console.error("Error fetching menu item:", error);
+    if (!error && data) return data;
+
+    const { data: fallbackData, error: fallbackErr } = await supabase
+      .from("menu_items")
+      .select("*")
+      .eq("id", itemId)
+      .single();
+
+    if (fallbackErr) {
+      console.error("Error fetching menu item fallback:", fallbackErr);
+      return null;
+    }
+    return fallbackData;
+  } catch (err) {
+    console.error("Error in getMenuItemById:", err);
     return null;
   }
-
-  return data;
 }
 
 export async function getMenuItemsByCategory(shopId) {
