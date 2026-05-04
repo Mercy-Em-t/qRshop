@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, Link } from "react-router-dom";
 import OnboardingGate from "../components/OnboardingGate";
 import Dashboard from "../pages/Dashboard";
 import OrderManager from "../pages/OrderManager";
@@ -23,8 +23,21 @@ import SubscriptionPage from "../pages/SubscriptionPage";
 import ShopAppearance from "../pages/ShopAppearance";
 
 export default function DashboardRoutes() {
+  const location = useLocation();
+  const isSubpage = location.pathname !== "/a" && location.pathname !== "/a/";
+
   return (
     <OnboardingGate>
+      {isSubpage && (
+        <div className="md:hidden bg-white/95 backdrop-blur-md border-b border-gray-100 px-4 py-3.5 flex items-center justify-between sticky top-0 z-[100] transition-all select-none">
+          <Link to="/a" className="text-xs font-black uppercase tracking-widest text-indigo-600 flex items-center gap-1.5 hover:opacity-80">
+            ← Dashboard
+          </Link>
+          <span className="text-[9px] bg-indigo-50 text-indigo-600 px-2.5 py-1 rounded-full font-black tracking-widest uppercase border border-indigo-100">
+            {location.pathname.split("/").pop()?.replace(/-/g, " ") || "subpage"}
+          </span>
+        </div>
+      )}
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="analytics" element={<Navigate to="/a#analytics" replace />} />
