@@ -210,13 +210,7 @@ export function useCart() {
       } else if (discount_type === 'flat') {
         discountAmount = Math.min(subtotal, discount_value || 0);
       } else if (discount_type === 'bundle_price') {
-        const bundleItemsValue = items.reduce((sum, item) => {
-           if (requiredProductIds.has('ALL') || requiredProductIds.has(item.id)) {
-              return sum + (item.price * item.quantity);
-           }
-           return sum;
-        }, 0);
-        discountAmount = Math.max(0, bundleItemsValue - (bundle_price || bundleItemsValue));
+        discountAmount = Math.max(0, subtotal - (bundle_price || subtotal));
       }
     }
   }

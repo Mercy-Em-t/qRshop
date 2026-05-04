@@ -27,9 +27,17 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <header className="bg-white dark:bg-slate-900 shadow-sm sticky top-0 z-10 border-b dark:border-slate-800">
-        <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800 dark:text-white">Your Cart</h1>
-          <div className="w-24"></div>
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate(-1)}
+              className="px-3 py-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-200 text-xs font-bold rounded-xl transition select-none"
+            >
+              ← Back
+            </button>
+            <h1 className="text-lg font-black tracking-tight text-gray-800 dark:text-white">Your Cart</h1>
+          </div>
+          <div className="w-12"></div>
         </div>
       </header>
 

@@ -16,7 +16,7 @@ export default function BundleCard({ bundle, onClaim, menuItems }) {
   const savings = originalTotal - displayBundlePrice;
 
   return (
-    <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg flex-shrink-0 w-72 snap-center">
+    <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg flex-shrink-0 w-[280px] min-w-[280px] sm:w-72 sm:min-w-[288px] snap-center">
       <div className="flex justify-between items-start mb-3">
         <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest backdrop-blur-sm">
           🔥 Exclusive Deal
