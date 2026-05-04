@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
+import { getCurrentUser } from "../services/auth-service";
 
 export default function SalesMagazine() {
   const { identifier } = useParams();
@@ -8,6 +9,9 @@ export default function SalesMagazine() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
+
+  const rawUser = getCurrentUser();
+  const activeSessionShopId = rawUser?.shop_id || sessionStorage.getItem("active_shop_id") || null;
 
   useEffect(() => {
     fetchMagazineData();
@@ -52,11 +56,65 @@ export default function SalesMagazine() {
   }
 
   if (!shop || products.length === 0) {
+    const isOwner = shop && (shop.shop_id === activeSessionShopId);
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center">
-        <h2 className="text-3xl font-black text-white mb-4">Magazine Not Found</h2>
-        <p className="text-slate-400 mb-8 max-w-md">This shop hasn't published their sales magazine yet or is currently being curated.</p>
-        <Link to="/" className="bg-indigo-600 text-white px-8 py-3 rounded-full font-bold hover:bg-indigo-700 transition shadow-xl shadow-indigo-900/20">Return Home</Link>
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center select-none font-sans selection:bg-indigo-500">
+        <div className="max-w-xl mx-auto space-y-6">
+          <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 text-3xl mx-auto animate-bounce">
+             📖
+          </div>
+          <h2 className="text-3xl font-black text-white leading-tight uppercase tracking-widest">
+            {isOwner ? "Produce Your First Magazine" : "Magazine Under Curation"}
+          </h2>
+          <p className="text-slate-400 max-w-md mx-auto text-sm leading-relaxed">
+            {isOwner
+              ? "Your shop hasn't generated any product sales copy for the digital magazine yet. Take a few seconds to build your first high-converting product catalog."
+              : "This shop hasn't published their sales magazine yet. Please check back later!"}
+          </p>
+
+          {isOwner && (
+            <div className="bg-slate-900/50 backdrop-blur-md rounded-2xl p-6 border border-white/5 text-left space-y-4 max-w-lg mx-auto">
+              <h3 className="text-xs font-black text-indigo-400 tracking-wider uppercase flex items-center gap-2">
+                 📋 Getting Started Checklist
+              </h3>
+              <div className="space-y-3.5 text-xs text-slate-300 leading-relaxed font-medium">
+                 <div className="flex gap-3">
+                   <span className="text-indigo-400 font-black">1.</span>
+                   <p>Go to the <span className="text-white font-bold">Product Manager</span> in your dashboard.</p>
+                 </div>
+                 <div className="flex gap-3">
+                   <span className="text-indigo-400 font-black">2.</span>
+                   <p>Select any high-priority products you'd like to feature.</p>
+                 </div>
+                 <div className="flex gap-3">
+                   <span className="text-indigo-400 font-black">3.</span>
+                   <p>Click on <span className="text-white font-bold">Sales Copy</span>, and fill out the Headline, Sales Script, and Benefits Summary.</p>
+                 </div>
+                 <div className="flex gap-3">
+                   <span className="text-indigo-400 font-black">4.</span>
+                   <p>Click save! Your first high-converting product catalog will automatically publish here.</p>
+                 </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+            {isOwner ? (
+              <>
+                <Link to="/a" className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition shadow-xl shadow-indigo-900/20">
+                  ← Go to Dashboard
+                </Link>
+                <Link to="/a/products" className="bg-white/10 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-white/20 transition border border-white/10">
+                  Product Manager
+                </Link>
+              </>
+            ) : (
+              <Link to="/" className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition shadow-xl shadow-indigo-900/20">
+                Return Home
+              </Link>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
