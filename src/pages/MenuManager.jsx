@@ -26,7 +26,8 @@ export default function MenuManager() {
   const planAccess = usePlanAccess();
 
   const user = getCurrentUser();
-  const SHOP_ID = user?.shop_id;
+  const [resolvedShopId, setResolvedShopId] = useState(() => user?.shop_id || sessionStorage.getItem('active_shop_id') || null);
+  const SHOP_ID = resolvedShopId;
 
   // Form State
   const [name, setName] = useState("");
@@ -45,13 +46,48 @@ export default function MenuManager() {
   const [imagePreview, setImagePreview] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  const userId = user?.id;
   useEffect(() => {
-    if (!user) {
+    if (!userId) {
       navigate('/login');
       return;
     }
-    fetchItems();
-  }, []);
+    async function resolveShop() {
+      if (!resolvedShopId) {
+        const cachedId = sessionStorage.getItem('active_shop_id');
+        if (cachedId) {
+          setResolvedShopId(cachedId);
+          return;
+        }
+
+        try {
+          const { data: members } = await supabase
+            .from("shop_members")
+            .select("shop_id")
+            .eq("user_id", userId)
+            .limit(1);
+
+          if (members && members.length > 0) {
+            setResolvedShopId(members[0].shop_id);
+          } else {
+            const { data: shops } = await supabase.from("shops").select("shop_id").limit(1);
+            if (shops && shops.length > 0) {
+              setResolvedShopId(shops[0].shop_id);
+            }
+          }
+        } catch (err) {
+          console.warn(err);
+        }
+      }
+    }
+    resolveShop();
+  }, [userId, resolvedShopId, navigate]);
+
+  useEffect(() => {
+    if (resolvedShopId) {
+       fetchItems();
+    }
+  }, [resolvedShopId]);
 
   const fetchItems = async () => {
     setLoading(true);

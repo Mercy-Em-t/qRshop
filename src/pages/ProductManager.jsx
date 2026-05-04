@@ -33,7 +33,7 @@ export default function ProductManager() {
   const planAccess = usePlanAccess();
 
   const user = getCurrentUser();
-  const [resolvedShopId, setResolvedShopId] = useState(user?.shop_id || null);
+  const [resolvedShopId, setResolvedShopId] = useState(() => user?.shop_id || sessionStorage.getItem('active_shop_id') || null);
   const SHOP_ID = resolvedShopId;
 
   // Form State
@@ -70,6 +70,12 @@ export default function ProductManager() {
     }
     async function resolveShop() {
       if (!resolvedShopId) {
+        const cachedId = sessionStorage.getItem('active_shop_id');
+        if (cachedId) {
+          setResolvedShopId(cachedId);
+          return;
+        }
+
         try {
           const { data: members } = await supabase
             .from("shop_members")
