@@ -47,17 +47,14 @@ export default function ManageAttributes() {
       if (!shopId) return;
       const { data } = await supabase
         .from("shops")
-        .select("custom_attributes_schema")
+        .select("appearance_config")
         .eq("shop_id", shopId)
         .single();
       
-      if (data && data.custom_attributes_schema) {
-        if (!Array.isArray(data.custom_attributes_schema)) {
-          if (data.custom_attributes_schema.fields) setFields(data.custom_attributes_schema.fields);
-          if (data.custom_attributes_schema.category_defaults) setCategoryDefaults(data.custom_attributes_schema.category_defaults);
-        } else {
-          setFields(data.custom_attributes_schema);
-        }
+      if (data && data.appearance_config && data.appearance_config.custom_attributes) {
+        const ca = data.appearance_config.custom_attributes;
+        if (ca.fields) setFields(ca.fields);
+        if (ca.category_defaults) setCategoryDefaults(ca.category_defaults);
       }
       setLoading(false);
     }
@@ -127,12 +124,23 @@ export default function ManageAttributes() {
     }
     setSaving(true);
     try {
+      const { data: currentShop } = await supabase
+        .from("shops")
+        .select("appearance_config")
+        .eq("shop_id", shopId)
+        .single();
+
+      const existingConfig = currentShop?.appearance_config || {};
+
       const { error } = await supabase
         .from("shops")
         .update({ 
-          custom_attributes_schema: {
-            fields,
-            category_defaults: categoryDefaults
+          appearance_config: {
+            ...existingConfig,
+            custom_attributes: {
+              fields,
+              category_defaults: categoryDefaults
+            }
           }
         })
         .eq("shop_id", shopId);

@@ -110,8 +110,8 @@ export default function ProductManager() {
          .eq("shop_id", SHOP_ID)
          .single();
       
-      if (data && data.custom_attributes_schema) {
-         setShopSchema(data.custom_attributes_schema);
+      if (data && data.appearance_config && data.appearance_config.custom_attributes) {
+         setShopSchema(data.appearance_config.custom_attributes.fields || []);
       }
     } catch (err) {
       console.warn("Custom attributes schema is not available:", err);
