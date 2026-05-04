@@ -208,18 +208,20 @@ export default function SalesAgentWidget({ menuItems = [], addItem, shopId }) {
                       {msg.recommendations.map((rec) => (
                         <div
                           key={rec.id}
-                          className="bg-gray-50 border border-gray-200 rounded-xl p-2.5 flex items-center justify-between gap-2"
+                          className="bg-white border border-gray-100 rounded-xl p-3 flex flex-col gap-2 shadow-sm"
                         >
-                          <div className="min-w-0">
-                            <p className="font-bold text-gray-800 text-xs truncate">{rec.name}</p>
-                            <p className="text-[10px] text-gray-400">KSh {rec.price}</p>
+                          <div className="flex justify-between items-start">
+                            <div className="min-w-0">
+                              <p className="font-black text-gray-900 text-sm leading-snug tracking-tight truncate">{rec.name}</p>
+                              <p className="text-xs font-bold text-green-600 mt-0.5">KSh {rec.price}</p>
+                            </div>
+                            <button
+                              onClick={() => handlePropel(rec)}
+                              className="shrink-0 bg-green-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg hover:bg-green-700 transition"
+                            >
+                              Add to Cart
+                            </button>
                           </div>
-                          <button
-                            onClick={() => handlePropel(rec)}
-                            className="shrink-0 bg-green-600 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg hover:bg-green-700 transition"
-                          >
-                            Propel
-                          </button>
                         </div>
                       ))}
                     </div>
