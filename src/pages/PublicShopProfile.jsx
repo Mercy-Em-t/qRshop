@@ -6,6 +6,7 @@ import { getCurrentUser } from "../services/auth-service";
 import { logEvent } from "../services/telemetry-service";
 import MetaTags from "../components/MetaTags";
 import { createPublicSession } from "../utils/qr-session";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 // Shop Homepage Components
 import ShopHero from "../components/shop/ShopHero";
@@ -25,7 +26,21 @@ export default function PublicShopProfile({ directShopId }) {
   
   useEffect(() => {
     async function loadShopData() {
+      // 1. Cache First Resolution
       try {
+        const cachedShop = sessionStorage.getItem(`savannah_cached_shop_${shopIdentifier}`);
+        const cachedItems = sessionStorage.getItem(`savannah_cached_items_${shopIdentifier}`);
+        if (cachedShop && cachedItems) {
+          setShop(JSON.parse(cachedShop));
+          setFeaturedItems(JSON.parse(cachedItems).slice(0, 4));
+          setLoading(false);
+        }
+      } catch (err) {
+        // ignore cache failures
+      }
+
+      try {
+        // 2. Fetch fresh data
         const shopData = await resolveShopIdentifier(shopIdentifier);
 
         if (!shopData) {
@@ -33,26 +48,34 @@ export default function PublicShopProfile({ directShopId }) {
           return;
         }
 
-        const items = await getMenuItems(shopData.id);
+        // Parallel Data Fetching
+        const [items] = await Promise.all([
+           getMenuItems(shopData.id)
+        ]);
 
         setShop(shopData);
+        setFeaturedItems(items ? items.slice(0, 4) : []);
         
         // Log Telemetry: Direct Visit (Link in Bio / Share)
-        // We log this as a general view event.
         logEvent("shop_profile_view", {
            shop_id: shopData.id,
-           is_direct: !params.qrId // If there is no QR ID in the URL, it's a direct link
+           is_direct: !params.qrId 
         });
         
-        // Canonical Redirect: If accessed via UUID or old link, redirect to the current slug
+        // Update Cache
+        try {
+          sessionStorage.setItem(`savannah_cached_shop_${shopIdentifier}`, JSON.stringify(shopData));
+          sessionStorage.setItem(`savannah_cached_items_${shopIdentifier}`, JSON.stringify(items || []));
+        } catch (err) {
+          // ignore cache writing limits
+        }
+
+        // Canonical Redirect
         if (shopIdentifier !== shopData.slug && !directShopId) {
           navigate(`/s/${shopData.slug}`, { replace: true });
         }
-
-        // Take first 4 items as featured
-        setFeaturedItems(items.slice(0, 4));
       } catch (err) {
-        setError("Failed to load shop profile.");
+        if (!shop) setError("Failed to load shop profile.");
       } finally {
         setLoading(false);
       }
@@ -93,7 +116,7 @@ export default function PublicShopProfile({ directShopId }) {
   };
 
   // 2. Loading / Error States
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>;
+  if (loading) return <LoadingSpinner showLogo={true} message="Accessing Storefront..." />;
   if (error || !shop) return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-4"><h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Shop Not Found</h1><button onClick={() => navigate("/")} className="mt-4 text-theme-secondary font-bold">Go Home</button></div>;
 
   // 3. Extract Dynamic Layout — with hard defensive guards
