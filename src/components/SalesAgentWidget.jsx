@@ -112,9 +112,10 @@ export default function SalesAgentWidget({ menuItems = [], addItem, shopId }) {
 
       if (error) throw error;
 
-      // 3. Match recommendations in the AI text
-      const aiReply = data.reply;
-      const recs = menuItems.filter(p => aiReply.toLowerCase().includes(p.name.toLowerCase())).slice(0, 3);
+      // 3. Extract recommendations from structured JSON
+      const aiReply = data.reply || "I'm having trouble understanding, but I'm here to help!";
+      const recommendedIds = data.recommended_product_ids || [];
+      const recs = menuItems.filter(p => recommendedIds.includes(p.id)).slice(0, 3);
       
       const aiResponse = { 
         sender: "ai", 

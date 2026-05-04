@@ -25,11 +25,11 @@ const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 async function check() {
-  const { data, error } = await supabase.from('shops').select('*').limit(1);
+  const { data, error } = await supabase.from('product_sales_pages').select('*').limit(1);
   if (!error && data) {
-     console.log("Shops table columns:", Object.keys(data[0] || {}));
+     console.log("product_sales_pages columns:", Object.keys(data[0] || {}));
   } else {
-     console.error("Error fetching shops:", error);
+     console.error("Error fetching sales pages:", error);
   }
 }
 

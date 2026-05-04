@@ -25,11 +25,18 @@ const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 async function check() {
-  const { data, error } = await supabase.from('shops').select('*').limit(1);
-  if (!error && data) {
-     console.log("Shops table columns:", Object.keys(data[0] || {}));
+  const shopId = 'deada001-1111-4444-8888-deada0016666';
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("*, product_images(url, position)")
+    .eq("shop_id", shopId)
+    .neq("is_active", false)
+    .order("category", { ascending: true });
+
+  if (error) {
+     console.error("Fetch items error:", error);
   } else {
-     console.error("Error fetching shops:", error);
+     console.log(`Success! Found ${data.length} menu items.`);
   }
 }
 

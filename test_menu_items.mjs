@@ -25,11 +25,17 @@ const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
 async function check() {
-  const { data, error } = await supabase.from('shops').select('*').limit(1);
-  if (!error && data) {
-     console.log("Shops table columns:", Object.keys(data[0] || {}));
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select("*");
+
+  if (error) {
+     console.error("Fetch items error:", error);
   } else {
-     console.error("Error fetching shops:", error);
+     console.log(`Success! Found ${data.length} menu items in database.`);
+     if (data.length > 0) {
+        console.log("Example menu item:", data[0]);
+     }
   }
 }
 

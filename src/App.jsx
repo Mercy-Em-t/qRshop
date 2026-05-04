@@ -53,6 +53,7 @@ import DashboardRoutes from "./routes/DashboardRoutes";
 import BulkImageMapper from "./pages/BulkImageMapper";
 import AuthGate from "./components/AuthGate";
 import { Navigate } from "react-router-dom";
+import SalesMagazine from "./pages/SalesMagazine";
 
 // --- Admin Pages ---
 import MasterAdmin from "./pages/MasterAdmin";
@@ -183,6 +184,7 @@ export default function App() {
       <Route path="/shops/:shopId" element={<PublicShopProfile />} />
       <Route path="/s/:shopId" element={<PublicShopProfile />} />
       <Route path="/product/:productId" element={<ProductDetails />} />
+      <Route path="/s/:identifier/magazine" element={<SalesMagazine />} />
 
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
       <Route path="/request-access" element={<RequestAccess />} />

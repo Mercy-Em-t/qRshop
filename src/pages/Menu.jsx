@@ -29,6 +29,8 @@ export default function Menu() {
   const [showUpsell, setShowUpsell] = useState(false);
   const [bundles, setBundles] = useState([]);
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('qr_menu_view_mode') || 'grid');
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const terms = useNomenclature(session?.shop_id);
   const { campaigns } = useCampaigns(session?.shop_id);
@@ -116,20 +118,38 @@ export default function Menu() {
 
   // GRACEFUL TIER DEGRADATION: Cap display items to 50 if Free tier or expired
   const displayCategories = useMemo(() => {
+    let currentCats = categories;
+    
+    // Apply Search Filter First
+    if (searchQuery && categories) {
+        currentCats = {};
+        const q = searchQuery.toLowerCase();
+        for (const [cat, items] of Object.entries(categories)) {
+            const filtered = items.filter(i => 
+                i.name?.toLowerCase().includes(q) || 
+                i.description?.toLowerCase().includes(q) ||
+                (i.diet_tags && i.diet_tags.some(t => t.toLowerCase().includes(q)))
+            );
+            if (filtered.length > 0) {
+                currentCats[cat] = filtered;
+            }
+        }
+    }
+
     const isFreeTier = shop?.plan === 'free' || (shop?.subscription_expires_at && new Date(shop.subscription_expires_at) < new Date());
-    if (!isFreeTier || !categories) return categories;
+    if (!isFreeTier || !currentCats) return currentCats;
 
     let count = 0;
     const limited = {};
-    for (const cat of Object.keys(categories)) {
+    for (const cat of Object.keys(currentCats)) {
       const remaining = 50 - count;
       if (remaining <= 0) break;
-      limited[cat] = categories[cat].slice(0, remaining);
+      limited[cat] = currentCats[cat].slice(0, remaining);
       count += limited[cat].length;
       if (limited[cat].length >= remaining) break;
     }
     return limited;
-  }, [categories, shop]);
+  }, [categories, shop, searchQuery]);
 
   const categoryNames = useMemo(() => Object.keys(displayCategories || {}), [displayCategories]);
   const activeCat = activeCategory || categoryNames[0];
@@ -205,6 +225,22 @@ export default function Menu() {
                 </span>
               )}
             </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="max-w-lg mx-auto px-4 pb-3">
+          <div className="relative">
+             <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+             </span>
+             <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={`Search ${terms.menu?.toLowerCase() || 'menu'}...`}
+                className="w-full pl-10 pr-4 py-2 bg-gray-100 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-theme-secondary focus:bg-white transition-all outline-none"
+             />
           </div>
         </div>
 

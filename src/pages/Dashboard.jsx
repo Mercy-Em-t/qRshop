@@ -424,9 +424,9 @@ export default function Dashboard() {
              </div>
           )}
 
-          {/* Bundles tab — links to Campaign Manager which handles bundle creation */}
+          {/* Bundles tab — links to Marketing Studio which handles bundle creation */}
           <Link
-            to="/a/campaigns"
+            to="/a/marketing"
             className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-orange-200 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 bg-orange-400 w-16 h-16 rounded-bl-full opacity-10"></div>

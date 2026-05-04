@@ -1,23 +1,36 @@
 import { createClient } from "@supabase/supabase-js";
-import dotenv from "dotenv";
-dotenv.config();
+import fs from 'fs';
+import path from 'path';
 
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL;
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
-
-async function checkPolicies() {
-  const { data, error } = await supabase.rpc('get_policies'); // If custom RPC exists
-  // Alternative: query pg_policies
-  const { data: policies, error: polErr } = await supabase.from('pg_policies').select('*').eq('tablename', 'shop_users');
-  
-  if (polErr) {
-    console.error("Standard query failed, trying raw SQL via RPC if exists...");
-    // Often we don't have direct access to pg_policies via anon/service unless exposed.
+function loadEnv() {
+  try {
+    const envPath = path.resolve('.env');
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const env = {};
+    envContent.split('\n').forEach(line => {
+      const parts = line.split('=');
+      if (parts.length >= 2) {
+        env[parts[0].trim()] = parts.slice(1).join('=').trim();
+      }
+    });
+    return env;
+  } catch (err) {
+    return {};
   }
-  
-  console.log("Policies:", JSON.stringify(policies, null, 2));
 }
 
-checkPolicies();
+const env = loadEnv();
+const supabaseUrl = env.VITE_SUPABASE_URL;
+const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+async function check() {
+  // Query all policies for public.profiles using rpc/sql
+  const { data, error } = await supabase.rpc('get_view_def', {}); // Wait, there's no such rpc maybe
+  // Let's directly run it or let's use the REST API
+  // Instead of guessing RPCs, let's just query a specific test table if it has policies, or let's inspect the `pg_policies` via an rpc if we have one.
+  // Wait, is there a query we can run? Let's check `test_rpc.mjs` or `query_rpc.mjs` to see.
+  // Wait, let's just query profiles directly as a specific user.
+}
+
+check();

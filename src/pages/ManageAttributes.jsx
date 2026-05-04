@@ -115,6 +115,10 @@ export default function ManageAttributes() {
   };
 
   const handleSave = async () => {
+    if (!shopId) {
+      alert("Shop ID is missing. Please refresh or login again.");
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase
@@ -128,8 +132,8 @@ export default function ManageAttributes() {
       if (error) throw error;
       alert("Settings saved successfully!");
     } catch (err) {
-      console.error(err);
-      alert("Failed to save settings. Check your database connection.");
+      console.error("Save Attributes Error:", err);
+      alert(`Failed to save settings: ${err?.message || "Check your database connection."}`);
     } finally {
       setSaving(false);
     }
