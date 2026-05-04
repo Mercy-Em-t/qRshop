@@ -61,6 +61,7 @@ export default function ShopSelection() {
     };
 
     localStorage.setItem("savannah_session", JSON.stringify(sessionUser));
+    sessionStorage.setItem("active_shop_id", profile.shop_id);
     sessionStorage.removeItem("qr_session"); // Clear visitor session to prevent profile leakage
     localStorage.removeItem("pending_selection");
     localStorage.removeItem("pending_user_id");

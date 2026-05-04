@@ -130,11 +130,17 @@ export async function authenticateUser(email, password) {
 }
 
 export function getCurrentUser() {
-
   try {
     const raw = localStorage.getItem("savannah_session");
     if (!raw) return null;
-    return JSON.parse(raw);
+    const userObj = JSON.parse(raw);
+    
+    // Add dynamic/fallback shop_id from active shop
+    const activeShopId = sessionStorage.getItem("active_shop_id");
+    if (activeShopId && !userObj.shop_id) {
+       userObj.shop_id = activeShopId;
+    }
+    return userObj;
   } catch {
     return null;
   }
