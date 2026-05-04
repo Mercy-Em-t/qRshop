@@ -47,13 +47,17 @@ export default function ManageAttributes() {
       if (!shopId) return;
       const { data } = await supabase
         .from("shops")
-        .select("*")
+        .select("custom_attributes_schema")
         .eq("shop_id", shopId)
         .single();
       
-      if (data) {
-        if (data.custom_attributes_schema) setFields(data.custom_attributes_schema);
-        if (data.category_attribute_defaults) setCategoryDefaults(data.category_attribute_defaults);
+      if (data && data.custom_attributes_schema) {
+        if (!Array.isArray(data.custom_attributes_schema)) {
+          if (data.custom_attributes_schema.fields) setFields(data.custom_attributes_schema.fields);
+          if (data.custom_attributes_schema.category_defaults) setCategoryDefaults(data.custom_attributes_schema.category_defaults);
+        } else {
+          setFields(data.custom_attributes_schema);
+        }
       }
       setLoading(false);
     }
@@ -126,8 +130,10 @@ export default function ManageAttributes() {
       const { error } = await supabase
         .from("shops")
         .update({ 
-          custom_attributes_schema: fields,
-          category_attribute_defaults: categoryDefaults
+          custom_attributes_schema: {
+            fields,
+            category_defaults: categoryDefaults
+          }
         })
         .eq("shop_id", shopId);
       

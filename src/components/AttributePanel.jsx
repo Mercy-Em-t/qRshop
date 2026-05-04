@@ -62,12 +62,14 @@ export default function AttributePanel({ currentAttributes, onChange, category, 
 
       const { data } = await supabase
         .from("shops")
-        .select("category_attribute_defaults")
+        .select("custom_attributes_schema")
         .eq("shop_id", shopId)
         .single();
       
-      if (data?.category_attribute_defaults) {
-        setShopCategoryDefaults(data.category_attribute_defaults);
+      if (data?.custom_attributes_schema) {
+        if (!Array.isArray(data.custom_attributes_schema) && data.custom_attributes_schema.category_defaults) {
+          setShopCategoryDefaults(data.custom_attributes_schema.category_defaults);
+        }
       }
     }
     fetchShopDefaults();
