@@ -19,6 +19,8 @@ import ProductManager from "../pages/ProductManager";
 import ManageAttributes from "../pages/ManageAttributes";
 import SalesBrainManager from "../pages/SalesBrainManager";
 import BulkImageMapper from "../pages/BulkImageMapper";
+import SubscriptionPage from "../pages/SubscriptionPage";
+import ShopAppearance from "../pages/ShopAppearance";
 
 export default function DashboardRoutes() {
   return (
@@ -44,6 +46,8 @@ export default function DashboardRoutes() {
         <Route path="attributes" element={<ManageAttributes />} />
         <Route path="ai-brain" element={<SalesBrainManager />} />
         <Route path="bulk-image-mapper" element={<BulkImageMapper />} />
+        <Route path="subscription" element={<SubscriptionPage />} />
+        <Route path="appearance" element={<ShopAppearance />} />
       </Routes>
     </OnboardingGate>
   );

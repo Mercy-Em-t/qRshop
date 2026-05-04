@@ -38,7 +38,9 @@ export default function ManageAttributes() {
   const [newCategory, setNewCategory] = useState("");
   
   const navigate = useNavigate();
-  const shopId = getCurrentUser()?.shop_id;
+  // Multi-shop users have shop_id = null in session; fall back to the active shop selected in ShopSelection
+  const rawUser = getCurrentUser();
+  const shopId = rawUser?.shop_id || sessionStorage.getItem('active_shop_id') || null;
 
   useEffect(() => {
     async function fetchShopSettings() {

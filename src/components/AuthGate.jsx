@@ -47,5 +47,21 @@ export default function AuthGate({ children }) {
     return <Navigate to="/login" replace />;
   }
 
+  // ── Admin-Specific Role Verification ──
+  const isTargetingAdmin = typeof window !== 'undefined' && window.location.pathname.startsWith("/a/admin");
+  if (isTargetingAdmin && user.system_role !== 'system_admin') {
+    import("../utils/security").then(({ reportSecurityEvent }) => {
+       reportSecurityEvent("unauthorized_access", {
+          targetPath: window.location.pathname,
+          attemptedByEmail: user.email,
+          attemptedByRole: user.role,
+          attemptedBySystemRole: user.system_role
+       });
+    }).catch(err => console.warn(err));
+    
+    console.warn(`AuthGate: Unauthorized attempt to access admin path ${window.location.pathname} blocked.`);
+    return <Navigate to="/invalid-access" replace />;
+  }
+
   return children;
 }

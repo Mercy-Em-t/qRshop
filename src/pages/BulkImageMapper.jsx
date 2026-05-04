@@ -71,7 +71,13 @@ export default function BulkImageMapper() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [user] = useState(() => getCurrentUser());
-  const [resolvedShopId, setResolvedShopId] = useState(() => searchParams.get("shop_id") || null);
+  const [resolvedShopId, setResolvedShopId] = useState(() => {
+    const urlShopId = searchParams.get("shop_id");
+    // Guard: reject the literal string "null" that comes from ?shop_id=null when shopId is null in session
+    if (urlShopId && urlShopId !== "null") return urlShopId;
+    // Fallback to active shop chosen in ShopSelection for multi-shop accounts
+    return sessionStorage.getItem('active_shop_id') || null;
+  });
   const SHOP_ID = resolvedShopId;
 
   const stats = useMemo(() => ({
@@ -115,9 +121,17 @@ export default function BulkImageMapper() {
 
     async function resolveShop() {
       const urlShopId = searchParams.get("shop_id");
-      if (urlShopId) {
+      // Guard: reject the literal string "null"
+      if (urlShopId && urlShopId !== "null") {
          setResolvedShopId(urlShopId);
          return;
+      }
+
+      // Check sessionStorage first — set by ShopSelection for multi-shop accounts
+      const activeShopId = sessionStorage.getItem('active_shop_id');
+      if (activeShopId) {
+        setResolvedShopId(activeShopId);
+        return;
       }
 
       try {

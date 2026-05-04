@@ -1,14 +1,19 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { toPng } from "html-to-image";
 import { getCurrentUser, logout } from "../services/auth-service";
 import { supabase } from "../services/supabase-client";
 
 export default function MarketingStudio() {
+  const [searchParams] = useSearchParams();
   const [qrs, setQrs] = useState([]);
   const [selectedQr, setSelectedQr] = useState(null);
-  const [activeTab, setActiveTab] = useState("ads"); // "ads" | "promos" | "appearance"
+  // Read ?tab param so dashboard Bundles link can deep-link to the Promo Bundles tab
+  const [activeTab, setActiveTab] = useState(() => {
+    const tabParam = searchParams.get('tab');
+    return ['ads', 'promos', 'appearance'].includes(tabParam) ? tabParam : 'ads';
+  });
   
   // Appearance State
   const [appearanceConfig, setAppearanceConfig] = useState({

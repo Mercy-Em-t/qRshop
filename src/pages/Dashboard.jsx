@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getCurrentUser, logout } from "../services/auth-service";
 import { supabase } from "../services/supabase-client";
-import { getOrdersPerDay, getPopularItems, getUpsellStats } from "../services/analytics-service";
+import { getOrdersPerDay, getPopularItems } from "../services/analytics-service";
 import { getSubscription } from "../services/subscription-service";
+import { useConversionStats } from "../hooks/useConversionStats";
+import { useVisitStats } from "../hooks/useVisitStats";
 import AnalyticsChart from "../components/AnalyticsChart";
 import SubscriptionStatus from "../components/SubscriptionStatus";
 import OnboardingWizard from "../components/OnboardingWizard";
@@ -16,7 +18,6 @@ import usePlanAccess from "../hooks/usePlanAccess";
 export default function Dashboard() {
   const [ordersPerDay, setOrdersPerDay] = useState([]);
   const [popularItems, setPopularItems] = useState([]);
-  const [upsellStats, setUpsellStats] = useState(null);
   const [shop, setShop] = useState(null);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [lastCheckCount, setLastCheckCount] = useState(null);
@@ -30,7 +31,12 @@ export default function Dashboard() {
   const [showShareModal, setShowShareModal] = useState(false);
 
   const user = getCurrentUser();
-  const shopId = user?.shop_id;
+  // Multi-shop users have shop_id = null; fall back to the active shop chosen in ShopSelection
+  const shopId = user?.shop_id || sessionStorage.getItem('active_shop_id') || null;
+
+  // Real-time conversion intelligence hook
+  const { stats: convStats } = useConversionStats(shopId);
+  const { stats: visitStats } = useVisitStats(shopId);
 
   useEffect(() => {
     if (!user) {
@@ -66,15 +72,13 @@ export default function Dashboard() {
       }
 
       try {
-        const [orders, popular, upsells, shopRes] = await Promise.all([
+        const [orders, popular, shopRes] = await Promise.all([
           getOrdersPerDay(shopId),
           getPopularItems(shopId),
-          getUpsellStats(shopId),
           supabase.from("shops").select("*, id:shop_id").eq("shop_id", shopId).single(),
         ]);
         setOrdersPerDay(orders);
         setPopularItems(popular);
-        setUpsellStats(upsells);
         setShop(shopRes?.data || null);
       } catch {
         // Analytics loading failed silently
@@ -174,7 +178,7 @@ export default function Dashboard() {
           <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-3">
             <Link to="/a/orders" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🛎 Live Orders</Link>
             <Link to="/product-manager" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">📋 Product Manager</Link>
-            <Link to="/a/campaigns" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🎁 Bundles</Link>
+            <Link to="/a/marketing?tab=promos" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🎁 Bundles</Link>
             <Link to="/a/ai-brain" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🧠 AI Brain</Link>
             <Link to="/a/settings" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">⚙️ Settings</Link>
             <button onClick={() => { logout(); navigate("/login"); }} className="text-sm font-bold text-red-500 text-left">Logout</button>
@@ -326,7 +330,7 @@ export default function Dashboard() {
           </Link>
 
           <Link
-            to={`/a/bulk-image-mapper?shop_id=${shopId}`}
+            to={shopId ? `/a/bulk-image-mapper?shop_id=${shopId}` : `/a/bulk-image-mapper`}
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-green-100 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 bg-green-500 w-16 h-16 rounded-bl-full opacity-10"></div>
@@ -391,6 +395,19 @@ export default function Dashboard() {
               Update store info, logo, passwords, and manage plan.
             </p>
           </Link>
+
+          <Link
+            to="/a/appearance"
+            className="bg-gradient-to-br from-violet-50 to-indigo-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-200 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-indigo-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              🎨 Store Appearance
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Customise your public profile — logo, colours, fonts, layout &amp; hero text.
+            </p>
+          </Link>
         
           {planAccess.isPro ? (
              <Link
@@ -424,13 +441,13 @@ export default function Dashboard() {
              </div>
           )}
 
-          {/* Bundles tab — links to Marketing Studio which handles bundle creation */}
+          {/* Bundles tab — links to Marketing Studio Promo Bundles tab */}
           <Link
-            to="/a/marketing"
+            to="/a/marketing?tab=promos"
             className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-orange-200 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 bg-orange-400 w-16 h-16 rounded-bl-full opacity-10"></div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">🎁 Bundles</h2>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">🎁 Bundles & Promos</h2>
             <p className="text-gray-500 text-sm">Create product bundles and combo promotions for your shop.</p>
           </Link>
 
@@ -584,27 +601,135 @@ export default function Dashboard() {
               unit="sold"
             />
 
-            {upsellStats && (
-              <div className="bg-white rounded-xl shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                  Upsell Conversion
-                </h3>
-                <div className="flex items-center gap-4">
-                  <div className="text-center">
-                    <p className="text-3xl font-bold text-green-600">{upsellStats.rate}%</p>
-                    <p className="text-sm text-gray-500">Conversion Rate</p>
+            {/* Real-time Product Conversion Intelligence Card */}
+            <div className="bg-white rounded-xl shadow-sm p-6 col-span-1 md:col-span-2 relative overflow-hidden">
+              {/* Live indicator */}
+              <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                </span>
+                <span className="text-[10px] font-black text-green-600 uppercase tracking-widest">Live</span>
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-800 mb-1">📊 Product Conversion Intelligence</h3>
+              <p className="text-xs text-gray-400 mb-5">All customer interaction avenues — updates in real time</p>
+
+              {convStats.loading ? (
+                <div className="flex items-center gap-3 py-4">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
+                  <span className="text-sm text-gray-400">Computing live stats...</span>
+                </div>
+              ) : (
+                <>
+                  {/* Primary KPI row */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-100">
+                      <p className="text-[10px] font-black text-green-700 uppercase tracking-widest mb-1">Overall Conv. Rate</p>
+                      <p className="text-3xl font-black text-green-700">{convStats.overallRate}%</p>
+                      <p className="text-[10px] text-green-500 mt-1">Across all touchpoints</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+                      <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1">Upsell Accept Rate</p>
+                      <p className="text-3xl font-black text-blue-700">{convStats.upsellRate}%</p>
+                      <p className="text-[10px] text-blue-500 mt-1">{convStats.upsellAccepted} of {convStats.upsellTotal} shown</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4 border border-amber-100">
+                      <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-1">Orders Today</p>
+                      <div className="flex items-end gap-2">
+                        <p className="text-3xl font-black text-amber-700">{convStats.ordersToday}</p>
+                        {convStats.trend !== null && (
+                          <span className={`text-xs font-black pb-1 ${
+                            convStats.trend > 0 ? 'text-green-600' : convStats.trend < 0 ? 'text-red-500' : 'text-gray-400'
+                          }`}>
+                            {convStats.trend > 0 ? `▲ +${convStats.trend}` : convStats.trend < 0 ? `▼ ${convStats.trend}` : '→ 0'}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-amber-500 mt-1">vs. yesterday</p>
+                    </div>
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-100">
+                      <p className="text-[10px] font-black text-purple-700 uppercase tracking-widest mb-1">Revenue Today</p>
+                      <p className="text-2xl font-black text-purple-700">KSh {convStats.revenueToday.toLocaleString()}</p>
+                      <p className="text-[10px] text-purple-500 mt-1">{convStats.ordersThisWeek} orders this week</p>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-semibold text-gray-700">{upsellStats.accepted}</p>
-                    <p className="text-sm text-gray-500">Accepted</p>
+
+                  {/* Conversion funnel bar */}
+                  <div className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="text-xs font-bold text-gray-600">Conversion Funnel</p>
+                      <p className="text-xs text-gray-400">{convStats.totalConversions} converted of {convStats.totalInteractions} interactions</p>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                      <div
+                        className="h-3 rounded-full bg-gradient-to-r from-green-400 to-emerald-500 transition-all duration-700"
+                        style={{ width: `${Math.min(convStats.overallRate, 100)}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between mt-2">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block"></span>
+                        <span className="text-[10px] text-gray-500">Upsell Modal</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2.5 h-2.5 rounded-full bg-green-400 inline-block"></span>
+                        <span className="text-[10px] text-gray-500">Completed Orders</span>
+                      </div>
+                      {convStats.lastUpdated && (
+                        <span className="text-[10px] text-gray-300">Updated {convStats.lastUpdated.toLocaleTimeString()}</span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <p className="text-2xl font-semibold text-gray-700">{upsellStats.total}</p>
-                    <p className="text-sm text-gray-500">Total Shown</p>
+                </>
+              )}
+            </div>
+
+            {/* Traffic & Visit Analytics Card */}
+            <div className="bg-white rounded-xl shadow-sm p-6 col-span-1 md:col-span-2 relative overflow-hidden">
+              <div className="absolute top-4 right-4 flex items-center gap-1.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
+                </span>
+                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Live</span>
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-800 mb-1">🏪 Traffic &amp; Visit Analytics</h3>
+              <p className="text-xs text-gray-400 mb-5">Shop profile visits, QR scans, and conversion rates</p>
+
+              {visitStats.loading ? (
+                <div className="flex items-center gap-3 py-4">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                  <span className="text-sm text-gray-400">Computing traffic stats...</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-2">
+                  <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-4 border border-indigo-100">
+                    <p className="text-[10px] font-black text-indigo-700 uppercase tracking-widest mb-1">Total Profile Visits</p>
+                    <p className="text-3xl font-black text-indigo-700">{visitStats.totalVisits}</p>
+                    <p className="text-[10px] text-indigo-500 mt-1">All time direct &amp; QR</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-blue-50 to-sky-50 rounded-xl p-4 border border-blue-100">
+                    <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-1">Visits Today</p>
+                    <p className="text-3xl font-black text-blue-700">{visitStats.visitsToday}</p>
+                    <p className="text-[10px] text-blue-500 mt-1">Directly today</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-sky-50 to-cyan-50 rounded-xl p-4 border border-sky-100">
+                    <p className="text-[10px] font-black text-sky-700 uppercase tracking-widest mb-1">Visit Trend</p>
+                    <p className="text-3xl font-black text-sky-700">
+                      {visitStats.trend > 0 ? `▲ +${visitStats.trend}%` : visitStats.trend < 0 ? `▼ ${visitStats.trend}%` : '→ 0%'}
+                    </p>
+                    <p className="text-[10px] text-sky-500 mt-1">vs yesterday</p>
+                  </div>
+                  <div className="bg-gradient-to-br from-cyan-50 to-teal-50 rounded-xl p-4 border border-cyan-100">
+                    <p className="text-[10px] font-black text-cyan-700 uppercase tracking-widest mb-1">Visit → Order Rate</p>
+                    <p className="text-3xl font-black text-cyan-700">{visitStats.conversionToOrder}%</p>
+                    <p className="text-[10px] text-cyan-500 mt-1">Conversion funnel rate</p>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">

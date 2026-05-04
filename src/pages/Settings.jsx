@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
@@ -13,6 +13,12 @@ export default function Settings() {
   const [showMpesaTest, setShowMpesaTest] = useState(false);
   const [testPhone, setTestPhone] = useState("");
   const [isTestingMpesa, setIsTestingMpesa] = useState(false);
+
+  // Logo upload state
+  const [logoFile,    setLogoFile]    = useState(null);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const logoInputRef = useRef(null);
   
   const navigate = useNavigate();
   const user = getCurrentUser();
@@ -32,6 +38,24 @@ export default function Settings() {
   const handleUpdate = async (e) => {
     e.preventDefault();
     setSaving(true);
+
+    // Upload logo first if pending
+    let logoUrl = shop.logo_url || null;
+    if (logoFile) {
+      setUploadingLogo(true);
+      try {
+        const ext  = logoFile.name.split(".").pop();
+        const path = `${SHOP_ID}/logo-${Date.now()}.${ext}`;
+        const { error: upErr } = await supabase.storage.from("shop-logos").upload(path, logoFile, { upsert: true });
+        if (!upErr) {
+          const { data: urlData } = supabase.storage.from("shop-logos").getPublicUrl(path);
+          logoUrl = urlData?.publicUrl || logoUrl;
+          setLogoFile(null);
+          setLogoPreview(null);
+        }
+      } catch { /* fail silently for logo, still save other fields */ }
+      setUploadingLogo(false);
+    }
     const { error } = await supabase.from("shops").update({
       name: shop.name,
       description: shop.description,
@@ -46,6 +70,7 @@ export default function Settings() {
       fulfillment_settings: shop.fulfillment_settings,
       mpesa_shortcode: shop.mpesa_shortcode || null,
       mpesa_passkey: shop.mpesa_passkey || null,
+      ...(logoUrl ? { logo_url: logoUrl } : {}),
     }).eq("shop_id", SHOP_ID);
     
     setSaving(false);
@@ -81,7 +106,7 @@ export default function Settings() {
   if (loading) return <div className="p-10 text-center animate-pulse text-green-600 font-bold">Syncing Profile...</div>;
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="min-h-screen bg-slate-50 pb-20 overflow-x-hidden">
       <header className="bg-white border-b border-slate-100 px-6 py-4 sticky top-0 z-10 shadow-sm">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
            <h1 className="text-xl font-bold text-gray-900">Shop Settings</h1>
@@ -89,9 +114,63 @@ export default function Settings() {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto p-6">
+      <main className="max-w-4xl mx-auto p-4 sm:p-6 overflow-hidden">
         <form onSubmit={handleUpdate} className="space-y-6">
            
+           {/* ── Appearance Shortcut ── */}
+           <Link
+             to="/a/appearance"
+             className="flex items-center justify-between bg-gradient-to-br from-violet-50 to-indigo-50 rounded-2xl px-6 py-4 border border-indigo-100 hover:border-indigo-300 transition group"
+           >
+             <div>
+               <p className="text-sm font-black text-indigo-800">🎨 Customise Store Appearance</p>
+               <p className="text-xs text-indigo-500 mt-0.5">Logo, colours, fonts, hero text &amp; page layout</p>
+             </div>
+             <svg className="w-5 h-5 text-indigo-300 group-hover:text-indigo-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+             </svg>
+           </Link>
+
+           {/* ── Logo Upload ── */}
+           <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+             <h2 className="text-sm font-black text-green-600 uppercase tracking-widest mb-5 border-b border-slate-50 pb-4">Shop Logo</h2>
+             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
+               <div className="w-20 h-20 rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex items-center justify-center overflow-hidden flex-shrink-0">
+                 {logoPreview || shop?.logo_url ? (
+                   <img src={logoPreview || shop.logo_url} alt="Logo" className="w-full h-full object-cover rounded-2xl" />
+                 ) : (
+                   <span className="text-3xl">{shop?.name?.charAt(0) || "🏪"}</span>
+                 )}
+               </div>
+               <div className="flex-1 space-y-2">
+                 <p className="text-sm text-gray-600">Appears on your public shop profile hero banner.</p>
+                 <p className="text-[10px] text-gray-400 uppercase tracking-wider">JPG, PNG, WEBP, SVG — max 2MB</p>
+                 <div className="flex flex-wrap gap-2">
+                   <button type="button" onClick={() => logoInputRef.current?.click()} className="bg-green-50 text-green-700 border border-green-200 text-xs font-black px-4 py-2 rounded-xl hover:bg-green-100 transition uppercase tracking-widest">
+                     {logoFile ? "Change" : "Upload Logo"}
+                   </button>
+                   {(shop?.logo_url || logoFile) && (
+                     <button type="button" onClick={() => { setLogoFile(null); setLogoPreview(null); setShop({...shop, logo_url: null}); }} className="bg-red-50 text-red-400 border border-red-100 text-xs font-black px-4 py-2 rounded-xl hover:bg-red-100 transition uppercase tracking-widest">Remove</button>
+                   )}
+                 </div>
+                 {logoFile && <p className="text-xs text-green-600 font-bold">📎 {logoFile.name} — will upload on save</p>}
+                 <input
+                   ref={logoInputRef}
+                   type="file"
+                   accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                   className="hidden"
+                   onChange={e => {
+                     const f = e.target.files[0];
+                     if (!f) return;
+                     if (f.size > 2 * 1024 * 1024) { alert("Logo must be under 2MB"); return; }
+                     setLogoFile(f);
+                     setLogoPreview(URL.createObjectURL(f));
+                   }}
+                 />
+               </div>
+             </div>
+           </div>
+
            {/* Basic Identity */}
            <div className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
               <h2 className="text-sm font-black text-green-600 uppercase tracking-widest mb-6 border-b border-slate-50 pb-4">Classic Profile</h2>
@@ -120,18 +199,18 @@ export default function Settings() {
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition h-24 font-medium text-gray-900"
                     />
                  </div>
-                 <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Public URL Slug (Instagram/TikTok Link)</label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-mono text-gray-400">{window.location.origin}/s/</span>
-                      <input 
-                         type="text" 
-                         value={shop.slug || ""} 
-                         onChange={e => setShop({...shop, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')})}
-                         placeholder="your-shop-name"
-                         className="flex-1 bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-bold text-gray-900"
-                      />
-                    </div>
+                  <div className="md:col-span-2">
+                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Public URL Slug (Instagram/TikTok Link)</label>
+                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                       <span className="text-xs font-mono text-gray-400 break-all shrink-0 max-w-full sm:max-w-[200px] truncate">{window.location.origin}/s/</span>
+                       <input 
+                          type="text" 
+                          value={shop.slug || ""} 
+                          onChange={e => setShop({...shop, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-')})}
+                          placeholder="your-shop-name"
+                          className="flex-1 bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-bold text-gray-900 min-w-0"
+                       />
+                     </div>
                     <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-wide">
                       This is the link you put in your Instagram or TikTok bio. Changing this will update your public identity.
                     </p>
@@ -335,7 +414,7 @@ export default function Settings() {
                  </button>
               </div>
            </div>
-           <div className="flex items-center justify-between gap-4 sticky bottom-4 z-10 bg-white/80 backdrop-blur p-4 rounded-3xl shadow-2xl border border-slate-100">
+           <div className="flex flex-wrap items-center justify-between gap-3 sticky bottom-4 z-10 bg-white/80 backdrop-blur p-4 rounded-3xl shadow-2xl border border-slate-100">
               <div className="flex items-center gap-3">
                  <div className={`w-3 h-3 rounded-full ${shop.is_open ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
                  <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">{shop.is_open ? 'Shop is Live' : 'Shop is Closed'}</span>

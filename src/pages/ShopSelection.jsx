@@ -55,6 +55,7 @@ export default function ShopSelection() {
       id: profile.user_id || JSON.parse(localStorage.getItem("pending_user_id")),
       email: profile.email || "merchant@qrshop.com",
       role: profile.role,
+      system_role: profile.system_role || "user",
       shop_id: profile.shop_id,
       shop_name: profile.shop_name
     };
@@ -64,7 +65,7 @@ export default function ShopSelection() {
     localStorage.removeItem("pending_selection");
     localStorage.removeItem("pending_user_id");
 
-    if (profile.system_role === 'system_admin') {
+    if (profile.system_role === 'system_admin' || sessionUser.system_role === 'system_admin') {
       navigate("/admin");
     } else {
       navigate("/a");

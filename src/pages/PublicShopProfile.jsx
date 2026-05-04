@@ -96,29 +96,44 @@ export default function PublicShopProfile({ directShopId }) {
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>;
   if (error || !shop) return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-4"><h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Shop Not Found</h1><button onClick={() => navigate("/")} className="mt-4 text-theme-secondary font-bold">Go Home</button></div>;
 
-  // 3. Extract Dynamic Layout
-  const config = shop.appearance_config || { layout: ["hero", "categories", "featured_grid", "value_props", "cta"] };
-  const layout = config.layout || ["hero", "categories", "featured_grid", "value_props", "cta"];
-  const theme = config.theme || {};
+  // 3. Extract Dynamic Layout — with hard defensive guards
+  const SAFE_SECTIONS = ["hero", "categories", "featured_grid", "value_props", "cta", "footer"];
+  const rawConfig = shop.appearance_config;
+  const config    = (rawConfig && typeof rawConfig === "object") ? rawConfig : {};
+  const rawLayout = Array.isArray(config.layout) ? config.layout : ["hero", "categories", "featured_grid", "value_props", "cta"];
+  // Whitelist filter — unknown section names are silently dropped
+  const layout    = rawLayout.filter(s => SAFE_SECTIONS.includes(s));
+  const theme     = (config.theme && typeof config.theme === "object") ? config.theme : {};
+
+  // Only inject CSS if it's a plain string (no script tag)
+  const safeCss = (typeof shop.custom_css === "string" && !/(<script|javascript:)/i.test(shop.custom_css))
+    ? shop.custom_css
+    : "";
 
   return (
     <div className="min-h-screen bg-white selection:bg-indigo-500 selection:text-white" style={{
-       '--primary-color': theme.primary_color || '#6366f1',
+       '--primary-color':   theme.primary_color   || '#6366f1',
        '--secondary-color': theme.secondary_color || '#10b981',
-       '--font-family': theme.font_family || 'Outfit'
+       '--font-family':     theme.font_family      || 'Outfit'
     }}>
-      <MetaTags 
-        title={`${shop.name} | ${shop.tagline || 'Shop Online'}`} 
-        description={shop.tagline || `Welcome to ${shop.name}. Browse our products and order online.`} 
+      <MetaTags
+        title={`${shop.name} | ${shop.tagline || 'Shop Online'}`}
+        description={shop.tagline || `Welcome to ${shop.name}. Browse our products and order online.`}
       />
 
-      {/* Power User CSS Injection */}
-      {shop.custom_css && <style>{shop.custom_css}</style>}
+      {/* Safe CSS Injection — sanitised before render */}
+      {safeCss && <style>{safeCss}</style>}
 
       <main className="relative">
         {layout.map(sectionName => {
-           const render = SectionRegistry[sectionName];
-           return render ? render(shop, featuredItems) : null;
+           // Each section is guarded — a crash in one section never breaks the others
+           try {
+             const render = SectionRegistry[sectionName];
+             return render ? render(shop, featuredItems) : null;
+           } catch (err) {
+             console.warn(`[PublicShopProfile] Section "${sectionName}" failed to render:`, err);
+             return null; // silently skip broken sections
+           }
         })}
       </main>
 

@@ -329,7 +329,7 @@ export default function Menu() {
                 {category}
               </h2>
               <div className={viewMode === "grid" ? "grid grid-cols-2 gap-4" : "grid gap-3"}>
-                {categories[category].map((item) => (
+                {(displayCategories[category] || []).map((item) => (
                   <MenuItem 
                      key={item.id} 
                      item={item} 

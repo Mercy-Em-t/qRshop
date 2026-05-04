@@ -11,6 +11,7 @@ import { generateSalesContent } from "../services/sales-content-generator";
 import { normalizeAttributeKey } from "../utils/attribute-utils";
 import VariationBuilder from "../components/VariationBuilder";
 import AttributePanel from "../components/AttributePanel";
+import { validateImageFile } from "../utils/security";
 
 export default function ProductManager() {
   const [items, setItems] = useState([]);
@@ -188,7 +189,6 @@ export default function ProductManager() {
       description,
       price: parseFloat(price),
       category,
-      subcategory: subcategory || null,
       stock: stock ? parseInt(stock) : -1,
       sku: sku || null,
       product_link: productLink || null,
@@ -199,6 +199,8 @@ export default function ProductManager() {
             acc[normalizeAttributeKey(key)] = customFields[key];
             return acc;
          }, {}),
+         // Store subcategory inside attributes (column does not exist on menu_items table)
+         ...(subcategory ? { subcategory } : {}),
       }
     };
 
@@ -340,7 +342,7 @@ export default function ProductManager() {
      setDescription(item.description || "");
      setPrice(item.price || "");
      setCategory(item.category || "Main");
-     setSubcategory(item.subcategory || "");
+     setSubcategory(item.subcategory || item.attributes?.subcategory || "");
      setStock(item.stock === -1 ? "" : (item.stock || ""));
      setSku(item.sku || "");
      setProductLink(item.product_link || "");
@@ -383,9 +385,17 @@ export default function ProductManager() {
      setShowAddForm(false);
   };
   
-  const handleImageSelect = (e) => {
+  const handleImageSelect = async (e) => {
      const file = e.target.files[0];
      if (!file) return;
+
+     // ── Magic Number & MIME Hard Validation ──
+     const check = await validateImageFile(file);
+     if (!check.valid) {
+        alert(check.error || "Security Check Failed: File is not a valid photo.");
+        return;
+     }
+
      if (file.size > 5 * 1024 * 1024) {
         alert("Image must be less than 5MB");
         return;
@@ -562,7 +572,6 @@ export default function ProductManager() {
            shop_id: SHOP_ID,
            name: name,
            category: category,
-           subcategory: subcategory || null,
            price: parsedPrice,
            description: row.length >= (5 + offset) ? cleanStr(row[4 + offset]) : "",
            stock: (row.length >= (6 + offset) && cleanStr(row[5 + offset])) ? parseInt(row[5 + offset]) : -1,
@@ -571,7 +580,8 @@ export default function ProductManager() {
            tags: parsedTags,
            variant_options: parsedVariants,
            image_url: imageUrl,
-           attributes: parsedAttributes
+           // Store subcategory inside attributes JSON (no dedicated column exists on menu_items)
+           attributes: subcategory ? { ...parsedAttributes, subcategory } : parsedAttributes
         };
 
         if (id && id.length > 10) {

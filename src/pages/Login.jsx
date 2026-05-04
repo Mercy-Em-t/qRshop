@@ -23,6 +23,12 @@ export default function Login() {
       return;
     }
 
+    if (user && user.system_role === 'system_admin') {
+      localStorage.setItem("savannah_session", JSON.stringify(user));
+      navigate("/admin");
+      return;
+    }
+
     if (requiresSelection) {
       localStorage.setItem("pending_selection", JSON.stringify(profiles));
       localStorage.setItem("pending_user_id", JSON.stringify(user.id));
@@ -30,11 +36,7 @@ export default function Login() {
       return;
     }
 
-    if (user.system_role === 'system_admin') {
-      navigate("/admin");
-    } else {
-      navigate("/a");
-    }
+    navigate("/a");
   };
 
   return (

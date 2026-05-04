@@ -8,6 +8,7 @@ export default function AdminMonitoring() {
   const user = getCurrentUser();
   const [logs, setLogs] = useState([]);
   const [auditLogs, setAuditLogs] = useState([]);
+  const [securityAlerts, setSecurityAlerts] = useState([]);
   const [activeTab, setActiveTab] = useState("intercept"); // "intercept" or "audit"
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +26,7 @@ export default function AdminMonitoring() {
 
   const fetchAllData = async () => {
      setLoading(true);
-     await Promise.all([fetchLiveLogs(), fetchAuditLogs()]);
+     await Promise.all([fetchLiveLogs(), fetchAuditLogs(), fetchSecurityAlerts()]);
      setLoading(false);
   };
 
@@ -67,6 +68,42 @@ export default function AdminMonitoring() {
     } catch (err) {
       console.error("Failed to fetch logs:", err);
     }
+  };
+
+  const fetchSecurityAlerts = async () => {
+     try {
+       // 1. Redundant File logs from local storage
+       const localStr = localStorage.getItem("savannah_security_file_logs");
+       const localLogs = localStr ? JSON.parse(localStr) : [];
+
+       // 2. Telemetry alerts from cloud events table
+       const { data: cloudLogs } = await supabase
+         .from("events")
+         .select("*")
+         .like("event_type", "security_alert_%")
+         .order("created_at", { ascending: false })
+         .limit(50);
+
+       // Merge & Deduplicate based on exact match of timestamp and event_type
+       const unified = [...localLogs];
+       if (cloudLogs) {
+         cloudLogs.forEach(cl => {
+           const match = unified.find(u => u.timestamp === cl.created_at || u.metadata?.targetPath === cl.metadata?.targetPath);
+           if (!match) {
+             unified.push({
+               event_type: cl.event_type,
+               user: cl.metadata?.attemptedByEmail || "System Event",
+               timestamp: cl.created_at || cl.timestamp,
+               metadata: cl.metadata || {}
+             });
+           }
+         });
+       }
+
+       setSecurityAlerts(unified.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+     } catch (err) {
+       console.error("Failed to fetch security alerts:", err);
+     }
   };
 
   return (
@@ -129,35 +166,42 @@ export default function AdminMonitoring() {
            <div className="absolute top-0 right-0 w-20 h-20 bg-red-500/5 blur-3xl group-hover:bg-red-500/10 transition-all"></div>
            <div className="bg-red-900/20 px-4 py-2 border-b border-red-900/30 font-bold uppercase text-xs tracking-wider text-red-500 flex justify-between items-center">
               Security Flags
-              <span className="text-red-400 text-[10px] bg-red-900/30 px-2 py-0.5 rounded border border-red-800">1 ALERT</span>
+              <span className="text-red-400 text-[10px] bg-red-900/30 px-2 py-0.5 rounded border border-red-800">{securityAlerts.length} ALERT</span>
            </div>
            <div className="p-4 space-y-2 text-sm flex-1 overflow-y-auto">
-              <div className="border border-green-500 bg-green-500/10 p-3 mb-4 rounded relative overflow-hidden">
-                 <div className="text-green-400 font-bold mb-1 uppercase tracking-wider text-xs">🚀 Action Required: M-Pesa Integration</div>
-                 <div className="text-gray-300 text-[11px] leading-relaxed">
-                    Remember to configure the Daraja API for ShopQR! <br/><br/>
-                    1. Run <span className="text-white font-mono bg-black/40 px-1 rounded">supabase secrets set MPESA_CONSUMER_KEY=xyz MPESA_CONSUMER_SECRET=abc MPESA_ENVIRONMENT=sandbox</span><br/>
-                    2. Deploy edge functions <span className="text-white font-mono bg-black/40 px-1 rounded">mpesa-stk-push</span> & <span className="text-white font-mono bg-black/40 px-1 rounded">mpesa-webhook</span><br/>
-                    <span className="text-green-500/70 text-[10px] mt-1 block font-bold">Waiting for Supabase remote deployment...</span>
-                 </div>
-              </div>
-              <div className="border-l-2 border-red-500 pl-3 py-1">
-                 <div className="text-red-400 text-xs font-bold mb-1">[WARN] Auth Override Attempt</div>
-                 <div className="text-gray-400 text-[11px]">Multiple failed logins detected from IP 192.168.1.144 addressing Shop UUID `d8f2...`.</div>
-                 <div className="text-red-900 text-[10px] mt-1">12 minutes ago</div>
-              </div>
-              
-              <div className="border-l-2 border-orange-500/50 pl-3 py-1 opacity-60">
-                 <div className="text-orange-400 text-xs font-bold mb-1">[INFO] Free Tier Saturation</div>
-                 <div className="text-gray-500 text-[11px]">Shop `java-house` reaching max 20 product catalog limit.</div>
-                 <div className="text-orange-900/50 text-[10px] mt-1">2 hours ago</div>
-              </div>
+               {securityAlerts.length > 0 ? (
+                 securityAlerts.map((alert, idx) => (
+                   <div key={idx} className="border-l-2 border-red-500 bg-red-900/10 pl-3 py-2 mb-2 rounded border-t border-r border-b border-red-900/20">
+                      <div className="text-red-400 text-xs font-bold mb-1 uppercase tracking-wider">
+                         ⚠️ {alert.event_type?.replace('security_alert_', '')?.replace(/_/g, ' ')}
+                      </div>
+                      <div className="text-gray-300 text-[11px] leading-relaxed">
+                         User: <span className="text-white font-mono">{alert.user}</span><br/>
+                         {alert.metadata?.targetPath && (
+                           <>Target: <span className="text-white font-mono">{alert.metadata.targetPath}</span><br/></>
+                         )}
+                         {alert.url && (
+                           <>Origin: <span className="text-gray-400 font-mono text-[10px] break-all">{alert.url}</span><br/></>
+                         )}
+                      </div>
+                      <div className="text-red-800 text-[10px] mt-1">
+                         {alert.timestamp ? new Date(alert.timestamp).toLocaleString('en-GB') : "N/A"}
+                      </div>
+                   </div>
+                 ))
+               ) : (
+                 <div className="text-gray-600 italic py-2">No suspicious alerts detected on the edge network.</div>
+               )}
 
-              <div className="border-l-2 border-orange-500/50 pl-3 py-1 opacity-60">
-                 <div className="text-orange-400 text-xs font-bold mb-1">[INFO] High Velocity Orders</div>
-                 <div className="text-gray-500 text-[11px]">Shop Profile ID `4f8a...` received 4 orders within 10 seconds. Flagged as potential script.</div>
-                 <div className="text-orange-900/50 text-[10px] mt-1">Yesterday</div>
-              </div>
+               <div className="border border-green-500 bg-green-500/10 p-3 my-4 rounded relative overflow-hidden">
+                  <div className="text-green-400 font-bold mb-1 uppercase tracking-wider text-xs">🚀 Action Required: M-Pesa Integration</div>
+                  <div className="text-gray-300 text-[11px] leading-relaxed">
+                     Remember to configure the Daraja API for ShopQR! <br/><br/>
+                     1. Run <span className="text-white font-mono bg-black/40 px-1 rounded">supabase secrets set MPESA_CONSUMER_KEY=xyz MPESA_CONSUMER_SECRET=abc MPESA_ENVIRONMENT=sandbox</span><br/>
+                     2. Deploy edge functions <span className="text-white font-mono bg-black/40 px-1 rounded">mpesa-stk-push</span> & <span className="text-white font-mono bg-black/40 px-1 rounded">mpesa-webhook</span><br/>
+                     <span className="text-green-500/70 text-[10px] mt-1 block font-bold">Waiting for Supabase remote deployment...</span>
+                  </div>
+               </div>
            </div>
         </div>
 
