@@ -8,6 +8,7 @@ export default function SalesMagazine() {
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
 
   const rawUser = getCurrentUser();
@@ -28,6 +29,24 @@ export default function SalesMagazine() {
 
     if (shopData) {
       setShop(shopData);
+
+      // Check ownership
+      let ownerStatus = shopData.shop_id === activeSessionShopId;
+      if (!ownerStatus && rawUser) {
+        try {
+          const { data: mems } = await supabase
+            .from("shop_members")
+            .select("shop_id")
+            .eq("user_id", rawUser.id);
+          if (mems && mems.some(m => m.shop_id === shopData.shop_id)) {
+            ownerStatus = true;
+          }
+        } catch (err) {
+          console.warn("Error checking ownership:", err);
+        }
+      }
+      setIsOwner(ownerStatus);
+
       // 2. Fetch Products with Sales Pages
       const { data: productsData } = await supabase
         .from("menu_items")
@@ -56,7 +75,6 @@ export default function SalesMagazine() {
   }
 
   if (!shop || products.length === 0) {
-    const isOwner = shop && (shop.shop_id === activeSessionShopId);
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center select-none font-sans selection:bg-indigo-500">
         <div className="max-w-xl mx-auto space-y-6">
