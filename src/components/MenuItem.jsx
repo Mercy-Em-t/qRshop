@@ -1,20 +1,23 @@
 import { Link } from "react-router-dom";
+import { getThumbnailUrl } from "../utils/image-utils";
 
 export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
   const { id, name, price, image_url, attributes } = item;
+  const optimizedImage = getThumbnailUrl(image_url);
+
   const size = attributes?.size || attributes?.weight || "";
 
   if (isGridView) {
     return (
-      <div className="bg-white dark:bg-slate-900 rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col group transition-all hover:shadow-md">
+      <div className="bg-white rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col group transition-all hover:shadow-md">
         <Link to={`/product/${id}`} className="relative h-40 overflow-hidden">
           <img
-            src={image_url || "/placeholder-product.png"}
+            src={optimizedImage || "/placeholder-product.png"}
             alt={name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
           {size && (
-            <span className="absolute top-3 left-3 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-400">
+            <span className="absolute top-3 left-3 bg-white/80 backdrop-blur-md px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest text-gray-500">
               {size}
             </span>
           )}
@@ -22,13 +25,13 @@ export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
         <div className="p-4 flex-1 flex flex-col justify-between">
           <div>
             <Link to={`/product/${id}`}>
-               <h3 className="text-sm font-bold text-gray-800 dark:text-gray-100 line-clamp-1 leading-tight hover:text-theme-secondary transition-colors">
+               <h3 className="text-sm font-bold text-gray-800 line-clamp-1 leading-tight hover:text-theme-secondary transition-colors">
                   {name}
                </h3>
             </Link>
           </div>
           <div className="flex items-center justify-between mt-3">
-            <span className="text-sm font-black text-theme-secondary dark:text-blue-400">
+            <span className="text-sm font-black text-theme-secondary">
               KSh {price}
             </span>
             <button
@@ -52,10 +55,10 @@ export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
 
   // List View (Horizontal)
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-3xl p-3 shadow-sm border border-gray-100 dark:border-slate-800 flex items-center gap-4 transition-all hover:shadow-md group">
+    <div className="bg-white rounded-3xl p-3 shadow-sm border border-gray-100 flex items-center gap-4 transition-all hover:shadow-md group">
       <Link to={`/product/${id}`} className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
         <img
-          src={image_url || "/placeholder-product.png"}
+          src={optimizedImage || "/placeholder-product.png"}
           alt={name}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
@@ -63,7 +66,7 @@ export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
       <div className="flex-1 min-w-0">
          <div className="flex justify-between items-start">
             <Link to={`/product/${id}`} className="flex-1 min-w-0">
-               <h3 className="text-base font-bold text-gray-800 dark:text-gray-100 truncate hover:text-theme-secondary transition-colors">
+               <h3 className="text-base font-bold text-gray-800 truncate hover:text-theme-secondary transition-colors">
                   {name}
                </h3>
                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-0.5">
@@ -71,7 +74,7 @@ export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
                </p>
             </Link>
             <div className="text-right">
-               <p className="text-base font-black text-theme-secondary dark:text-blue-400">
+               <p className="text-base font-black text-theme-secondary">
                   {price}
                </p>
                <p className="text-[8px] font-black text-slate-500 uppercase tracking-tighter">KSh</p>

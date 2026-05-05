@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
+import { getThumbnailUrl, getDetailImageUrl } from "../utils/image-utils";
 
 export default function SalesMagazine() {
   const { identifier } = useParams();
@@ -96,7 +97,7 @@ export default function SalesMagazine() {
                   onClick={() => setActiveIndex(idx)}
                   className={`shrink-0 w-16 h-16 rounded-xl border-2 transition-all duration-300 overflow-hidden ${activeIndex === idx ? 'border-indigo-500 scale-110 shadow-lg shadow-indigo-500/20' : 'border-transparent opacity-40 hover:opacity-100'}`}
                >
-                  <img src={p.image_url || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover" />
+                  <img src={getThumbnailUrl(p.image_url) || 'https://via.placeholder.com/150'} alt="" className="w-full h-full object-cover" />
                </button>
             ))}
          </aside>
@@ -110,7 +111,7 @@ export default function SalesMagazine() {
                   <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
                   <div className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10">
                      <img 
-                        src={currentProduct.image_url || 'https://via.placeholder.com/400'} 
+                        src={getDetailImageUrl(currentProduct.image_url) || 'https://via.placeholder.com/400'} 
                         alt={currentProduct.name} 
                         className="w-full h-full object-cover"
                      />

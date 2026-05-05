@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { createPublicSession } from '../../utils/qr-session';
+import { getThumbnailUrl } from '../../utils/image-utils';
 import './ShopHero.css';
 
 export default function ShopHero({ shop }) {
@@ -43,7 +44,7 @@ export default function ShopHero({ shop }) {
     <section className="hero">
       <div className="hero__logo">
         {shop?.logo_url ? (
-          <img src={shop.logo_url} alt={shop.name} className="w-full h-full rounded-full object-cover" />
+          <img src={getThumbnailUrl(shop.logo_url)} alt={shop.name} className="w-full h-full rounded-full object-cover" />
         ) : (
           initial
         )}
