@@ -24,7 +24,7 @@ export default function ProductManager() {
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: false, details: false, marketing: false });
+  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: false, marketing: false });
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,14 +52,6 @@ export default function ProductManager() {
   const [salesHeadline, setSalesHeadline] = useState("");
   const [salesScript, setSalesScript] = useState("");
   const [tags, setTags] = useState("");
-  
-  // Extended Product Details
-  const [brand, setBrand] = useState("");
-  const [origin, setOrigin] = useState("");
-  const [processing, setProcessing] = useState("");
-  const [nutritionInfo, setNutritionInfo] = useState("");
-  const [benefits, setBenefits] = useState("");
-  const [usageInstructions, setUsageInstructions] = useState("");
   
   // Image Upload State
   const [imageFile, setImageFile] = useState(null);
@@ -1020,91 +1012,6 @@ export default function ProductManager() {
                   </div>
                )}
              </div>
-
-             {/* COLLAPSIBLE: EXTENDED PRODUCT DETAILS */}
-             {!selectedTemplateId && (
-                <div className="md:col-span-2">
-                   <button 
-                      type="button"
-                      onClick={() => setActiveSections(prev => ({...prev, details: !prev.details}))}
-                      className="w-full flex items-center justify-between p-4 bg-slate-900 text-white rounded-xl transition-all shadow-lg shadow-slate-200 mb-2 mt-2 hover:bg-slate-800"
-                   >
-                      <div className="flex items-center gap-2">
-                         <span className="text-xl">📋</span>
-                         <div className="text-left">
-                            <h3 className="text-sm font-bold uppercase tracking-widest">Enhanced Product Details</h3>
-                            <p className="text-[10px] text-slate-400">Brand, Origin, Processing & Benefits</p>
-                         </div>
-                      </div>
-                      <span className={`transition-transform duration-300 ${activeSections.details ? 'rotate-180' : ''}`}>▼</span>
-                   </button>
-
-                   {activeSections.details && (
-                      <div className="grid md:grid-cols-2 gap-4 p-5 bg-white rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2">
-                        <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
-                           <input
-                              type="text"
-                              value={brand}
-                              onChange={(e) => setBrand(e.target.value)}
-                              placeholder="e.g. Mama Rosy"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
-                           />
-                        </div>
-                        <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Origin</label>
-                           <input
-                              type="text"
-                              value={origin}
-                              onChange={(e) => setOrigin(e.target.value)}
-                              placeholder="e.g. Kenya (Makueni)"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
-                           />
-                        </div>
-                        <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Processing</label>
-                           <input
-                              type="text"
-                              value={processing}
-                              onChange={(e) => setProcessing(e.target.value)}
-                              placeholder="e.g. Cold-pressed, Organic"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
-                           />
-                        </div>
-                        <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Nutrition Focus</label>
-                           <input
-                              type="text"
-                              value={nutritionInfo}
-                              onChange={(e) => setNutritionInfo(e.target.value)}
-                              placeholder="e.g. High Protein, Vitamin C"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
-                           />
-                        </div>
-                        <div className="md:col-span-2">
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Product Benefits (Key Selling Points)</label>
-                           <textarea
-                              rows={2}
-                              value={benefits}
-                              onChange={(e) => setBenefits(e.target.value)}
-                              placeholder="e.g. Supports focus and energy without the crash..."
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
-                           />
-                        </div>
-                        <div className="md:col-span-2">
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Usage Instructions / Recipe</label>
-                           <textarea
-                              rows={2}
-                              value={usageInstructions}
-                              onChange={(e) => setUsageInstructions(e.target.value)}
-                              placeholder="e.g. Add 1 scoop to hot water, whisk until frothy."
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
-                           />
-                        </div>
-                      </div>
-                   )}
-                </div>
-             )}
 
              {/* COLLAPSIBLE: PRODUCT BLUEPRINT */}
              <div className="md:col-span-2">
