@@ -1154,7 +1154,6 @@ export default function ProductManager() {
               >
                 {isAdding ? "Saving..." : editingId ? "Update Product" : "Save Product"}
               </button>
-            </div>
           </form>
         </section>
         )}

@@ -188,12 +188,19 @@ export default function ProductDetails() {
         <section className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Main Specifications */}
           <div className="space-y-6">
-            <div>
-                  <div key={spec.label} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">{spec.label}</span>
-                    <span className="text-sm font-bold text-gray-800">{spec.value}</span>
-                  </div>
-                ))}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Brand", value: item.brand },
+                { label: "Origin", value: item.origin },
+                { label: "Processing", value: item.processing },
+                { label: "Nutrition", value: item.nutrition_info },
+                { label: "SKU", value: item.sku }
+              ].map(spec => spec.value && (
+                <div key={spec.label} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                  <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">{spec.label}</span>
+                  <span className="text-sm font-bold text-gray-800">{spec.value}</span>
+                </div>
+              ))}
                 
                 {/* Legacy / Dynamic Attributes */}
                 {item.attributes && Object.entries(item.attributes).map(([key, value]) => {
@@ -206,7 +213,7 @@ export default function ProductDetails() {
                   );
                 })}
               </div>
-            </div>
+
 
             {item.diet_tags && item.diet_tags.length > 0 && (
               <div>
