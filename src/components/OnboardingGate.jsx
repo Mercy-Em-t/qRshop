@@ -150,8 +150,10 @@ export default function OnboardingGate({ children }) {
   };
 
   const isDebug = (typeof window !== 'undefined') && (
-    new URLSearchParams(window.location.search).get('debug') === 'true' || 
-    localStorage.getItem('tms_debug') === 'true'
+    user?.system_role === 'system_admin' && (
+      new URLSearchParams(window.location.search).get('debug') === 'true' || 
+      localStorage.getItem('tms_debug') === 'true'
+    )
   );
 
   if (loading) {
