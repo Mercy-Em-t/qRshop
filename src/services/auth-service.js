@@ -147,8 +147,16 @@ export function getCurrentUser() {
 }
 
 export async function logout() {
-  await supabase.auth.signOut();
   localStorage.removeItem("savannah_session");
+  sessionStorage.removeItem("active_shop_id");
+  localStorage.removeItem("pending_selection");
+  localStorage.removeItem("pending_user_id");
+  try {
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.warn("SignOut error", err);
+  }
+  window.location.href = "/login";
 }
 
 /**
