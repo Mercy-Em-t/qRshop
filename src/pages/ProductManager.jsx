@@ -12,6 +12,7 @@ import { normalizeAttributeKey } from "../utils/attribute-utils";
 import VariationBuilder from "../components/VariationBuilder";
 import AttributePanel from "../components/AttributePanel";
 import { validateImageFile } from "../utils/security";
+import { getThumbnailUrl } from "../utils/image-utils";
 
 export default function ProductManager() {
   const [items, setItems] = useState([]);
@@ -23,6 +24,7 @@ export default function ProductManager() {
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: false, details: false });
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -907,10 +909,68 @@ export default function ProductManager() {
               />
             </div>
             
-            <div className="md:col-span-2 pt-2 border-t border-gray-100 mt-2">
-               <h3 className="text-sm font-bold text-gray-800">Inventory & Links</h3>
+            {/* COLLAPSIBLE: INVENTORY & LINKS */}
+            <div className="md:col-span-2">
+               <button 
+                  type="button"
+                  onClick={() => setActiveSections(prev => ({...prev, inventory: !prev.inventory}))}
+                  className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors mb-2"
+               >
+                  <div className="flex items-center gap-2">
+                     <span className="text-xl">📦</span>
+                     <h3 className="text-sm font-bold text-gray-800">Inventory & Links</h3>
+                  </div>
+                  <span className={`transition-transform duration-300 ${activeSections.inventory ? 'rotate-180' : ''}`}>▼</span>
+               </button>
+               
+               {activeSections.inventory && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-100 rounded-xl animate-in fade-in slide-in-from-top-2">
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Stock Level</label>
+                        <input
+                           type="number"
+                           value={stock}
+                           onChange={(e) => setStock(e.target.value)}
+                           placeholder="Leave blank for unlimited"
+                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                        />
+                     </div>
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">SKU / ID</label>
+                        <input
+                           type="text"
+                           value={sku}
+                           onChange={(e) => setSku(e.target.value)}
+                           placeholder="e.g. MS-001"
+                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                        />
+                     </div>
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
+                        <input
+                           type="text"
+                           value={tags}
+                           onChange={(e) => setTags(e.target.value)}
+                           placeholder="e.g. limited, seasonal"
+                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                        />
+                     </div>
+                     <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Direct Link (External/Digital)</label>
+                        <input
+                           type="url"
+                           value={productLink}
+                           onChange={(e) => setProductLink(e.target.value)}
+                           placeholder="https://..."
+                           className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                        />
+                     </div>
+                  </div>
+               )}
             </div>
+
             
+<<<<<<< HEAD
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Stock Level</label>
               <input
@@ -989,6 +1049,88 @@ export default function ProductManager() {
                     shopSchema={shopSchema}
                  />
               </div>
+=======
+             {/* COLLAPSIBLE: PRODUCT BLUEPRINT */}
+             <div className="md:col-span-2">
+               <button 
+                  type="button"
+                  onClick={() => setActiveSections(prev => ({...prev, blueprint: !prev.blueprint}))}
+                  className="w-full flex items-center justify-between p-4 bg-indigo-50 hover:bg-indigo-100 rounded-xl transition-colors mb-2 mt-2"
+               >
+                  <div className="flex items-center gap-2">
+                     <span className="text-xl">📐</span>
+                     <div className="text-left">
+                        <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-widest">Product Structure</h3>
+                        <p className="text-[10px] text-indigo-500">Choose a blueprint to define custom fields.</p>
+                     </div>
+                  </div>
+                  <span className={`text-indigo-600 transition-transform duration-300 ${activeSections.blueprint ? 'rotate-180' : ''}`}>▼</span>
+               </button>
+
+               {activeSections.blueprint && (
+                  <div className="p-4 border border-indigo-100 rounded-xl animate-in fade-in slide-in-from-top-2">
+                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Select Blueprint / Template</label>
+                     <select 
+                        value={selectedTemplateId}
+                        onChange={(e) => setSelectedTemplateId(e.target.value)}
+                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-indigo-600 outline-none transition"
+                     >
+                        <option value="">Generic (Standard Fields)</option>
+                        {availableTemplates.map(t => (
+                           <option key={t.id} value={t.id}>{t.name}</option>
+                        ))}
+                     </select>
+                  </div>
+               )}
+             </div>
+
+
+             {/* DYNAMIC SHOP-SPECIFIC ATTRIBUTES */}
+              {shopSchema.length > 0 && (
+                <div className="md:col-span-2">
+                   <button 
+                       type="button"
+                       onClick={() => setActiveSections(prev => ({...prev, attributes: !prev.attributes}))}
+                       className="w-full flex items-center justify-between p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition-colors mb-2 mt-2"
+                   >
+                       <div className="flex items-center gap-2">
+                          <span className="text-xl">✨</span>
+                          <div className="text-left">
+                             <h3 className="text-sm font-bold text-orange-900 uppercase tracking-widest">Custom Shop Attributes</h3>
+                             <p className="text-[10px] text-orange-500">Fields defined in your Attribute Manager.</p>
+                          </div>
+                       </div>
+                       <span className={`text-orange-600 transition-transform duration-300 ${activeSections.attributes ? 'rotate-180' : ''}`}>▼</span>
+                   </button>
+
+                   {activeSections.attributes && (
+                      <div className="grid md:grid-cols-2 gap-4 p-5 bg-white rounded-2xl border border-orange-100/50 animate-in fade-in slide-in-from-top-2">
+                         {shopSchema.map(field => (
+                           <div key={field.key} className={field.type === 'variation' ? 'md:col-span-2' : ''}>
+                              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{field.label}</label>
+                              
+                              {field.type === 'variation' ? (
+                                <VariationBuilder 
+                                  field={field} 
+                                  value={customFields[field.key]} 
+                                  onChange={(val) => setCustomFields({...customFields, [field.key]: val})} 
+                                />
+                              ) : (
+                                <input 
+                                   type="text"
+                                   value={customFields[field.key] || ""}
+                                   onChange={e => setCustomFields({...customFields, [field.key]: e.target.value})}
+                                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
+                                   placeholder={"Enter " + field.label + "..."}
+                                />
+                              )}
+                           </div>
+                         ))}
+                      </div>
+                   )}
+                </div>
+              )}
+>>>>>>> v2/scalable-rebuild
 
              {selectedTemplateId && (
                 <div className="md:col-span-2 p-6 bg-indigo-50/20 rounded-2xl border border-indigo-100/50 space-y-4">
@@ -1017,6 +1159,7 @@ export default function ProductManager() {
                 </div>
              )}
 
+<<<<<<< HEAD
              <div className="md:col-span-2 flex items-center gap-4 py-4">
                 {imagePreview ? (
                    <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm">
@@ -1033,6 +1176,115 @@ export default function ProductManager() {
              </div>
 
             <div className="flex items-end gap-2 md:col-span-1 pt-4">
+=======
+             {/* COLLAPSIBLE: EXTENDED PRODUCT DETAILS (FALLBACK STATIC FIELDS) */}
+             {!selectedTemplateId && (
+                <div className="md:col-span-2">
+                   <button 
+                      type="button"
+                      onClick={() => setActiveSections(prev => ({...prev, details: !prev.details}))}
+                      className="w-full flex items-center justify-between p-4 bg-slate-900 text-white rounded-xl transition-all shadow-lg shadow-slate-200 mb-2 mt-2"
+                   >
+                      <div className="flex items-center gap-2">
+                         <span className="text-xl">📋</span>
+                         <div className="text-left">
+                            <h3 className="text-sm font-bold uppercase tracking-widest">Enhanced Product Details</h3>
+                            <p className="text-[10px] text-slate-400">Brand, Origin, Processing & Benefits</p>
+                         </div>
+                      </div>
+                      <span className={`transition-transform duration-300 ${activeSections.details ? 'rotate-180' : ''}`}>▼</span>
+                   </button>
+
+                   {activeSections.details && (
+                      <div className="grid md:grid-cols-2 gap-4 p-5 bg-white rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2">
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
+                           <input
+                              type="text"
+                              value={brand}
+                              onChange={(e) => setBrand(e.target.value)}
+                              placeholder="e.g. Mama Rosy"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Origin</label>
+                           <input
+                              type="text"
+                              value={origin}
+                              onChange={(e) => setOrigin(e.target.value)}
+                              placeholder="e.g. Kenya (Makueni)"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Processing</label>
+                           <input
+                              type="text"
+                              value={processing}
+                              onChange={(e) => setProcessing(e.target.value)}
+                              placeholder="e.g. Cold-pressed, Organic"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Nutrition Focus</label>
+                           <input
+                              type="text"
+                              value={nutritionInfo}
+                              onChange={(e) => setNutritionInfo(e.target.value)}
+                              placeholder="e.g. High Protein, Vitamin C"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                           />
+                        </div>
+                        <div className="md:col-span-2">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Product Benefits (Key Selling Points)</label>
+                           <textarea
+                              rows={2}
+                              value={benefits}
+                              onChange={(e) => setBenefits(e.target.value)}
+                              placeholder="e.g. Supports focus and energy without the crash..."
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                           />
+                        </div>
+                        <div className="md:col-span-2">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Usage Instructions / Recipe</label>
+                           <textarea
+                              rows={2}
+                              value={usageInstructions}
+                              onChange={(e) => setUsageInstructions(e.target.value)}
+                              placeholder="e.g. Add 1 scoop to hot water, whisk until frothy."
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                           />
+                        </div>
+                      </div>
+                   )}
+                </div>
+             )}
+
+
+            <div className="md:col-span-2 mt-4 flex gap-6 items-end">
+               <div className="flex-1">
+                 <label className="block text-sm font-medium text-gray-700 mb-2">Product Image (Max 5MB)</label>
+                 <div className="flex items-center gap-4">
+                    {imagePreview ? (
+                       <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm">
+                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                          <button type="button" onClick={() => {setImageFile(null); setImagePreview(null);}} className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-bl-lg text-xs font-bold">×</button>
+                       </div>
+                    ) : (
+                       <div className="w-16 h-16 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 font-bold">📷</div>
+                    )}
+                    <label className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 cursor-pointer transition">
+                       Upload Image
+                       <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImageSelect} className="hidden" />
+                    </label>
+                 </div>
+               </div>
+            </div>
+
+            <div className="flex items-end gap-2 md:col-span-1">
+>>>>>>> v2/scalable-rebuild
               <button
                 type="submit"
                 disabled={isAdding}
@@ -1061,9 +1313,9 @@ export default function ProductManager() {
                        <div className="flex items-center gap-3 min-w-0">
                           <div className="w-12 h-12 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden border border-gray-200">
                              {item.product_images && item.product_images.length > 0 ? (
-                                <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
+                                <img src={getThumbnailUrl(item.product_images[0].url)} alt="" className="w-full h-full object-cover" />
                              ) : item.image_url ? (
-                                <img src={item.image_url} alt="" className="w-full h-full object-cover" />
+                                <img src={getThumbnailUrl(item.image_url)} alt="" className="w-full h-full object-cover" />
                              ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-300 text-[9px] font-bold uppercase tracking-tighter">No Pic</div>
                              )}
@@ -1111,40 +1363,39 @@ export default function ProductManager() {
                 ))}
              </div>
            ) : (
-               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {currentItems.map((item) => (
-                     <div key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-md ${item.is_active === false ? 'opacity-60' : ''}`}>
-                        <div className="aspect-square bg-gray-100 relative group">
-                           {item.product_images && item.product_images.length > 0 ? (
-                               <img src={item.product_images[0].url} alt="" className="w-full h-full object-cover" />
-                           ) : item.image_url ? (
-                               <img src={item.image_url} alt="" className="w-full h-full object-cover" />
-                           ) : (
-                               <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-bold uppercase">No Image</div>
-                           )}
-                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                              <button onClick={() => generateAdLink(item)} className="p-2 bg-white rounded-full text-indigo-600 shadow-sm hover:scale-110 transition-transform">🔗</button>
-                              <button onClick={() => startEdit(item)} className="p-2 bg-white rounded-full text-slate-600 shadow-sm hover:scale-110 transition-transform">✏️</button>
-                           </div>
-                        </div>
-                        <div className="p-3 flex-1 flex flex-col">
-                           <div className="flex items-start justify-between gap-1 mb-1">
-                              <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{item.name}</h3>
-                              <button onClick={() => handleToggleActive(item.id, item.is_active)} className="text-xs">{item.is_active === false ? '👁️' : '🚫'}</button>
-                           </div>
-                           <p className="text-[10px] text-gray-500 mb-2">{item.category}</p>
-                           <div className="flex items-center justify-between mt-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                 {currentItems.map((item) => (
+                    <div key={item.id} className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col transition-all hover:shadow-md ${item.is_active === false ? 'opacity-60' : ''}`}>
+                       <div className="aspect-square bg-gray-100 relative group">
+                          {item.product_images && item.product_images.length > 0 ? (
+                              <img src={getThumbnailUrl(item.product_images[0].url)} alt="" className="w-full h-full object-cover" />
+                          ) : item.image_url ? (
+                              <img src={getThumbnailUrl(item.image_url)} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                              <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-bold uppercase">No Image</div>
+                          )}
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                             <button onClick={() => generateAdLink(item)} className="p-2 bg-white rounded-full text-indigo-600 shadow-sm hover:scale-110 transition-transform">🔗</button>
+                             <button onClick={() => startEdit(item)} className="p-2 bg-white rounded-full text-slate-600 shadow-sm hover:scale-110 transition-transform">✏️</button>
+                          </div>
+                       </div>
+                       <div className="p-3 flex-1 flex flex-col">
+                          <div className="flex items-start justify-between gap-1 mb-1">
+                             <h3 className="text-sm font-bold text-gray-900 line-clamp-1">{item.name}</h3>
+                             <button onClick={() => handleToggleActive(item.id, item.is_active)} className="text-xs">{item.is_active === false ? '👁️' : '🚫'}</button>
+                          </div>
+                          <p className="text-[10px] text-gray-500 mb-2">{item.category}</p>
+                          <div className="flex items-center justify-between mt-auto">
                               <p className="font-black text-green-700 text-sm">KSh {item.price}</p>
                               {item.product_sales_pages && item.product_sales_pages.length > 0 && (
                                  <span className="text-[8px] font-black text-indigo-400 bg-indigo-50 px-1 rounded" title="AI Script Generated">✨ AI</span>
                               )}
-                           </div>
-                        </div>
-                     </div>
-                  ))}
-               </div>
+                          </div>
+                       </div>
+                    </div>
+                 ))}
+              </div>
            )}
-
           {totalPages > 1 && (
              <div className="flex items-center justify-center gap-4 mt-8">
                 <button onClick={goToPrevPage} disabled={currentPage === 1} className="p-2 rounded-full hover:bg-white disabled:opacity-30">←</button>

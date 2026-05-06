@@ -20,22 +20,42 @@
 }
 
 .product-grid {
-  padding: 60px 24px;
+  padding: 40px 16px;
   background: #ffffff;
 }
 
+@media (min-width: 640px) {
+  .product-grid {
+    padding: 60px 24px;
+  }
+}
+
 .product-grid__title {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 900;
   color: #0f172a;
-  margin-bottom: 32px;
+  margin-bottom: 24px;
   letter-spacing: -0.01em;
+}
+
+@media (min-width: 640px) {
+  .product-grid__title {
+    font-size: 1.8rem;
+    margin-bottom: 32px;
+  }
 }
 
 .product-grid__items {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .product-grid__items {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 24px;
+  }
 }
 
 .product-card {

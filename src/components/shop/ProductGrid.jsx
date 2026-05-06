@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { createPublicSession } from '../../utils/qr-session';
+import { getThumbnailUrl } from '../../utils/image-utils';
 import './ProductGrid.css';
 
 export default function ProductGrid({ items = [], shopId }) {
@@ -26,7 +27,7 @@ export default function ProductGrid({ items = [], shopId }) {
             <div className="product-card__image">
                {item.image_url ? (
                   <img 
-                    src={item.image_url} 
+                    src={getThumbnailUrl(item.image_url)} 
                     alt={item.name} 
                     className="w-full h-full object-cover transition-opacity duration-300"
                     onLoad={(e) => e.target.classList.remove('opacity-0')}

@@ -1,98 +1,103 @@
-import { useEffect, useState, useMemo } from "react";
+import { lazy, Suspense, useEffect, useState, useMemo } from "react";
 import { getShopBySubdomain } from "./services/shop-service";
 import { supabase } from "./services/supabase-client";
 import LoadingSpinner from "./components/LoadingSpinner";
-import { Routes, Route } from "react-router-dom";
-import PublicShopProfile from "./pages/PublicShopProfile";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useOfflineEventQueue } from "./hooks/useOfflineEventQueue";
 
-// --- Public Pages ---
-import Home from "./pages/Home";
-import Enter from "./pages/Enter";
-import InvalidAccess from "./pages/InvalidAccess";
-import PublicQrLanding from "./pages/PublicQrLanding";
-import RequestAccess from "./pages/RequestAccess";
-import Pricing from "./pages/Pricing";
-import AutoCart from "./pages/AutoCart";
-import CommunityFeed from "./pages/social/CommunityFeed";
-import Directory from "./pages/social/Directory";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import Advertise from "./pages/Advertise";
-import ScanGateway from "./pages/ScanGateway";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import SupplierSignup from "./pages/SupplierSignup";
-
-// --- Customer Pages ---
+// --- Always-eager: small guards/wrappers used on every render ---
 import QrAccessGuard from "./components/QrAccessGuard";
 import OfflineMenuWrapper from "./components/OfflineMenuWrapper";
 import ComingSoonGuard from "./components/ComingSoonGuard";
-import Menu from "./pages/Menu";
-import CartPage from "./pages/CartPage";
-import Order from "./pages/Order";
-import Campaign from "./pages/Campaign";
-import TrackOrder from "./pages/TrackOrder";
-import EditOrder from "./pages/EditOrder";
-import MyOrders from "./pages/MyOrders";
-
-// --- Operator Pages ---
 import OnboardingGate from "./components/OnboardingGate";
 import MaintenanceGate from "./components/MaintenanceGate";
-import ProductManager from "./pages/ProductManager";
-import ShopSelection from "./pages/ShopSelection";
-import QrGenerator from "./pages/QrGenerator";
-import Plans from "./pages/Plans";
-
-// --- Dashboard Routes ---
-import DashboardRoutes from "./routes/DashboardRoutes";
-import BulkImageMapper from "./pages/BulkImageMapper";
 import AuthGate from "./components/AuthGate";
-import { Navigate } from "react-router-dom";
-import SalesMagazine from "./pages/SalesMagazine";
 
-// --- Admin Pages ---
-import MasterAdmin from "./pages/MasterAdmin";
-import Admin from "./pages/Admin";
-import AdminShops from "./pages/AdminShops";
-import AdminPlans from "./pages/AdminPlans";
-import AdminSEO from "./pages/AdminSEO";
-import AdminReport from "./pages/AdminReport";
-import AdminEngineering from "./pages/AdminEngineering";
-import AdminGlobalOrders from "./pages/AdminGlobalOrders";
-import AdminGlobalProducts from "./pages/AdminGlobalProducts";
-import AdminMonitoring from "./pages/AdminMonitoring";
-import AdminSuppliers from "./pages/AdminSuppliers";
-import AdminAnalytics from "./pages/AdminAnalytics";
-import AdminTodo from "./pages/AdminTodo";
-import AdminBooklet from "./pages/AdminBooklet";
-import AdminPayouts from "./pages/AdminPayouts";
-import AdminIndustries from "./pages/AdminIndustries";
-import AdminGateway from "./pages/AdminGateway";
-import BusinessIntelligence from "./pages/BusinessIntelligence";
-import SocialCommerce from "./pages/SocialCommerce";
-import DeveloperPortal from "./pages/DeveloperPortal";
-import WholesaleSalesSystem from "./pages/WholesaleSalesSystem";
-import WholesaleJourneyMap from "./pages/WholesaleJourneyMap";
-import SeedWholesaleUser from "./pages/SeedWholesaleUser";
-import ProductDetails from "./pages/ProductDetails";
+// --- Public Pages (lazy) ---
+const Home             = lazy(() => import("./pages/Home"));
+const Enter            = lazy(() => import("./pages/Enter"));
+const InvalidAccess    = lazy(() => import("./pages/InvalidAccess"));
+const PublicQrLanding  = lazy(() => import("./pages/PublicQrLanding"));
+const PublicShopProfile= lazy(() => import("./pages/PublicShopProfile"));
+const RequestAccess    = lazy(() => import("./pages/RequestAccess"));
+const Pricing          = lazy(() => import("./pages/Pricing"));
+const AutoCart         = lazy(() => import("./pages/AutoCart"));
+const CommunityFeed    = lazy(() => import("./pages/social/CommunityFeed"));
+const Directory        = lazy(() => import("./pages/social/Directory"));
+const Terms            = lazy(() => import("./pages/Terms"));
+const Privacy          = lazy(() => import("./pages/Privacy"));
+const About            = lazy(() => import("./pages/About"));
+const Contact          = lazy(() => import("./pages/Contact"));
+const Advertise        = lazy(() => import("./pages/Advertise"));
+const ScanGateway      = lazy(() => import("./pages/ScanGateway"));
+const Login            = lazy(() => import("./pages/Login"));
+const Signup           = lazy(() => import("./pages/Signup"));
+const ForgotPassword   = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword    = lazy(() => import("./pages/ResetPassword"));
+const SupplierSignup   = lazy(() => import("./pages/SupplierSignup"));
+const ShopSelection    = lazy(() => import("./pages/ShopSelection"));
+const ProductDetails   = lazy(() => import("./pages/ProductDetails"));
+const SalesMagazine    = lazy(() => import("./pages/SalesMagazine"));
+
+// --- Customer Pages (lazy) ---
+const Menu      = lazy(() => import("./pages/Menu"));
+const CartPage  = lazy(() => import("./pages/CartPage"));
+const Order     = lazy(() => import("./pages/Order"));
+const Campaign  = lazy(() => import("./pages/Campaign"));
+const TrackOrder= lazy(() => import("./pages/TrackOrder"));
+const EditOrder = lazy(() => import("./pages/EditOrder"));
+const MyOrders  = lazy(() => import("./pages/MyOrders"));
+
+// --- Operator / Dashboard (lazy) ---
+const DashboardRoutes  = lazy(() => import("./routes/DashboardRoutes"));
+const ProductManager   = lazy(() => import("./pages/ProductManager"));
+const BulkImageMapper  = lazy(() => import("./pages/BulkImageMapper"));
+const QrGenerator      = lazy(() => import("./pages/QrGenerator"));
+const Plans            = lazy(() => import("./pages/Plans"));
+
+// --- Admin Pages (lazy — rarely visited, big files) ---
+const MasterAdmin        = lazy(() => import("./pages/MasterAdmin"));
+const Admin              = lazy(() => import("./pages/Admin"));
+const AdminShops         = lazy(() => import("./pages/AdminShops"));
+const AdminPlans         = lazy(() => import("./pages/AdminPlans"));
+const AdminSEO           = lazy(() => import("./pages/AdminSEO"));
+const AdminReport        = lazy(() => import("./pages/AdminReport"));
+const AdminEngineering   = lazy(() => import("./pages/AdminEngineering"));
+const AdminGlobalOrders  = lazy(() => import("./pages/AdminGlobalOrders"));
+const AdminGlobalProducts= lazy(() => import("./pages/AdminGlobalProducts"));
+const AdminMonitoring    = lazy(() => import("./pages/AdminMonitoring"));
+const AdminSuppliers     = lazy(() => import("./pages/AdminSuppliers"));
+const AdminAnalytics     = lazy(() => import("./pages/AdminAnalytics"));
+const AdminTodo          = lazy(() => import("./pages/AdminTodo"));
+const AdminBooklet       = lazy(() => import("./pages/AdminBooklet"));
+const AdminPayouts       = lazy(() => import("./pages/AdminPayouts"));
+const AdminIndustries    = lazy(() => import("./pages/AdminIndustries"));
+const AdminGateway       = lazy(() => import("./pages/AdminGateway"));
+const BusinessIntelligence= lazy(() => import("./pages/BusinessIntelligence"));
+const SocialCommerce     = lazy(() => import("./pages/SocialCommerce"));
+const DeveloperPortal    = lazy(() => import("./pages/DeveloperPortal"));
+const WholesaleSalesSystem= lazy(() => import("./pages/WholesaleSalesSystem"));
+const WholesaleJourneyMap = lazy(() => import("./pages/WholesaleJourneyMap"));
+const SeedWholesaleUser   = lazy(() => import("./pages/SeedWholesaleUser"));
+
+// Page-transition fallback — minimal spinner so users see something immediately
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 export default function App() {
   const [systemState, setSystemState] = useState(() => {
-    // Determine if we can "Hotload" this page
+    // Hotload: public paths on the main domain don't need to block for resolution
     const hostname = typeof window !== 'undefined' ? window.location.hostname : '';
     const parts = hostname.split('.');
     const isSubdomain = parts.length >= 3 && parts[0] !== 'www' && !hostname.includes('vercel.app');
     const isLocalSubdomain = hostname === 'localhost' ? false : (hostname.includes('localhost') && parts.length >= 2);
-    
     const publicPaths = ['/', '/pricing', '/login', '/signup', '/terms', '/privacy', '/about', '/contact', '/request-access'];
     const isPublicPath = typeof window !== 'undefined' && publicPaths.includes(window.location.pathname);
-    
-    // If it's a public path on the main domain, we don't need to block for resolution
     const canHotload = isPublicPath && !isSubdomain && !isLocalSubdomain;
 
     return {
@@ -171,11 +176,16 @@ export default function App() {
   const { subdomainShopId, maintenance } = systemState;
 
   if (subdomainShopId && window.location.pathname === "/") {
-     return <PublicShopProfile directShopId={subdomainShopId} />;
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <PublicShopProfile directShopId={subdomainShopId} />
+      </Suspense>
+    );
   }
 
   return (
     <MaintenanceGate preFetchedMaintenance={maintenance}>
+      <Suspense fallback={<PageLoader />}>
       <Routes>
       {/* === PUBLIC ROUTES === */}
       <Route path="/" element={<Home />} />
@@ -262,6 +272,7 @@ export default function App() {
          </div>
       } />
       </Routes>
+      </Suspense>
     </MaintenanceGate>
   );
 }

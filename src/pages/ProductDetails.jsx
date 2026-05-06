@@ -4,6 +4,7 @@ import { getMenuItemById, getRelatedItems } from "../services/menu-service";
 import { useCart } from "../hooks/use-cart";
 import { getQrSession } from "../utils/qr-session";
 import { resolveShopIdentifier } from "../services/shop-service";
+import { getDetailImageUrl, getThumbnailUrl } from "../utils/image-utils";
 
 export default function ProductDetails() {
   const { productId } = useParams();
@@ -81,7 +82,7 @@ export default function ProductDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-950">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-theme-secondary"></div>
       </div>
     );
@@ -89,8 +90,8 @@ export default function ProductDetails() {
 
   if (!item) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-6">
-        <h1 className="text-3xl font-black text-gray-900 dark:text-white mb-2">Product Not Found</h1>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6">
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Product Not Found</h1>
         <p className="text-gray-500 mb-8">The item you're looking for might have been moved or removed.</p>
         <button 
           onClick={() => navigate(-1)} 
@@ -103,11 +104,11 @@ export default function ProductDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20">
       {/* Hero Header */}
       <div className="relative h-[40vh] sm:h-[50vh] w-full overflow-hidden">
         <img 
-          src={item.product_images?.[0]?.url || item.image_url} 
+          src={getDetailImageUrl(item.product_images?.[0]?.url || item.image_url)} 
           alt={item.name} 
           className="w-full h-full object-cover"
         />
@@ -150,8 +151,8 @@ export default function ProductDetails() {
       <div className="max-w-4xl mx-auto p-6 space-y-8 animate-fade-in">
         {/* Variation Selector (Umbrella Options) */}
         {Object.entries(item.attributes || {}).some(([_, v]) => Array.isArray(v)) && (
-          <section className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm transition-all">
-            <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Choose your option</h2>
+          <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all">
+            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Choose your option</h2>
             <div className="flex flex-wrap gap-3">
               {Object.entries(item.attributes).map(([key, variations]) => {
                 if (!Array.isArray(variations)) return null;
@@ -162,7 +163,7 @@ export default function ProductDetails() {
                     className={`px-6 py-3 rounded-2xl font-bold transition-all border-2 text-sm ${
                       selectedVariation?.label === v.label && selectedVariation?.key === key
                       ? "bg-slate-900 border-slate-900 text-white shadow-lg scale-105"
-                      : "bg-white dark:bg-slate-800 border-gray-100 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:border-slate-300"
+                      : "bg-white border-gray-100 text-gray-600 hover:border-slate-300"
                     }`}
                   >
                     {v.label}
@@ -177,8 +178,8 @@ export default function ProductDetails() {
         )}
         {/* Description */}
         <section>
-          <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Product Overview</h2>
-          <p className="text-lg text-gray-700 dark:text-gray-300 leading-relaxed font-medium">
+          <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Product Overview</h2>
+          <p className="text-lg text-gray-700 leading-relaxed font-medium">
             {item.description || "A premium selection from " + (shop?.name || "our collection") + "."}
           </p>
         </section>
@@ -188,18 +189,9 @@ export default function ProductDetails() {
           {/* Main Specifications */}
           <div className="space-y-6">
             <div>
-              <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-4">Specifications</h2>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  { label: "Brand", value: item.brand },
-                  { label: "Origin", value: item.origin },
-                  { label: "Processing", value: item.processing },
-                  { label: "Nutrition", value: item.nutrition_info },
-                  { label: "SKU", value: item.sku }
-                ].map(spec => spec.value && (
-                  <div key={spec.label} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
-                    <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">{spec.label}</span>
-                    <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{spec.value}</span>
+                  <div key={spec.label} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">{spec.label}</span>
+                    <span className="text-sm font-bold text-gray-800">{spec.value}</span>
                   </div>
                 ))}
                 
@@ -207,9 +199,9 @@ export default function ProductDetails() {
                 {item.attributes && Object.entries(item.attributes).map(([key, value]) => {
                   if (!value || Array.isArray(value) || ['brand', 'origin', 'processing', 'nutrition_info', 'benefits', 'usage_instructions', 'diet_tags'].includes(key.toLowerCase())) return null;
                   return (
-                    <div key={key} className="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
-                      <span className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-wider block mb-1">{key.replace('_', ' ')}</span>
-                      <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{String(value)}</span>
+                    <div key={key} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                      <span className="text-[9px] font-black text-gray-400 uppercase tracking-wider block mb-1">{key.replace('_', ' ')}</span>
+                      <span className="text-sm font-bold text-gray-800">{String(value)}</span>
                     </div>
                   );
                 })}
@@ -218,10 +210,10 @@ export default function ProductDetails() {
 
             {item.diet_tags && item.diet_tags.length > 0 && (
               <div>
-                <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-3">Dietary Tags</h2>
+                <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Dietary Tags</h2>
                 <div className="flex flex-wrap gap-2">
                   {item.diet_tags.map(tag => (
-                    <span key={tag} className="px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 text-[10px] font-bold rounded-full border border-green-100 dark:border-green-900/40 uppercase tracking-wider">
+                    <span key={tag} className="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-bold rounded-full border border-green-100 uppercase tracking-wider">
                       {tag}
                     </span>
                   ))}
@@ -233,18 +225,18 @@ export default function ProductDetails() {
           {/* Detailed Info (Benefits & Usage) */}
           <div className="space-y-6">
             {item.benefits && (
-              <div className="bg-indigo-50 dark:bg-indigo-900/10 p-6 rounded-3xl border border-indigo-100 dark:border-indigo-900/20">
-                <h2 className="text-xs font-black text-indigo-400 dark:text-indigo-500 uppercase tracking-widest mb-3">Key Benefits</h2>
-                <p className="text-sm font-medium text-indigo-900 dark:text-indigo-200 leading-relaxed">
+              <div className="bg-indigo-50 p-6 rounded-3xl border border-indigo-100">
+                <h2 className="text-xs font-black text-indigo-400 uppercase tracking-widest mb-3">Key Benefits</h2>
+                <p className="text-sm font-medium text-indigo-900 leading-relaxed">
                   {item.benefits}
                 </p>
               </div>
             )}
             
             {item.usage_instructions && (
-              <div className="bg-amber-50 dark:bg-amber-900/10 p-6 rounded-3xl border border-amber-100 dark:border-amber-900/20">
-                <h2 className="text-xs font-black text-amber-500 dark:text-amber-400 uppercase tracking-widest mb-3">Usage & Preparation</h2>
-                <p className="text-sm font-medium text-amber-900 dark:text-amber-200 leading-relaxed italic">
+              <div className="bg-amber-50 p-6 rounded-3xl border border-amber-100">
+                <h2 className="text-xs font-black text-amber-500 uppercase tracking-widest mb-3">Usage & Preparation</h2>
+                <p className="text-sm font-medium text-amber-900 leading-relaxed italic">
                   "{item.usage_instructions}"
                 </p>
               </div>
@@ -254,33 +246,33 @@ export default function ProductDetails() {
 
         {/* Trust Factors */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
-           <div className="flex items-center gap-4 bg-green-50 dark:bg-green-900/10 p-5 rounded-3xl border border-green-100 dark:border-green-900/20">
+           <div className="flex items-center gap-4 bg-green-50 p-5 rounded-3xl border border-green-100">
               <div className="w-12 h-12 bg-green-500 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-green-500/20">
                  🛡️
               </div>
               <div>
-                 <h4 className="font-black text-green-800 dark:text-green-400 text-sm italic">Authentic Guarantee</h4>
-                 <p className="text-[11px] text-green-700/70 dark:text-green-400/60 font-bold uppercase tracking-wide">100% Sourced by {shop?.name || 'Modern Savannah'}</p>
+                 <h4 className="font-black text-green-800 text-sm italic">Authentic Guarantee</h4>
+                 <p className="text-[11px] text-green-700/70 font-bold uppercase tracking-wide">100% Sourced by {shop?.name || 'Modern Savannah'}</p>
               </div>
            </div>
-           <div className="flex items-center gap-4 bg-blue-50 dark:bg-blue-900/10 p-5 rounded-3xl border border-blue-100 dark:border-blue-900/20">
+           <div className="flex items-center gap-4 bg-blue-50 p-5 rounded-3xl border border-blue-100">
               <div className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-blue-500/20">
                  🚚
               </div>
               <div>
-                 <h4 className="font-black text-blue-800 dark:text-blue-400 text-sm italic">Savannah Express</h4>
-                 <p className="text-[11px] text-blue-700/70 dark:text-blue-400/60 font-bold uppercase tracking-wide">Dynamic Delivery Available</p>
+                 <h4 className="font-black text-blue-800 text-sm italic">Savannah Express</h4>
+                 <p className="text-[11px] text-blue-700/70 font-bold uppercase tracking-wide">Dynamic Delivery Available</p>
               </div>
            </div>
         </div>
 
         {/* Related Products Scroller */}
         {relatedItems.length > 0 && (
-          <section className="pt-8 border-t border-gray-100 dark:border-slate-800">
+           <section className="pt-8 border-t border-gray-100">
             <div className="flex justify-between items-end mb-6">
                <div>
-                  <h2 className="text-xs font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1">Customers also bought</h2>
-                  <h3 className="text-xl font-black text-gray-800 dark:text-gray-100 italic">Complete the set</h3>
+                  <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-1">Customers also bought</h2>
+                  <h3 className="text-xl font-black text-gray-800 italic">Complete the set</h3>
                </div>
                <Link to="/menu" className="text-xs font-bold text-theme-secondary underline decoration-2 underline-offset-4">View All</Link>
             </div>
@@ -291,14 +283,14 @@ export default function ProductDetails() {
                   to={`/product/${rItem.id}`}
                   className="flex-shrink-0 w-40 snap-start group"
                 >
-                  <div className="aspect-square rounded-3xl overflow-hidden mb-3 shadow-sm border border-gray-100 dark:border-slate-800">
+                  <div className="aspect-square rounded-3xl overflow-hidden mb-3 shadow-sm border border-gray-100">
                     <img 
-                      src={rItem.product_images?.[0]?.url || rItem.image_url} 
+                      src={getThumbnailUrl(rItem.product_images?.[0]?.url || rItem.image_url)} 
                       alt={rItem.name}
                       className="w-full h-full object-cover transition-transform group-hover:scale-110"
                     />
                   </div>
-                  <h4 className="text-xs font-bold text-gray-800 dark:text-gray-100 truncate">{rItem.name}</h4>
+                  <h4 className="text-xs font-bold text-gray-800 truncate">{rItem.name}</h4>
                   <p className="text-sm font-black text-theme-secondary mt-0.5">KSh {rItem.price}</p>
                 </Link>
               ))}
