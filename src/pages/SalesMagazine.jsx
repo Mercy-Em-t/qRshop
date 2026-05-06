@@ -157,8 +157,8 @@ export default function SalesMagazine() {
                <p className="text-[10px] text-indigo-400 font-bold tracking-widest uppercase">Sales Magazine 2026</p>
             </div>
          </div>
-         <Link to={`/s/${identifier}`} className="text-[10px] font-black uppercase tracking-widest bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full border border-white/10 transition">
-            Exit to Shop
+         <Link to={isOwner ? "/a" : `/s/${identifier}`} className="text-[10px] font-black uppercase tracking-widest bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full border border-white/10 transition">
+            {isOwner ? "Exit to Dashboard" : "Exit to Shop"}
          </Link>
       </nav>
 
