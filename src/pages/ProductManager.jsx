@@ -792,28 +792,36 @@ export default function ProductManager() {
            </div>
 
             {!showAddForm && (
-            <div className="flex flex-col sm:flex-row gap-3 pt-2 border-t border-gray-50 items-center justify-between">
-               <div className="relative flex-1 w-full">
-                  <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                     <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-gray-100 items-center justify-between">
+               <div className="relative flex-1 w-full group">
+                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                     <svg className="h-5 w-5 text-indigo-400 group-focus-within:text-indigo-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                   </span>
                   <input
                     type="text"
-                    placeholder="Search items by name, category, or tags..."
+                    placeholder="Search by name, tags, or category..."
                     value={searchTerm}
                     onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                    className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-sm focus:outline-none focus:bg-white transition"
+                    className="block w-full pl-12 pr-10 py-3 border-2 border-transparent bg-gray-100/80 hover:bg-gray-100 focus:bg-white focus:border-indigo-500 rounded-2xl text-sm font-medium focus:outline-none transition-all shadow-sm focus:shadow-md text-gray-900 placeholder-gray-400"
                   />
+                  {searchTerm && (
+                     <button 
+                       onClick={() => setSearchTerm("")}
+                       className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600"
+                     >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                     </button>
+                  )}
                </div>
                
-               <div className="flex items-center gap-2 w-full sm:w-auto">
+               <div className="flex items-center gap-3 w-full sm:w-auto">
                  <select
                    value={categoryFilter}
                    onChange={(e) => { setCategoryFilter(e.target.value); setCurrentPage(1); }}
-                   className="bg-gray-50 border border-gray-200 rounded-lg py-2 px-3 text-sm font-medium text-gray-700 outline-none capitalize flex-1 sm:flex-none"
+                   className="bg-white border border-gray-200 hover:border-gray-300 rounded-xl py-3 px-4 text-sm font-bold text-gray-700 outline-none capitalize flex-1 sm:flex-none shadow-sm transition-colors cursor-pointer"
                  >
                     {allCategories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
+                      <option key={cat} value={cat}>{cat === "all" ? "All Categories" : cat}</option>
                     ))}
                  </select>
 

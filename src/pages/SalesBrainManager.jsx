@@ -112,7 +112,7 @@ export default function SalesBrainManager() {
             
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">AI Identity Name</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">What should we call your AI?</label>
                 <input 
                   type="text" 
                   value={brain.personality}
@@ -124,7 +124,7 @@ export default function SalesBrainManager() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Engagement Tone</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">How should the AI talk?</label>
                 <select 
                   value={brain.tone}
                   onChange={e => setBrain({...brain, tone: e.target.value})}
@@ -147,7 +147,7 @@ export default function SalesBrainManager() {
             </h2>
             <div className="space-y-6">
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Operational Instructions</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Secret Instructions</label>
                 <textarea 
                   value={brain.sales_playbook}
                   onChange={e => setBrain({...brain, sales_playbook: e.target.value})}
@@ -158,7 +158,7 @@ export default function SalesBrainManager() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Custom Shop Context</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Shop Background</label>
                 <textarea 
                   value={brain.custom_context}
                   onChange={e => setBrain({...brain, custom_context: e.target.value})}

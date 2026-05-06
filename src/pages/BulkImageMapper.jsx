@@ -208,7 +208,7 @@ export default function BulkImageMapper() {
         id: Math.random().toString(36).substring(7),
         file,
         preview: URL.createObjectURL(file),
-        matchedProductId: matchedId,
+        matchedProductId: matchedId || "CREATE_NEW",
         status: "pending",
         error: null
       };
