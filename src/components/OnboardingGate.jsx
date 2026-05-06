@@ -169,7 +169,9 @@ export default function OnboardingGate({ children }) {
   const kycCompleted = true; 
   const hasNodes = (qrs || []).length > 0;
 
-  console.log("Gate Diagnostics:", { shopStatus, needsPasswordChange, kycCompleted, hasNodes, loading });
+  if (isDebug) {
+    console.log("Gate Diagnostics:", { shopStatus, needsPasswordChange, kycCompleted, hasNodes, loading });
+  }
 
   // Let through: system_admin (always)
   if (user?.system_role === "system_admin") return children;
