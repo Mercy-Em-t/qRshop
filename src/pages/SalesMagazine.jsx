@@ -117,14 +117,16 @@ export default function SalesMagazine() {
             </div>
           )}
 
-          <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
+          <div className="flex flex-wrap items-center justify-center gap-4 pt-6">
             {isOwner ? (
               <>
-                <Link to="/a" className="bg-indigo-600 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition shadow-xl shadow-indigo-900/20">
-                  ← Go to Dashboard
+                <Link to="/a/products" className="bg-indigo-600 text-white px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition shadow-xl shadow-indigo-600/20 flex items-center gap-3 hover:-translate-y-1 transform duration-200">
+                  <span>Start Curating Products</span>
+                  <span className="text-lg">✨</span>
                 </Link>
-                <Link to="/a/products" className="bg-white/10 text-white px-8 py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-white/20 transition border border-white/10">
-                  Product Manager
+                <Link to="/a/ai-brain" className="bg-white/5 text-slate-300 px-8 py-4 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-white/10 hover:text-white transition border border-white/10 flex items-center gap-2">
+                  <span>Calibrate AI Brain</span>
+                  <span>🧠</span>
                 </Link>
               </>
             ) : (
