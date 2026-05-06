@@ -135,9 +135,9 @@ export function getCurrentUser() {
     if (!raw) return null;
     const userObj = JSON.parse(raw);
     
-    // Add dynamic/fallback shop_id from active shop
+    // Always prioritize the active shop chosen in sessionStorage for multi-shop switching
     const activeShopId = sessionStorage.getItem("active_shop_id");
-    if (activeShopId && !userObj.shop_id) {
+    if (activeShopId) {
        userObj.shop_id = activeShopId;
     }
     return userObj;
