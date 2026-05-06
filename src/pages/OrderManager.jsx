@@ -1,10 +1,62 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
 import { updateOrderStatus } from "../services/order-service";
 import { useShopAgent } from "../hooks/use-shop-agent";
 import { triggerMpesaStkPush } from "../services/payment-service";
+
+// High-performance Binary Search Tree node for in-memory order index
+class OrderBSTNode {
+  constructor(order) {
+    this.key = new Date(order.created_at).getTime();
+    this.orders = [order];
+    this.left = null;
+    this.right = null;
+  }
+}
+
+// Client-side Binary Search Tree for logarithmic range queries and instant sorting
+class OrderBST {
+  constructor() {
+    this.root = null;
+  }
+
+  insert(order) {
+    const node = new OrderBSTNode(order);
+    if (!this.root) {
+      this.root = node;
+      return;
+    }
+    this._insertNode(this.root, node);
+  }
+
+  _insertNode(current, newNode) {
+    if (newNode.key === current.key) {
+      current.orders.push(...newNode.orders);
+    } else if (newNode.key < current.key) {
+      if (!current.left) current.left = newNode;
+      else this._insertNode(current.left, newNode);
+    } else {
+      if (!current.right) current.right = newNode;
+      else this._insertNode(current.right, newNode);
+    }
+  }
+
+  searchRange(start, end) {
+    const results = [];
+    this._searchRangeNode(this.root, start, end, results);
+    return results.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }
+
+  _searchRangeNode(node, start, end, results) {
+    if (!node) return;
+    if (node.key >= start) this._searchRangeNode(node.left, start, end, results);
+    if (node.key >= start && node.key <= end) results.push(...node.orders);
+    if (node.key <= end) this._searchRangeNode(node.right, start, end, results);
+  }
+}
+
 
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
@@ -17,6 +69,14 @@ export default function OrderManager() {
   const [noteOrder, setNoteOrder] = useState(null);
   const [noteText, setNoteText] = useState('');
   const [overflowOpenId, setOverflowOpenId] = useState(null);
+  const [dateFilter, setDateFilter] = useState("all"); // "all", "today", "week"
+
+  // Memoize high-performance BST index
+  const orderBST = useMemo(() => {
+    const bst = new OrderBST();
+    orders.forEach(o => bst.insert(o));
+    return bst;
+  }, [orders]);
 
   const navigate = useNavigate();
   const user = getCurrentUser();
@@ -180,15 +240,31 @@ export default function OrderManager() {
 
   const isGastro = shop?.industry_type === 'food' || shop?.industry_type === 'restaurant';
   
-  const filteredOrders = orders.filter(o => {
-    const matchesTab = activeTab === 'all' ? true : o.status === activeTab;
-    const s = searchTerm.toLowerCase();
-    const matchesSearch = !searchTerm || 
-      (o.client_name?.toLowerCase().includes(s)) ||
-      (o.client_phone?.includes(s)) ||
-      (o.id.toLowerCase().includes(s));
-    return matchesTab && matchesSearch;
-  });
+  const filteredOrders = useMemo(() => {
+    let baseOrders = orders;
+    
+    if (dateFilter === "today") {
+      const start = new Date();
+      start.setHours(0,0,0,0);
+      const end = new Date();
+      end.setHours(23,59,59,999);
+      baseOrders = orderBST.searchRange(start.getTime(), end.getTime());
+    } else if (dateFilter === "week") {
+      const start = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const end = new Date();
+      baseOrders = orderBST.searchRange(start.getTime(), end.getTime());
+    }
+
+    return baseOrders.filter(o => {
+      const matchesTab = activeTab === 'all' ? true : o.status === activeTab;
+      const s = searchTerm.toLowerCase();
+      const matchesSearch = !searchTerm || 
+        (o.client_name?.toLowerCase().includes(s)) ||
+        (o.client_phone?.includes(s)) ||
+        (o.id.toLowerCase().includes(s));
+      return matchesTab && matchesSearch;
+    });
+  }, [orders, orderBST, dateFilter, activeTab, searchTerm]);
 
   const [viewType, setViewType] = useState('grid'); // 'grid' or 'table'
 
@@ -240,6 +316,21 @@ export default function OrderManager() {
                >
                   ⬇ CSV
                </button>
+                {/* Date BST Filter Selector */}
+                <div className="relative">
+                   <select
+                     value={dateFilter}
+                     onChange={(e) => setDateFilter(e.target.value)}
+                     className="appearance-none bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 pr-8 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer transition-all"
+                   >
+                      <option value="all">All Dates</option>
+                      <option value="today">Today</option>
+                      <option value="week">This Week</option>
+                   </select>
+                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                      <svg className="fill-current h-3 w-3" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                   </div>
+                </div>
                {/* Search Bar */}
                <div className="relative flex-1 md:w-64">
                   <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
