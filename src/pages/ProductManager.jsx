@@ -24,7 +24,7 @@ export default function ProductManager() {
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: false, details: false });
+  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: false, details: false, marketing: false });
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -52,6 +52,14 @@ export default function ProductManager() {
   const [salesHeadline, setSalesHeadline] = useState("");
   const [salesScript, setSalesScript] = useState("");
   const [tags, setTags] = useState("");
+  
+  // Extended Product Details
+  const [brand, setBrand] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [processing, setProcessing] = useState("");
+  const [nutritionInfo, setNutritionInfo] = useState("");
+  const [benefits, setBenefits] = useState("");
+  const [usageInstructions, setUsageInstructions] = useState("");
   
   // Image Upload State
   const [imageFile, setImageFile] = useState(null);
@@ -970,86 +978,134 @@ export default function ProductManager() {
             </div>
 
             
-<<<<<<< HEAD
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Stock Level</label>
-              <input
-                type="number"
-                value={stock}
-                onChange={(e) => setStock(e.target.value)}
-                placeholder="Leave blank for unlimited"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">SKU / ID</label>
-              <input
-                type="text"
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                placeholder="e.g. MS-001"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50"
-              />
-            </div>
-            <div>
-               <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
-               <input
-                 type="text"
-                 value={tags}
-                 onChange={(e) => setTags(e.target.value)}
-                 placeholder="e.g. limited, seasonal"
-                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50"
-               />
-            </div>
-            <div>
-               <label className="block text-sm font-medium text-gray-700 mb-1">Direct Link (External/Digital)</label>
-               <input
-                 type="url"
-                 value={productLink}
-                 onChange={(e) => setProductLink(e.target.value)}
-                 placeholder="https://..."
-                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50"
-               />
-            </div>
+             {/* COLLAPSIBLE: MARKETING AI COPY */}
+             <div className="md:col-span-2">
+               <button 
+                  type="button"
+                  onClick={() => setActiveSections(prev => ({...prev, marketing: !prev.marketing}))}
+                  className="w-full flex items-center justify-between p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors mb-2 mt-2"
+               >
+                  <div className="flex items-center gap-2">
+                     <span className="text-xl">✨</span>
+                     <div className="text-left">
+                        <h3 className="text-sm font-bold text-purple-900 uppercase tracking-widest">Marketing AI Copy</h3>
+                        <p className="text-[10px] text-purple-500">Auto-generated if left blank</p>
+                     </div>
+                  </div>
+                  <span className={`text-purple-600 transition-transform duration-300 ${activeSections.marketing ? 'rotate-180' : ''}`}>▼</span>
+               </button>
 
-              <div className="md:col-span-2 py-6 border-t border-gray-100">
-                 <h3 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    ✨ Marketing AI Copy
-                    <span className="text-[10px] font-normal text-gray-400 normal-case tracking-normal">(Auto-generated if left blank)</span>
-                 </h3>
-                 <div className="space-y-4">
-                    <div>
-                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Marketing Headline</label>
-                       <input 
-                          type="text"
-                          value={salesHeadline}
-                          onChange={e => setSalesHeadline(e.target.value)}
-                          placeholder="e.g. Experience the purest organic blend..."
-                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                       />
-                    </div>
-                    <div>
-                       <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sales Script / Hook</label>
-                       <textarea 
-                          rows={3}
-                          value={salesScript}
-                          onChange={e => setSalesScript(e.target.value)}
-                          placeholder="Write a compelling story or hook for this product..."
-                          className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                       />
-                    </div>
-                 </div>
-              </div>
+               {activeSections.marketing && (
+                  <div className="space-y-4 p-5 bg-white rounded-2xl border border-purple-100/50 animate-in fade-in slide-in-from-top-2">
+                     <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Marketing Headline</label>
+                        <input 
+                           type="text"
+                           value={salesHeadline}
+                           onChange={e => setSalesHeadline(e.target.value)}
+                           placeholder="e.g. Experience the purest organic blend..."
+                           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition"
+                        />
+                     </div>
+                     <div>
+                        <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Sales Script / Hook</label>
+                        <textarea 
+                           rows={3}
+                           value={salesScript}
+                           onChange={e => setSalesScript(e.target.value)}
+                           placeholder="Write a compelling story or hook for this product..."
+                           className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 outline-none transition"
+                        />
+                     </div>
+                  </div>
+               )}
+             </div>
 
-              <div className="md:col-span-2 py-6 border-t border-gray-100">
-                 <AttributePanel 
-                    category={category}
-                    currentAttributes={customFields}
-                    onChange={setCustomFields}
-                    shopSchema={shopSchema}
-                 />
-              </div>
-=======
+             {/* COLLAPSIBLE: EXTENDED PRODUCT DETAILS */}
+             {!selectedTemplateId && (
+                <div className="md:col-span-2">
+                   <button 
+                      type="button"
+                      onClick={() => setActiveSections(prev => ({...prev, details: !prev.details}))}
+                      className="w-full flex items-center justify-between p-4 bg-slate-900 text-white rounded-xl transition-all shadow-lg shadow-slate-200 mb-2 mt-2 hover:bg-slate-800"
+                   >
+                      <div className="flex items-center gap-2">
+                         <span className="text-xl">📋</span>
+                         <div className="text-left">
+                            <h3 className="text-sm font-bold uppercase tracking-widest">Enhanced Product Details</h3>
+                            <p className="text-[10px] text-slate-400">Brand, Origin, Processing & Benefits</p>
+                         </div>
+                      </div>
+                      <span className={`transition-transform duration-300 ${activeSections.details ? 'rotate-180' : ''}`}>▼</span>
+                   </button>
+
+                   {activeSections.details && (
+                      <div className="grid md:grid-cols-2 gap-4 p-5 bg-white rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2">
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
+                           <input
+                              type="text"
+                              value={brand}
+                              onChange={(e) => setBrand(e.target.value)}
+                              placeholder="e.g. Mama Rosy"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Origin</label>
+                           <input
+                              type="text"
+                              value={origin}
+                              onChange={(e) => setOrigin(e.target.value)}
+                              placeholder="e.g. Kenya (Makueni)"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Processing</label>
+                           <input
+                              type="text"
+                              value={processing}
+                              onChange={(e) => setProcessing(e.target.value)}
+                              placeholder="e.g. Cold-pressed, Organic"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
+                           />
+                        </div>
+                        <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Nutrition Focus</label>
+                           <input
+                              type="text"
+                              value={nutritionInfo}
+                              onChange={(e) => setNutritionInfo(e.target.value)}
+                              placeholder="e.g. High Protein, Vitamin C"
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
+                           />
+                        </div>
+                        <div className="md:col-span-2">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Product Benefits (Key Selling Points)</label>
+                           <textarea
+                              rows={2}
+                              value={benefits}
+                              onChange={(e) => setBenefits(e.target.value)}
+                              placeholder="e.g. Supports focus and energy without the crash..."
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
+                           />
+                        </div>
+                        <div className="md:col-span-2">
+                           <label className="block text-sm font-medium text-gray-700 mb-1">Usage Instructions / Recipe</label>
+                           <textarea
+                              rows={2}
+                              value={usageInstructions}
+                              onChange={(e) => setUsageInstructions(e.target.value)}
+                              placeholder="e.g. Add 1 scoop to hot water, whisk until frothy."
+                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white outline-none focus:ring-2 focus:ring-slate-900"
+                           />
+                        </div>
+                      </div>
+                   )}
+                </div>
+             )}
+
              {/* COLLAPSIBLE: PRODUCT BLUEPRINT */}
              <div className="md:col-span-2">
                <button 
@@ -1060,7 +1116,7 @@ export default function ProductManager() {
                   <div className="flex items-center gap-2">
                      <span className="text-xl">📐</span>
                      <div className="text-left">
-                        <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-widest">Product Structure</h3>
+                        <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-widest">Product Structure Blueprint</h3>
                         <p className="text-[10px] text-indigo-500">Choose a blueprint to define custom fields.</p>
                      </div>
                   </div>
@@ -1068,7 +1124,7 @@ export default function ProductManager() {
                </button>
 
                {activeSections.blueprint && (
-                  <div className="p-4 border border-indigo-100 rounded-xl animate-in fade-in slide-in-from-top-2">
+                  <div className="p-4 border border-indigo-100 rounded-xl animate-in fade-in slide-in-from-top-2 bg-white">
                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Select Blueprint / Template</label>
                      <select 
                         value={selectedTemplateId}
@@ -1080,10 +1136,36 @@ export default function ProductManager() {
                            <option key={t.id} value={t.id}>{t.name}</option>
                         ))}
                      </select>
+
+                     {selectedTemplateId && (
+                        <div className="mt-4 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100/50 space-y-4">
+                           <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 italic">Building based on {availableTemplates.find(t => t.id === selectedTemplateId)?.name}</p>
+                           <div className="grid md:grid-cols-2 gap-4">
+                              {availableTemplates.find(t => t.id === selectedTemplateId)?.product_template_fields?.map(field => (
+                                  <div key={field.id}>
+                                     <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">{field.label}</label>
+                                     {field.field_type === 'textarea' ? (
+                                        <textarea 
+                                           value={customFields[field.field_key] || ""}
+                                           onChange={e => setCustomFields({...customFields, [field.field_key]: e.target.value})}
+                                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-indigo-500"
+                                        />
+                                     ) : (
+                                        <input 
+                                           type={field.field_type}
+                                           value={customFields[field.field_key] || ""}
+                                           onChange={e => setCustomFields({...customFields, [field.field_key]: e.target.value})}
+                                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-indigo-500"
+                                        />
+                                     )}
+                                  </div>
+                              ))}
+                           </div>
+                        </div>
+                     )}
                   </div>
                )}
              </div>
-
 
              {/* DYNAMIC SHOP-SPECIFIC ATTRIBUTES */}
               {shopSchema.length > 0 && (
@@ -1094,7 +1176,7 @@ export default function ProductManager() {
                        className="w-full flex items-center justify-between p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition-colors mb-2 mt-2"
                    >
                        <div className="flex items-center gap-2">
-                          <span className="text-xl">✨</span>
+                          <span className="text-xl">🛠️</span>
                           <div className="text-left">
                              <h3 className="text-sm font-bold text-orange-900 uppercase tracking-widest">Custom Shop Attributes</h3>
                              <p className="text-[10px] text-orange-500">Fields defined in your Attribute Manager.</p>
@@ -1130,150 +1212,18 @@ export default function ProductManager() {
                    )}
                 </div>
               )}
->>>>>>> v2/scalable-rebuild
-
-             {selectedTemplateId && (
-                <div className="md:col-span-2 p-6 bg-indigo-50/20 rounded-2xl border border-indigo-100/50 space-y-4">
-                   <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-2 italic">Building based on {availableTemplates.find(t => t.id === selectedTemplateId)?.name} blueprint</p>
-                   <div className="grid md:grid-cols-2 gap-4">
-                      {availableTemplates.find(t => t.id === selectedTemplateId)?.product_template_fields?.map(field => (
-                          <div key={field.id}>
-                             <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">{field.label}</label>
-                             {field.field_type === 'textarea' ? (
-                                <textarea 
-                                   value={customFields[field.field_key] || ""}
-                                   onChange={e => setCustomFields({...customFields, [field.field_key]: e.target.value})}
-                                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                                />
-                             ) : (
-                                <input 
-                                   type={field.field_type}
-                                   value={customFields[field.field_key] || ""}
-                                   onChange={e => setCustomFields({...customFields, [field.field_key]: e.target.value})}
-                                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                                />
-                             )}
-                          </div>
-                      ))}
-                   </div>
-                </div>
-             )}
-
-<<<<<<< HEAD
-             <div className="md:col-span-2 flex items-center gap-4 py-4">
-                {imagePreview ? (
-                   <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm">
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                      <button type="button" onClick={() => {setImageFile(null); setImagePreview(null);}} className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-bl-lg text-xs font-bold">×</button>
-                   </div>
-                ) : (
-                   <div className="w-16 h-16 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 font-bold">📷</div>
-                )}
-                <label className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 cursor-pointer transition">
-                   Upload Image
-                   <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImageSelect} className="hidden" />
-                </label>
-             </div>
-
-            <div className="flex items-end gap-2 md:col-span-1 pt-4">
-=======
-             {/* COLLAPSIBLE: EXTENDED PRODUCT DETAILS (FALLBACK STATIC FIELDS) */}
-             {!selectedTemplateId && (
-                <div className="md:col-span-2">
-                   <button 
-                      type="button"
-                      onClick={() => setActiveSections(prev => ({...prev, details: !prev.details}))}
-                      className="w-full flex items-center justify-between p-4 bg-slate-900 text-white rounded-xl transition-all shadow-lg shadow-slate-200 mb-2 mt-2"
-                   >
-                      <div className="flex items-center gap-2">
-                         <span className="text-xl">📋</span>
-                         <div className="text-left">
-                            <h3 className="text-sm font-bold uppercase tracking-widest">Enhanced Product Details</h3>
-                            <p className="text-[10px] text-slate-400">Brand, Origin, Processing & Benefits</p>
-                         </div>
-                      </div>
-                      <span className={`transition-transform duration-300 ${activeSections.details ? 'rotate-180' : ''}`}>▼</span>
-                   </button>
-
-                   {activeSections.details && (
-                      <div className="grid md:grid-cols-2 gap-4 p-5 bg-white rounded-2xl border border-slate-200 animate-in fade-in slide-in-from-top-2">
-                        <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Brand Name</label>
-                           <input
-                              type="text"
-                              value={brand}
-                              onChange={(e) => setBrand(e.target.value)}
-                              placeholder="e.g. Mama Rosy"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
-                           />
-                        </div>
-                        <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Origin</label>
-                           <input
-                              type="text"
-                              value={origin}
-                              onChange={(e) => setOrigin(e.target.value)}
-                              placeholder="e.g. Kenya (Makueni)"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
-                           />
-                        </div>
-                        <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Processing</label>
-                           <input
-                              type="text"
-                              value={processing}
-                              onChange={(e) => setProcessing(e.target.value)}
-                              placeholder="e.g. Cold-pressed, Organic"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
-                           />
-                        </div>
-                        <div>
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Nutrition Focus</label>
-                           <input
-                              type="text"
-                              value={nutritionInfo}
-                              onChange={(e) => setNutritionInfo(e.target.value)}
-                              placeholder="e.g. High Protein, Vitamin C"
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
-                           />
-                        </div>
-                        <div className="md:col-span-2">
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Product Benefits (Key Selling Points)</label>
-                           <textarea
-                              rows={2}
-                              value={benefits}
-                              onChange={(e) => setBenefits(e.target.value)}
-                              placeholder="e.g. Supports focus and energy without the crash..."
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
-                           />
-                        </div>
-                        <div className="md:col-span-2">
-                           <label className="block text-sm font-medium text-gray-700 mb-1">Usage Instructions / Recipe</label>
-                           <textarea
-                              rows={2}
-                              value={usageInstructions}
-                              onChange={(e) => setUsageInstructions(e.target.value)}
-                              placeholder="e.g. Add 1 scoop to hot water, whisk until frothy."
-                              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
-                           />
-                        </div>
-                      </div>
-                   )}
-                </div>
-             )}
-
 
             <div className="md:col-span-2 mt-4 flex gap-6 items-end">
                <div className="flex-1">
                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Image (Max 5MB)</label>
                  <div className="flex items-center gap-4">
                     {imagePreview ? (
-                       <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm">
+                       <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm shrink-0">
                           <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                           <button type="button" onClick={() => {setImageFile(null); setImagePreview(null);}} className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-bl-lg text-xs font-bold">×</button>
                        </div>
                     ) : (
-                       <div className="w-16 h-16 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 font-bold">📷</div>
+                       <div className="w-16 h-16 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 font-bold shrink-0">📷</div>
                     )}
                     <label className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 cursor-pointer transition">
                        Upload Image
@@ -1282,9 +1232,6 @@ export default function ProductManager() {
                  </div>
                </div>
             </div>
-
-            <div className="flex items-end gap-2 md:col-span-1">
->>>>>>> v2/scalable-rebuild
               <button
                 type="submit"
                 disabled={isAdding}
