@@ -9,7 +9,7 @@ export default defineConfig({
     react(), 
     tailwindcss(),
     VitePWA({
-      registerType: 'prompt', // Enable the "Update available" prompt
+      registerType: 'autoUpdate', // Automatically update and reload the PWA when new code is pushed
       includeAssets: ['favicon.svg', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
         name: 'The Modern Savannah',
@@ -30,6 +30,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        cleanupOutdatedCaches: true, // Instantly remove old files to prevent conflict with fresh updates
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024 // 4 MiB
       }
     })
