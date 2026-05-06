@@ -67,7 +67,7 @@ export default function ShopSelection() {
     localStorage.removeItem("pending_user_id");
 
     if (profile.system_role === 'system_admin' || sessionUser.system_role === 'system_admin') {
-      navigate("/admin");
+      navigate("/a/admin");
     } else {
       navigate("/a");
     }

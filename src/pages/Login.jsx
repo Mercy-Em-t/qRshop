@@ -25,7 +25,7 @@ export default function Login() {
 
     if (user && user.system_role === 'system_admin') {
       localStorage.setItem("savannah_session", JSON.stringify(user));
-      navigate("/admin");
+      navigate("/a/admin");
       return;
     }
 

@@ -80,6 +80,12 @@ const WholesaleSalesSystem= lazy(() => import("./pages/WholesaleSalesSystem"));
 const WholesaleJourneyMap = lazy(() => import("./pages/WholesaleJourneyMap"));
 const SeedWholesaleUser   = lazy(() => import("./pages/SeedWholesaleUser"));
 
+// Dynamic legacy admin link redirect helper
+function AdminRedirect() {
+  const target = window.location.pathname.replace(/^\/admin/, '/a/admin');
+  return <Navigate to={target} replace />;
+}
+
 // Page-transition fallback — minimal spinner so users see something immediately
 function PageLoader() {
   return (
@@ -234,6 +240,8 @@ export default function App() {
       <Route path="/menu-manager" element={<Navigate to="/a/settings" replace />} />
       <Route path="/qr-generator" element={<Navigate to="/a/qrs" replace />} />
       <Route path="/plans" element={<Navigate to="/a/settings" replace />} />
+      <Route path="/admin" element={<Navigate to="/a/admin" replace />} />
+      <Route path="/admin/*" element={<AdminRedirect />} />
 
       {/* === ADMIN ROUTES (Now nested under /a/ if possible, or kept separate but gated) === */}
       {/* For now, keeping them simple but they should ideally be inside DashboardRoutes or prefixed with /a/admin */}
