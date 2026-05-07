@@ -66,15 +66,20 @@ export function useConversionStats(shopId) {
       let upsellAccepted = 0;
 
       if (itemIds.length > 0) {
-        const { data: upsells } = await supabase
-          .from("analytics_upsells")
-          .select("accepted")
-          .in("item_id", itemIds);
+        const [totalRes, acceptedRes] = await Promise.all([
+          supabase
+            .from("analytics_upsells")
+            .select("*", { count: "exact", head: true })
+            .in("item_id", itemIds),
+          supabase
+            .from("analytics_upsells")
+            .select("*", { count: "exact", head: true })
+            .in("item_id", itemIds)
+            .eq("accepted", true)
+        ]);
 
-        if (upsells) {
-          upsellTotal = upsells.length;
-          upsellAccepted = upsells.filter((u) => u.accepted).length;
-        }
+        upsellTotal = totalRes.count || 0;
+        upsellAccepted = acceptedRes.count || 0;
       }
 
       const upsellRate =

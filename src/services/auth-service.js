@@ -8,8 +8,7 @@ let _authStaticCache = null;
 export async function authenticateUser(email, password) {
   if (!supabase) return { error: "Supabase not connected." };
 
-  // Phase 1: Authenticate natively against Supabase Auth (with Timeout Guard)
-  // We no longer force signOut() here; Supabase handles session transition natively.
+  // Phase 1: Authenticate natively against Supabase Auth (with Optimized Timeout Guard)
   console.log("Auth: Initiating native signIn for", email.trim());
   
   const authPromise = supabase.auth.signInWithPassword({
@@ -18,7 +17,7 @@ export async function authenticateUser(email, password) {
   });
 
   const timeoutPromise = new Promise((_, reject) => 
-    setTimeout(() => reject(new Error("Supabase Auth Handshake Timed Out (10s)")), 10000)
+    setTimeout(() => reject(new Error("Supabase Auth Handshake Timed Out (6s)")), 6000)
   );
 
   let authData, authError;
@@ -46,7 +45,7 @@ export async function authenticateUser(email, password) {
   let resolvedProfile = profileRes.data;
   let resolvedMemberships = membershipsRes;
 
-  // Phase 2.5: V1 → V2 Soft Backfill Guard
+  // Phase 2.5: V1 → V2 Soft Backfill Guard (Optimized with Parallel Upserts)
   if (!resolvedProfile) {
     console.warn("Auth: Profile missing — checking for V1 legacy data...");
     const { data: v1Rows } = await supabase
@@ -55,8 +54,8 @@ export async function authenticateUser(email, password) {
       .eq("id", authData.user.id);
 
     if (v1Rows && v1Rows.length > 0) {
-      // 1. Bulk create profile
-      const { data: newProfile } = await supabase
+      // Parallelize both Profile Creation and Membership linking
+      const profilePromise = supabase
         .from("profiles")
         .upsert({
           id: authData.user.id,
@@ -66,7 +65,6 @@ export async function authenticateUser(email, password) {
         .select()
         .single();
 
-      // 2. Bulk create shop_members
       const newMemberships = v1Rows.map(row => ({
         user_id: authData.user.id,
         shop_id: row.shop_id,
@@ -74,9 +72,14 @@ export async function authenticateUser(email, password) {
         is_active: true,
       }));
 
-      await supabase.from("shop_members").upsert(newMemberships, { onConflict: 'user_id,shop_id' });
+      const membershipsPromise = supabase
+        .from("shop_members")
+        .upsert(newMemberships, { onConflict: 'user_id,shop_id' });
+
+      // Execute legacy backfill parallelly
+      const [pRes] = await Promise.all([profilePromise, membershipsPromise]);
       
-      resolvedProfile = newProfile;
+      resolvedProfile = pRes.data;
       resolvedMemberships = await getShopMemberships(authData.user.id);
     }
   }
@@ -130,6 +133,7 @@ export async function authenticateUser(email, password) {
 }
 
 export function getCurrentUser() {
+  if (_authStaticCache) return _authStaticCache;
   try {
     const raw = localStorage.getItem("savannah_session");
     if (!raw) return null;
@@ -140,6 +144,7 @@ export function getCurrentUser() {
     if (activeShopId) {
        userObj.shop_id = activeShopId;
     }
+    _authStaticCache = userObj;
     return userObj;
   } catch {
     return null;

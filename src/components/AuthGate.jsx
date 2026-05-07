@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { getCurrentUser } from "../services/auth-service";
+import { supabase } from "../services/supabase-client";
 import LoadingSpinner from "./LoadingSpinner";
 import { useState, useEffect, useMemo } from "react";
 
@@ -9,16 +10,26 @@ import { useState, useEffect, useMemo } from "react";
  * Redirects to /login if no active session is found.
  */
 export default function AuthGate({ children }) {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => getCurrentUser());
+  const [loading, setLoading] = useState(() => !getCurrentUser());
 
   useEffect(() => {
     async function checkAuth() {
       try {
-        const currentUser = await getCurrentUser();
+        const currentUser = getCurrentUser();
         setUser(currentUser);
+        
+        if (currentUser && supabase) {
+          // Silent background session validation
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error || !session) {
+            console.warn("AuthGate: Background session validation failed. Logging out...");
+            const { logout } = await import("../services/auth-service");
+            await logout();
+          }
+        }
       } catch (err) {
-        console.error("AuthGate Security Error:", err);
+        console.error("AuthGate Security Error during background revalidation:", err);
       } finally {
         setLoading(false);
       }

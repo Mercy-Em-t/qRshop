@@ -31,34 +31,44 @@ export function useVisitStats(shopId) {
       const yesterdayStart = new Date(todayStart);
       yesterdayStart.setDate(todayStart.getDate() - 1);
 
-      // 1. Fetch all visit events for this shop (both profile views and QR scans)
-      const { data: events } = await supabase
-        .from("events")
-        .select("created_at, event_type")
-        .eq("shop_id", shopId)
-        .in("event_type", ["shop_profile_view", "qr_scanned"]);
+      // Perform parallel, server-side aggregate COUNT queries (Zero payload download!)
+      const [totalRes, todayRes, yesterdayRes, ordersRes] = await Promise.all([
+        supabase
+          .from("events")
+          .select("*", { count: "exact", head: true })
+          .eq("shop_id", shopId)
+          .in("event_type", ["shop_profile_view", "qr_scanned"]),
 
-      // 2. Fetch order count to compute visit → order percentage
-      const { data: orders } = await supabase
-        .from("orders")
-        .select("id")
-        .eq("shop_id", shopId);
+        supabase
+          .from("events")
+          .select("*", { count: "exact", head: true })
+          .eq("shop_id", shopId)
+          .in("event_type", ["shop_profile_view", "qr_scanned"])
+          .gte("created_at", todayStart.toISOString()),
 
-      const totalVisits = events ? events.length : 0;
-      const visitsToday = (events || []).filter(
-        e => new Date(e.created_at || new Date()) >= todayStart
-      ).length;
+        supabase
+          .from("events")
+          .select("*", { count: "exact", head: true })
+          .eq("shop_id", shopId)
+          .in("event_type", ["shop_profile_view", "qr_scanned"])
+          .gte("created_at", yesterdayStart.toISOString())
+          .lt("created_at", todayStart.toISOString()),
 
-      const visitsYesterday = (events || []).filter(e => {
-        const d = new Date(e.created_at || new Date());
-        return d >= yesterdayStart && d < todayStart;
-      }).length;
+        supabase
+          .from("orders")
+          .select("*", { count: "exact", head: true })
+          .eq("shop_id", shopId)
+      ]);
+
+      const totalVisits = totalRes.count || 0;
+      const visitsToday = todayRes.count || 0;
+      const visitsYesterday = yesterdayRes.count || 0;
+      const totalOrders = ordersRes.count || 0;
 
       const trend = visitsYesterday > 0
         ? Math.round(((visitsToday - visitsYesterday) / visitsYesterday) * 100)
         : visitsToday > 0 ? 100 : 0;
 
-      const totalOrders = orders ? orders.length : 0;
       const conversionToOrder = totalVisits > 0 ? Math.round((totalOrders / totalVisits) * 100) : 0;
 
       setStats({
