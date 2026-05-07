@@ -20,10 +20,10 @@ export default function AuthGate({ children }) {
         setUser(currentUser);
         
         if (currentUser && supabase) {
-          // Silent background session validation
-          const { data: { session }, error } = await supabase.auth.getSession();
-          if (error || !session) {
-            console.warn("AuthGate: Background session validation failed. Logging out...");
+          // Cryptographically secure background session verification
+          const { data: { user: secureUser }, error } = await supabase.auth.getUser();
+          if (error || !secureUser) {
+            console.warn("AuthGate: Cryptographic background session verification failed. Logging out...");
             const { logout } = await import("../services/auth-service");
             await logout();
           }
