@@ -37,6 +37,11 @@ export default defineConfig({
   ],
   build: {
     chunkSizeWarningLimit: 2000, // Increase limit to 2MB to suppress warnings for large bundles
+    rollupOptions: {
+      external: [
+        '@tauri-apps/plugin-notification'
+      ]
+    }
   },
   test: {
     globals: true,
