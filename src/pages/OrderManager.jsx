@@ -57,6 +57,48 @@ class OrderBST {
   }
 }
 
+// Send a native OS or web fallback notification whenever a new order lands
+async function notifyNewOrder(order) {
+  try {
+    const isTauri = typeof window !== 'undefined' && !!window.__TAURI__;
+    
+    // Play kitchen notification alert sound
+    const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/911/911-200.wav");
+    audio.play().catch(() => {});
+
+    if (isTauri) {
+      const { sendNotification, isPermissionGranted, requestPermission } = await import("@tauri-apps/plugin-notification");
+      let permissionGranted = await isPermissionGranted();
+      if (!permissionGranted) {
+        const permission = await requestPermission();
+        permissionGranted = permission === 'granted';
+      }
+      
+      if (permissionGranted) {
+        sendNotification({
+          title: "🍳 New Order Received!",
+          body: `Order for ${order.client_name || 'Guest'} - KSh ${order.total_price}`,
+          sound: "Default"
+        });
+      }
+    } else if (typeof window !== 'undefined' && "Notification" in window) {
+      if (Notification.permission === "granted") {
+        new Notification("🍳 New Order Received!", {
+          body: `Order for ${order.client_name || 'Guest'} - KSh ${order.total_price}`
+        });
+      } else if (Notification.permission !== "denied") {
+        const perm = await Notification.requestPermission();
+        if (perm === "granted") {
+          new Notification("🍳 New Order Received!", {
+            body: `Order for ${order.client_name || 'Guest'} - KSh ${order.total_price}`
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Notification trigger failed silently:", err);
+  }
+}
 
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
@@ -91,7 +133,7 @@ export default function OrderManager() {
        console.error("Supabase client is not initialized.");
        setLoading(false);
        return;
-    }
+     }
     fetchOrders();
 
     const channel = supabase
@@ -101,7 +143,12 @@ export default function OrderManager() {
         schema: 'public', 
         table: 'orders',
         filter: `shop_id=eq.${SHOP_ID}` 
-      }, () => fetchOrders())
+      }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          notifyNewOrder(payload.new);
+        }
+        fetchOrders();
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
