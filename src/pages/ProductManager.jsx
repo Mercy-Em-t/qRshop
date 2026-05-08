@@ -234,20 +234,21 @@ export default function ProductManager() {
        }
 
        // 2. Secondary Operations (Parallel & Background)
+       const fileToUpload = imageFile;
        const handleSecondaryOps = async () => {
           let imageUrl = null;
           
           // Image Flow
-          if (imageFile && newProductId) {
+          if (fileToUpload && newProductId) {
              try {
                 setUploadProgress(10);
-                const fileExt = imageFile.name.split('.').pop();
+                const fileExt = fileToUpload.name.split('.').pop();
                 const fileName = `${SHOP_ID}/${newProductId}-${Date.now()}.${fileExt}`;
                 
                 setUploadProgress(40);
                 const { error: uploadError } = await supabase.storage
                    .from('product-images')
-                   .upload(fileName, imageFile);
+                   .upload(fileName, fileToUpload);
                    
                 if (uploadError) throw uploadError;
                 
