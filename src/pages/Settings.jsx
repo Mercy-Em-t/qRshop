@@ -22,7 +22,7 @@ export default function Settings() {
   
   const navigate = useNavigate();
   const user = getCurrentUser();
-  const SHOP_ID = user?.shop_id;
+  const SHOP_ID = user?.shop_id || sessionStorage.getItem('active_shop_id') || null;
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
