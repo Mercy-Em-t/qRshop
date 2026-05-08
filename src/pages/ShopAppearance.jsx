@@ -41,8 +41,14 @@ function sanitiseConfig(config) {
   };
 
   const wordings = {
-    hero_title:    clampStr(config.wordings?.hero_title,    MAX_TITLE_LEN),
-    hero_subtitle: clampStr(config.wordings?.hero_subtitle, MAX_SUBTITLE_LEN),
+    hero_title:       clampStr(config.wordings?.hero_title,    MAX_TITLE_LEN),
+    hero_subtitle:    clampStr(config.wordings?.hero_subtitle, MAX_SUBTITLE_LEN),
+    val_prop_1_title: clampStr(config.wordings?.val_prop_1_title, 50),
+    val_prop_1_text:  clampStr(config.wordings?.val_prop_1_text, 120),
+    val_prop_2_title: clampStr(config.wordings?.val_prop_2_title, 50),
+    val_prop_2_text:  clampStr(config.wordings?.val_prop_2_text, 120),
+    val_prop_3_title: clampStr(config.wordings?.val_prop_3_title, 50),
+    val_prop_3_text:  clampStr(config.wordings?.val_prop_3_text, 120),
   };
 
   return { layout, theme, wordings };
@@ -78,6 +84,12 @@ export default function ShopAppearance({ adminShopId = null }) {
   const [fontFamily,   setFontFamily]   = useState("Outfit");
   const [heroTitle,    setHeroTitle]    = useState("");
   const [heroSubtitle, setHeroSubtitle] = useState("");
+  const [valProp1Title, setValProp1Title] = useState("Fresh Quality");
+  const [valProp1Text,  setValProp1Text]  = useState("We source locally for the best taste.");
+  const [valProp2Title, setValProp2Title] = useState("Fast Delivery");
+  const [valProp2Text,  setValProp2Text]  = useState("Straight to your door in minutes.");
+  const [valProp3Title, setValProp3Title] = useState("Secure Payment");
+  const [valProp3Text,  setValProp3Text]  = useState("Encrypted M-Pesa transactions.");
   const [tagline,      setTagline]      = useState("");
   const [customCss,    setCustomCss]    = useState("");
   const [logoUrl,      setLogoUrl]      = useState("");
@@ -107,6 +119,12 @@ export default function ShopAppearance({ adminShopId = null }) {
         setFontFamily(ALLOWED_FONTS.includes(cfg.theme?.font_family) ? cfg.theme.font_family : "Outfit");
         setHeroTitle(clampStr(cfg.wordings?.hero_title, MAX_TITLE_LEN));
         setHeroSubtitle(clampStr(cfg.wordings?.hero_subtitle, MAX_SUBTITLE_LEN));
+        setValProp1Title(cfg.wordings?.val_prop_1_title || "Fresh Quality");
+        setValProp1Text(cfg.wordings?.val_prop_1_text || "We source locally for the best taste.");
+        setValProp2Title(cfg.wordings?.val_prop_2_title || "Fast Delivery");
+        setValProp2Text(cfg.wordings?.val_prop_2_text || "Straight to your door in minutes.");
+        setValProp3Title(cfg.wordings?.val_prop_3_title || "Secure Payment");
+        setValProp3Text(cfg.wordings?.val_prop_3_text || "Encrypted M-Pesa transactions.");
         setTagline(clampStr(data.tagline, MAX_TAGLINE_LEN));
         setCustomCss(data.custom_css || "");
         setLogoUrl(data.logo_url || "");
@@ -188,7 +206,16 @@ export default function ShopAppearance({ adminShopId = null }) {
       const cleanConfig = sanitiseConfig({
         layout,
         theme: { primary_color: primaryColor, secondary_color: secondaryColor, font_family: fontFamily },
-        wordings: { hero_title: heroTitle, hero_subtitle: heroSubtitle },
+        wordings: { 
+          hero_title: heroTitle, 
+          hero_subtitle: heroSubtitle,
+          val_prop_1_title: valProp1Title,
+          val_prop_1_text: valProp1Text,
+          val_prop_2_title: valProp2Title,
+          val_prop_2_text: valProp2Text,
+          val_prop_3_title: valProp3Title,
+          val_prop_3_text: valProp3Text,
+        },
       });
       const cleanCss     = sanitiseCss(customCss);
       const cleanTagline = clampStr(tagline, MAX_TAGLINE_LEN);
@@ -417,6 +444,95 @@ export default function ShopAppearance({ adminShopId = null }) {
                 className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 focus:bg-white transition font-medium text-gray-900"
               />
               <p className="text-[10px] text-gray-400 mt-1.5 uppercase tracking-wide">This appears in the page meta tag and browser tab title</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── VALUE PROPOSITIONS WORDING ────────────────── */}
+        <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <h2 className="text-xs font-black text-indigo-600 uppercase tracking-widest mb-5 pb-3 border-b border-slate-50">
+            🥗 Value Propositions Wording
+          </h2>
+          <div className="space-y-6">
+            {/* Prop 1 */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">🥗 Card 1: Fresh Quality</h3>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={valProp1Title}
+                    onChange={e => setValProp1Title(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500 transition text-sm font-medium"
+                    placeholder="e.g. Fresh Quality"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Description</label>
+                  <input
+                    type="text"
+                    value={valProp1Text}
+                    onChange={e => setValProp1Text(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500 transition text-sm font-medium"
+                    placeholder="e.g. We source locally for the best taste."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Prop 2 */}
+            <div className="space-y-3 pt-4 border-t border-slate-100">
+              <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">🛵 Card 2: Fast Delivery</h3>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={valProp2Title}
+                    onChange={e => setValProp2Title(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500 transition text-sm font-medium"
+                    placeholder="e.g. Fast Delivery"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Description</label>
+                  <input
+                    type="text"
+                    value={valProp2Text}
+                    onChange={e => setValProp2Text(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500 transition text-sm font-medium"
+                    placeholder="e.g. Straight to your door in minutes."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Prop 3 */}
+            <div className="space-y-3 pt-4 border-t border-slate-100">
+              <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">🔒 Card 3: Secure Payment</h3>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={valProp3Title}
+                    onChange={e => setValProp3Title(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500 transition text-sm font-medium"
+                    placeholder="e.g. Secure Payment"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Description</label>
+                  <input
+                    type="text"
+                    value={valProp3Text}
+                    onChange={e => setValProp3Text(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:border-indigo-500 transition text-sm font-medium"
+                    placeholder="e.g. Encrypted M-Pesa transactions."
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </section>

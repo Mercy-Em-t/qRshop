@@ -95,7 +95,16 @@ export default function PublicShopProfile({ directShopId }) {
        return <div key="categories" className="py-8"><CategoryScroller categories={cats} shopId={s.id} /></div>;
     },
     featured_grid: (s, items) => <ProductGrid key="grid" items={items} shopId={s.id} />,
-    value_props: () => <ValueProps key="props" />,
+    value_props: (s) => {
+       const cfg = s.appearance_config || {};
+       const wordings = cfg.wordings || {};
+       const customProps = [
+         { id: '1', title: wordings.val_prop_1_title || 'Fresh Quality', text: wordings.val_prop_1_text || 'We source locally for the best taste.', emoji: '🥗' },
+         { id: '2', title: wordings.val_prop_2_title || 'Fast Delivery', text: wordings.val_prop_2_text || 'Straight to your door in minutes.', emoji: '🛵' },
+         { id: '3', title: wordings.val_prop_3_title || 'Secure Payment', text: wordings.val_prop_3_text || 'Encrypted M-Pesa transactions.', emoji: '🔒' }
+       ];
+       return <ValueProps key="props" props={customProps} />;
+    },
     cta: (s) => (
       <div key="cta" className="text-center py-20 px-6 bg-slate-50 dark:bg-slate-900/50">
           <h2 className="text-3xl font-black mb-6 dark:text-white">Ready to explore?</h2>
