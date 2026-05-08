@@ -23,9 +23,24 @@ export default function AuthGate({ children }) {
           // Cryptographically secure background session verification
           const { data: { user: secureUser }, error } = await supabase.auth.getUser();
           if (error || !secureUser) {
-            console.warn("AuthGate: Cryptographic background session verification failed. Logging out...");
-            const { logout } = await import("../services/auth-service");
-            await logout();
+            // Check if this is a temporary network issue or offline status
+            const isNetworkIssue = !navigator.onLine || 
+              (error && (
+                error.message?.toLowerCase().includes("fetch") || 
+                error.message?.toLowerCase().includes("network") ||
+                error.message?.toLowerCase().includes("timeout") ||
+                error.status === 0 ||
+                error.status === 503 ||
+                error.status === 504
+              ));
+
+            if (!isNetworkIssue) {
+              console.warn("AuthGate: Cryptographic background session verification failed (invalid/expired session). Logging out...");
+              const { logout } = await import("../services/auth-service");
+              await logout();
+            } else {
+              console.warn("AuthGate: Network issue detected during session revalidation. Preserving session for offline use.");
+            }
           }
         }
       } catch (err) {
