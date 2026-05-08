@@ -68,8 +68,18 @@ export function sanitiseText(val, maxLength = 2000) {
 // 3. Suspicious Activity Reporter to System Admins
 // Logs suspicious activity silently to Supabase or local telemetry
 export async function reportSecurityEvent(eventType, metadata = {}) {
-  const user = localStorage.getItem("savannah_session");
-  const userData = user ? JSON.parse(user) : null;
+  let userData = null;
+  try {
+    const { getCurrentUser } = await import("../services/auth-service");
+    userData = getCurrentUser();
+  } catch (err) {
+    try {
+      const user = localStorage.getItem("savannah_session");
+      userData = user ? JSON.parse(user) : null;
+    } catch (e) {
+      // ignore parsing exceptions
+    }
+  }
 
   const newLog = {
     event_type: `security_alert_${eventType}`,

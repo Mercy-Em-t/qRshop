@@ -113,10 +113,16 @@ export default function OrderManager() {
   const [overflowOpenId, setOverflowOpenId] = useState(null);
   const [dateFilter, setDateFilter] = useState("all"); // "all", "today", "week"
 
-  // Memoize high-performance BST index
+  // Memoize high-performance BST index (Pruned to last 30 days to prevent memory bloat)
   const orderBST = useMemo(() => {
     const bst = new OrderBST();
-    orders.forEach(o => bst.insert(o));
+    const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    orders.forEach(o => {
+      const orderTime = new Date(o.created_at).getTime();
+      if (orderTime >= thirtyDaysAgo) {
+        bst.insert(o);
+      }
+    });
     return bst;
   }, [orders]);
 
@@ -134,6 +140,25 @@ export default function OrderManager() {
        setLoading(false);
        return;
      }
+
+    const fetchSingleOrder = async (orderId) => {
+      try {
+        const { data, error } = await supabase
+          .from("orders")
+          .select(`*, order_items (quantity, price, menu_items (name))`)
+          .eq("id", orderId)
+          .single();
+        if (!error && data) {
+          setOrders(prev => {
+            if (prev.some(o => o.id === orderId)) return prev;
+            return [data, ...prev];
+          });
+        }
+      } catch (err) {
+        console.warn("Incremental single order fetch failed:", err);
+      }
+    };
+
     fetchOrders();
 
     const channel = supabase
@@ -146,8 +171,10 @@ export default function OrderManager() {
       }, (payload) => {
         if (payload.eventType === 'INSERT') {
           notifyNewOrder(payload.new);
+          fetchSingleOrder(payload.new.id);
+        } else {
+          fetchOrders();
         }
-        fetchOrders();
       })
       .subscribe();
 
