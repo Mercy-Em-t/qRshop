@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 
-const envFile = fs.readFileSync('.env.local', 'utf-8');
+const envFile = fs.readFileSync('.env', 'utf-8');
 const env = {};
 envFile.split('\n').forEach(line => {
    const [key, ...val] = line.split('=');
@@ -14,7 +14,7 @@ const SUPABASE_KEY = env['VITE_SUPABASE_ANON_KEY'];
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function check() {
-  const { data, error } = await supabase.from('shops').select('*').limit(1);
+  const { data, error } = await supabase.from('shop_users').select('*').limit(1);
   if (error) console.error("Error:", error);
   else {
       if (data && data.length > 0) {
