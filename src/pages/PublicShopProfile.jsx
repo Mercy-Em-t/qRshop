@@ -15,11 +15,44 @@ import ProductGrid from "../components/shop/ProductGrid";
 import ValueProps from "../components/shop/ValueProps";
 import ShopFooter from "../components/shop/ShopFooter";
 
+// Helper to select a diverse set of products across categories
+function getFeaturedItems(items, config) {
+  if (!items || items.length === 0) return [];
+  
+  // 1. Merchant explicitly selected items (if configured)
+  const explicitIds = config?.featured_item_ids;
+  if (Array.isArray(explicitIds) && explicitIds.length > 0) {
+    const explicitItems = items.filter(i => explicitIds.includes(i.id));
+    if (explicitItems.length > 0) return explicitItems.slice(0, 8);
+  }
+  
+  // 2. Diversity Algorithm: pick 1 item from each category in a round-robin until 8
+  const byCategory = {};
+  items.forEach(item => {
+    const cat = item.category || 'Uncategorized';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(item);
+  });
+  
+  const diverse = [];
+  const keys = Object.keys(byCategory);
+  while (diverse.length < 8 && keys.some(k => byCategory[k].length > 0)) {
+    for (const cat of keys) {
+      if (diverse.length >= 8) break;
+      if (byCategory[cat].length > 0) {
+        diverse.push(byCategory[cat].shift());
+      }
+    }
+  }
+  return diverse;
+}
+
 export default function PublicShopProfile({ directShopId }) {
   const params = useParams();
   const navigate = useNavigate();
   const shopIdentifier = directShopId || params.identifier || params.shopId;
   const [shop, setShop] = useState(null);
+  const [allItems, setAllItems] = useState([]);
   const [featuredItems, setFeaturedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -31,8 +64,11 @@ export default function PublicShopProfile({ directShopId }) {
         const cachedShop = sessionStorage.getItem(`savannah_cached_shop_${shopIdentifier}`);
         const cachedItems = sessionStorage.getItem(`savannah_cached_items_${shopIdentifier}`);
         if (cachedShop && cachedItems) {
-          setShop(JSON.parse(cachedShop));
-          setFeaturedItems(JSON.parse(cachedItems).slice(0, 8));
+          const parsedShop = JSON.parse(cachedShop);
+          const parsedItems = JSON.parse(cachedItems);
+          setShop(parsedShop);
+          setAllItems(parsedItems);
+          setFeaturedItems(getFeaturedItems(parsedItems, parsedShop?.appearance_config));
           setLoading(false);
         }
       } catch (err) {
@@ -54,7 +90,8 @@ export default function PublicShopProfile({ directShopId }) {
         ]);
 
         setShop(shopData);
-        setFeaturedItems(items ? items.slice(0, 8) : []);
+        setAllItems(items || []);
+        setFeaturedItems(getFeaturedItems(items || [], shopData.appearance_config));
         
         // Log Telemetry: Direct Visit (Link in Bio / Share)
         logEvent("shop_profile_view", {
@@ -85,16 +122,17 @@ export default function PublicShopProfile({ directShopId }) {
 
   // 1. Section Registry
   const SectionRegistry = {
-    hero: (s, items) => <ShopHero key="hero" shop={s} />,
-    categories: (s, items) => {
-       const cats = Array.from(new Set(items.map(i => i.category))).map(cat => ({
+    hero: (s, fItems, allItems) => <ShopHero key="hero" shop={s} />,
+    categories: (s, fItems, allItems) => {
+       // Use ALL items to extract categories, not just the featured ones!
+       const cats = Array.from(new Set((allItems || []).map(i => i.category).filter(Boolean))).map(cat => ({
          id: cat,
          name: cat,
          emoji: "📦"
        }));
        return <div key="categories" className="py-8"><CategoryScroller categories={cats} shopId={s.id} /></div>;
     },
-    featured_grid: (s, items) => <ProductGrid key="grid" items={items} shopId={s.id} />,
+    featured_grid: (s, fItems, allItems) => <ProductGrid key="grid" items={fItems} shopId={s.id} />,
     value_props: (s) => {
        const cfg = s.appearance_config || {};
        const wordings = cfg.wordings || {};
@@ -165,7 +203,7 @@ export default function PublicShopProfile({ directShopId }) {
            // Each section is guarded — a crash in one section never breaks the others
            try {
              const render = SectionRegistry[sectionName];
-             return render ? render(shop, featuredItems) : null;
+             return render ? render(shop, featuredItems, allItems) : null;
            } catch (err) {
              console.warn(`[PublicShopProfile] Section "${sectionName}" failed to render:`, err);
              return null; // silently skip broken sections
