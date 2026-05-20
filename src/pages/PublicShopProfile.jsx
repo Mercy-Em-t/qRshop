@@ -32,7 +32,7 @@ export default function PublicShopProfile({ directShopId }) {
         const cachedItems = sessionStorage.getItem(`savannah_cached_items_${shopIdentifier}`);
         if (cachedShop && cachedItems) {
           setShop(JSON.parse(cachedShop));
-          setFeaturedItems(JSON.parse(cachedItems).slice(0, 4));
+          setFeaturedItems(JSON.parse(cachedItems).slice(0, 8));
           setLoading(false);
         }
       } catch (err) {
@@ -54,7 +54,7 @@ export default function PublicShopProfile({ directShopId }) {
         ]);
 
         setShop(shopData);
-        setFeaturedItems(items ? items.slice(0, 4) : []);
+        setFeaturedItems(items ? items.slice(0, 8) : []);
         
         // Log Telemetry: Direct Visit (Link in Bio / Share)
         logEvent("shop_profile_view", {
@@ -99,25 +99,29 @@ export default function PublicShopProfile({ directShopId }) {
        const cfg = s.appearance_config || {};
        const wordings = cfg.wordings || {};
        const customProps = [
-         { id: '1', title: wordings.val_prop_1_title || 'Fresh Quality', text: wordings.val_prop_1_text || 'We source locally for the best taste.', emoji: '🥗' },
-         { id: '2', title: wordings.val_prop_2_title || 'Fast Delivery', text: wordings.val_prop_2_text || 'Straight to your door in minutes.', emoji: '🛵' },
-         { id: '3', title: wordings.val_prop_3_title || 'Secure Payment', text: wordings.val_prop_3_text || 'Encrypted M-Pesa transactions.', emoji: '🔒' }
-       ];
-       return <ValueProps key="props" props={customProps} />;
+         wordings.val_prop_1_title && { id: '1', title: wordings.val_prop_1_title, text: wordings.val_prop_1_text || '', emoji: '✅' },
+         wordings.val_prop_2_title && { id: '2', title: wordings.val_prop_2_title, text: wordings.val_prop_2_text || '', emoji: '🚚' },
+         wordings.val_prop_3_title && { id: '3', title: wordings.val_prop_3_title, text: wordings.val_prop_3_text || '', emoji: '🔒' },
+       ].filter(Boolean);
+       return <ValueProps key="props" props={customProps} industryType={s.industry_type || ''} />;
     },
     cta: (s) => (
-      <div key="cta" className="text-center py-20 px-6 bg-slate-50 dark:bg-slate-900/50">
-          <h2 className="text-3xl font-black mb-6 dark:text-white">Ready to explore?</h2>
-          <button 
+      <div key="cta" className="text-center py-20 px-6" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+          <p className="text-xs font-black uppercase tracking-[0.2em] mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>Ready to shop?</p>
+          <h2 className="text-3xl font-black mb-3" style={{ color: '#fff' }}>Explore the Full Catalogue</h2>
+          <p className="text-sm mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>Browse every product, place your order instantly.</p>
+          <button
               onClick={() => {
                  if (s.id) {
                     createPublicSession(s.id);
                     navigate(`/menu`);
                  }
               }}
-              className="bg-theme-secondary text-white px-12 py-5 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl shadow-indigo-500/20"
+              disabled={s.is_online === false}
+              style={{ background: 'var(--primary-color, #6366f1)', color: 'white' }}
+              className={`px-12 py-5 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl text-sm ${s.is_online === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >
-              Enter Full Store
+              {s.is_online === false ? '🔒 Shop Currently Closed' : '🛒 Enter Full Store'}
           </button>
       </div>
     ),

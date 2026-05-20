@@ -1,14 +1,39 @@
 .category-scroller {
+  padding: 40px 0 8px;
+  background: #ffffff;
+  font-family: var(--font-family, 'Outfit'), sans-serif;
+}
+
+.category-scroller__header {
   padding: 0 24px;
+  margin-bottom: 4px;
+}
+
+.category-scroller__label {
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--primary-color, #6366f1);
+  margin: 0 0 4px;
+}
+
+.category-scroller__title {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: #0f172a;
+  margin: 0 0 16px;
+  letter-spacing: -0.02em;
 }
 
 .category-scroller__track {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   overflow-x: auto;
-  padding: 10px 4px 24px;
+  padding: 12px 24px 32px;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  scroll-snap-type: x mandatory;
 }
 
 .category-scroller__track::-webkit-scrollbar {
@@ -20,33 +45,46 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 20px;
-  background: white;
-  border: 1px solid #f1f5f9;
+  padding: 18px 16px;
+  background: #f8fafc;
+  border: 1.5px solid #f1f5f9;
   border-radius: 20px;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   flex-shrink: 0;
-  transition: all 0.3s ease;
-  min-width: 100px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 90px;
+  scroll-snap-align: start;
 }
 
 .category-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  border-color: #166534;
+  background: white;
+  border-color: var(--primary-color, #6366f1);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.category-card:active {
+  transform: scale(0.96);
 }
 
 .category-card__icon {
-  font-size: 32px;
-  filter: drop-shadow(0 4px 4px rgba(0,0,0,0.05));
+  font-size: 28px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+  transition: transform 0.2s;
+}
+
+.category-card:hover .category-card__icon {
+  transform: scale(1.15);
 }
 
 .category-card__name {
-  font-size: 0.85rem;
+  font-size: 0.7rem;
   font-weight: 800;
-  color: #1e293b;
+  color: #334155;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
+  text-align: center;
+  line-height: 1.2;
 }

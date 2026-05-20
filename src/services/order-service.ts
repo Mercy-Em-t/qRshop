@@ -72,7 +72,8 @@ export async function createOrder(
     items: items.map(i => ({ 
       id: i.id, 
       quantity: Number(i.quantity) || 1, 
-      is_bundled: i.is_bundled || false 
+      is_bundled: i.is_bundled || false
+      // NOTE: price is intentionally omitted — backend resolves from menu_items
     })),
     applied_promotion_id: appliedPromotion?.id || null,
     client_mutation_id: clientMutationId || crypto.randomUUID?.() || Date.now().toString()

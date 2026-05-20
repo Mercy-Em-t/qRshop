@@ -16,7 +16,7 @@ export default function BundleCard({ bundle, onClaim, menuItems }) {
   const savings = originalTotal - displayBundlePrice;
 
   return (
-    <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-5 text-white shadow-lg flex-shrink-0 w-[280px] min-w-[280px] sm:w-72 sm:min-w-[288px] snap-center">
+    <div className="bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl p-4 text-white shadow-lg flex-shrink-0 w-[252px] min-w-[252px] sm:w-64 sm:min-w-[256px] snap-center">
       <div className="flex justify-between items-start mb-3">
         <span className="bg-white/20 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest backdrop-blur-sm">
           🔥 Exclusive Deal
@@ -28,30 +28,30 @@ export default function BundleCard({ bundle, onClaim, menuItems }) {
         )}
       </div>
 
-      <h3 className="text-xl font-black mb-1 leading-tight truncate">{name}</h3>
-      <p className="text-xs text-white/80 mb-4 h-8 line-clamp-2 leading-snug">
+      <h3 className="text-lg font-black mb-1 leading-tight truncate">{name}</h3>
+      <p className="text-[11px] text-white/80 mb-4 h-8 line-clamp-2 leading-snug">
         {description || `Enjoy this special combo of ${itemsInBundle.length} items.`}
       </p>
 
-      <div className="bg-black/10 rounded-xl p-3 mb-5 border border-white/10">
+      <div className="bg-black/10 rounded-xl p-3 mb-4 border border-white/10">
         <ul className="space-y-1">
           {itemsInBundle.map(item => (
-            <li key={item.id} className="text-[11px] font-medium flex justify-between">
-              <span>• {item.name}</span>
-              <span className="opacity-60 line-through">KSh {item.price}</span>
+            <li key={item.id} className="text-[10px] font-medium flex justify-between gap-1">
+              <span className="truncate">• {item.name}</span>
+              <span className="opacity-60 line-through flex-shrink-0">KSh {item.price}</span>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="flex items-center justify-between gap-3 mt-auto">
+      <div className="flex items-center justify-between gap-2 mt-auto">
         <div>
-          <p className="text-[10px] uppercase font-bold opacity-60 leading-none mb-1">Bundle Price</p>
-          <p className="text-2xl font-black leading-none">KSh {displayBundlePrice}</p>
+          <p className="text-[9px] uppercase font-bold opacity-60 leading-none mb-1">Bundle Price</p>
+          <p className="text-xl font-black leading-none">KSh {displayBundlePrice}</p>
         </div>
         <button 
           onClick={() => onClaim(bundle, itemsInBundle)}
-          className="bg-white text-emerald-700 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-tight shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+          className="bg-white text-emerald-700 px-3 py-2 rounded-xl font-black text-[10px] uppercase tracking-tight shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer flex-shrink-0"
         >
           Claim Now
         </button>

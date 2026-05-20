@@ -1,21 +1,53 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { getMenuItemById, getRelatedItems } from "../services/menu-service";
 import { useCart } from "../hooks/use-cart";
 import { getQrSession } from "../utils/qr-session";
 import { resolveShopIdentifier } from "../services/shop-service";
 import { getDetailImageUrl, getThumbnailUrl } from "../utils/image-utils";
+function parseSafePrice(val, fallback = 0) {
+  if (val === undefined || val === null || val === '') return parseFloat(fallback) || 0;
+  if (typeof val === 'number') {
+    return isNaN(val) ? (parseFloat(fallback) || 0) : val;
+  }
+  const cleanStr = String(val).replace(/[^0-9.]/g, '');
+  const parsed = parseFloat(cleanStr);
+  return isNaN(parsed) ? (parseFloat(fallback) || 0) : parsed;
+}
 
 export default function ProductDetails() {
   const { productId } = useParams();
   const navigate = useNavigate();
-  const { addItem } = useCart();
+  const { addItem, itemCount } = useCart();
   const [item, setItem] = useState(null);
   const [shop, setShop] = useState(null);
   const [relatedItems, setRelatedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedVariation, setSelectedVariation] = useState(null);
   const [added, setAdded] = useState(false);
+
+  const trustBadges = useMemo(() => {
+    const badges = [];
+    const type = shop?.industry_type?.toLowerCase() || "";
+
+    if (type.includes("food") || type.includes("restaurant") || type.includes("cafe")) {
+      badges.push({ icon: "🍳", text: "Freshly Cooked" });
+      badges.push({ icon: "🥬", text: "Hygiene Certified" });
+      badges.push({ icon: "⚡", text: "Quick Serve" });
+    } else if (type.includes("clothing") || type.includes("fashion") || type.includes("boutique")) {
+      badges.push({ icon: "🧵", text: "Premium Sourced" });
+      badges.push({ icon: "🛡️", text: "Authentic Design" });
+      badges.push({ icon: "🚚", text: "Delivery Active" });
+    } else if (type.includes("grocery") || type.includes("supermarket")) {
+      badges.push({ icon: "🌱", text: "Fresh Harvest" });
+      badges.push({ icon: "🧼", text: "Sanitized Packing" });
+      badges.push({ icon: "🚚", text: "Delivery Active" });
+    } else {
+      badges.push({ icon: "🛡️", text: "Quality Guaranteed" });
+      badges.push({ icon: "🚚", text: "Delivery Active" });
+    }
+    return badges;
+  }, [shop?.industry_type]);
 
   useEffect(() => {
     async function loadData() {
@@ -29,6 +61,7 @@ export default function ProductDetails() {
         // Unify attributes (Check top-level first, fallback to JSONB attributes)
         const unified = {
           ...itemData,
+          price: parseSafePrice(itemData.price, 0),
           brand: itemData.brand || itemData.attributes?.brand,
           origin: itemData.origin || itemData.attributes?.origin,
           processing: itemData.processing || itemData.attributes?.processing,
@@ -44,7 +77,11 @@ export default function ProductDetails() {
         // Auto-select first variation if any exist
         const varKey = Object.keys(unified.attributes || {}).find(k => Array.isArray(unified.attributes[k]));
         if (varKey && unified.attributes[varKey].length > 0) {
-          setSelectedVariation({ key: varKey, ...unified.attributes[varKey][0] });
+          const firstVal = unified.attributes[varKey][0];
+          const normV = typeof firstVal === 'object' && firstVal !== null
+            ? { label: firstVal.label || firstVal.name || "", price: parseSafePrice((firstVal.price !== undefined && firstVal.price !== null) ? firstVal.price : unified.price, unified.price) }
+            : { label: String(firstVal), price: parseSafePrice(unified.price, 0) };
+          setSelectedVariation({ key: varKey, ...normV });
         }
 
         const [shopData, related] = await Promise.all([
@@ -70,7 +107,7 @@ export default function ProductDetails() {
     // Create cart item with correct price and name if variation selected
     const cartItem = {
       ...item,
-      price: selectedVariation ? selectedVariation.price : item.price,
+      price: parseSafePrice(selectedVariation ? selectedVariation.price : item.price, 0),
       name: selectedVariation ? `${item.name} (${selectedVariation.label})` : item.name,
       variant_label: selectedVariation?.label // Extra metadata
     };
@@ -115,15 +152,42 @@ export default function ProductDetails() {
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent" />
         
         {/* Top Actions */}
-        <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center bg-gradient-to-b from-gray-900/40 to-transparent">
+        <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center bg-gradient-to-b from-gray-900/40 to-transparent z-10">
           <button 
             onClick={() => navigate(-1)}
-            className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white ring-1 ring-white/30 hover:bg-white/30 transition"
+            className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white ring-1 ring-white/30 hover:bg-white/30 transition cursor-pointer"
+            title="Go Back"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
+          
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate("/menu")}
+              className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white ring-1 ring-white/30 hover:bg-white/30 transition cursor-pointer"
+              title="Store Menu"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+              </svg>
+            </button>
+            <button 
+              onClick={() => navigate("/cart")}
+              className="relative w-12 h-12 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white ring-1 ring-white/30 hover:bg-white/30 transition cursor-pointer"
+              title="View Cart"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center shadow-md font-extrabold border border-white">
+                  {itemCount}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Floating Title Card */}
@@ -144,6 +208,16 @@ export default function ProductDetails() {
                 </span>
               </div>
             </div>
+            {trustBadges.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-white/10">
+                {trustBadges.map((badge, idx) => (
+                  <span key={idx} className="flex items-center gap-1 bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[9px] font-bold text-white/90 border border-white/10">
+                    <span>{badge.icon}</span>
+                    <span>{badge.text}</span>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -151,27 +225,37 @@ export default function ProductDetails() {
       <div className="max-w-4xl mx-auto p-6 space-y-8 animate-fade-in">
         {/* Variation Selector (Umbrella Options) */}
         {Object.entries(item.attributes || {}).some(([_, v]) => Array.isArray(v)) && (
-          <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all">
+          <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all animate-fade-in-up">
             <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Choose your option</h2>
             <div className="flex flex-wrap gap-3">
               {Object.entries(item.attributes).map(([key, variations]) => {
                 if (!Array.isArray(variations)) return null;
-                return variations.map((v, i) => (
-                  <button
-                    key={`${key}-${i}`}
-                    onClick={() => setSelectedVariation({ key, ...v })}
-                    className={`px-6 py-3 rounded-2xl font-bold transition-all border-2 text-sm ${
-                      selectedVariation?.label === v.label && selectedVariation?.key === key
-                      ? "bg-slate-900 border-slate-900 text-white shadow-lg scale-105"
-                      : "bg-white border-gray-100 text-gray-600 hover:border-slate-300"
-                    }`}
-                  >
-                    {v.label}
-                    <span className={`block text-[10px] opacity-60 mt-0.5 ${selectedVariation?.label === v.label ? 'text-white' : 'text-gray-400'}`}>
-                      KSh {v.price}
-                    </span>
-                  </button>
-                ));
+                return variations.map((v, i) => {
+                  const normV = typeof v === 'object' && v !== null
+                    ? { label: v.label || v.name || "", price: parseSafePrice((v.price !== undefined && v.price !== null) ? v.price : item.price, item.price) }
+                    : { label: String(v), price: parseSafePrice(item.price, 0) };
+                  
+                  const isSelected = selectedVariation?.label === normV.label && selectedVariation?.key === key;
+
+                  return (
+                    <button
+                      key={`${key}-${i}`}
+                      onClick={() => setSelectedVariation({ key, ...normV })}
+                      className={`px-5 py-2.5 rounded-xl font-bold transition-all border-2 text-xs cursor-pointer flex flex-col items-center min-w-[80px] ${
+                        isSelected
+                        ? "bg-slate-900 border-slate-900 text-white shadow-md scale-105"
+                        : "bg-white border-gray-200 text-gray-600 hover:border-slate-300"
+                      }`}
+                    >
+                      <span className="font-extrabold">{normV.label}</span>
+                      {normV.price !== undefined && normV.price !== null && (
+                        <span className={`block text-[9px] opacity-75 mt-0.5 ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
+                          KSh {normV.price}
+                        </span>
+                      )}
+                    </button>
+                  );
+                });
               })}
             </div>
           </section>
@@ -251,27 +335,7 @@ export default function ProductDetails() {
           </div>
         </section>
 
-        {/* Trust Factors */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
-           <div className="flex items-center gap-4 bg-green-50 p-5 rounded-3xl border border-green-100">
-              <div className="w-12 h-12 bg-green-500 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-green-500/20">
-                 🛡️
-              </div>
-              <div>
-                 <h4 className="font-black text-green-800 text-sm italic">Authentic Guarantee</h4>
-                 <p className="text-[11px] text-green-700/70 font-bold uppercase tracking-wide">100% Sourced by {shop?.name || 'Modern Savannah'}</p>
-              </div>
-           </div>
-           <div className="flex items-center gap-4 bg-blue-50 p-5 rounded-3xl border border-blue-100">
-              <div className="w-12 h-12 bg-blue-500 text-white rounded-2xl flex items-center justify-center text-xl shadow-lg shadow-blue-500/20">
-                 🚚
-              </div>
-              <div>
-                 <h4 className="font-black text-blue-800 text-sm italic">Savannah Express</h4>
-                 <p className="text-[11px] text-blue-700/70 font-bold uppercase tracking-wide">Dynamic Delivery Available</p>
-              </div>
-           </div>
-        </div>
+
 
         {/* Related Products Scroller */}
         {relatedItems.length > 0 && (
@@ -285,21 +349,49 @@ export default function ProductDetails() {
             </div>
             <div className="flex overflow-x-auto gap-4 pb-4 -mx-6 px-6 no-scrollbar snap-x">
               {relatedItems.map((rItem) => (
-                <Link 
-                  key={rItem.id} 
-                  to={`/product/${rItem.id}`}
-                  className="flex-shrink-0 w-40 snap-start group"
-                >
-                  <div className="aspect-square rounded-3xl overflow-hidden mb-3 shadow-sm border border-gray-100">
-                    <img 
-                      src={getThumbnailUrl(rItem.product_images?.[0]?.url || rItem.image_url)} 
-                      alt={rItem.name}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-110"
-                    />
-                  </div>
-                  <h4 className="text-xs font-bold text-gray-800 truncate">{rItem.name}</h4>
-                  <p className="text-sm font-black text-theme-secondary mt-0.5">KSh {rItem.price}</p>
-                </Link>
+                <div key={rItem.id} className="flex-shrink-0 w-40 snap-start group relative">
+                  <Link 
+                    to={`/product/${rItem.id}`}
+                    className="block"
+                  >
+                    <div className="relative aspect-square rounded-3xl overflow-hidden mb-3 shadow-sm border border-gray-100 bg-gray-50">
+                      <img 
+                        src={getThumbnailUrl(rItem.product_images?.[0]?.url || rItem.image_url)} 
+                        alt={rItem.name}
+                        className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          addItem({
+                            ...rItem,
+                            price: parseSafePrice(rItem.price, 0)
+                          });
+                          
+                          // Quick inline tactile visual indicator on button
+                          const target = e.currentTarget;
+                          const originalHtml = target.innerHTML;
+                          target.style.backgroundColor = '#10B981'; // Green confirmation
+                          target.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>';
+                          setTimeout(() => {
+                            target.style.backgroundColor = '';
+                            target.innerHTML = originalHtml;
+                          }, 1000);
+                        }}
+                        className="absolute bottom-2.5 right-2.5 w-8 h-8 bg-theme-secondary text-white rounded-full flex items-center justify-center shadow-md active:scale-90 hover:scale-105 transition-all hover:bg-theme-main cursor-pointer z-20"
+                        title="Add to Cart"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
+                        </svg>
+                      </button>
+                    </div>
+                    <h4 className="text-xs font-bold text-gray-800 truncate">{rItem.name}</h4>
+                    <p className="text-sm font-black text-theme-secondary mt-0.5">KSh {rItem.price}</p>
+                  </Link>
+                </div>
               ))}
             </div>
           </section>

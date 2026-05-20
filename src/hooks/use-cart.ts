@@ -5,7 +5,8 @@ import { getQrSession } from "../utils/qr-session.js";
 export interface CartItem {
   id: string;
   name: string;
-  price: number;
+  price: number;          // Effective price (may be discounted for bundle items)
+  original_price?: number; // Original catalogue price before bundle discount
   quantity: number;
   image_url?: string;
   is_bundled?: boolean;
@@ -121,22 +122,48 @@ export function useCart() {
   }, []);
 
   const addBundle = useCallback((promo: Coupon, bundleItems: Omit<CartItem, 'quantity' | 'instance_id'>[]) => {
-    // 1. Clear cart to avoid mixing bundle pricing with individual items
-    setItems(bundleItems.map(item => ({ 
-      ...item, 
-      quantity: 1, 
-      is_bundled: true, 
-      instance_id: generateInstanceId(item.id, item.selected_options) 
-    } as CartItem)));
+    // Compute catalogue subtotal of all bundle items
+    const catalogueSubtotal = bundleItems.reduce((sum, i) => sum + (Number(i.price) || 0), 0);
+
+    // Compute the effective total this bundle resolves to for display purposes
+    let effectiveBundleTotal = catalogueSubtotal;
+    if (promo.discount_type === 'bundle_price' && promo.bundle_price != null) {
+      effectiveBundleTotal = promo.bundle_price;
+    } else if (promo.discount_type === 'percent' && promo.discount_value != null) {
+      effectiveBundleTotal = catalogueSubtotal * (1 - promo.discount_value / 100);
+    } else if (promo.discount_type === 'flat' && promo.discount_value != null) {
+      effectiveBundleTotal = Math.max(0, catalogueSubtotal - promo.discount_value);
+    }
+
+    // Distribute the effective total proportionally across items so each item
+    // shows its fair share of the bundle deal price (for display only).
+    // The backend will ALWAYS revalidate from the promotions table — this is display-only.
+    const ratio = catalogueSubtotal > 0 ? effectiveBundleTotal / catalogueSubtotal : 1;
+
+    // 1. Set items with proportional display prices stamped on each
+    setItems(bundleItems.map(item => {
+      const cataloguePrice = Number(item.price) || 0;
+      const displayPrice = Math.round(cataloguePrice * ratio * 100) / 100; // 2dp
+      return { 
+        ...item,
+        original_price: cataloguePrice,  // Keep original for backend / strike-through UI
+        price: displayPrice,             // Proportional bundle price for display
+        quantity: 1, 
+        is_bundled: true, 
+        instance_id: generateInstanceId(item.id, item.selected_options) 
+      } as CartItem;
+    }));
     
-    // 2. Apply the promotion automatically
+    // 2. Apply the promotion so useCart discount logic also runs
     setActiveCoupon(promo);
 
     const currentSession = getQrSession();
     if (currentSession) {
       logEvent("bundle_claimed", "N/A", currentSession.shop_id, navigator.userAgent, {
         bundle_id: promo.id,
-        bundle_name: promo.name
+        bundle_name: promo.name,
+        catalogue_total: catalogueSubtotal,
+        effective_total: effectiveBundleTotal
       });
     }
   }, []);
@@ -185,7 +212,12 @@ export function useCart() {
 
   // Calculate Base Cost
   const subtotal = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
+    (sum, item) => {
+      const parsedPrice = typeof item.price === 'string'
+        ? parseFloat(item.price.replace(/[^0-9.]/g, ''))
+        : Number(item.price);
+      return sum + (parsedPrice || 0) * item.quantity;
+    },
     0
   );
 

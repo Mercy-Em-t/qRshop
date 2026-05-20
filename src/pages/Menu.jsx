@@ -31,6 +31,7 @@ export default function Menu() {
   const [viewMode, setViewMode] = useState(() => localStorage.getItem('qr_menu_view_mode') || 'grid');
   const [activeCategory, setActiveCategory] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [collapsedCategories, setCollapsedCategories] = useState({});
 
   const terms = useNomenclature(session?.shop_id);
   const { campaigns } = useCampaigns(session?.shop_id);
@@ -154,6 +155,16 @@ export default function Menu() {
   const categoryNames = useMemo(() => Object.keys(displayCategories || {}), [displayCategories]);
   const activeCat = activeCategory || categoryNames[0];
 
+  const shopEmoji = useMemo(() => {
+    const type = shop?.industry_type?.toLowerCase() || "";
+    if (type.includes("food") || type.includes("restaurant") || type.includes("cafe")) return "🍽️";
+    if (type.includes("clothing") || type.includes("fashion") || type.includes("boutique")) return "🛍️";
+    if (type.includes("grocery") || type.includes("supermarket")) return "🛒";
+    if (type.includes("electronics") || type.includes("tech")) return "📱";
+    if (type.includes("beauty") || type.includes("salon")) return "💅";
+    return "📦"; // Default retail/generic shop
+  }, [shop?.industry_type]);
+
   if (isLoading) return <LoadingSpinner showLogo={true} message="Loading menu..." />;
 
   // Extract unique categories for the scroller
@@ -194,7 +205,7 @@ export default function Menu() {
           </div>
         </div>
         {/* Action Bar */}
-        <div className="max-w-lg mx-auto px-4 py-2.5 flex items-center justify-between">
+        <div className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
              {(shop?.industry_type === 'food' || shop?.industry_type === 'restaurant') ? (
                 <p className="text-xs text-gray-500 font-medium">
@@ -229,7 +240,7 @@ export default function Menu() {
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-lg mx-auto px-4 pb-3">
+        <div className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto px-4 pb-3">
           <div className="relative">
              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -245,14 +256,17 @@ export default function Menu() {
         </div>
 
         {/* Category & View Toggle Bar */}
-        <div className="max-w-lg mx-auto flex items-center justify-between px-4 pb-2.5">
+        <div className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto flex items-center justify-between px-4 pb-2.5">
            <div className="flex overflow-x-auto gap-2 scrollbar-hide flex-1 mr-4">
               {categoryNames.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => {
                     setActiveCategory(cat);
-                    document.getElementById(`cat-${cat}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    setCollapsedCategories(prev => ({ ...prev, [cat]: false }));
+                    setTimeout(() => {
+                      document.getElementById(`cat-${cat}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 50);
                   }}
                   className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                     activeCat === cat
@@ -296,11 +310,11 @@ export default function Menu() {
       {/* ── Deals & Bundles Section ── */}
       {bundles.length > 0 && (
          <div className="bg-white border-b border-gray-100 pb-8 pt-4">
-            <div className="max-w-lg mx-auto px-4">
+            <div className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto px-4">
                <h2 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
                  <span>🔥</span> Featured {terms.menu} Deals
                </h2>
-               <div className="flex overflow-x-auto gap-4 snap-x pb-4 -mx-4 px-4 no-scrollbar">
+               <div className="flex overflow-x-auto gap-3 snap-x pb-4 -mx-4 px-4 no-scrollbar">
                   {bundles.map(bundle => (
                     <BundleCard 
                       key={bundle.id} 
@@ -315,39 +329,56 @@ export default function Menu() {
       )}
 
       {/* ── Menu Items ── */}
-      <main className="max-w-lg mx-auto px-4 py-6 flex-1 w-full">
+      <main className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
         {categoryNames.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
-            <span className="text-5xl block mb-4">🍽️</span>
+            <span className="text-5xl block mb-4">{shopEmoji}</span>
             <p className="text-lg font-medium">No menu items yet</p>
             <p className="text-sm mt-1">Check back soon!</p>
           </div>
         ) : (
-          categoryNames.map((category) => (
-            <div key={category} id={`cat-${category}`} className="mb-8 scroll-mt-40">
-              <h2 className="text-base font-bold text-gray-700 mb-3 border-b border-gray-200 pb-2 uppercase tracking-wide text-xs">
-                {category}
-              </h2>
-              <div className={viewMode === "grid" ? "grid grid-cols-2 gap-4" : "grid gap-3"}>
-                {(displayCategories[category] || []).map((item) => (
-                  <MenuItem 
-                     key={item.id} 
-                     item={item} 
-                     onAdd={handleAddItem} 
-                     isShopOnline={shop?.is_online !== false} 
-                     isGridView={viewMode === "grid"}
-                  />
-                ))}
+          categoryNames.map((category) => {
+            const isCollapsed = collapsedCategories[category] && !searchQuery;
+            const items = displayCategories[category] || [];
+
+            return (
+              <div key={category} id={`cat-${category}`} className="mb-6 scroll-mt-40 bg-white rounded-[2rem] p-4 border border-gray-100 shadow-xs transition-all">
+                <button
+                  onClick={() => setCollapsedCategories(prev => ({ ...prev, [category]: !prev[category] }))}
+                  className="w-full flex items-center justify-between text-left text-base font-bold text-gray-700 uppercase tracking-wide text-xs group cursor-pointer py-1"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="font-extrabold">{category}</span>
+                    <span className="text-[10px] text-gray-400 font-normal lowercase">({items.length} items)</span>
+                  </span>
+                  <span className={`text-[10px] text-gray-400 group-hover:text-gray-600 transition-transform duration-200 ${isCollapsed ? '' : 'rotate-180'}`}>
+                    ▼
+                  </span>
+                </button>
+                
+                {!isCollapsed && (
+                  <div className={`mt-4 ${viewMode === "grid" ? "grid grid-cols-4 gap-2 sm:gap-4 animate-fade-in" : "grid gap-3 animate-fade-in"}`}>
+                    {items.map((item) => (
+                      <MenuItem 
+                         key={item.id} 
+                         item={item} 
+                         onAdd={handleAddItem} 
+                         isShopOnline={shop?.is_online !== false} 
+                         isGridView={viewMode === "grid"}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </main>
       <CouponWidget shopPlan={shop?.plan} campaign={activeCampaign} />
 
       {/* ── Branded Footer ── */}
       <footer className="bg-white border-t border-gray-100 mt-4 pt-6 pb-8 px-4">
-        <div className="max-w-lg mx-auto">
+        <div className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto">
           {/* App Brand */}
           <div className="flex flex-col items-center text-center mb-5">
             <div className="flex items-center gap-2 mb-1">

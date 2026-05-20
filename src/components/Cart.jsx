@@ -13,10 +13,21 @@ export default function Cart({ items, onAdd, onRemove, total }) {
       {items.map((item) => (
         <div
           key={item.instance_id}
-          className="flex items-center justify-between border border-slate-200 dark:border-slate-800 rounded-lg p-3 bg-white dark:bg-slate-900 transition-colors"
+          className={`flex items-center justify-between rounded-lg p-3 transition-colors ${
+            item.is_bundled
+              ? 'border border-teal-200 bg-teal-50/60 dark:bg-teal-900/20 dark:border-teal-800'
+              : 'border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900'
+          }`}
         >
           <div className="flex-1 mr-4">
-            <h4 className="font-medium text-gray-800 dark:text-gray-100 leading-tight">{item.name}</h4>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h4 className="font-medium text-gray-800 dark:text-gray-100 leading-tight">{item.name}</h4>
+              {item.is_bundled && (
+                <span className="text-[9px] font-black uppercase tracking-widest bg-teal-500 text-white px-1.5 py-0.5 rounded-full">
+                  🎁 Bundle
+                </span>
+              )}
+            </div>
             {item.selected_options && Object.keys(item.selected_options).length > 0 && (
                <div className="flex flex-wrap gap-1 mt-1">
                   {Object.entries(item.selected_options).map(([key, value]) => (
@@ -26,7 +37,14 @@ export default function Cart({ items, onAdd, onRemove, total }) {
                   ))}
                </div>
             )}
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">KSh {item.price}</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className={`text-sm font-bold ${item.is_bundled ? 'text-teal-700 dark:text-teal-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                KSh {item.price}
+              </p>
+              {item.is_bundled && item.original_price != null && item.original_price !== item.price && (
+                <p className="text-xs text-gray-400 line-through">KSh {item.original_price}</p>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -40,7 +58,13 @@ export default function Cart({ items, onAdd, onRemove, total }) {
             </span>
             <button
               onClick={() => onAdd(item)}
-              className="w-8 h-8 rounded-full bg-theme-secondary text-white flex items-center justify-center hover:bg-theme-secondary/90 transition-colors cursor-pointer dark:shadow-theme-secondary/20"
+              disabled={item.is_bundled}
+              className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                item.is_bundled
+                  ? 'bg-teal-100 text-teal-400 cursor-not-allowed dark:bg-teal-900/30'
+                  : 'bg-theme-secondary text-white hover:bg-theme-secondary/90 cursor-pointer dark:shadow-theme-secondary/20'
+              }`}
+              title={item.is_bundled ? "Bundle quantities are fixed" : "Add one more"}
             >
               +
             </button>
