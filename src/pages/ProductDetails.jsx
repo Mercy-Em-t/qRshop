@@ -5,6 +5,8 @@ import { useCart } from "../hooks/use-cart";
 import { getQrSession } from "../utils/qr-session";
 import { resolveShopIdentifier } from "../services/shop-service";
 import { getDetailImageUrl, getThumbnailUrl } from "../utils/image-utils";
+import { slugify } from "../utils/slugify";
+import MetaTags from "../components/MetaTags";
 function parseSafePrice(val, fallback = 0) {
   if (val === undefined || val === null || val === '') return parseFloat(fallback) || 0;
   if (typeof val === 'number') {
@@ -16,7 +18,7 @@ function parseSafePrice(val, fallback = 0) {
 }
 
 export default function ProductDetails() {
-  const { productId } = useParams();
+  const { productSlug, productId } = useParams();
   const navigate = useNavigate();
   const { addItem, itemCount } = useCart();
   const [item, setItem] = useState(null);
@@ -71,7 +73,13 @@ export default function ProductDetails() {
           recipe: itemData.recipe || itemData.attributes?.recipe,
           diet_tags: itemData.diet_tags && itemData.diet_tags.length > 0 ? itemData.diet_tags : (itemData.attributes?.diet_tags || [])
         };
-        
+
+        // Canonical SEO Redirect check
+        const expectedSlug = slugify(unified.name);
+        if (productSlug !== expectedSlug) {
+          navigate(`/product/${expectedSlug}/${productId}`, { replace: true });
+        }
+
         setItem(unified);
 
         // Auto-select first variation if any exist
@@ -99,7 +107,7 @@ export default function ProductDetails() {
     }
     loadData();
     window.scrollTo(0, 0);
-  }, [productId]);
+  }, [productId, productSlug, navigate]);
 
   const handleAddToCart = () => {
     if (!item) return;
@@ -142,6 +150,11 @@ export default function ProductDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      <MetaTags
+        title={`${item.name} | ${shop?.name || "Store"}`}
+        description={item.description || `Buy ${item.name} online at ${shop?.name || "our store"}.`}
+        ogImage={item.image_url || (item.product_images?.[0]?.url)}
+      />
       {/* Hero Header with Carousel */}
       <div className="relative h-[40vh] sm:h-[50vh] w-full overflow-hidden bg-gray-900 group">
         {(() => {
@@ -376,7 +389,7 @@ export default function ProductDetails() {
               {relatedItems.map((rItem) => (
                 <div key={rItem.id} className="flex-shrink-0 w-40 snap-start group relative">
                   <Link 
-                    to={`/product/${rItem.id}`}
+                    to={`/product/${slugify(rItem.name)}/${rItem.id}`}
                     className="block"
                   >
                     <div className="relative aspect-square rounded-3xl overflow-hidden mb-3 shadow-sm border border-gray-100 bg-gray-50">

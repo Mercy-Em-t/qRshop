@@ -14,6 +14,7 @@ import AttributePanel from "../components/AttributePanel";
 import { validateImageFile } from "../utils/security";
 import { getThumbnailUrl } from "../utils/image-utils";
 import ProductGalleryManager from "../components/ProductGalleryManager";
+import { slugify } from "../utils/slugify";
 
 export default function ProductManager() {
   const [items, setItems] = useState([]);
@@ -1219,7 +1220,7 @@ export default function ProductManager() {
                           </button>
                           {item.product_sales_pages?.[0]?.id && (
                               <button 
-                                onClick={() => window.open(`/product/${item.id}`, '_blank')}
+                               onClick={() => window.open(`/product/${slugify(item.name)}/${item.id}`, '_blank')}
                                 className="p-2 text-purple-500 hover:bg-purple-50 rounded-lg" 
                                 title="View Sales Script"
                               >

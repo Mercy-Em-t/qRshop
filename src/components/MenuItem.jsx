@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { getThumbnailUrl } from "../utils/image-utils";
+import { slugify } from "../utils/slugify";
 
 export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
   const { id, name, price, image_url, attributes } = item;
@@ -10,7 +11,7 @@ export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
   if (isGridView) {
     return (
       <div className="bg-white rounded-2xl sm:rounded-[2rem] overflow-hidden shadow-sm border border-gray-100 flex flex-col group transition-all hover:shadow-md min-w-0 w-full">
-        <Link to={`/product/${id}`} className="relative aspect-square w-full overflow-hidden block bg-gray-50 flex-shrink-0">
+        <Link to={`/product/${slugify(name)}/${id}`} className="relative aspect-square w-full overflow-hidden block bg-gray-50 flex-shrink-0">
           <img
             src={optimizedImage || "/placeholder-product.png"}
             alt={name}
@@ -24,7 +25,7 @@ export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
         </Link>
         <div className="p-2 sm:p-4 flex-1 flex flex-col justify-between min-w-0">
           <div className="min-w-0">
-            <Link to={`/product/${id}`} className="block min-w-0">
+            <Link to={`/product/${slugify(name)}/${id}`} className="block min-w-0">
                <h3 className="text-[10px] sm:text-xs md:text-sm font-bold text-gray-800 line-clamp-2 leading-tight hover:text-theme-secondary transition-colors">
                   {name}
                </h3>
@@ -56,7 +57,7 @@ export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
   // List View (Horizontal)
   return (
     <div className="bg-white rounded-3xl p-3 shadow-sm border border-gray-100 flex items-center gap-4 transition-all hover:shadow-md group w-full min-w-0">
-      <Link to={`/product/${id}`} className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
+      <Link to={`/product/${slugify(name)}/${id}`} className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0">
         <img
           src={optimizedImage || "/placeholder-product.png"}
           alt={name}
@@ -65,7 +66,7 @@ export default function MenuItem({ item, onAdd, isShopOnline, isGridView }) {
       </Link>
       <div className="flex-1 min-w-0">
          <div className="flex justify-between items-start gap-2 w-full min-w-0">
-            <Link to={`/product/${id}`} className="flex-1 min-w-0">
+            <Link to={`/product/${slugify(name)}/${id}`} className="flex-1 min-w-0">
                <h3 className="text-base font-bold text-gray-800 truncate hover:text-theme-secondary transition-colors">
                   {name}
                </h3>

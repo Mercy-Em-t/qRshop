@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { createPublicSession } from '../../utils/qr-session';
 import { getThumbnailUrl } from '../../utils/image-utils';
+import { slugify } from '../../utils/slugify';
 import './ProductGrid.css';
 
 // Maps category names to relevant emojis
@@ -34,10 +35,10 @@ export default function ProductGrid({ items = [], shopId }) {
   const navigate = useNavigate();
   if (items.length === 0) return null;
 
-  const handleProductClick = (itemId) => {
+  const handleProductClick = (itemId, itemName) => {
     if (shopId) {
       createPublicSession(shopId);
-      navigate(`/product/${itemId}`);
+      navigate(`/product/${slugify(itemName)}/${itemId}`);
     }
   };
 
@@ -64,10 +65,10 @@ export default function ProductGrid({ items = [], shopId }) {
           <div
             key={item.id}
             className="product-card"
-            onClick={() => handleProductClick(item.id)}
+            onClick={() => handleProductClick(item.id, item.name)}
             role="button"
             tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && handleProductClick(item.id)}
+            onKeyDown={(e) => e.key === 'Enter' && handleProductClick(item.id, item.name)}
           >
             <div className="product-card__image">
               {item.image_url ? (

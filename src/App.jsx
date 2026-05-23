@@ -200,6 +200,7 @@ export default function App() {
       <Route path="/shops/:shopId" element={<PublicShopProfile />} />
       <Route path="/s/:shopId" element={<PublicShopProfile />} />
       <Route path="/product/:productId" element={<ProductDetails />} />
+      <Route path="/product/:productSlug/:productId" element={<ProductDetails />} />
       <Route path="/s/:identifier/magazine" element={<SalesMagazine />} />
 
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
