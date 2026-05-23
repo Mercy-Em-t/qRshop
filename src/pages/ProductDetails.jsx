@@ -7,6 +7,7 @@ import { resolveShopIdentifier } from "../services/shop-service";
 import { getDetailImageUrl, getThumbnailUrl } from "../utils/image-utils";
 import { slugify } from "../utils/slugify";
 import MetaTags from "../components/MetaTags";
+import { supabase } from "../services/supabase-client";
 function parseSafePrice(val, fallback = 0) {
   if (val === undefined || val === null || val === '') return parseFloat(fallback) || 0;
   if (typeof val === 'number') {
@@ -27,6 +28,33 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [selectedVariation, setSelectedVariation] = useState(null);
   const [added, setAdded] = useState(false);
+  const [siblingSizes, setSiblingSizes] = useState([]);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+
+  // Handle popstate backward navigation for gallery close
+  useEffect(() => {
+    const handlePopState = (e) => {
+      if (isGalleryOpen) {
+        setIsGalleryOpen(false);
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [isGalleryOpen]);
+
+  const openFullscreenGallery = (idx) => {
+    setGalleryIndex(idx);
+    setIsGalleryOpen(true);
+    window.history.pushState({ gallery: true }, "");
+  };
+
+  const closeFullscreenGallery = () => {
+    setIsGalleryOpen(false);
+    if (window.history.state?.gallery) {
+      window.history.back();
+    }
+  };
 
   const trustBadges = useMemo(() => {
     const badges = [];
@@ -82,7 +110,45 @@ export default function ProductDetails() {
 
         setItem(unified);
 
-        // Auto-select first variation if any exist
+        // Standalone Sibling Sizes mapping logic
+        const baseNameMatch = unified.name.match(/^(.*?)\s*(\d+(?:\.\d+)?\s*(?:g|kg|ml|l|oz|pcs|pack))\s*$/i);
+        if (baseNameMatch) {
+          const baseName = baseNameMatch[1].trim();
+          const { data: siblings } = await supabase
+            .from('menu_items')
+            .select('id, name, price')
+            .eq('shop_id', unified.shop_id)
+            .ilike('name', `${baseName}%`);
+          
+          if (siblings && siblings.length > 1) {
+            const mappedSiblings = siblings.map(s => {
+              const sMatch = s.name.match(/^(.*?)\s*(\d+(?:\.\d+)?\s*(?:g|kg|ml|l|oz|pcs|pack))\s*$/i);
+              return {
+                id: s.id,
+                name: s.name,
+                price: parseSafePrice(s.price, 0),
+                label: sMatch ? sMatch[2].trim() : s.name
+              };
+            });
+            // Sort by numerical weight value for clean sequential listing
+            mappedSiblings.sort((a, b) => {
+              const parseWeight = (str) => {
+                const num = parseFloat(str) || 0;
+                const lower = str.toLowerCase();
+                if (lower.includes('kg') || lower.includes('l')) return num * 1000;
+                return num;
+              };
+              return parseWeight(a.label) - parseWeight(b.label);
+            });
+            setSiblingSizes(mappedSiblings);
+          } else {
+            setSiblingSizes([]);
+          }
+        } else {
+          setSiblingSizes([]);
+        }
+
+        // Auto-select first variation if any exist (local fallback attributes)
         const varKey = Object.keys(unified.attributes || {}).find(k => Array.isArray(unified.attributes[k]));
         if (varKey && unified.attributes[varKey].length > 0) {
           const firstVal = unified.attributes[varKey][0];
@@ -117,7 +183,8 @@ export default function ProductDetails() {
       ...item,
       price: parseSafePrice(selectedVariation ? selectedVariation.price : item.price, 0),
       name: selectedVariation ? `${item.name} (${selectedVariation.label})` : item.name,
-      variant_label: selectedVariation?.label // Extra metadata
+      variant_label: selectedVariation?.label, // Extra metadata
+      selected_options: selectedVariation ? { size: selectedVariation.label } : undefined
     };
 
     addItem(cartItem);
@@ -165,17 +232,27 @@ export default function ProductDetails() {
           if (images.length === 0) return null;
 
           return (
-            <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth">
-              {images.map((url, idx) => (
-                <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
-                  <img 
-                    src={getDetailImageUrl(url)} 
-                    alt={`${item.name} - Image ${idx + 1}`} 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth">
+                {images.map((url, idx) => (
+                  <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer" onClick={() => openFullscreenGallery(idx)}>
+                    <img 
+                      src={getDetailImageUrl(url)} 
+                      alt={`${item.name} - Image ${idx + 1}`} 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Dynamic Overlay View Gallery Button */}
+              <button 
+                onClick={() => openFullscreenGallery(0)}
+                className="absolute bottom-24 right-6 bg-slate-900/80 backdrop-blur-md text-white border border-white/20 px-4.5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer z-10 hover:bg-slate-900"
+              >
+                🔍 View Gallery ({images.length})
+              </button>
+            </>
           );
         })()}
         
@@ -261,49 +338,93 @@ export default function ProductDetails() {
       </div>
 
       <div className="max-w-4xl mx-auto p-6 space-y-8 animate-fade-in">
-        {/* Variation Selector (Umbrella Options) */}
-        {Object.entries(item.attributes || {}).some(([_, v]) => Array.isArray(v)) && (
+        {/* Standalone Sibling Sizes & Variation Selector */}
+        {(siblingSizes.length > 0 || Object.entries(item.attributes || {}).some(([_, v]) => Array.isArray(v))) && (
           <section className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all animate-fade-in-up">
             <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">Choose your option</h2>
-            <div className="flex flex-wrap gap-3">
-              {Object.entries(item.attributes).map(([key, variations]) => {
-                if (!Array.isArray(variations)) return null;
-                return variations.map((v, i) => {
-                  const normV = typeof v === 'object' && v !== null
-                    ? { label: v.label || v.name || "", price: parseSafePrice((v.price !== undefined && v.price !== null) ? v.price : item.price, item.price) }
-                    : { label: String(v), price: parseSafePrice(item.price, 0) };
-                  
-                  const isSelected = selectedVariation?.label === normV.label && selectedVariation?.key === key;
-
+            
+            {siblingSizes.length > 0 ? (
+              <div className="flex flex-wrap gap-3">
+                {siblingSizes.map((sib) => {
+                  const isSelected = sib.id === productId;
                   return (
                     <button
-                      key={`${key}-${i}`}
-                      onClick={() => setSelectedVariation({ key, ...normV })}
-                      className={`px-5 py-2.5 rounded-xl font-bold transition-all border-2 text-xs cursor-pointer flex flex-col items-center min-w-[80px] ${
+                      key={sib.id}
+                      onClick={() => {
+                        if (!isSelected) {
+                          navigate(`/product/${slugify(sib.name)}/${sib.id}`);
+                        }
+                      }}
+                      className={`px-5 py-3 rounded-2xl font-bold transition-all border-2 text-xs cursor-pointer flex flex-col items-center min-w-[90px] ${
                         isSelected
                         ? "bg-slate-900 border-slate-900 text-white shadow-md scale-105"
                         : "bg-white border-gray-200 text-gray-600 hover:border-slate-300"
                       }`}
                     >
-                      <span className="font-extrabold">{normV.label}</span>
-                      {normV.price !== undefined && normV.price !== null && (
-                        <span className={`block text-[9px] opacity-75 mt-0.5 ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
-                          KSh {normV.price}
-                        </span>
-                      )}
+                      <span className="font-extrabold uppercase tracking-tight">{sib.label}</span>
+                      <span className={`block text-[9px] mt-0.5 font-bold ${isSelected ? 'text-green-300' : 'text-theme-secondary'}`}>
+                        KSh {sib.price}
+                      </span>
                     </button>
                   );
-                });
-              })}
-            </div>
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-3">
+                {Object.entries(item.attributes).map(([key, variations]) => {
+                  if (!Array.isArray(variations)) return null;
+                  return variations.map((v, i) => {
+                    const normV = typeof v === 'object' && v !== null
+                      ? { label: v.label || v.name || "", price: parseSafePrice((v.price !== undefined && v.price !== null) ? v.price : item.price, item.price) }
+                      : { label: String(v), price: parseSafePrice(item.price, 0) };
+                    
+                    const isSelected = selectedVariation?.label === normV.label && selectedVariation?.key === key;
+
+                    return (
+                      <button
+                        key={`${key}-${i}`}
+                        onClick={() => setSelectedVariation({ key, ...normV })}
+                        className={`px-5 py-2.5 rounded-xl font-bold transition-all border-2 text-xs cursor-pointer flex flex-col items-center min-w-[80px] ${
+                          isSelected
+                          ? "bg-slate-900 border-slate-900 text-white shadow-md scale-105"
+                          : "bg-white border-gray-200 text-gray-600 hover:border-slate-300"
+                        }`}
+                      >
+                        <span className="font-extrabold">{normV.label}</span>
+                        {normV.price !== undefined && normV.price !== null && (
+                          <span className={`block text-[9px] opacity-75 mt-0.5 ${isSelected ? 'text-white/80' : 'text-gray-400'}`}>
+                            KSh {normV.price}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  });
+                })}
+              </div>
+            )}
           </section>
         )}
-        {/* Description */}
-        <section>
-          <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3">Product Overview</h2>
-          <p className="text-lg text-gray-700 leading-relaxed font-medium">
-            {item.description || "A premium selection from " + (shop?.name || "our collection") + "."}
-          </p>
+
+        {/* Featured Description Section */}
+        <section className="bg-white rounded-[2rem] p-6 sm:p-8 border border-gray-100 shadow-sm animate-fade-in-up">
+          <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+            <span>📝</span> Product Overview
+          </h2>
+          <div className="prose prose-slate max-w-none">
+            <p className="text-base text-gray-700 leading-relaxed font-medium">
+              {item.description || "A premium selection from " + (shop?.name || "our collection") + "."}
+            </p>
+          </div>
+          {item.recipe && (
+            <div className="mt-6 pt-5 border-t border-gray-100">
+              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <span>🍳</span> Suggestions & Serving
+              </h3>
+              <p className="text-sm text-gray-500 leading-relaxed font-medium bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                {item.recipe}
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Details & Specs Grid */}
@@ -447,18 +568,78 @@ export default function ProductDetails() {
           >
             {added ? (
               <>
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" stroke="3" d="M5 13l4 4L19 7" /></svg>
                 <span>Added to Basket</span>
               </>
             ) : (
               <>
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" stroke="2.5" d="M12 4v16m8-8H4" /></svg>
                 <span>Add to Basket</span>
               </>
             )}
           </button>
         </div>
       </div>
+
+      {/* Dedicated Fullscreen Image Gallery Modal */}
+      {isGalleryOpen && (() => {
+        const images = (item.product_images && item.product_images.length > 0) 
+          ? item.product_images.map(img => img.url)
+          : (item.image_url ? [item.image_url] : []);
+        return (
+          <div className="fixed inset-0 bg-black/95 z-[999] flex flex-col justify-between p-4 animate-fade-in">
+            {/* Header Close */}
+            <div className="flex justify-between items-center py-2 px-4 z-10">
+              <button 
+                onClick={closeFullscreenGallery}
+                className="w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white ring-1 ring-white/20 transition cursor-pointer"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <span className="text-white/60 text-xs font-bold uppercase tracking-widest">
+                Gallery ({galleryIndex + 1} / {images.length})
+              </span>
+              <div className="w-12"></div> {/* spacer */}
+            </div>
+
+            {/* Swipeable Scroll Track */}
+            <div className="flex-1 w-full flex items-center justify-center overflow-hidden py-4">
+              <div 
+                className="w-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth h-full max-h-[70vh] items-center"
+                onScroll={(e) => {
+                  const width = e.currentTarget.clientWidth;
+                  if (width > 0) {
+                    const index = Math.round(e.currentTarget.scrollLeft / width);
+                    setGalleryIndex(index);
+                  }
+                }}
+              >
+                {images.map((url, idx) => (
+                  <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-2 relative">
+                    <img 
+                      src={getDetailImageUrl(url)} 
+                      alt={`${item.name} fullscreen view`} 
+                      className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Pagination Indicators */}
+            <div className="pb-8 flex justify-center gap-2">
+              {images.map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`h-2 rounded-full transition-all duration-300 ${galleryIndex === i ? 'w-8 bg-green-400' : 'w-2 bg-white/30'}`}
+                ></div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

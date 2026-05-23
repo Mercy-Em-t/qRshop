@@ -33,6 +33,31 @@ export default function Menu() {
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedCategories, setCollapsedCategories] = useState({});
 
+  // Collapsible drawers expand and URL routing logic
+  useEffect(() => {
+    if (categoryNames.length > 0) {
+      const params = new URLSearchParams(window.location.search);
+      const targetCategory = params.get("category");
+      
+      const initialCollapseState = {};
+      categoryNames.forEach(cat => {
+        // Expand the target category if it matches the query param, otherwise collapse it by default
+        initialCollapseState[cat] = targetCategory ? cat.toLowerCase() !== targetCategory.toLowerCase() : true;
+      });
+      setCollapsedCategories(initialCollapseState);
+
+      // Smooth scroll target category into view
+      if (targetCategory) {
+        const match = categoryNames.find(c => c.toLowerCase() === targetCategory.toLowerCase());
+        if (match) {
+          setTimeout(() => {
+            document.getElementById(`cat-${match}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 300);
+        }
+      }
+    }
+  }, [categoryNames]);
+
   const terms = useNomenclature(session?.shop_id);
   const { campaigns } = useCampaigns(session?.shop_id);
 
@@ -357,7 +382,7 @@ export default function Menu() {
                 </button>
                 
                 {!isCollapsed && (
-                  <div className={`mt-4 ${viewMode === "grid" ? "grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 animate-fade-in" : "grid gap-3 animate-fade-in"}`}>
+                  <div className={`mt-4 ${viewMode === "grid" ? "grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-1.5 sm:gap-4 animate-fade-in" : "grid gap-3 animate-fade-in"}`}>
                     {items.map((item) => (
                       <MenuItem 
                          key={item.id} 

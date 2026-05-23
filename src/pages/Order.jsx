@@ -48,7 +48,7 @@ export default function Order() {
   const session = getQrSession();
   const navigate = useNavigate();
   const { shop, loading: shopLoading } = useShop(session?.shop_id);
-  const { items, subtotal, discountAmount, activeCoupon, applyCoupon, clearCart, parentOrderId } = useCart();
+  const { items, subtotal, discountAmount, activeCoupon, applyCoupon, clearCart, parentOrderId, addItem } = useCart();
   const [sending, setSending] = useState(false);
   const [queued, setQueued] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
@@ -59,6 +59,7 @@ export default function Order() {
   const [capturingIdentity, setCapturingIdentity] = useState(false);
   const [transferringToWhatsApp, setTransferringToWhatsApp] = useState(false);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [addons, setAddons] = useState([]);
   const [identity, setIdentity] = useState({
       name: localStorage.getItem('qr_customer_name') || "",
       phone: localStorage.getItem('qr_customer_phone') || "",
@@ -98,6 +99,34 @@ export default function Order() {
       // ignore parsing error
     }
   }, []);
+
+  // Smart Checkout Add-ons recommender
+  useEffect(() => {
+    if (!session?.shop_id || items.length === 0) return;
+    async function fetchAddons() {
+      try {
+        const { data: menuItems } = await supabase
+          .from('menu_items')
+          .select('*')
+          .eq('shop_id', session.shop_id)
+          .eq('is_active', true);
+        
+        if (!menuItems) return;
+
+        const cartIds = new Set(items.map(i => i.id));
+        const potentialAddons = menuItems.filter(item => {
+          if (cartIds.has(item.id)) return false;
+          const cat = item.category?.toLowerCase() || '';
+          return cat.includes('side') || cat.includes('drink') || cat.includes('dessert') || cat.includes('snack') || cat.includes('addon') || item.price < 400;
+        });
+
+        setAddons(potentialAddons.slice(0, 5));
+      } catch (err) {
+        console.error("Failed to load checkout addons:", err);
+      }
+    }
+    fetchAddons();
+  }, [session?.shop_id, items]);
 
   // Track online/offline status
   useEffect(() => {
@@ -568,7 +597,7 @@ export default function Order() {
           <div className="border-t border-gray-200 pt-4">
             {items.map((item) => (
               <div
-                key={item.id}
+                key={item.instance_id || item.id}
                 className="flex justify-between py-2 text-gray-700"
               >
                 <span>
@@ -644,6 +673,38 @@ export default function Order() {
                 >
                   Apply
                 </button>
+              </div>
+            )}
+
+            {/* Dynamic Checkout Add-ons Carousel */}
+            {addons.length > 0 && (
+              <div className="border-t border-gray-100 pt-5 mt-5 mb-3">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                  <span>🍿</span> Complete your order
+                </h3>
+                <div className="flex gap-3 overflow-x-auto pb-3 -mx-4 px-4 no-scrollbar scroll-smooth snap-x">
+                  {addons.map(addon => (
+                    <div key={addon.id} className="flex-shrink-0 w-44 bg-slate-50 border border-slate-100/80 p-3.5 rounded-2xl flex flex-col justify-between snap-start">
+                      <div>
+                        {addon.image_url ? (
+                          <img src={addon.image_url} alt="" className="w-full h-24 rounded-xl object-cover mb-2" />
+                        ) : (
+                          <div className="w-full h-24 bg-slate-200/50 rounded-xl flex items-center justify-center text-xl mb-2">
+                            📦
+                          </div>
+                        )}
+                        <p className="text-xs font-bold text-gray-800 truncate">{addon.name}</p>
+                        <p className="text-[10px] font-black text-theme-secondary mt-0.5">KSh {addon.price}</p>
+                      </div>
+                      <button 
+                        onClick={() => addItem({ ...addon, price: addon.price })}
+                        className="w-full mt-3 bg-white hover:bg-slate-100 text-gray-800 border border-gray-200/80 text-[10px] font-black uppercase py-2 rounded-xl transition-all cursor-pointer text-center shadow-xs active:scale-95"
+                      >
+                        + Add to Order
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
