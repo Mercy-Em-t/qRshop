@@ -242,11 +242,6 @@ export default function OrderManager() {
         return;
       }
 
-      // If phone exists, trigger M-Pesa immediately
-      if (editingOrder.client_phone) {
-         triggerMpesaStkPush(editingOrder.id, editingOrder.client_phone, editTotal, SHOP_ID);
-      }
-
       setEditingOrder(null);
       fetchOrders();
     } catch (err) {
@@ -256,23 +251,10 @@ export default function OrderManager() {
   };
 
   const handleRequestPayment = async (order) => {
-    if (!order.client_phone) {
-       alert("No phone number found for this customer. Please update order first.");
-       return;
-    }
-
     try {
       // 1. Update Status
       await updateOrderStatus(order.id, 'pending_payment');
-
-      // 2. Trigger STK Push
-      const result = await triggerMpesaStkPush(order.id, order.client_phone, order.total_price, SHOP_ID);
-      
-      if (result.success) {
-         alert(`M-Pesa prompt sent to ${order.client_phone}`);
-      } else {
-         alert("Failed to trigger STK push. Is the phone number valid?");
-      }
+      alert(`Manual Payment Requested from ${order.client_name || 'Customer'}`);
     } catch (err) {
       console.error("Payment Request Error:", err);
     }
@@ -460,6 +442,9 @@ export default function OrderManager() {
                            order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
                            'bg-gray-100 text-gray-500'
                         }`}>{order.status.replace('_', ' ')}</span>
+                         {order.order_type === 'whatsapp' && (
+                            <span style={{background:'#dcf8c6', color:'#128C7E', padding:'2px 6px', borderRadius:'4px', fontSize:'9px', fontWeight:'bold'}}>💬 WhatsApp</span>
+                         )}
                     </div>
 
                     {/* Fulfillment Deadline */}
@@ -570,14 +555,7 @@ export default function OrderManager() {
                           </button>
                        )}
 
-                       {order.status === 'pending_payment' && (
-                          <button 
-                             onClick={() => triggerMpesaStkPush(order.id, order.client_phone, order.total_price, SHOP_ID)} 
-                             className="w-full bg-slate-800 hover:bg-black text-white py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 mb-2"
-                          >
-                             🔄 Resend STK Push
-                          </button>
-                       )}
+
 
                        {['paid', 'accepted', 'preparing'].includes(order.status) && (
                           <button onClick={() => updateOrderStatus(order.id, 'ready')} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition">📦 Mark Ready</button>

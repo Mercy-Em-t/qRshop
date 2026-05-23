@@ -13,6 +13,7 @@ import VariationBuilder from "../components/VariationBuilder";
 import AttributePanel from "../components/AttributePanel";
 import { validateImageFile } from "../utils/security";
 import { getThumbnailUrl } from "../utils/image-utils";
+import ProductGalleryManager from "../components/ProductGalleryManager";
 
 export default function ProductManager() {
   const [items, setItems] = useState([]);
@@ -1129,24 +1130,35 @@ export default function ProductManager() {
                 </div>
               )}
 
-            <div className="md:col-span-2 mt-4 flex gap-6 items-end">
-               <div className="flex-1">
-                 <label className="block text-sm font-medium text-gray-700 mb-2">Product Image (Max 5MB)</label>
-                 <div className="flex items-center gap-4">
-                    {imagePreview ? (
-                       <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm shrink-0">
-                          <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                          <button type="button" onClick={() => {setImageFile(null); setImagePreview(null);}} className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-bl-lg text-xs font-bold">×</button>
-                       </div>
-                    ) : (
-                       <div className="w-16 h-16 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 font-bold shrink-0">📷</div>
-                    )}
-                    <label className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 cursor-pointer transition">
-                       Upload Image
-                       <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImageSelect} className="hidden" />
-                    </label>
+            <div className="md:col-span-2 mt-4 flex flex-col gap-2">
+               {editingId ? (
+                 <ProductGalleryManager 
+                    productId={editingId} 
+                    shopId={SHOP_ID} 
+                    currentMainImage={items.find(i => i.id === editingId)?.image_url}
+                    onMainImageChange={(url) => {
+                       setItems(prev => prev.map(item => item.id === editingId ? { ...item, image_url: url } : item));
+                    }}
+                 />
+               ) : (
+                 <div className="flex-1">
+                   <label className="block text-sm font-medium text-gray-700 mb-2">Product Image (Save product first to unlock gallery)</label>
+                   <div className="flex items-center gap-4">
+                      {imagePreview ? (
+                         <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden relative shadow-sm shrink-0">
+                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                            <button type="button" onClick={() => {setImageFile(null); setImagePreview(null);}} className="absolute top-0 right-0 bg-red-500 text-white w-5 h-5 flex items-center justify-center rounded-bl-lg text-xs font-bold">×</button>
+                         </div>
+                      ) : (
+                         <div className="w-16 h-16 rounded-xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 font-bold shrink-0">📷</div>
+                      )}
+                      <label className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium text-sm hover:bg-gray-50 cursor-pointer transition">
+                         Upload Image
+                         <input type="file" accept="image/png, image/jpeg, image/webp" onChange={handleImageSelect} className="hidden" />
+                      </label>
+                   </div>
                  </div>
-               </div>
+               )}
             </div>
               <button
                 type="submit"

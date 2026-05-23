@@ -28,6 +28,7 @@ DECLARE
     p_fee numeric := COALESCE((payload->>'delivery_fee_charged')::numeric, 0);
     p_email text := payload->>'customer_email';
     p_mutation_id text := payload->>'client_mutation_id';
+    p_order_type text := COALESCE(payload->>'order_type', 'direct');
     p_items jsonb := payload->'items';
     p_promo_id uuid := NULLIF(payload->>'applied_promotion_id', '')::uuid;
 
@@ -36,6 +37,7 @@ DECLARE
     promo_total_items integer := 0;
     promo_required_ids uuid[];
     has_required_items boolean := false;
+
 BEGIN
     -- STEP 0: Idempotency — return existing order if same mutation key
     IF p_mutation_id IS NOT NULL THEN
@@ -118,7 +120,8 @@ BEGIN
         client_name, client_phone, customer_email, fulfillment_type,
         delivery_address, delivery_fee_charged, discount_amount, coupon_code,
         parent_order_id, client_mutation_id,
-        expires_at, fulfillment_deadline
+        expires_at, fulfillment_deadline,
+        order_type
     )
     VALUES (
         v_order_id, p_shop_id, p_table_id, calculated_total, 'pending',
@@ -126,7 +129,8 @@ BEGIN
         p_address, p_fee, server_discount, p_coupon,
         NULLIF(p_parent, '')::uuid, p_mutation_id,
         now() + interval '2 hours',
-        now() + interval '45 minutes'
+        now() + interval '45 minutes',
+        p_order_type
     );
 
     -- STEP D: Insert Order Items using server-side prices (not frontend prices)

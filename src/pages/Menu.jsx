@@ -357,7 +357,7 @@ export default function Menu() {
                 </button>
                 
                 {!isCollapsed && (
-                  <div className={`mt-4 ${viewMode === "grid" ? "grid grid-cols-4 gap-2 sm:gap-4 animate-fade-in" : "grid gap-3 animate-fade-in"}`}>
+                  <div className={`mt-4 ${viewMode === "grid" ? "grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 animate-fade-in" : "grid gap-3 animate-fade-in"}`}>
                     {items.map((item) => (
                       <MenuItem 
                          key={item.id} 

@@ -142,13 +142,38 @@ export default function ProductDetails() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Hero Header */}
-      <div className="relative h-[40vh] sm:h-[50vh] w-full overflow-hidden">
-        <img 
-          src={getDetailImageUrl(item.product_images?.[0]?.url || item.image_url)} 
-          alt={item.name} 
-          className="w-full h-full object-cover"
-        />
+      {/* Hero Header with Carousel */}
+      <div className="relative h-[40vh] sm:h-[50vh] w-full overflow-hidden bg-gray-900 group">
+        {(() => {
+          const images = (item.product_images && item.product_images.length > 0) 
+            ? item.product_images.map(img => img.url)
+            : (item.image_url ? [item.image_url] : []);
+            
+          if (images.length === 0) return null;
+
+          return (
+            <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth">
+              {images.map((url, idx) => (
+                <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+                  <img 
+                    src={getDetailImageUrl(url)} 
+                    alt={`${item.name} - Image ${idx + 1}`} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+        
+        {/* Pagination Dots (if multiple images) */}
+        {(item.product_images && item.product_images.length > 1) && (
+          <div className="absolute bottom-[20%] left-0 w-full flex justify-center gap-2 z-10 pointer-events-none">
+             {item.product_images.map((_, i) => (
+               <div key={i} className="w-1.5 h-1.5 rounded-full bg-white/50 border border-white/20"></div>
+             ))}
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 via-transparent to-transparent" />
         
         {/* Top Actions */}

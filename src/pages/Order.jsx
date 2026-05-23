@@ -58,6 +58,7 @@ export default function Order() {
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const [capturingIdentity, setCapturingIdentity] = useState(false);
   const [transferringToWhatsApp, setTransferringToWhatsApp] = useState(false);
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [identity, setIdentity] = useState({
       name: localStorage.getItem('qr_customer_name') || "",
       phone: localStorage.getItem('qr_customer_phone') || "",
@@ -353,6 +354,62 @@ export default function Order() {
       }
   };
 
+  const handleWhatsAppCheckout = async () => {
+      setSending(true);
+      setShowInquiryModal(false);
+      setTransferringToWhatsApp(true);
+      try {
+         const order = await createOrder(
+            session?.shop_id,
+            session?.table,
+            items,
+            finalPayableTotal,
+            discountAmount,
+            activeCoupon?.code || activeCoupon?.coupon_code || null,
+            identity.name,
+            identity.phone,
+            parentOrderId,
+            identity.fulfillment_type,
+            identity.address,
+            deliveryFee,
+            identity.email,
+            activeCoupon,
+            clientMutationId,
+            'whatsapp'
+         );
+
+         if (order && !queued) {
+            const orderId = order.id;
+            const shortId = orderId.split('-')[0].toUpperCase();
+            const trackingLink = `${window.location.origin}/track/${orderId}`;
+
+            const history = JSON.parse(localStorage.getItem('customer_history') || '[]');
+            if (!history.includes(orderId)) { history.push(orderId); localStorage.setItem('customer_history', JSON.stringify(history)); }
+            localStorage.setItem('qr_customer_name', identity.name || '');
+            localStorage.setItem('qr_customer_phone', identity.phone || '');
+            sessionStorage.removeItem('qr_pending_mutation_id');
+
+            const baseMsg = buildUnstructuredMessage(shopName, session?.table, items, identity, deliveryFee, shortId);
+            const fullMsg = `${baseMsg}\n\n🏷️ Order Ref: #${shortId}\n🔗 Track your order: ${trackingLink}`;
+            const link = buildWhatsAppLink(shopPhone, fullMsg);
+
+            clearCart();
+            setTimeout(() => {
+               setTransferringToWhatsApp(false);
+               window.location.href = link;
+            }, 1200);
+         } else {
+            setTransferringToWhatsApp(false);
+         }
+      } catch (err) {
+         console.error("WhatsApp Checkout Error:", err);
+         alert(err.message || "Could not log order. Please try again.");
+         setTransferringToWhatsApp(false);
+      } finally {
+         setSending(false);
+      }
+  };
+
   const handleMpesaCheckout = async () => {
     if (!identity.phone || identity.phone.length < 10) {
        alert("Please enter a valid phone number to receive the payment prompt.");
@@ -633,14 +690,12 @@ export default function Order() {
                     : `🛒 Confirm ${terms.order}`}
             </button>
             
-            <a
-               href={buildWhatsAppLink(shopPhone, `Hi ${shopName}, I have a question about my order/menu.`)}//we should also allow the syste m
-               target="_blank"
-               rel="noopener noreferrer"
-               className={`w-full py-4 rounded-xl font-bold text-lg border-2 transition-colors flex items-center justify-center gap-2 shadow-sm ${shop?.is_online === false ? 'border-gray-300 text-gray-400 cursor-not-allowed pointer-events-none' : 'border-green-600 bg-white text-green-700 hover:bg-green-50 z-10'}`}
+            <button
+               onClick={() => setShowInquiryModal(true)}
+               className={`w-full py-4 rounded-xl font-bold text-lg border-2 transition-colors flex items-center justify-center gap-2 shadow-sm ${shop?.is_online === false ? 'border-gray-300 text-gray-400 cursor-not-allowed pointer-events-none' : 'border-green-600 bg-white text-green-700 hover:bg-green-50 z-10 cursor-pointer'}`}
             >
                💬 Inquire via Chatbot
-            </a>
+            </button>
           </div>
         ) : (
           <p className="mt-6 text-center text-red-500 text-sm">
@@ -805,38 +860,25 @@ export default function Order() {
                   )}
                </div>
 
-               {shop?.mpesa_shortcode && shopPlanAccess.isBasic ? (
-                 <button 
-                    onClick={() => {
-                       setCapturingIdentity(false);
-                       handleMpesaCheckout();
-                    }}
-                    disabled={!identity.name || !identity.phone || identity.phone.replace(/[^0-9]/g, '').length < 9 || sending || (identity.fulfillment_type === 'delivery' && !identity.address)}
-                    className="w-full bg-[#3CBC3C] text-white font-bold py-3 rounded-xl hover:bg-[#32a832] transition disabled:opacity-50 cursor-pointer shadow-md flex items-center justify-center gap-2"
-                 >
-                    {sending ? "Processing..." : `📲 Pay with M-Pesa (KSh ${finalPayableTotal})`}
-                 </button>
-               ) : (
-                 <button 
-                    onClick={() => {
-                       setCapturingIdentity(false);
-                       if (!shopPlanAccess.isBasic && isOnline) {
-                          handeFreeTierCheckout();
-                       } else {
-                          handleDirectCheckout();
-                       }
-                    }}
-                    disabled={
-                       !identity.name || 
-                       sending || 
-                       (identity.fulfillment_type === 'delivery' && !identity.address) || 
-                       (shopPlanAccess.isBasic && (!identity.phone || identity.phone.replace(/[^0-9]/g, '').length < 9))
-                    }
-                    className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer shadow-md"
-                 >
-                    {sending ? "Processing..." : !shopPlanAccess.isBasic ? `💬 Place ${terms.order} via WhatsApp` : `🛒 Place ${terms.order} (Direct Checkout)`}
-                 </button>
-               )}
+               <button 
+                  onClick={() => {
+                     setCapturingIdentity(false);
+                     if (!shopPlanAccess.isBasic && isOnline) {
+                        handeFreeTierCheckout();
+                     } else {
+                        handleDirectCheckout();
+                     }
+                  }}
+                  disabled={
+                     !identity.name || 
+                     sending || 
+                     (identity.fulfillment_type === 'delivery' && !identity.address) || 
+                     (shopPlanAccess.isBasic && (!identity.phone || identity.phone.replace(/[^0-9]/g, '').length < 9))
+                  }
+                  className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer shadow-md"
+               >
+                  {sending ? "Processing..." : !shopPlanAccess.isBasic ? `💬 Place ${terms.order} via WhatsApp` : `🛒 Place ${terms.order} (Direct Checkout)`}
+               </button>
             </div>
          </div>
       )}
@@ -867,6 +909,46 @@ export default function Order() {
                navigate(`/track/${generatedOrder.id}`);
             }}
          />
+      )}
+
+      {showInquiryModal && (
+         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[150] flex items-center justify-center p-4 animate-in fade-in">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95">
+               <button 
+                  onClick={() => setShowInquiryModal(false)} 
+                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition cursor-pointer"
+               >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+               </button>
+
+               <div className="mb-6">
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">WhatsApp Inquiry</h2>
+                  <p className="text-sm text-gray-600">How would you like to proceed?</p>
+               </div>
+
+               <div className="space-y-3">
+                  <button
+                     onClick={handleWhatsAppCheckout}
+                     disabled={sending}
+                     className="w-full block text-center bg-[#25D366] text-white font-bold py-3 px-4 rounded-xl shadow hover:bg-[#20bd5a] transition cursor-pointer disabled:opacity-50"
+                  >
+                     📦 Send Cart as Order
+                     <span className="block text-[10px] font-normal opacity-90 mt-0.5">Logs order + redirects to WhatsApp</span>
+                  </button>
+                  
+                  <a
+                     href={buildWhatsAppLink(shopPhone, `Hi ${shopName}, I have a general inquiry.`)}
+                     target="_blank"
+                     rel="noopener noreferrer"
+                     onClick={() => setShowInquiryModal(false)}
+                     className="w-full block text-center border-2 border-[#25D366] text-[#25D366] font-bold py-3 px-4 rounded-xl hover:bg-green-50 transition cursor-pointer"
+                  >
+                     💬 General Inquiry
+                     <span className="block text-[10px] font-normal text-gray-500 mt-0.5">Ask a question before ordering</span>
+                  </a>
+               </div>
+            </div>
+         </div>
       )}
     </div>
   );

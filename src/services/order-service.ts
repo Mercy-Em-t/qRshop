@@ -34,7 +34,8 @@ export async function createOrder(
   deliveryFeeCharged: number = 0,
   clientEmail: string | null = null,
   appliedPromotion: Promotion | null = null,
-  clientMutationId: string | null = null
+  clientMutationId: string | null = null,
+  orderType: string = 'direct'
 ): Promise<{ id: string } | any> {
   if (!supabase) {
     return {
@@ -52,6 +53,7 @@ export async function createOrder(
       delivery_address: deliveryAddress,
       delivery_fee_charged: deliveryFeeCharged,
       status: "pending",
+      order_type: orderType,
       created_at: new Date().toISOString(),
     };
   }
@@ -69,6 +71,7 @@ export async function createOrder(
     fulfillment_type: fulfillmentType,
     delivery_address: deliveryAddress,
     delivery_fee_charged: Number(deliveryFeeCharged) || 0,
+    order_type: orderType,
     items: items.map(i => ({ 
       id: i.id, 
       quantity: Number(i.quantity) || 1, 
