@@ -59,7 +59,7 @@ export default function TrackOrder() {
       // Fetch Core Order
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
-        .select("*, shops(name, phone, whatsapp_number)")
+        .select("*, shops(name, phone, whatsapp_number, mpesa_till_number)")
         .eq("id", orderId)
         .single();
 

@@ -227,7 +227,7 @@ export default function App() {
       <Route path="/cart" element={<QrAccessGuard><CartPage /></QrAccessGuard>} />
       <Route path="/order" element={<QrAccessGuard><Order /></QrAccessGuard>} />
       <Route path="/campaign" element={<QrAccessGuard><Campaign /></QrAccessGuard>} />
-      <Route path="/track/:orderId" element={<QrAccessGuard><TrackOrder /></QrAccessGuard>} />
+      <Route path="/track/:orderId" element={<TrackOrder />} />
       <Route path="/edit/:orderId" element={<QrAccessGuard><EditOrder /></QrAccessGuard>} />
       <Route path="/history" element={<QrAccessGuard><MyOrders /></QrAccessGuard>} />
 
