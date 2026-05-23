@@ -873,7 +873,7 @@ export default function Order() {
                      !identity.name || 
                      sending || 
                      (identity.fulfillment_type === 'delivery' && !identity.address) || 
-                     (shopPlanAccess.isBasic && (!identity.phone || identity.phone.replace(/[^0-9]/g, '').length < 9))
+                     (!identity.phone || identity.phone.replace(/[^0-9]/g, '').length < 9)
                   }
                   className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer shadow-md"
                >

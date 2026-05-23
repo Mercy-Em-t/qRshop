@@ -56,6 +56,8 @@ export default function PublicShopProfile({ directShopId }) {
   const [featuredItems, setFeaturedItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showConsent, setShowConsent] = useState(false);
+  const [pendingShopId, setPendingShopId] = useState(null);
   
   useEffect(() => {
     async function loadShopData() {
@@ -151,8 +153,14 @@ export default function PublicShopProfile({ directShopId }) {
           <button
               onClick={() => {
                  if (s.id) {
-                    createPublicSession(s.id);
-                    navigate(`/menu`);
+                    const hasConsented = localStorage.getItem('shopqr_privacy_consent');
+                    if (hasConsented === 'true') {
+                       createPublicSession(s.id);
+                       navigate('/menu');
+                    } else {
+                       setPendingShopId(s.id);
+                       setShowConsent(true);
+                    }
                  }
               }}
               disabled={s.is_online === false}
@@ -200,19 +208,54 @@ export default function PublicShopProfile({ directShopId }) {
 
       <main className="relative">
         {layout.map(sectionName => {
-           // Each section is guarded — a crash in one section never breaks the others
            try {
              const render = SectionRegistry[sectionName];
              return render ? render(shop, featuredItems, allItems) : null;
            } catch (err) {
              console.warn(`[PublicShopProfile] Section "${sectionName}" failed to render:`, err);
-             return null; // silently skip broken sections
+             return null;
            }
         })}
       </main>
 
       {/* Persistent Footer if not in layout */}
       {!layout.includes('footer') && <ShopFooter shop={shop} />}
+
+      {/* Privacy Consent Modal — shown to web visitors before entering the store */}
+      {showConsent && (
+         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <div className="bg-white max-w-sm w-full rounded-3xl shadow-2xl p-8 text-center">
+               <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+               </div>
+               <h2 className="text-xl font-extrabold text-gray-800 mb-2">Privacy &amp; Tracking</h2>
+               <p className="text-gray-500 text-sm mb-8 leading-relaxed">
+                  To give you a seamless shopping experience, this store may link to WhatsApp when you order. By continuing, you consent to session data collection in line with our Privacy Policy &amp; the Kenya Data Protection Act.
+               </p>
+               <div className="flex flex-col gap-3">
+                  <button
+                     onClick={() => {
+                        localStorage.setItem('shopqr_privacy_consent', 'true');
+                        setShowConsent(false);
+                        if (pendingShopId) {
+                           createPublicSession(pendingShopId);
+                           navigate('/menu');
+                        }
+                     }}
+                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition"
+                  >
+                     I Agree, Continue
+                  </button>
+                  <button
+                     onClick={() => setShowConsent(false)}
+                     className="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-3 px-4 rounded-xl transition"
+                  >
+                     Decline &amp; Stay
+                  </button>
+               </div>
+            </div>
+         </div>
+      )}
     </div>
   );
 }
