@@ -63,7 +63,7 @@ export default function AdminShops() {
     try {
       const { data: shopsData, error: shopsErr } = await supabase
         .from("shops")
-        .select(`*, id:shop_id, shop_users (email, role)`)
+        .select(`*, id:shop_id, shop_users (email, role), shop_members (role, profiles (display_name, phone))`)
         .order("created_at", { ascending: false });
       if (shopsData) setShops(shopsData);
 
@@ -99,7 +99,7 @@ export default function AdminShops() {
 
       const { data: mktData } = await supabase
         .from('shops')
-        .select('id:shop_id, name, subdomain, industry_type, plan, created_at, shop_users(email)')
+        .select('id:shop_id, name, subdomain, industry_type, plan, created_at, shop_users(email), shop_members(role, profiles(display_name))')
         .eq('marketplace_status', 'pending_review')
         .order('created_at', { ascending: false });
       if (mktData) setMarketplacePending(mktData);
@@ -427,7 +427,18 @@ export default function AdminShops() {
                                    <button onClick={() => handleToggleSuspension(shop.id, shop.is_suspended)} className={`text-[10px] font-black uppercase ${shop.is_suspended ? 'text-green-600' : 'text-red-600'}`}>{shop.is_suspended ? 'Thaw Store' : 'Freeze Store'}</button>
                                 </div>
                              </div>
-                             {shop.shop_users?.map((su, idx) => <p key={idx} className="text-gray-600 text-xs flex justify-between"><span>{su.email}</span><span className="bg-blue-100 text-blue-800 px-1.5 rounded uppercase">{su.role}</span></p>)}
+                             {shop.shop_users?.map((su, idx) => (
+                                 <p key={`su-${idx}`} className="text-gray-600 text-xs flex justify-between">
+                                    <span>{su.email}</span>
+                                    <span className="bg-blue-100 text-blue-800 px-1.5 rounded uppercase">{su.role}</span>
+                                 </p>
+                              ))}
+                              {shop.shop_members?.map((sm, idx) => (
+                                 <p key={`sm-${idx}`} className="text-indigo-600/90 text-xs font-medium flex justify-between mt-1 pt-1 border-t border-indigo-50/50">
+                                    <span>{sm.profiles?.display_name || "V2 Member"} {sm.profiles?.phone && `(${sm.profiles.phone})`}</span>
+                                    <span className="bg-emerald-100 text-emerald-800 px-1.5 rounded text-[10px] font-bold uppercase">{sm.role}</span>
+                                 </p>
+                              ))}
                           </div>
                        </div>
                     ))}

@@ -2,6 +2,50 @@
   "name": "qrshop-main",
   "framework": "vite",
   "rewrites": [
+    {
+      "source": "/s/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "User-Agent",
+          "value": "(.*)(facebookexternalhit|twitterbot|whatsapp|googlebot|bingbot|slackbot)(.*)"
+        }
+      ],
+      "destination": "/api/seo-handler.js?type=shop&id=:id"
+    },
+    {
+      "source": "/shops/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "User-Agent",
+          "value": "(.*)(facebookexternalhit|twitterbot|whatsapp|googlebot|bingbot|slackbot)(.*)"
+        }
+      ],
+      "destination": "/api/seo-handler.js?type=shop&id=:id"
+    },
+    {
+      "source": "/product/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "User-Agent",
+          "value": "(.*)(facebookexternalhit|twitterbot|whatsapp|googlebot|bingbot|slackbot)(.*)"
+        }
+      ],
+      "destination": "/api/seo-handler.js?type=product&id=:id"
+    },
+    {
+      "source": "/product/:slug/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "User-Agent",
+          "value": "(.*)(facebookexternalhit|twitterbot|whatsapp|googlebot|bingbot|slackbot)(.*)"
+        }
+      ],
+      "destination": "/api/seo-handler.js?type=product&id=:id"
+    },
     { "source": "/api/admin/create-community", "destination": "/api/admin/router.js?action=create-community" },
     { "source": "/api/admin/create-shop", "destination": "/api/admin/router.js?action=create-shop" },
     { "source": "/api/admin/create-supplier", "destination": "/api/admin/router.js?action=create-supplier" },

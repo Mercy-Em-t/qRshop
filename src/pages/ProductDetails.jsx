@@ -28,6 +28,7 @@ export default function ProductDetails() {
   const [loading, setLoading] = useState(true);
   const [selectedVariation, setSelectedVariation] = useState(null);
   const [added, setAdded] = useState(false);
+  const [quantity, setQuantity] = useState(1);
   const [siblingSizes, setSiblingSizes] = useState([]);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
@@ -78,6 +79,38 @@ export default function ProductDetails() {
     }
     return badges;
   }, [shop?.industry_type]);
+
+  const productSchema = useMemo(() => {
+    if (!item) return null;
+    const images = (item.product_images && item.product_images.length > 0)
+      ? item.product_images.map(img => img.url)
+      : (item.image_url ? [item.image_url] : []);
+    
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": item.name,
+      "image": images.map(url => getDetailImageUrl(url)),
+      "description": item.description || `Buy ${item.name} online at ${shop?.name || "our store"}.`,
+      "brand": {
+        "@type": "Brand",
+        "name": item.brand || shop?.name || "Savannah Platform"
+      },
+      "offers": {
+        "@type": "Offer",
+        "url": typeof window !== "undefined" ? window.location.href : "",
+        "priceCurrency": "KES",
+        "price": selectedVariation ? selectedVariation.price : item.price,
+        "availability": "https://schema.org/InStock",
+        "itemCondition": "https://schema.org/NewCondition"
+      }
+    };
+
+    if (item.category) {
+      schema.category = item.category;
+    }
+    return schema;
+  }, [item, shop, selectedVariation]);
 
   useEffect(() => {
     async function loadData() {
@@ -187,7 +220,7 @@ export default function ProductDetails() {
       selected_options: selectedVariation ? { size: selectedVariation.label } : undefined
     };
 
-    addItem(cartItem);
+    addItem(cartItem, quantity);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -218,9 +251,10 @@ export default function ProductDetails() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <MetaTags
-        title={`${item.name} | ${shop?.name || "Store"}`}
+        title={`Buy ${item.name} | ${shop?.name || "Store"}`}
         description={item.description || `Buy ${item.name} online at ${shop?.name || "our store"}.`}
         ogImage={item.image_url || (item.product_images?.[0]?.url)}
+        jsonLd={productSchema}
       />
       {/* Hero Header with Carousel */}
       <div className="relative h-[40vh] sm:h-[50vh] w-full overflow-hidden bg-gray-900 group">
@@ -238,7 +272,7 @@ export default function ProductDetails() {
                   <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer" onClick={() => openFullscreenGallery(idx)}>
                     <img 
                       src={getDetailImageUrl(url)} 
-                      alt={`${item.name} - Image ${idx + 1}`} 
+                      alt={`Buy ${item.name} online - ${item.category || "item"} image ${idx + 1}`} 
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -559,22 +593,44 @@ export default function ProductDetails() {
 
       {/* Floating Bottom Navigator for Cart */}
       <div className="fixed bottom-0 left-0 w-full p-6 z-50">
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md mx-auto bg-white/80 backdrop-blur-xl border border-gray-100 rounded-3xl p-3 shadow-2xl flex items-center gap-3">
+          {/* Quantity Selector Pill */}
+          <div className="flex items-center bg-gray-100 rounded-full p-1.5 border border-gray-200">
+            <button 
+              type="button"
+              onClick={() => setQuantity(q => Math.max(1, q - 1))}
+              className="w-10 h-10 rounded-full bg-white text-gray-800 font-extrabold flex items-center justify-center shadow-sm hover:bg-gray-50 active:scale-90 transition cursor-pointer select-none"
+            >
+              —
+            </button>
+            <span className="w-10 text-center font-black text-sm text-gray-900 select-none">
+              {quantity}
+            </span>
+            <button 
+              type="button"
+              onClick={() => setQuantity(q => q + 1)}
+              className="w-10 h-10 rounded-full bg-white text-gray-800 font-extrabold flex items-center justify-center shadow-sm hover:bg-gray-50 active:scale-90 transition cursor-pointer select-none"
+            >
+              +
+            </button>
+          </div>
+
+          {/* Add to Basket Action */}
           <button 
             onClick={handleAddToCart}
-            className={`w-full h-16 rounded-full font-black uppercase tracking-[0.2em] shadow-2xl transition-all flex items-center justify-center gap-3 active:scale-95 ${
-              added ? 'bg-green-500 text-white' : 'bg-gray-900 text-white hover:bg-black'
+            className={`flex-1 h-13 rounded-full font-black uppercase tracking-wider text-[10px] shadow-md transition-all flex items-center justify-center gap-2 active:scale-95 cursor-pointer ${
+              added ? 'bg-green-500 text-white' : 'bg-slate-900 text-white hover:bg-black'
             }`}
           >
             {added ? (
               <>
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" stroke="3" d="M5 13l4 4L19 7" /></svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
                 <span>Added to Basket</span>
               </>
             ) : (
               <>
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" stroke="2.5" d="M12 4v16m8-8H4" /></svg>
-                <span>Add to Basket</span>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                <span>Add • KSh {((selectedVariation ? selectedVariation.price : item.price) * quantity).toLocaleString()}</span>
               </>
             )}
           </button>
@@ -620,7 +676,7 @@ export default function ProductDetails() {
                   <div key={idx} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center p-2 relative">
                     <img 
                       src={getDetailImageUrl(url)} 
-                      alt={`${item.name} fullscreen view`} 
+                      alt={`Buy ${item.name} online - fullscreen view ${idx + 1}`} 
                       className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
                     />
                   </div>

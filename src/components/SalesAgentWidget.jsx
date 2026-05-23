@@ -9,8 +9,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
+import { fuzzyMatchProducts } from "../utils/fuzzy-search";
 
-export default function SalesAgentWidget({ menuItems = [], addItem, shopId }) {
+export default function SalesAgentWidget({ menuItems = [], addItem, shopId, shop }) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -43,30 +44,22 @@ export default function SalesAgentWidget({ menuItems = [], addItem, shopId }) {
       return "GREETING";
     }
 
-    // Filter by Category first
-    const categoryMatches = menuItems.filter((p) => p.category?.toLowerCase().includes(q));
-    if (categoryMatches.length > 0) return categoryMatches.slice(0, 3);
-
     // Sorting overrides
     if (q.includes("popular") || q.includes("best")) return [...menuItems].sort((a, b) => (b.orders_count || 0) - (a.orders_count || 0)).slice(0, 3);
     if (q.includes("cheap") || q.includes("affordable")) return [...menuItems].sort((a, b) => a.price - b.price).slice(0, 3);
     
-    // Generic Keyword Search
-    return menuItems.filter((p) => 
-      p.name?.toLowerCase().includes(q) || 
-      p.description?.toLowerCase().includes(q) ||
-      (p.tags && p.tags.some(t => t.toLowerCase().includes(q)))
-    ).slice(0, 3);
+    // Fuzzy Levenshtein Matcher
+    return fuzzyMatchProducts(menuItems, query);
   };
 
   const buildReply = (query, recs) => {
-    if (recs === "GREETING") return "Hey there! How can I help you navigate our shop today? I can suggest products based on category or help you find our most popular items.";
+    if (recs === "GREETING") return "Hello! While our live AI system is in standby, I've scanned our menu catalog. How can I help you find what you need? Ask about specific items or categories like coffee or meals.";
     
     const q = query.toLowerCase();
-    if (recs.length === 0) return "I couldn't find an exact match for that, but feel free to browse our full catalog! You can also ask about specific categories.";
-    if (q.includes("popular") || q.includes("best")) return "Here are our most popular items right now:";
-    if (q.includes("cheap") || q.includes("affordable")) return "Here are some of our most affordable options:";
-    return `I found ${recs.length} recommendation${recs.length > 1 ? "s" : ""} for you. Hit **Propel** to add to cart:`;
+    if (recs.length === 0) return "I scanned our active menu details but couldn't find an exact match. However, you can explore our categories or tap any menu item to see benefits!";
+    if (q.includes("popular") || q.includes("best")) return "Based on recent store order metrics, here are our top-performing catalog selections:";
+    if (q.includes("cheap") || q.includes("affordable")) return "I've sorted our catalog for you. Here are our most budget-friendly menu listings:";
+    return `Excellent choice! I've matched your request with our catalog inventory. Feel free to click **Propel** to add them straight to your order:`;
   };
 
   const handleSend = async (customText = null) => {
@@ -116,11 +109,13 @@ export default function SalesAgentWidget({ menuItems = [], addItem, shopId }) {
       const aiReply = data.reply || "I'm having trouble understanding, but I'm here to help!";
       const recommendedIds = data.recommended_product_ids || [];
       const recs = menuItems.filter(p => recommendedIds.includes(p.id)).slice(0, 3);
+      const handoff = !!data.whatsapp_handoff;
       
       const aiResponse = { 
         sender: "ai", 
         text: aiReply, 
-        recommendations: recs 
+        recommendations: recs,
+        whatsappHandoff: handoff
       };
       
       setMessages((prev) => [...prev, aiResponse]);
@@ -129,7 +124,7 @@ export default function SalesAgentWidget({ menuItems = [], addItem, shopId }) {
       // Fallback to simple matching if AI fails (e.g. no API key yet)
       const recs = findProducts(text);
       const reply = buildReply(text, recs);
-      setMessages((prev) => [...prev, { sender: "ai", text: `(Offline Mode) ${reply}`, recommendations: Array.isArray(recs) ? recs : [] }]);
+      setMessages((prev) => [...prev, { sender: "ai", text: reply, recommendations: Array.isArray(recs) ? recs : [] }]);
     } finally {
       setIsTyping(false);
     }
@@ -176,7 +171,9 @@ export default function SalesAgentWidget({ menuItems = [], addItem, shopId }) {
               </div>
               <div>
                 <p className="text-white font-bold text-sm leading-tight">Sales Assistant</p>
-                <p className="text-green-200 text-[10px]">Online — here to help</p>
+                <p className="text-green-200 text-[10px]">
+                  {shop?.ai_credits <= 0 ? "Catalog Search Assistant — active" : "Online — here to help"}
+                </p>
               </div>
             </div>
             <button
@@ -219,13 +216,29 @@ export default function SalesAgentWidget({ menuItems = [], addItem, shopId }) {
                               onClick={() => handlePropel(rec)}
                               className="shrink-0 bg-green-600 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-lg hover:bg-green-700 transition"
                             >
-                              Add to Cart
+                              Propel
                             </button>
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
+
+                  {/* WhatsApp HITL Handoff CTA */}
+                  {msg.whatsappHandoff && (
+                    <div className="mt-4 border-t border-gray-100 pt-3">
+                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Connect with Live Agent</p>
+                      <a 
+                        href={`https://wa.me/${shop?.whatsapp || '254700000000'}?text=${encodeURIComponent(`Hi! I'm shopping on your storefront menu and need assistance with my current order inquiry.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider py-2.5 rounded-xl transition shadow-md"
+                      >
+                        💬 Chat on WhatsApp
+                      </a>
+                    </div>
+                  )}
+
                   {/* Actions (e.g., Checkout) */}
                   {msg.actions?.length > 0 && (
                     <div className="mt-3 flex flex-col gap-2">

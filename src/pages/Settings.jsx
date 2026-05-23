@@ -54,7 +54,7 @@ export default function Settings() {
         setLogoFile(null);
         setLogoPreview(null);
       } catch (err) {
-        alert("Logo upload failed: " + err.message + ". Please verify database policies and file constraints.");
+        alert("Logo upload failed: " + err.message + ". Please ensure your image is under 2MB.");
       }
       setUploadingLogo(false);
     }

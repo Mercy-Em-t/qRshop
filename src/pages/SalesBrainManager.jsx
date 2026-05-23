@@ -15,6 +15,18 @@ export default function SalesBrainManager() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState(null);
   
+  // Custom Hardening & Auditing States
+  const [logs, setLogs] = useState([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [activeLogId, setActiveLogId] = useState(null);
+
+  // Sandbox Calibration Playground States
+  const [sandboxMessages, setSandboxMessages] = useState([
+    { sender: "ai", text: "🤖 Sandbox Playground Active! I am initialized with your current unsaved inputs. Tweak personality or playbook above and ask me questions here to calibrate my responses instantly!" }
+  ]);
+  const [sandboxInput, setSandboxInput] = useState("");
+  const [sandboxTyping, setSandboxTyping] = useState(false);
+  
   const navigate = useNavigate();
   const user = getCurrentUser();
   const shopId = user?.shop_id;
@@ -25,6 +37,7 @@ export default function SalesBrainManager() {
       return;
     }
     fetchBrain();
+    fetchLogs();
   }, [shopId]);
 
   const fetchBrain = async () => {
@@ -44,6 +57,66 @@ export default function SalesBrainManager() {
       console.error("Failed to fetch brain:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchLogs = async () => {
+    setLogsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("ai_usage_logs")
+        .select("*")
+        .eq("shop_id", shopId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      setLogs(data || []);
+    } catch (err) {
+      console.error("Failed to fetch AI audit logs:", err);
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  const handleSendSandbox = async () => {
+    const text = sandboxInput.trim();
+    if (!text) return;
+
+    setSandboxMessages(prev => [...prev, { sender: "user", text }]);
+    setSandboxInput("");
+    setSandboxTyping(true);
+
+    try {
+      const { data: menuItems } = await supabase
+        .from("menu_items")
+        .select("*")
+        .eq("shop_id", shopId)
+        .limit(5);
+
+      const { data, error } = await supabase.functions.invoke('sales-assistant', {
+        body: {
+          messages: sandboxMessages.map(m => ({
+            role: m.sender === 'ai' ? 'assistant' : 'user',
+            content: m.text
+          })).concat([{ role: 'user', content: text }]),
+          menuItems: menuItems || [],
+          shopId,
+          brainOverride: brain
+        }
+      });
+
+      if (error) throw error;
+
+      setSandboxMessages(prev => [...prev, {
+        sender: "ai",
+        text: data.reply || "I'm updated with your settings! Ask me anything."
+      }]);
+    } catch (err) {
+      console.error("Sandbox failure:", err);
+      setSandboxMessages(prev => [...prev, { sender: "ai", text: `⚠️ Error during calibration: ${err.message}` }]);
+    } finally {
+      setSandboxTyping(false);
     }
   };
 
@@ -101,6 +174,22 @@ export default function SalesBrainManager() {
             </button>
           </div>
         </div>
+
+        {/* Three-Tier Credit Alerts Notification Banners */}
+        {credits <= 50 && (() => {
+          const alert = credits <= 0 
+            ? { text: "🚨 URGENT: Intelligence credits depleted. Sales Assistant has fallen back to offline search.", color: "bg-red-50 text-red-800 border-red-200" }
+            : credits <= 5 
+            ? { text: `🚨 CRITICAL WARNING: Only ${credits} credits left. Sales Assistant will lock into emergency catalog fallback soon.`, color: "bg-red-50 text-red-800 border-red-200 animate-pulse" }
+            : credits <= 25 
+            ? { text: `⚠️ WARNING: Credits running low (${credits} credits left). Top up soon to prevent assistant fallback.`, color: "bg-amber-50 text-amber-800 border-amber-200" }
+            : { text: `💡 NOTICE: AI Credits are decreasing (${credits} remaining). Keeping credits high guarantees fast AI answers.`, color: "bg-indigo-50 text-indigo-800 border-indigo-200" };
+          return (
+            <div className={`p-4 rounded-2xl border text-xs font-black uppercase tracking-wider ${alert.color} flex items-center gap-3 shadow-md`}>
+              <span>{alert.text}</span>
+            </div>
+          );
+        })()}
 
         <form onSubmit={handleSave} className="space-y-6">
           
@@ -185,6 +274,157 @@ export default function SalesBrainManager() {
           </div>
 
         </form>
+
+        {/* Dynamic Sandbox & Audit logs grid */}
+        <div className="grid md:grid-cols-2 gap-8 mt-8">
+          
+          {/* Sandbox Playground Panel */}
+          <section className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm flex flex-col h-[520px]">
+            <h2 className="text-sm font-black text-indigo-600 uppercase tracking-widest mb-2 flex items-center gap-2">
+              <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
+              AI Training Playground
+            </h2>
+            <p className="text-[10px] text-slate-400 mb-4 leading-relaxed font-bold">
+              Test your unsaved personality and playbook modifications here to verify calibration instantly.
+            </p>
+            
+            {/* Screen */}
+            <div className="flex-1 overflow-y-auto bg-gray-50 rounded-2xl p-4 space-y-3 mb-4 max-h-[340px]">
+              {sandboxMessages.map((m, idx) => (
+                <div key={idx} className={`flex ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-xs font-bold leading-relaxed ${
+                    m.sender === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-700 rounded-tl-none border border-gray-200 shadow-sm'
+                  }`}>
+                    {m.text}
+                  </div>
+                </div>
+              ))}
+              {sandboxTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-white border border-gray-200 text-slate-400 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-2xl animate-pulse">
+                    AI Syncing Playground Context...
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Input Bar */}
+            <div className="flex gap-2 shrink-0">
+              <input 
+                type="text" 
+                value={sandboxInput}
+                onChange={e => setSandboxInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSendSandbox()}
+                placeholder="Ask assistant something..."
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-indigo-500 font-bold text-xs"
+              />
+              <button 
+                type="button"
+                onClick={handleSendSandbox}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 rounded-xl font-black text-xs uppercase tracking-widest transition"
+              >
+                Test
+              </button>
+            </div>
+          </section>
+
+          {/* Collapsible drawer audit logs ledger */}
+          <section className="bg-white border border-gray-200 rounded-3xl p-8 shadow-sm flex flex-col h-[520px]">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-black text-indigo-600 uppercase tracking-widest flex items-center gap-2">
+                <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>
+                AI Credit Audit Ledger
+              </h2>
+              <button 
+                type="button"
+                onClick={fetchLogs} 
+                className="text-[9px] font-black uppercase text-indigo-600 hover:text-indigo-800 tracking-widest"
+              >
+                Refresh
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-400 mb-4 leading-relaxed font-bold">
+              Review live conversational audits and exact intelligence credits usage.
+            </p>
+
+            <div className="flex-1 overflow-y-auto pr-1 space-y-3">
+              {logsLoading ? (
+                <div className="text-center py-10 text-xs text-slate-400 font-black uppercase tracking-widest animate-pulse">Syncing Usage Ledger...</div>
+              ) : logs.length === 0 ? (
+                <div className="text-center py-16 border border-dashed border-gray-200 rounded-2xl">
+                  <p className="text-xs text-slate-400 font-black uppercase tracking-wider">No logs available</p>
+                  <p className="text-[9px] text-slate-300 mt-1 font-bold">Conversations will populate here in real time.</p>
+                </div>
+              ) : (
+                logs.map((log) => {
+                  const isOpen = activeLogId === log.id;
+                  return (
+                    <div 
+                      key={log.id} 
+                      className={`border border-gray-100 rounded-2xl overflow-hidden transition-all duration-300 ${
+                        isOpen ? 'ring-1 ring-indigo-500/30 bg-indigo-50/20' : 'bg-gray-50/50 hover:bg-gray-50'
+                      }`}
+                    >
+                      {/* Accordion header */}
+                      <button
+                        type="button"
+                        onClick={() => setActiveLogId(isOpen ? null : log.id)}
+                        className="w-full flex items-center justify-between p-4 cursor-pointer text-left focus:outline-none"
+                      >
+                        <div className="min-w-0 pr-4">
+                          <p className="text-xs font-black text-slate-700 truncate">
+                            "{log.user_query || 'Catalog exploration'}"
+                          </p>
+                          <p className="text-[9px] text-slate-400 font-bold mt-1">
+                            {new Date(log.created_at).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="shrink-0 flex items-center gap-3">
+                          <span className="text-[10px] font-black uppercase tracking-widest bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">
+                            -{log.credits_deducted || 1} CR
+                          </span>
+                          <svg 
+                            className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </button>
+
+                      {/* Smooth collapsible accordion content */}
+                      <div 
+                        className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                          isOpen ? 'max-h-[300px] border-t border-gray-100/60 p-4 space-y-3' : 'max-h-0'
+                        }`}
+                      >
+                        <div className="space-y-1">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Query</p>
+                          <p className="text-xs text-slate-600 bg-white border border-gray-100 p-3 rounded-xl font-medium leading-relaxed">
+                            {log.user_query}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-indigo-400">AI Response</p>
+                          <p className="text-xs text-indigo-900 bg-white border border-indigo-100/50 p-3 rounded-xl font-medium leading-relaxed font-semibold">
+                            {log.ai_response}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4 text-[8px] font-black text-slate-400 uppercase tracking-widest">
+                          <span>⚡ Consumed: {log.tokens_consumed || 0} Tokens</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </section>
+
+        </div>
+
       </main>
       
       {message && (

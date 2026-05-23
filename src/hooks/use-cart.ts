@@ -96,17 +96,17 @@ export function useCart() {
     return `${id}-${optionsHash}`;
   };
 
-  const addItem = useCallback((menuItem: Omit<CartItem, 'quantity' | 'instance_id'>) => {
+  const addItem = useCallback((menuItem: Omit<CartItem, 'quantity' | 'instance_id'>, quantity: number = 1) => {
     const instanceId = generateInstanceId(menuItem.id, menuItem.selected_options);
     
     setItems((prev) => {
       const existing = prev.find((i) => i.instance_id === instanceId);
       if (existing) {
         return prev.map((i) =>
-          i.instance_id === instanceId ? { ...i, quantity: i.quantity + 1 } : i
+          i.instance_id === instanceId ? { ...i, quantity: i.quantity + quantity } : i
         );
       }
-      return [...prev, { ...menuItem, quantity: 1, instance_id: instanceId } as CartItem];
+      return [...prev, { ...menuItem, quantity, instance_id: instanceId } as CartItem];
     });
 
     const currentSession = getQrSession();
@@ -116,7 +116,8 @@ export function useCart() {
         instance_id: instanceId,
         item_name: menuItem.name,
         price: menuItem.price,
-        options: menuItem.selected_options
+        options: menuItem.selected_options,
+        quantity: quantity
       });
     }
   }, []);

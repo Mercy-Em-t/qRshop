@@ -7,6 +7,7 @@ import { logEvent } from "../services/telemetry-service";
 import MetaTags from "../components/MetaTags";
 import { createPublicSession } from "../utils/qr-session";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { getGoogleMetadata } from "../services/seo-service";
 
 // Shop Homepage Components
 import ShopHero from "../components/shop/ShopHero";
@@ -52,6 +53,7 @@ export default function PublicShopProfile({ directShopId }) {
   const navigate = useNavigate();
   const shopIdentifier = directShopId || params.identifier || params.shopId;
   const [shop, setShop] = useState(null);
+  const [seoConfig, setSeoConfig] = useState(null);
   const [allItems, setAllItems] = useState([]);
   const [featuredItems, setFeaturedItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -87,11 +89,13 @@ export default function PublicShopProfile({ directShopId }) {
         }
 
         // Parallel Data Fetching
-        const [items] = await Promise.all([
-           getMenuItems(shopData.id)
+        const [items, seoData] = await Promise.all([
+           getMenuItems(shopData.id),
+           getGoogleMetadata('shop', shopData.id).catch(() => null)
         ]);
 
         setShop(shopData);
+        setSeoConfig(seoData);
         setAllItems(items || []);
         setFeaturedItems(getFeaturedItems(items || [], shopData.appearance_config));
         
@@ -199,8 +203,9 @@ export default function PublicShopProfile({ directShopId }) {
        '--font-family':     theme.font_family      || 'Outfit'
     }}>
       <MetaTags
-        title={`${shop.name} | ${shop.tagline || 'Shop Online'}`}
-        description={shop.tagline || `Welcome to ${shop.name}. Browse our products and order online.`}
+        title={seoConfig?.json_ld?.name ? `${seoConfig.json_ld.name} | ${shop.name}` : `${shop.name} | ${shop.tagline || 'Shop Online'}`}
+        description={seoConfig?.json_ld?.description || shop.tagline || `Welcome to ${shop.name}. Browse our products and order online.`}
+        jsonLd={seoConfig?.json_ld}
       />
 
       {/* Safe CSS Injection — sanitised before render */}

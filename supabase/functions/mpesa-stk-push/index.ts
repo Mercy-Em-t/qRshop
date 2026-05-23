@@ -53,78 +53,102 @@ serve(async (req) => {
        throw new Error("Platform M-Pesa API Keys missing in Vault or Environment.");
     }
 
-    // 4. Generate OAuth Token
-    const authString = btoa(`${consumerKey}:${consumerSecret}`)
-    const authRes = await fetch(`${baseUrl}/oauth/v1/generate?grant_type=client_credentials`, {
-      headers: { Authorization: `Basic ${authString}` },
-    })
-    
-    if (!authRes.ok) throw new Error(`Failed to generate M-Pesa token`)
-    const authData = await authRes.json()
-    const accessToken = authData.access_token
+    // 4. Run Safaricom Daraja STK Push Asynchronously in the Background
+    (async () => {
+      try {
+        // Generate OAuth Token
+        const authString = btoa(`${consumerKey}:${consumerSecret}`)
+        const authRes = await fetch(`${baseUrl}/oauth/v1/generate?grant_type=client_credentials`, {
+          headers: { Authorization: `Basic ${authString}` },
+        })
+        
+        if (!authRes.ok) throw new Error(`Failed to generate M-Pesa token`)
+        const authData = await authRes.json()
+        const accessToken = authData.access_token
 
-    // 5. Generate Password and Timestamp
-    const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3)
-    const password = btoa(`${shortcode}${passkey}${timestamp}`)
+        // Generate Password and Timestamp
+        const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, -3)
+        const password = btoa(`${shortcode}${passkey}${timestamp}`)
 
-    // Clean phone (must be 254...)
-    let safePhone = phone.replace(/[^0-9]/g, '')
-    if (safePhone.startsWith('0')) safePhone = '254' + safePhone.substring(1)
-    if (safePhone.startsWith('+')) safePhone = safePhone.substring(1)
+        // Clean phone (must be 254...)
+        let safePhone = phone.replace(/[^0-9]/g, '')
+        if (safePhone.startsWith('0')) safePhone = '254' + safePhone.substring(1)
+        if (safePhone.startsWith('+')) safePhone = safePhone.substring(1)
 
-    // 6. Push to STK
-    const webhookSecret = Deno.env.get('MPESA_WEBHOOK_SECRET')
-    const callbackUrl = webhookSecret 
-        ? `${supabaseUrl}/functions/v1/mpesa-webhook?secret=${webhookSecret}`
-        : `${supabaseUrl}/functions/v1/mpesa-webhook`
-    
-    const stkPayload = {
-      BusinessShortCode: shortcode,
-      Password: password,
-      Timestamp: timestamp,
-      TransactionType: "CustomerPayBillOnline", 
-      Amount: Math.ceil(Number(amount)),
-      PartyA: safePhone,
-      PartyB: shortcode,
-      PhoneNumber: safePhone,
-      CallBackURL: callbackUrl,
-      AccountReference: `${is_b2b ? 'S' : 'O'}${order_id.split('-')[0].toUpperCase()}`,
-      TransactionDesc: is_b2b ? "Wholesale Order" : "Retail Order"
-    }
+        // Webhook configuration
+        const webhookSecret = Deno.env.get('MPESA_WEBHOOK_SECRET')
+        const callbackUrl = webhookSecret 
+            ? `${supabaseUrl}/functions/v1/mpesa-webhook?secret=${webhookSecret}`
+            : `${supabaseUrl}/functions/v1/mpesa-webhook`
+        
+        const stkPayload = {
+          BusinessShortCode: shortcode,
+          Password: password,
+          Timestamp: timestamp,
+          TransactionType: "CustomerPayBillOnline", 
+          Amount: Math.ceil(Number(amount)),
+          PartyA: safePhone,
+          PartyB: shortcode,
+          PhoneNumber: safePhone,
+          CallBackURL: callbackUrl,
+          AccountReference: `${is_b2b ? 'S' : 'O'}${order_id.split('-')[0].toUpperCase()}`,
+          TransactionDesc: is_b2b ? "Wholesale Order" : "Retail Order"
+        }
 
-    const stkRes = await fetch(`${baseUrl}/mpesa/stkpush/v1/processrequest`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(stkPayload)
-    })
+        const stkRes = await fetch(`${baseUrl}/mpesa/stkpush/v1/processrequest`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(stkPayload)
+        })
 
-    const stkData = await stkRes.json()
-    if (!stkRes.ok || stkData.errorCode) throw new Error(`STK Push Failed: ${JSON.stringify(stkData)}`)
+        const stkData = await stkRes.json()
+        if (!stkRes.ok || stkData.errorCode) throw new Error(`STK Push Failed: ${JSON.stringify(stkData)}`)
 
-    // 7. Log to payment_audit_log for the webhook to find
-    await supabase
-      .from('payment_audit_log')
-      .insert({
-         checkout_request_id: stkData.CheckoutRequestID,
-         target_table: is_b2b ? 'supplier_orders' : 'orders',
-         target_id: order_id,
-         amount: amount,
-         status: 'pending'
-      });
+        // Log to payment_audit_log for the webhook to find
+        await supabase
+          .from('payment_audit_log')
+          .insert({
+             checkout_request_id: stkData.CheckoutRequestID,
+             target_table: is_b2b ? 'supplier_orders' : 'orders',
+             target_id: order_id,
+             amount: amount,
+             status: 'pending'
+          });
 
-    // 8. Update the original order status
-    await supabase
-      .from(is_b2b ? 'supplier_orders' : 'orders')
-      .update({ 
-         status: 'stk_pushed',
-         mpesa_checkout_request_id: stkData.CheckoutRequestID 
-      })
-      .eq('id', order_id)
+        // Update the original order status
+        await supabase
+          .from(is_b2b ? 'supplier_orders' : 'orders')
+          .update({ 
+             status: 'stk_pushed',
+             mpesa_checkout_request_id: stkData.CheckoutRequestID 
+          })
+          .eq('id', order_id)
 
-    return new Response(JSON.stringify({ success: true, data: stkData }), {
+        console.log(`[STK Push Async Success] Order: ${order_id}, CheckoutRequestID: ${stkData.CheckoutRequestID}`);
+      } catch (bgError) {
+        console.error(`[STK Push Async Failure] Order: ${order_id}`, bgError);
+        // Safely fallback order status to cancelled on failure
+        try {
+          await supabase
+            .from(is_b2b ? 'supplier_orders' : 'orders')
+            .update({ status: 'cancelled' })
+            .eq('id', order_id);
+        } catch (dbErr) {
+          console.error("Failed to cancel order after background STK push failure:", dbErr);
+        }
+      }
+    })();
+
+    // 5. Immediately return HTTP 202 Accepted to caller
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: "Payment request accepted and STK push initiated.",
+      order_id
+    }), {
+      status: 202,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (error) {

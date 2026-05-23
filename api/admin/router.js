@@ -59,7 +59,24 @@ async function handleCreateShop(req, res, adminDb) {
   if (shopErr) throw shopErr;
 
   const targetShopId = shopRes.shop_id || shopRes.id;
+  
+  // V1 Compatibility Layer insert
   await adminDb.from('shop_users').insert([{ id: userData.user.id, email: ownerEmail.trim().toLowerCase(), role: "shop_owner", shop_id: targetShopId }]);
+  
+  // V2 Profile Upsert
+  await adminDb.from('profiles').upsert({
+    id: userData.user.id,
+    display_name: ownerEmail.trim().toLowerCase().split('@')[0],
+    system_role: 'user'
+  }, { onConflict: 'id' });
+
+  // V2 Shop Member Relationship insert
+  await adminDb.from('shop_members').insert([{
+    user_id: userData.user.id,
+    shop_id: targetShopId,
+    role: "owner",
+    is_active: true
+  }]);
   
   return res.status(200).json({ success: true, shop: shopRes, tempPassword });
 }
@@ -76,6 +93,13 @@ async function handleCreateSupplier(req, res, adminDb) {
 
   const { data: supplier, error: supErr } = await adminDb.from('suppliers').insert([{ id: userData.user.id, name: name.trim(), industry: industry || 'retail', contact_phone: phone?.trim(), email: email.trim().toLowerCase(), mpesa_shortcode: mpesaShortcode?.trim(), mpesa_passkey: mpesaPasskey?.trim() }]).select().single();
   if (supErr) throw supErr;
+
+  // V2 Profile System Role Update to 'supplier'
+  await adminDb.from('profiles').upsert({
+    id: userData.user.id,
+    display_name: name.trim(),
+    system_role: 'supplier'
+  }, { onConflict: 'id' });
 
   return res.status(200).json({ success: true, supplier, tempPassword });
 }

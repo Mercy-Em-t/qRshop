@@ -60,13 +60,18 @@ export async function validateAdminRequest(req, res) {
     res.status(403).json({error: 'Invalid Admin Token. Security exception logged.'});
     return null;
   }
-  const { data: profile } = await adminDb.from('shop_users').select('*').eq('email', user.email).single();
-  caller = profile;
-
-  if (!caller || caller.role !== 'system_admin') {
+  
+  // V2 Profile Lookup
+  const { data: profile } = await adminDb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  
+  if (!profile || profile.system_role !== 'system_admin') {
     res.status(403).json({error: 'Forbidden. System Admin role required.'});
     return null;
   }
+
+  // Retrieve legacy profile for rate-limiting backwards compatibility
+  const { data: legacyProfile } = await adminDb.from('shop_users').select('*').eq('id', user.id).maybeSingle();
+  caller = legacyProfile || { ...profile, id: user.id, role: 'system_admin' };
 
   // 4. Burst Protection (Rate Limiting)
   const currentTime = new Date();
@@ -81,8 +86,10 @@ export async function validateAdminRequest(req, res) {
     return null;
   }
 
-  // Update last api call timestamp
-  await adminDb.from('shop_users').update({ last_api_call_at: currentTime.toISOString() }).eq('id', caller.id);
+  // Update last api call timestamp in legacy table if present
+  if (legacyProfile) {
+    await adminDb.from('shop_users').update({ last_api_call_at: currentTime.toISOString() }).eq('id', caller.id);
+  }
 
   return { adminDb, caller };
 }

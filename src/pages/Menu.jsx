@@ -17,14 +17,19 @@ import { useCampaigns } from "../hooks/useCampaigns";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
 import SalesAgentWidget from "../components/SalesAgentWidget";
+import { fuzzyMatchProducts } from "../utils/fuzzy-search";
+import CartComponent from "../components/Cart";
+import MetaTags from "../components/MetaTags";
+import { getGoogleMetadata } from "../services/seo-service";
 
 export default function Menu() {
   const session = getQrSession();
   const navigate = useNavigate();
   const { shop, loading: shopLoading } = useShop(session?.shop_id);
-  const { addItem, addBundle, itemCount } = useCart();
+  const { items, addItem, removeItem, total, addBundle, itemCount } = useCart();
   const { categories, loading: menuLoading, isOffline } = useOfflineMenu();
   const [upsellItems, setUpsellItems] = useState([]);
+  const [seoConfig, setSeoConfig] = useState(null);
   const [lastAddedItemId, setLastAddedItemId] = useState(null);
   const [showUpsell, setShowUpsell] = useState(false);
   const [bundles, setBundles] = useState([]);
@@ -64,6 +69,9 @@ export default function Menu() {
   useEffect(() => {
      if (session?.shop_id) {
         fetchActiveBundles();
+        getGoogleMetadata('shop', session.shop_id)
+          .then(data => setSeoConfig(data))
+          .catch(err => console.error("Failed to fetch menu SEO:", err));
      }
   }, [session?.shop_id]);
 
@@ -149,7 +157,10 @@ export default function Menu() {
     // Apply Search Filter First
     if (searchQuery && categories) {
         currentCats = {};
-        const q = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase().trim();
+        let hasDirectMatches = false;
+
+        // 1. Direct Search Matching
         for (const [cat, items] of Object.entries(categories)) {
             const filtered = items.filter(i => 
                 i.name?.toLowerCase().includes(q) || 
@@ -158,6 +169,21 @@ export default function Menu() {
             );
             if (filtered.length > 0) {
                 currentCats[cat] = filtered;
+                hasDirectMatches = true;
+            }
+        }
+
+        // 2. Fuzzy Typo Matching Fallback (if no direct matches are found anywhere in catalog)
+        if (!hasDirectMatches) {
+            const fuzzyMatches = fuzzyMatchProducts(allMenuItems, searchQuery);
+            if (fuzzyMatches.length > 0) {
+                fuzzyMatches.forEach(item => {
+                    const cat = item.category || "Uncategorized";
+                    if (!currentCats[cat]) {
+                        currentCats[cat] = [];
+                    }
+                    currentCats[cat].push(item);
+                });
             }
         }
     }
@@ -175,7 +201,7 @@ export default function Menu() {
       if (limited[cat].length >= remaining) break;
     }
     return limited;
-  }, [categories, shop, searchQuery]);
+  }, [categories, shop, searchQuery, allMenuItems]);
 
   const categoryNames = useMemo(() => Object.keys(displayCategories || {}), [displayCategories]);
   const activeCat = activeCategory || categoryNames[0];
@@ -196,6 +222,11 @@ export default function Menu() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      <MetaTags
+        title={seoConfig?.json_ld?.name ? `${seoConfig.json_ld.name} Menu | ${shop?.name || "Shop"}` : `${shop?.name || "Shop"} Menu | Order Online`}
+        description={seoConfig?.json_ld?.description || shop?.tagline || `Browse the menu of ${shop?.name || "our shop"} and place your order online.`}
+        jsonLd={seoConfig?.json_ld}
+      />
       {/* ── Shop Header with Logo ── */}
       <header className="bg-white shadow-sm sticky top-0 z-20">
         {/* Shop Identity Bar */}
@@ -230,7 +261,7 @@ export default function Menu() {
           </div>
         </div>
         {/* Action Bar */}
-        <div className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between">
+        <div className="max-w-lg md:max-w-3xl lg:max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
              {(shop?.industry_type === 'food' || shop?.industry_type === 'restaurant') ? (
                 <p className="text-xs text-gray-500 font-medium">
@@ -265,7 +296,7 @@ export default function Menu() {
         </div>
 
         {/* Search Bar */}
-        <div className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto px-4 pb-3">
+        <div className="max-w-lg md:max-w-3xl lg:max-w-7xl mx-auto px-4 pb-3">
           <div className="relative">
              <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -281,7 +312,7 @@ export default function Menu() {
         </div>
 
         {/* Category & View Toggle Bar */}
-        <div className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto flex items-center justify-between px-4 pb-2.5">
+        <div className="max-w-lg md:max-w-3xl lg:max-w-7xl mx-auto flex items-center justify-between px-4 pb-2.5">
            <div className="flex overflow-x-auto gap-2 scrollbar-hide flex-1 mr-4">
               {categoryNames.map((cat) => (
                 <button
@@ -335,7 +366,7 @@ export default function Menu() {
       {/* ── Deals & Bundles Section ── */}
       {bundles.length > 0 && (
          <div className="bg-white border-b border-gray-100 pb-8 pt-4">
-            <div className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto px-4">
+            <div className="max-w-lg md:max-w-3xl lg:max-w-7xl mx-auto px-4">
                <h2 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
                  <span>🔥</span> Featured {terms.menu} Deals
                </h2>
@@ -354,56 +385,99 @@ export default function Menu() {
       )}
 
       {/* ── Menu Items ── */}
-      <main className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
-        {categoryNames.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <span className="text-5xl block mb-4">{shopEmoji}</span>
-            <p className="text-lg font-medium">No menu items yet</p>
-            <p className="text-sm mt-1">Check back soon!</p>
-          </div>
-        ) : (
-          categoryNames.map((category) => {
-            const isCollapsed = collapsedCategories[category] && !searchQuery;
-            const items = displayCategories[category] || [];
+      <main className="max-w-lg md:max-w-3xl lg:max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+         <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+            {/* Left Column: Menu Items */}
+            <div className="lg:col-span-8">
+               {categoryNames.length === 0 ? (
+                 <div className="text-center py-16 text-gray-400 bg-white rounded-[2rem] border border-gray-100 shadow-xs">
+                   <span className="text-5xl block mb-4">{shopEmoji}</span>
+                   <p className="text-lg font-medium">No menu items yet</p>
+                   <p className="text-sm mt-1">Check back soon!</p>
+                 </div>
+               ) : (
+                 categoryNames.map((category) => {
+                   const isCollapsed = collapsedCategories[category] && !searchQuery;
+                   const items = displayCategories[category] || [];
 
-            return (
-              <div key={category} id={`cat-${category}`} className="mb-6 scroll-mt-40 bg-white rounded-[2rem] p-4 border border-gray-100 shadow-xs transition-all">
-                <button
-                  onClick={() => setCollapsedCategories(prev => ({ ...prev, [category]: !prev[category] }))}
-                  className="w-full flex items-center justify-between text-left text-base font-bold text-gray-700 uppercase tracking-wide text-xs group cursor-pointer py-1"
-                >
-                  <span className="flex items-center gap-2">
-                    <span className="font-extrabold">{category}</span>
-                    <span className="text-[10px] text-gray-400 font-normal lowercase">({items.length} items)</span>
+                   return (
+                     <div key={category} id={`cat-${category}`} className="mb-6 scroll-mt-40 bg-white rounded-[2rem] p-4 border border-gray-100 shadow-xs transition-all">
+                       <button
+                         onClick={() => setCollapsedCategories(prev => ({ ...prev, [category]: !prev[category] }))}
+                         className="w-full flex items-center justify-between text-left text-base font-bold text-gray-700 uppercase tracking-wide text-xs group cursor-pointer py-1"
+                       >
+                         <span className="flex items-center gap-2">
+                           <span className="font-extrabold">{category}</span>
+                           <span className="text-[10px] text-gray-400 font-normal lowercase">({items.length} items)</span>
+                         </span>
+                         <span className={`text-[10px] text-gray-400 group-hover:text-gray-600 transition-transform duration-200 ${isCollapsed ? '' : 'rotate-180'}`}>
+                           ▼
+                         </span>
+                       </button>
+                       
+                       {!isCollapsed && (
+                         <div className={`mt-4 ${viewMode === "grid" ? "grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-1.5 sm:gap-4 animate-fade-in" : "grid gap-3 animate-fade-in"}`}>
+                           {items.map((item) => (
+                             <MenuItem 
+                                key={item.id} 
+                                item={item} 
+                                onAdd={handleAddItem} 
+                                isShopOnline={shop?.is_online !== false} 
+                                isGridView={viewMode === "grid"}
+                             />
+                           ))}
+                         </div>
+                       )}
+                     </div>
+                   );
+                 })
+               )}
+            </div>
+
+            {/* Right Column: Sticky Cart Sidebar (Visible on Desktop only) */}
+            <div className="hidden lg:block lg:col-span-4 sticky top-40 bg-white rounded-[2rem] p-6 border border-gray-100 shadow-xl">
+               <div className="flex items-center justify-between border-b border-gray-100 pb-4 mb-4">
+                  <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
+                     <span>🛒</span> Your Order
+                  </h2>
+                  <span className="bg-theme-secondary text-white text-[10px] px-2.5 py-1 rounded-full font-black uppercase tracking-wider">
+                     {itemCount} {itemCount === 1 ? 'item' : 'items'}
                   </span>
-                  <span className={`text-[10px] text-gray-400 group-hover:text-gray-600 transition-transform duration-200 ${isCollapsed ? '' : 'rotate-180'}`}>
-                    ▼
-                  </span>
-                </button>
-                
-                {!isCollapsed && (
-                  <div className={`mt-4 ${viewMode === "grid" ? "grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-1.5 sm:gap-4 animate-fade-in" : "grid gap-3 animate-fade-in"}`}>
-                    {items.map((item) => (
-                      <MenuItem 
-                         key={item.id} 
-                         item={item} 
-                         onAdd={handleAddItem} 
-                         isShopOnline={shop?.is_online !== false} 
-                         isGridView={viewMode === "grid"}
-                      />
-                    ))}
+               </div>
+               
+               <div className="max-h-[350px] overflow-y-auto pr-1 no-scrollbar">
+                  <CartComponent
+                     items={items}
+                     onAdd={addItem}
+                     onRemove={removeItem}
+                     total={total}
+                  />
+               </div>
+               
+               {items.length > 0 && (
+                  <div className="mt-6 pt-4 border-t border-gray-100 space-y-3">
+                     {shop?.is_online === false && (
+                        <div className="p-3 bg-red-50 text-red-700 rounded-xl text-xs font-semibold border border-red-100 text-center">
+                           🔴 Shop is currently closed
+                        </div>
+                     )}
+                     <button
+                        onClick={() => navigate("/order")}
+                        disabled={shop?.is_online === false}
+                        className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-wider transition-all shadow-md hover:shadow-lg transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${shop?.is_online === false ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover'}`}
+                     >
+                        Confirm Order — KSh {total}
+                     </button>
                   </div>
-                )}
-              </div>
-            );
-          })
-        )}
+               )}
+            </div>
+         </div>
       </main>
       <CouponWidget shopPlan={shop?.plan} campaign={activeCampaign} />
 
       {/* ── Branded Footer ── */}
       <footer className="bg-white border-t border-gray-100 mt-4 pt-6 pb-8 px-4">
-        <div className="max-w-lg md:max-w-3xl lg:max-w-6xl mx-auto">
+        <div className="max-w-lg md:max-w-3xl lg:max-w-7xl mx-auto">
           {/* App Brand */}
           <div className="flex flex-col items-center text-center mb-5">
             <div className="flex items-center gap-2 mb-1">
