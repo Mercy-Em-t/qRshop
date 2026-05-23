@@ -47,13 +47,15 @@ export default function Settings() {
         const ext  = logoFile.name.split(".").pop();
         const path = `${SHOP_ID}/logo-${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from("shop-logos").upload(path, logoFile, { upsert: true });
-        if (!upErr) {
-          const { data: urlData } = supabase.storage.from("shop-logos").getPublicUrl(path);
-          logoUrl = urlData?.publicUrl || logoUrl;
-          setLogoFile(null);
-          setLogoPreview(null);
-        }
-      } catch { /* fail silently for logo, still save other fields */ }
+        if (upErr) throw upErr;
+
+        const { data: urlData } = supabase.storage.from("shop-logos").getPublicUrl(path);
+        logoUrl = urlData?.publicUrl || logoUrl;
+        setLogoFile(null);
+        setLogoPreview(null);
+      } catch (err) {
+        alert("Logo upload failed: " + err.message + ". Please verify database policies and file constraints.");
+      }
       setUploadingLogo(false);
     }
     const { error } = await supabase.from("shops").update({
