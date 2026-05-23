@@ -56,33 +56,17 @@ export default function TrackOrder() {
 
   const fetchOrderDetails = async () => {
     try {
-      // Fetch Core Order
-      const { data: orderData, error: orderError } = await supabase
-        .from("orders")
-        .select("*, shops(name, phone, whatsapp_number, mpesa_till_number)")
-        .eq("id", orderId)
-        .single();
+      // Secure RPC — no direct anon table access needed
+      const { data, error } = await supabase.rpc('get_order_for_tracking', { p_order_id: orderId });
 
-      if (orderError) throw orderError;
-      setOrder(orderData);
-      if (orderData.client_phone) setPin(orderData.client_phone);
+      if (error) throw error;
+      if (!data) throw new Error('Order not found.');
 
-      // Fetch Items + Join Menu Item Name
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("order_items")
-        .select("*, menu_items(name)")
-        .eq("order_id", orderId);
+      // RPC returns a single JSONB object with nested items, shop, rating
+      const { items: orderItems, rating: ratingData, ...orderFields } = data;
+      setOrder(orderFields);
+      setItems(orderItems || []);
 
-      if (itemsError) throw itemsError;
-      setItems(itemsData || []);
-
-      // Check for existing rating
-      const { data: ratingData } = await supabase
-        .from("order_ratings")
-        .select("*")
-        .eq("order_id", orderId)
-        .single();
-      
       if (ratingData) {
         setRating(ratingData.rating);
         setComment(ratingData.comment);
@@ -104,10 +88,10 @@ export default function TrackOrder() {
     }
     setSavingMpesaCode(true);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ mpesa_code: mpesaCode.toUpperCase() })
-        .eq("id", orderId);
+      const { error } = await supabase.rpc('submit_mpesa_code', {
+        p_order_id: orderId,
+        p_code: mpesaCode
+      });
       if (error) throw error;
       setOrder(prev => ({ ...prev, mpesa_code: mpesaCode.toUpperCase() }));
       alert("Payment code submitted! The shop will verify and update your status shortly.");
@@ -121,12 +105,9 @@ export default function TrackOrder() {
   const handleConfirmReceipt = async () => {
     setConfirmingReceipt(true);
     try {
-      const now = new Date().toISOString();
-      const { error } = await supabase
-        .from("orders")
-        .update({ customer_confirmed_at: now })
-        .eq("id", orderId);
+      const { error } = await supabase.rpc('confirm_order_receipt', { p_order_id: orderId });
       if (error) throw error;
+      const now = new Date().toISOString();
       setOrder(prev => ({ ...prev, customer_confirmed_at: now }));
     } catch (err) {
       alert("Failed to confirm receipt. Please try again.");
@@ -139,14 +120,12 @@ export default function TrackOrder() {
     if (rating === 0) return alert("Please select a rating.");
     setIsSubmittingRating(true);
     try {
-      const { error } = await supabase
-        .from("order_ratings")
-        .insert([{
-          order_id: orderId,
-          shop_id: order.shop_id,
-          rating,
-          comment
-        }]);
+      const { error } = await supabase.rpc('submit_order_rating', {
+        p_order_id: orderId,
+        p_shop_id: order.shop_id,
+        p_rating: rating,
+        p_comment: comment || null
+      });
       if (error) throw error;
       setRatingSaved(true);
     } catch (err) {
@@ -160,10 +139,10 @@ export default function TrackOrder() {
     try {
       const cartItems = items.map(i => ({
         id: i.menu_item_id,
-        name: i.menu_items?.name,
+        name: i.name,
         price: i.price,
         quantity: i.quantity,
-        image_url: i.menu_items?.image_url
+        image_url: null
       }));
       const sid = order.shop_id;
       localStorage.setItem(`qr_cart_${sid}`, JSON.stringify(cartItems));
@@ -214,7 +193,7 @@ export default function TrackOrder() {
       color: "bg-orange-100 text-orange-800 border-orange-200",
       icon: "📋",
       title: "Awaiting Payment",
-      description: `The shop is ready! Please send payment to the shop's number (${order?.shops?.phone || order?.shops?.whatsapp_number || "the counter"}) to confirm.`
+      description: `The shop is ready! Please send payment to the shop's number (${order?.shop?.phone || order?.shop?.whatsapp_number || "the counter"}) to confirm.`
     },
     stk_pushed: {
       color: "bg-green-100 text-green-800 border-green-200",
@@ -357,7 +336,7 @@ export default function TrackOrder() {
                     <div className="mt-4 pt-4 border-t border-dashed border-green-200">
                        <p className="text-xs text-gray-500 mb-2 font-medium">Lipa na M-Pesa <b>Buy Goods</b> Till:</p>
                        <p className="text-2xl font-black text-green-700 tracking-tighter">
-                          {order?.shops?.mpesa_till_number || order?.shops?.phone || "Contact Shop"}
+                          {order?.shop?.mpesa_till_number || order?.shop?.phone || "Contact Shop"}
                        </p>
                     </div>
                  </div>
@@ -390,13 +369,12 @@ export default function TrackOrder() {
 
                  <p className="text-[9px] text-center text-slate-400 px-4 leading-relaxed uppercase font-bold">
                     Need help? Contact the shop directly at <br/>
-                    <a href={`tel:${order?.shops?.phone}`} className="text-green-600">{order?.shops?.phone}</a>
+                    <a href={`tel:${order?.shop?.phone}`} className="text-green-600">{order?.shop?.phone}</a>
                  </p>
               </div>
            </div>
         )}
         
-        {/* Live Digital Receipt */}
         <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
            <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-100 text-sm">
               <span className="text-gray-500">Receipt <span className="font-mono text-gray-800 font-bold ml-1">#{shortId}</span></span>
@@ -408,7 +386,7 @@ export default function TrackOrder() {
                  <div key={item.id} className="flex justify-between text-gray-700">
                     <div>
                        <span className="font-medium text-gray-800 mr-2">{item.quantity}x</span>
-                       <span>{item.menu_items?.name || "Item"}</span>
+                       <span>{item.name || "Item"}</span>
                     </div>
                     <span className="font-medium">KSh {item.price * item.quantity}</span>
                  </div>
@@ -442,7 +420,6 @@ export default function TrackOrder() {
            </button>
         </section>
 
-        {/* Feedback Module */}
         {order.status === 'completed' && (
           <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 animate-in fade-in slide-in-from-bottom-4 duration-700 print:hidden">
             <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -491,7 +468,6 @@ export default function TrackOrder() {
           </section>
         )}
 
-        {/* Reorder Block */}
         {order.status === 'completed' && (
           <div className="pt-4 print:hidden">
             <button 
@@ -503,7 +479,6 @@ export default function TrackOrder() {
           </div>
         )}
 
-        {/* Action Blocks */}
         {order.status === 'requires_edit' && (
            <div className="bg-yellow-50 border border-yellow-200 p-6 rounded-xl shadow-sm">
              <h3 className="font-bold text-yellow-800 mb-2 flex items-center gap-2">
@@ -522,7 +497,7 @@ export default function TrackOrder() {
                  <button 
                     onClick={async () => {
                        if(confirm("Are you sure you want to cancel this order permanently?")) {
-                          await supabase.from('orders').update({ status: 'archived' }).eq('id', order.id);
+                          await supabase.rpc('cancel_order', { p_order_id: order.id }).catch(() => {});
                           window.location.reload();
                        }
                     }}
