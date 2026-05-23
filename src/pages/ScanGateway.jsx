@@ -24,24 +24,21 @@ export default function ScanGateway() {
     async function initScan() {
       try {
         let activeId = identifier || qrId || nodeId;
-
         if (!activeId) throw new Error("Invalid QR Code");
 
-        // Attempt 1: Resolve as a specific QR Node
+        // Resolve node as fast as possible — runs while BrandedSplash is already visible
         let node = await getQrNode(activeId);
 
-        // Attempt 2: Resolve as a direct Shop Slug/ID (Standardized Entry)
         if (!node) {
           const shop = await resolveShopIdentifier(activeId);
           if (shop) {
-             // Create a synthetic node for direct-to-shop scanning
-             node = {
-                qr_id: activeId,
-                shop_id: shop.id,
-                location: "Direct Scan",
-                action: "open_menu",
-                status: "active"
-             };
+            node = {
+              qr_id: activeId,
+              shop_id: shop.id,
+              location: "Direct Scan",
+              action: "open_menu",
+              status: "active"
+            };
           }
         }
 
@@ -55,15 +52,14 @@ export default function ScanGateway() {
           return;
         }
 
-        // Check for Privacy Consent
+        // Consent check — requires user input, show modal and halt
         const hasConsented = localStorage.getItem("shopqr_privacy_consent");
         if (hasConsented !== "true") {
-           setPendingNode(node);
-           setNeedsConsent(true);
-           return;
+          setPendingNode(node);
+          setNeedsConsent(true);
+          return; // BrandedSplash stays visible behind the consent modal
         }
 
-        // Already consented -> Proceed
         await processAction(node);
       } catch (err) {
         console.error("Gateway error:", err);
@@ -77,92 +73,88 @@ export default function ScanGateway() {
   }, [qrId, identifier, nodeId, navigate]);
 
   const processAction = async (node) => {
-     setIsProcessing(true);
-     
-     const activeNodeId = nodeId || qrId;
+    setIsProcessing(true);
+    const activeNodeId = nodeId || qrId;
 
-     // 1. Log Visit Record
-     const visit = await logVisit(activeNodeId, node.shop_id).catch((err) => {
-        console.error("Visit logging failed:", err);
-        return null;
-     });
+    // Minimum splash duration — lets the branding animation breathe
+    // while all other work runs in parallel behind it
+    const minSplashDone = new Promise(resolve => setTimeout(resolve, 1200));
 
-     // 2. Log Telemetry Event (Fire and Forget)
-     logEvent("qr_scanned", activeNodeId, node.shop_id, navigator.userAgent, {
-        visit_id: visit?.visit_id || null,
-        campaign_id: node.campaign_id || null,
-     }).catch((err) => console.error("Telemetry failed:", err));
+    // ── Fire-and-forget analytics — never await these ──────────────────
+    logVisit(activeNodeId, node.shop_id)
+      .catch(err => console.error("Visit logging failed:", err));
 
-     // 3. Dynamic QR — Time-Based Routing (Phase 46)
-     if (node.opens_at || node.closes_at) {
-       const now = new Date();
-       const toMinutes = (t) => {
-         if (!t) return null;
-         const [h, m] = t.split(":").map(Number);
-         return h * 60 + m;
-       };
-       const currentMinutes = now.getHours() * 60 + now.getMinutes();
-       const opensAtMinutes = toMinutes(node.opens_at);
-       const closesAtMinutes = toMinutes(node.closes_at);
+    logEvent("qr_scanned", activeNodeId, node.shop_id, navigator.userAgent, {
+      campaign_id: node.campaign_id || null,
+    }).catch(err => console.error("Telemetry failed:", err));
+    // ───────────────────────────────────────────────────────────────────
 
-       const isOpen = (
-         (opensAtMinutes !== null && closesAtMinutes !== null)
-           ? currentMinutes >= opensAtMinutes && currentMinutes < closesAtMinutes
-           : true
-       );
-
-       if (!isOpen) {
-         const msg = node.closed_message || "We are currently closed. Please come back during our business hours!";
-         const opens = node.opens_at ? node.opens_at.slice(0,5) : null;
-         const closes = node.closes_at ? node.closes_at.slice(0,5) : null;
-         setError(`${msg}${opens && closes ? ` (We're open ${opens} – ${closes})` : ""}`);
-         return;
-       }
-     }
-
-     // 4. Resolve Behavior based on Standardized Actions
-     const categoryParam = node.category_filter ? `?category=${encodeURIComponent(node.category_filter)}` : "";
-
-      const redirect = (path) => {
-        setTimeout(() => {
-          navigate(path, { replace: true });
-        }, 2000);
+    // Time gate check (pure JS — instant, no network)
+    if (node.opens_at || node.closes_at) {
+      const now = new Date();
+      const toMinutes = (t) => {
+        if (!t) return null;
+        const [h, m] = t.split(":").map(Number);
+        return h * 60 + m;
       };
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const opensAtMinutes = toMinutes(node.opens_at);
+      const closesAtMinutes = toMinutes(node.closes_at);
 
-      switch (node.action) {
-         case 'open_menu':
-           createQrSession(node.shop_id, node.location);
-           redirect(`/menu${categoryParam}`);
-           break;
-           
-         case 'open_order':
-           if (node.location && node.location.startsWith('AD:')) {
-              const payload = node.location.substring(3);
-              createQrSession(node.shop_id, "Direct Link");
-              redirect(`/buy?shop=${node.shop_id}&items=${payload}:1`);
-           } else {
-              createQrSession(node.shop_id, node.location);
-              redirect("/cart");
-           }
-           break;
-           
-         case 'open_campaign':
-            createQrSession(node.shop_id, node.location, null, node.campaign_id);
-            setTimeout(() => {
-              navigate("/campaign", { replace: true, state: { campaignId: node.campaign_id } });
-            }, 2000);
-            break;
-            
-         case 'open_loyalty':
-            setError(`The Loyalty experience is currently under construction.`);
-            setIsProcessing(false);
-            break;
-            
-         default:
-            setError(`Action '${node.action}' is not supported by this platform version.`);
-            setIsProcessing(false);
+      const isOpen = (
+        (opensAtMinutes !== null && closesAtMinutes !== null)
+          ? currentMinutes >= opensAtMinutes && currentMinutes < closesAtMinutes
+          : true
+      );
+
+      if (!isOpen) {
+        const msg = node.closed_message || "We are currently closed. Please come back during our business hours!";
+        const opens = node.opens_at ? node.opens_at.slice(0,5) : null;
+        const closes = node.closes_at ? node.closes_at.slice(0,5) : null;
+        setError(`${msg}${opens && closes ? ` (We're open ${opens} – ${closes})` : ""}`);
+        return;
       }
+    }
+
+    // Session is instant (sessionStorage write only)
+    createQrSession(node.shop_id, node.location);
+
+    const categoryParam = node.category_filter
+      ? `?category=${encodeURIComponent(node.category_filter)}`
+      : "";
+
+    // Wait for minimum splash, then navigate immediately
+    await minSplashDone;
+
+    switch (node.action) {
+      case 'open_menu':
+        navigate(`/menu${categoryParam}`, { replace: true });
+        break;
+
+      case 'open_order':
+        if (node.location && node.location.startsWith('AD:')) {
+          const payload = node.location.substring(3);
+          navigate(`/buy?shop=${node.shop_id}&items=${payload}:1`, { replace: true });
+        } else {
+          navigate("/cart", { replace: true });
+        }
+        break;
+
+      case 'open_campaign':
+        navigate("/campaign", { replace: true, state: { campaignId: node.campaign_id } });
+        break;
+
+      case 'open_loyalty':
+        setError(`The Loyalty experience is currently under construction.`);
+        setIsProcessing(false);
+        break;
+
+      default:
+        setError(`Action '${node.action}' is not supported by this platform version.`);
+        setIsProcessing(false);
+    }
   };
+
 
   const handleConsentAccept = () => {
       localStorage.setItem("shopqr_privacy_consent", "true");
