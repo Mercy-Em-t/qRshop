@@ -70,7 +70,7 @@ export default function Settings() {
       fulfillment_settings: shop.fulfillment_settings,
       mpesa_shortcode: shop.mpesa_shortcode || null,
       mpesa_passkey: shop.mpesa_passkey || null,
-      ...(logoUrl ? { logo_url: logoUrl } : {}),
+      logo_url: logoUrl || null,
     }).eq("shop_id", SHOP_ID);
     
     setSaving(false);

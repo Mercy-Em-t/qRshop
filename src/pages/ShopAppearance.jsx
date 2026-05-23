@@ -226,7 +226,7 @@ export default function ShopAppearance({ adminShopId = null }) {
         appearance_config: cleanConfig,
         custom_css:        cleanCss,
         tagline:           cleanTagline,
-        ...(cleanLogo ? { logo_url: cleanLogo } : {}),
+        logo_url:          cleanLogo || null,
       }).eq("shop_id", shopId);
 
       if (error) throw error;
