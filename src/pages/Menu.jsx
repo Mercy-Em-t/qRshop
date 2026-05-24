@@ -38,6 +38,71 @@ export default function Menu() {
   const [searchQuery, setSearchQuery] = useState("");
   const [collapsedCategories, setCollapsedCategories] = useState({});
 
+  const terms = useNomenclature(session?.shop_id);
+  const { campaigns } = useCampaigns(session?.shop_id);
+
+  // Metadata and Campaign memoization
+  const activeCampaign = useMemo(() => campaigns?.find(c => c.is_active), [campaigns]);
+
+  // Flatten items for BundleCard retrieval
+  const allMenuItems = useMemo(() => (categories ? Object.values(categories).flat() : []), [categories]);
+
+  // GRACEFUL TIER DEGRADATION: Cap display items to 50 if Free tier or expired
+  const displayCategories = useMemo(() => {
+    let currentCats = categories;
+    
+    // Apply Search Filter First
+    if (searchQuery && categories) {
+        currentCats = {};
+        const q = searchQuery.toLowerCase().trim();
+        let hasDirectMatches = false;
+
+        // 1. Direct Search Matching
+        for (const [cat, items] of Object.entries(categories)) {
+            const filtered = items.filter(i => 
+                i.name?.toLowerCase().includes(q) || 
+                i.description?.toLowerCase().includes(q) ||
+                (i.diet_tags && i.diet_tags.some(t => t.toLowerCase().includes(q)))
+            );
+            if (filtered.length > 0) {
+                currentCats[cat] = filtered;
+                hasDirectMatches = true;
+            }
+        }
+
+        // 2. Fuzzy Typo Matching Fallback (if no direct matches are found anywhere in catalog)
+        if (!hasDirectMatches) {
+            const fuzzyMatches = fuzzyMatchProducts(allMenuItems, searchQuery);
+            if (fuzzyMatches.length > 0) {
+                fuzzyMatches.forEach(item => {
+                    const cat = item.category || "Uncategorized";
+                    if (!currentCats[cat]) {
+                        currentCats[cat] = [];
+                    }
+                    currentCats[cat].push(item);
+                });
+            }
+        }
+    }
+
+    const isFreeTier = shop?.plan === 'free' || (shop?.subscription_expires_at && new Date(shop.subscription_expires_at) < new Date());
+    if (!isFreeTier || !currentCats) return currentCats;
+
+    let count = 0;
+    const limited = {};
+    for (const cat of Object.keys(currentCats)) {
+      const remaining = 50 - count;
+      if (remaining <= 0) break;
+      limited[cat] = currentCats[cat].slice(0, remaining);
+      count += limited[cat].length;
+      if (limited[cat].length >= remaining) break;
+    }
+    return limited;
+  }, [categories, shop, searchQuery, allMenuItems]);
+
+  const categoryNames = useMemo(() => Object.keys(displayCategories || {}), [displayCategories]);
+  const activeCat = activeCategory || categoryNames[0];
+
   // Collapsible drawers expand and URL routing logic
   useEffect(() => {
     if (categoryNames.length > 0) {
@@ -62,10 +127,6 @@ export default function Menu() {
       }
     }
   }, [categoryNames]);
-
-  const terms = useNomenclature(session?.shop_id);
-  const { campaigns } = useCampaigns(session?.shop_id);
-
   useEffect(() => {
      if (session?.shop_id) {
         fetchActiveBundles();
@@ -143,68 +204,6 @@ export default function Menu() {
   };
 
   const isLoading = shopLoading || menuLoading;
-
-  // Metadata and Campaign memoization (Moved up to satisfy Rules of Hooks)
-  const activeCampaign = useMemo(() => campaigns?.find(c => c.is_active), [campaigns]);
-
-  // Flatten items for BundleCard retrieval
-  const allMenuItems = useMemo(() => (categories ? Object.values(categories).flat() : []), [categories]);
-
-  // GRACEFUL TIER DEGRADATION: Cap display items to 50 if Free tier or expired
-  const displayCategories = useMemo(() => {
-    let currentCats = categories;
-    
-    // Apply Search Filter First
-    if (searchQuery && categories) {
-        currentCats = {};
-        const q = searchQuery.toLowerCase().trim();
-        let hasDirectMatches = false;
-
-        // 1. Direct Search Matching
-        for (const [cat, items] of Object.entries(categories)) {
-            const filtered = items.filter(i => 
-                i.name?.toLowerCase().includes(q) || 
-                i.description?.toLowerCase().includes(q) ||
-                (i.diet_tags && i.diet_tags.some(t => t.toLowerCase().includes(q)))
-            );
-            if (filtered.length > 0) {
-                currentCats[cat] = filtered;
-                hasDirectMatches = true;
-            }
-        }
-
-        // 2. Fuzzy Typo Matching Fallback (if no direct matches are found anywhere in catalog)
-        if (!hasDirectMatches) {
-            const fuzzyMatches = fuzzyMatchProducts(allMenuItems, searchQuery);
-            if (fuzzyMatches.length > 0) {
-                fuzzyMatches.forEach(item => {
-                    const cat = item.category || "Uncategorized";
-                    if (!currentCats[cat]) {
-                        currentCats[cat] = [];
-                    }
-                    currentCats[cat].push(item);
-                });
-            }
-        }
-    }
-
-    const isFreeTier = shop?.plan === 'free' || (shop?.subscription_expires_at && new Date(shop.subscription_expires_at) < new Date());
-    if (!isFreeTier || !currentCats) return currentCats;
-
-    let count = 0;
-    const limited = {};
-    for (const cat of Object.keys(currentCats)) {
-      const remaining = 50 - count;
-      if (remaining <= 0) break;
-      limited[cat] = currentCats[cat].slice(0, remaining);
-      count += limited[cat].length;
-      if (limited[cat].length >= remaining) break;
-    }
-    return limited;
-  }, [categories, shop, searchQuery, allMenuItems]);
-
-  const categoryNames = useMemo(() => Object.keys(displayCategories || {}), [displayCategories]);
-  const activeCat = activeCategory || categoryNames[0];
 
   const shopEmoji = useMemo(() => {
     const type = shop?.industry_type?.toLowerCase() || "";
