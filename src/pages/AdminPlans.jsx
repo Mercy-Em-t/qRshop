@@ -9,7 +9,7 @@ export default function AdminPlans() {
 
   useEffect(() => {
     // Lock down to System Admin only!
-    if (!user || user.role !== "system_admin") {
+    if (!user || user.system_role !== "system_admin") {
       navigate("/login");
     }
   }, [navigate]);

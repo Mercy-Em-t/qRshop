@@ -13,7 +13,7 @@ export default function AdminIndustries() {
   const user = getCurrentUser();
 
   useEffect(() => {
-    if (!user || user.role !== "system_admin") {
+    if (!user || user.system_role !== "system_admin") {
       navigate("/login");
       return;
     }

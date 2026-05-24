@@ -1,0 +1,17 @@
+{
+  "name": "terracoop-farming-club",
+  "version": "1.0.0",
+  "description": "TerraCoop Regenerative Farming Club Web Application",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server -p 8080 -c-1",
+    "start": "npx http-server -p 8080 -c-1"
+  },
+  "keywords": [
+    "farming",
+    "regenerative",
+    "volunteer"
+  ],
+  "author": "TerraCoop",
+  "license": "CC-BY-NC-4.0"
+}

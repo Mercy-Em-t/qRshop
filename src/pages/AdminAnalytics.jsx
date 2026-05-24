@@ -16,7 +16,7 @@ export default function AdminAnalytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user || user.role !== "system_admin") {
+    if (!user || user.system_role !== "system_admin") {
       navigate("/login");
       return;
     }

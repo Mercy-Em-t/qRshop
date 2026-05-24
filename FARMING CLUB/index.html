@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TerraCoop | Regenerative Volunteer Farming Club & Agricultural Research</title>
+    <meta name="description" content="Join TerraCoop, a strictly volunteering farming club. Collaborate on organic crop cultivation, syntropic forestry, and biological soil research across unique farm sanctuaries. Free to join, open to all nature-lovers.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="dark-theme">
+    
+    <!-- Background Blur Decorative Gradients -->
+    <div class="blob blob-green" aria-hidden="true"></div>
+    <div class="blob blob-earth" aria-hidden="true"></div>
+
+    <!-- Navigation Header -->
+    <header class="main-header glass-card">
+        <div class="header-container">
+            <a href="#home" class="logo" id="header-logo-link">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12" />
+                    <path d="M12 22V12" />
+                    <path d="M12 12C12 8 16 4 21 4" />
+                    <path d="M12 12C12 15 9 18 6 18" />
+                    <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.3" />
+                </svg>
+                <span class="logo-text">Terra<span class="highlight">Coop</span></span>
+            </a>
+            
+            <nav class="nav-menu" id="navigation-bar">
+                <a href="#home" class="nav-link active" id="nav-home">Home</a>
+                <a href="#dashboard" class="nav-link logged-in-only volunteer-only" id="nav-dashboard">My Dashboard</a>
+                <a href="#manager" class="nav-link logged-in-only manager-only" id="nav-manager">Manager Control</a>
+                <a href="#farms" class="nav-link" id="nav-farms">Our Farms</a>
+                <a href="#projects" class="nav-link" id="nav-projects">Active Projects</a>
+                <a href="#tours" class="nav-link" id="nav-tours">Youth & Tours</a>
+                <a href="#leases" class="nav-link" id="nav-leases">Leases & Donations</a>
+                <a href="#produce" class="nav-link" id="nav-produce">Pantry & Science</a>
+                <a href="#library" class="nav-link" id="nav-library">Library</a>
+                <a href="#profile" class="nav-link logged-in-only" id="nav-profile">My Profile</a>
+                <a href="#apply" class="nav-link nav-cta-mobile logged-out-only" id="nav-apply-mobile">Apply to Join</a>
+            </nav>
+
+            <div class="nav-actions">
+                <a href="#apply" class="btn btn-primary nav-cta glass-button logged-out-only" id="nav-apply-btn">Join Club</a>
+                <button class="btn btn-secondary nav-cta logged-out-only" id="nav-login-btn">Log In</button>
+                
+                <!-- Logged In User Pill -->
+                <div class="user-profile-header logged-in-only" id="header-user-profile">
+                    <span class="header-avatar" id="header-avatar-emoji">🌱</span>
+                    <span class="header-username" id="header-username-text">Rowan</span>
+                    <button class="btn-logout" id="btn-logout" title="Log Out">📴</button>
+                </div>
+
+                <button class="mobile-menu-toggle" id="menu-toggle-btn" aria-label="Toggle Navigation Menu">
+                    <span class="hamburger-bar"></span>
+                    <span class="hamburger-bar"></span>
+                    <span class="hamburger-bar"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Containers -->
+    <main class="content-wrapper">
+
+        <!-- SECTION: HOME / DISCOVERY HUB -->
+        <section id="home" class="spa-section active">
+            <div class="hero-container">
+                <div class="hero-text-content">
+                    <div class="badge-accent">🌱 100% Volunteering • Strictly Free</div>
+                    <h1 class="hero-title">Co-Cultivating <br><span class="gradient-text">Earth & Knowledge</span></h1>
+                    <p class="hero-description">
+                        TerraCoop is a collaborative eco-collective where enthusiasts, scientists, and amateurs plant, travel, and conduct advanced agricultural research together. We charge nothing to join—the soil pays us back in abundant produce and shared wisdom.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="#farms" class="btn btn-primary btn-large glow-btn" id="hero-explore-btn">Explore Laboratories</a>
+                        <a href="#apply" class="btn btn-secondary btn-large logged-out-only" id="hero-apply-btn">Become a Volunteer</a>
+                        <a href="#dashboard" class="btn btn-secondary btn-large logged-in-only volunteer-only" id="hero-dashboard-btn">Go To Dashboard ➜</a>
+                        <a href="#manager" class="btn btn-secondary btn-large logged-in-only manager-only" id="hero-manager-btn">Go To Manager Control ➜</a>
+                    </div>
+                </div>
+                
+                <div class="hero-media-wrapper">
+                    <div class="glass-card hero-image-card">
+                        <img src="assets/hero.png" alt="Lush eco-farm at sunrise" class="hero-img" id="hero-banner-image">
+                        <div class="image-overlay-card glass-card">
+                            <div class="stat-mini">
+                                <span class="pulse-indicator"></span>
+                                <div>
+                                    <h4 id="mini-stat-title">Active Crop Cycle</h4>
+                                    <p id="mini-stat-desc">Spring Seedlings Inoculated</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Impact Counter Metrics Grid -->
+            <div class="metrics-container glass-card">
+                <div class="metric-item">
+                    <h3 class="metric-val" id="metric-farms">3</h3>
+                    <p class="metric-label">Research Sanctuary Farms</p>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-item">
+                    <h3 class="metric-val" id="metric-members">520+</h3>
+                    <p class="metric-label">Active Volunteers</p>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-item">
+                    <h3 class="metric-val" id="metric-trees">2,450+</h3>
+                    <p class="metric-label">Saplings Rooted</p>
+                </div>
+                <div class="metric-divider"></div>
+                <div class="metric-item">
+                    <h3 class="metric-val" id="metric-produce">6.8t</h3>
+                    <p class="metric-label">Organic Harvest Shared</p>
+                </div>
+            </div>
+
+            <!-- Core Beliefs Section -->
+            <div class="beliefs-section">
+                <div class="section-header text-center">
+                    <h2>Our Foundation</h2>
+                    <p>Built upon regenerative ethics, complete inclusivity, and scientific curiosity.</p>
+                </div>
+                
+                <div class="beliefs-grid">
+                    <div class="glass-card belief-card">
+                        <div class="belief-icon">🚀</div>
+                        <h3>Volunteer Exclusivity</h3>
+                        <p>No entry fees, no membership dues. We invest our time and energy, and we share the fruits of our labor equally among all active members.</p>
+                    </div>
+                    <div class="glass-card belief-card">
+                        <div class="belief-icon">🗺️</div>
+                        <h3>Collective Wandering</h3>
+                        <p>We organize group excursions and seasonal camping field trips to our distinct farm locations, offering free shared eco-transit.</p>
+                    </div>
+                    <div class="glass-card belief-card">
+                        <div class="belief-icon">🔬</div>
+                        <h3>Living Laboratories</h3>
+                        <p>We don't just dig; we study. From tracking soil mycorrhizal networks to prototyping off-grid solar micro-irrigation systems.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: USER PERSONALIZED DASHBOARD (LOGGED IN ONLY - VOLUNTEERS) -->
+        <section id="dashboard" class="spa-section volunteer-only">
+            <div class="dashboard-header glass-card">
+                <div class="dashboard-welcome">
+                    <span class="db-badge">ACTIVE SESSION</span>
+                    <h2 id="db-greeting">Welcome back, Rowan!</h2>
+                    <p id="db-sub-greeting">Your regenerative journey is in motion. Let's dig in today!</p>
+                </div>
+                <div class="db-current-badges">
+                    <!-- SVG Radial Progress Ring -->
+                    <div class="radial-progress-wrapper" title="Weekly Cooperative Harvest Progress">
+                        <svg class="radial-ring-svg" viewBox="0 0 80 80">
+                            <circle class="ring-bg" cx="40" cy="40" r="34" />
+                            <circle class="ring-fill" cx="40" cy="40" r="34" id="db-radial-progress-fill" />
+                        </svg>
+                        <div class="radial-center-text">
+                            <span class="radial-val" id="db-radial-percent">75%</span>
+                            <span class="radial-lbl">Yield</span>
+                        </div>
+                    </div>
+
+                    <div class="db-badge-bubble">
+                        <span class="db-bubble-icon" id="db-badge-avatar">🌱</span>
+                        <div>
+                            <span class="db-bubble-lbl" id="db-rank-title">Seedling Sprout</span>
+                            <span class="db-bubble-val" id="db-rank-points">10 XP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Dashboard Grid -->
+            <div class="db-stats-grid">
+                <div class="glass-card db-stat-card">
+                    <span class="stat-icon">🏆</span>
+                    <div>
+                        <h4>Member Rank</h4>
+                        <h3 id="db-stat-rank">Seedling Sprout</h3>
+                        <p>Next level at 30 XP</p>
+                    </div>
+                </div>
+                <div class="glass-card db-stat-card">
+                    <span class="stat-icon">⏱️</span>
+                    <div>
+                        <h4>Contribution Hours</h4>
+                        <h3 id="db-stat-hours">12 Hrs</h3>
+                        <p>Simulated tracking</p>
+                    </div>
+                </div>
+                <div class="glass-card db-stat-card">
+                    <span class="stat-icon">🌱</span>
+                    <div>
+                        <h4>Crops Planted</h4>
+                        <h3 id="db-stat-crops">8 Crops</h3>
+                        <p>Across active farms</p>
+                    </div>
+                </div>
+                <div class="glass-card db-stat-card">
+                    <span class="stat-icon">🚐</span>
+                    <div>
+                        <h4>Active Commits</h4>
+                        <h3 id="db-stat-commits">1 Roster</h3>
+                        <p>Expeditions booked</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Split Layout -->
+            <div class="db-split-layout">
+                <div class="db-main-column">
+                    <!-- Section: My Committed Tasks -->
+                    <div class="db-sub-section">
+                        <h3 class="db-sec-title">🗓️ My Committed Expeditions</h3>
+                        <div class="db-commitments-list" id="db-commitments-container">
+                            <div class="no-commits glass-card">
+                                <p>You haven't committed to any laboratory tasks yet! Explore the tasks and book your slot.</p>
+                                <a href="#projects" class="btn btn-primary btn-sm">Find Tasks</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section: Personalized Recommendations -->
+                    <div class="db-sub-section">
+                        <h3 class="db-sec-title">✨ Recommended For Your Skills</h3>
+                        <p class="db-sec-desc">Tailored matches based on your registered talents.</p>
+                        <div class="projects-grid" id="db-recommendations-container">
+                            <!-- Tailored cards loaded via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="db-sidebar-column">
+                    <!-- Section: Harvest Pickup Pass -->
+                    <div class="glass-card harvest-pass-card">
+                        <div class="pass-header">
+                            <span class="pass-tag">AUTUMN PANTRY SHARE</span>
+                            <h3>🌾 Free Harvest Claim</h3>
+                        </div>
+                        
+                        <div class="pass-body">
+                            <p class="pass-explanation">Your active volunteering guarantees you a bi-weekly box of fresh, organic crops harvested directly from our sanctuaries.</p>
+                            
+                            <!-- Dyn Vector QR -->
+                            <div class="qr-vector-container">
+                                <div class="qr-frame">
+                                    <div class="qr-box border-tl"></div>
+                                    <div class="qr-box border-tr"></div>
+                                    <div class="qr-box border-bl"></div>
+                                    <div class="qr-box border-br"></div>
+                                    
+                                    <!-- Stylized QR blocks -->
+                                    <div class="qr-row">
+                                        <span class="qr-block filled"></span><span class="qr-block filled"></span><span class="qr-block"></span><span class="qr-block filled"></span><span class="qr-block filled"></span>
+                                    </div>
+                                    <div class="qr-row">
+                                        <span class="qr-block filled"></span><span class="qr-block"></span><span class="qr-block filled"></span><span class="qr-block"></span><span class="qr-block filled"></span>
+                                    </div>
+                                    <div class="qr-row">
+                                        <span class="qr-block"></span><span class="qr-block filled"></span><span class="qr-block filled"></span><span class="qr-block filled"></span><span class="qr-block"></span>
+                                    </div>
+                                    <div class="qr-row">
+                                        <span class="qr-block filled"></span><span class="qr-block filled"></span><span class="qr-block"></span><span class="qr-block"></span><span class="qr-block filled"></span>
+                                    </div>
+                                    <div class="qr-row">
+                                        <span class="qr-block filled"></span><span class="qr-block"></span><span class="qr-block filled"></span><span class="qr-block filled"></span><span class="qr-block filled"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="pass-code-field">
+                                <span class="pass-lbl">CLAIM CODE</span>
+                                <h4 class="pass-val" id="db-pass-claim-code">TC-HARVEST-4920</h4>
+                            </div>
+
+                            <div class="pass-details">
+                                <div class="pass-det-item">
+                                    <span class="pass-lbl">STATUS</span>
+                                    <span class="pass-val-sec status-active" id="db-pass-status">READY FOR PICKUP</span>
+                                </div>
+                                <div class="pass-det-item">
+                                    <span class="pass-lbl">BOX VALUE</span>
+                                    <span class="pass-val-sec" id="db-pass-volume">~12kg Assorted Crops</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pass-footer">
+                            <span>📍 Pickup: Sector 4 Bio-Hub</span>
+                            <span>Saturdays 09:00 - 15:00</span>
+                        </div>
+                    </div>
+
+                    <!-- Section: Eco-Callings Medal Cabinet -->
+                    <div class="glass-card medal-cabinet-card" style="margin-top: 25px;">
+                        <div class="pass-header">
+                            <span class="pass-tag">UNLOCKABLE MILESTONES</span>
+                            <h3>🎖️ Eco-Callings Cabinet</h3>
+                        </div>
+                        <div class="medal-grid" id="db-medals-cabinet">
+                            <!-- 3D flip card medals loaded dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Section: Expedition Transit & Carpool Scheduler -->
+                    <div class="glass-card transit-scheduler-card" style="margin-top: 25px;">
+                        <div class="pass-header">
+                            <span class="pass-tag">EXPEDITION LOGISTICS</span>
+                            <h3>🚐 Transit & Carpool Hub</h3>
+                        </div>
+                        <div class="transit-body">
+                            <p class="pass-explanation font-sm" style="font-size: 0.8rem; line-height: 1.4; color: var(--text-muted); margin-bottom: 12px;">Coordinate transit for weekend tasks. Ride the cooperative shuttle or host/join member carpools.</p>
+                            
+                            <div class="transit-selection-panel" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+                                <label class="transit-radio-lbl" style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                                    <input type="radio" name="user-transit-type" value="shuttle" checked>
+                                    <span>🚌 Ride Cooperative Shuttle</span>
+                                </label>
+                                <label class="transit-radio-lbl" style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                                    <input type="radio" name="user-transit-type" value="driver">
+                                    <span>🚗 Drive & Host a Carpool</span>
+                                </label>
+                                <label class="transit-radio-lbl" style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer;">
+                                    <input type="radio" name="user-transit-type" value="passenger">
+                                    <span>🚶 Join a Member Carpool</span>
+                                </label>
+                            </div>
+
+                            <!-- Contextual transit feedback -->
+                            <div class="transit-details-box" id="transit-context-details" style="padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); font-size: 0.8rem;">
+                                <!-- Loaded dynamically based on radio selection -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: MANAGER ADMINISTRATIVE DASHBOARD (LOGGED IN ONLY - MANAGERS) -->
+        <section id="manager" class="spa-section manager-only">
+            <div class="dashboard-header glass-card">
+                <div class="dashboard-welcome">
+                    <span class="db-badge" style="background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.2); color: var(--secondary);">COOPERATIVE DIRECTOR</span>
+                    <h2 id="mgr-greeting">Manager Portal: Elena</h2>
+                    <p>Overseeing farm leases, youth tours, tool donations, and volunteer coordinates.</p>
+                </div>
+                
+                <div class="db-current-badges">
+                    <div class="db-badge-bubble" style="border-color: var(--secondary-glow);">
+                        <span class="db-bubble-icon">🚜</span>
+                        <div>
+                            <span class="db-bubble-lbl" style="color: var(--secondary);">Security clearance</span>
+                            <span class="db-bubble-val" style="color: var(--secondary);">Root Director</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manager Overview metrics -->
+            <div class="db-stats-grid">
+                <div class="glass-card db-stat-card">
+                    <span class="stat-icon" style="color: var(--secondary);">🗺️</span>
+                    <div>
+                        <h4>Sanctuary Tracts</h4>
+                        <h3 id="mgr-metric-farms">3 Active</h3>
+                        <p>Under stewardship</p>
+                    </div>
+                </div>
+                <div class="glass-card db-stat-card">
+                    <span class="stat-icon" style="color: var(--secondary);">✍️</span>
+                    <div>
+                        <h4>Pending Leases</h4>
+                        <h3 id="mgr-metric-leases">3 Offers</h3>
+                        <p id="mgr-metric-leases-active">12 approved total</p>
+                    </div>
+                </div>
+                <div class="glass-card db-stat-card">
+                    <span class="stat-icon" style="color: var(--secondary);">🎓</span>
+                    <div>
+                        <h4>Pending Youth Tours</h4>
+                        <h3 id="mgr-metric-tours">2 Requests</h3>
+                        <p id="mgr-metric-tours-done">4 tours completed</p>
+                    </div>
+                </div>
+                <div class="glass-card db-stat-card">
+                    <span class="stat-icon" style="color: var(--secondary);">🎁</span>
+                    <div>
+                        <h4>Equipment Donations</h4>
+                        <h3 id="mgr-metric-donations">4 Ledgers</h3>
+                        <p>Total asset value: $8,400</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manager Tabs Panel -->
+            <div class="manager-dashboard-tabs glass-card">
+                <div class="mgr-tab-header">
+                    <button class="mgr-tab-btn active" data-mgr-target="mgr-panel-leases">✍️ Land Lease Proposals</button>
+                    <button class="mgr-tab-btn" data-mgr-target="mgr-panel-tours">🎓 Educational School Tours</button>
+                    <button class="mgr-tab-btn" data-mgr-target="mgr-panel-rosters">👥 Live Volunteer Shuttle Rosters</button>
+                    <button class="mgr-tab-btn" data-mgr-target="mgr-panel-donations">🎁 Equipment Donations Ledger</button>
+                </div>
+
+                <!-- Tab 1: Lease Proposals -->
+                <div class="mgr-tab-panel active" id="mgr-panel-leases">
+                    <h3 class="panel-heading">Pending Land Lease Proposals</h3>
+                    <p class="panel-sub">Landowners offering properties for syntropic cultivation under TerraCoop's free stewardship program.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="mgr-table">
+                            <thead>
+                                <tr>
+                                    <th>Landowner</th>
+                                    <th>Proposed Site & Location</th>
+                                    <th>Dimensions</th>
+                                    <th>Soil & Features</th>
+                                    <th>Proposed Term</th>
+                                    <th>Action Hooks</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mgr-lease-table-body">
+                                <!-- Loaded dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Youth Tours -->
+                <div class="mgr-tab-panel" id="mgr-panel-tours">
+                    <h3 class="panel-heading">Youth School Tours & Botanical Classes</h3>
+                    <p class="panel-sub">Coordinating engagements with schools, community clubs, and scouts to build eco-literacy.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="mgr-table">
+                            <thead>
+                                <tr>
+                                    <th>School / Group Name</th>
+                                    <th>Sanctuary Target</th>
+                                    <th>Date Preference</th>
+                                    <th>Cohort Headcount</th>
+                                    <th>Class Theme / Age Group</th>
+                                    <th>Status / Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mgr-tours-table-body">
+                                <!-- Loaded dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Volunteer Rosters -->
+                <div class="mgr-tab-panel" id="mgr-panel-rosters">
+                    <h3 class="panel-heading">Sanctuary Expedition Rosters & Shuttle Allocations</h3>
+                    <p class="panel-sub">Real-time cohort roster checking. Coordinates shuttle seating for upcoming weekend work-trips.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="mgr-table">
+                            <thead>
+                                <tr>
+                                    <th>Volunteer Name</th>
+                                    <th>Registered Email</th>
+                                    <th>Expeditions Booked</th>
+                                    <th>Cohort Availability</th>
+                                    <th>Primary Callings</th>
+                                    <th>Access Pass</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mgr-rosters-table-body">
+                                <!-- Loaded dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Donations Ledger -->
+                <div class="mgr-tab-panel" id="mgr-panel-donations">
+                    <h3 class="panel-heading">Physical Materials & Equipment Contributions</h3>
+                    <p class="panel-sub">Asset ledger logging tools, seeds, compost kits, and heavy structures provided free by patrons.</p>
+                    
+                    <div class="table-responsive">
+                        <table class="mgr-table">
+                            <thead>
+                                <tr>
+                                    <th>Benefactor</th>
+                                    <th>Resource Item Description</th>
+                                    <th>Category Tag</th>
+                                    <th>Estimated Value</th>
+                                    <th>Allocated Farm Sanctuary</th>
+                                    <th>Receipt Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mgr-donations-table-body">
+                                <!-- Loaded dynamically via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: OUR FARMS Explorer -->
+        <section id="farms" class="spa-section">
+            <div class="section-header">
+                <div class="badge-accent">📍 Local Havens</div>
+                <h2>The TerraCoop Farm Network</h2>
+                <p>We work across three distinct micro-climates, each testing unique ecological and botanical protocols.</p>
+            </div>
+
+            <!-- Farms View Toggle -->
+            <div class="pantry-tabs-container" style="margin-bottom: 30px; display: flex; justify-content: center; gap: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px;">
+                <button class="tab-btn active" id="tab-btn-farms-cards" style="background: none; border: none; font-family: inherit; font-size: 0.95rem; color: var(--text-muted); cursor: pointer; padding: 8px 16px; border-bottom: 2px solid transparent; transition: all 0.3s ease;">🗂️ Farm Sanctuaries Directory</button>
+                <button class="tab-btn" id="tab-btn-farms-grid" style="background: none; border: none; font-family: inherit; font-size: 0.95rem; color: var(--text-muted); cursor: pointer; padding: 8px 16px; border-bottom: 2px solid transparent; transition: all 0.3s ease;">🗺️ Interactive Syntropic Ag-Grid</button>
+            </div>
+
+            <!-- Farms Cards Layout -->
+            <div class="farms-grid active" id="farms-list-container">
+                <div class="loading-shimmer glass-card" style="height: 400px; width: 100%;"></div>
+            </div>
+
+            <!-- Interactive Ag-Grid Map Layout -->
+            <div class="farm-grid-map-container" id="farms-grid-container" style="display: none; flex-direction: column; gap: 20px;">
+                <!-- Selection of Farm -->
+                <div class="grid-farm-selector" style="margin-bottom: 15px; display: flex; gap: 15px; justify-content: center;">
+                    <button class="btn btn-secondary active btn-farm-sel" data-farm-grid-target="oakridge" style="font-size: 0.85rem; padding: 8px 16px;">Oakridge Grounds (Permaculture)</button>
+                    <button class="btn btn-secondary btn-farm-sel" data-farm-grid-target="solaris" style="font-size: 0.85rem; padding: 8px 16px;">Solaris Lab (Greenhouse)</button>
+                </div>
+                
+                <div class="ag-grid-split" style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 25px;">
+                    <!-- Left: Interactive Visual Grid -->
+                    <div class="glass-card ag-grid-visual-card" style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                        <div class="ag-grid-legend" style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center; font-size: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 12px; margin-bottom: 5px;">
+                            <span class="legend-item" style="display: flex; align-items: center; gap: 6px;"><span class="legend-dot status-idle" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: rgba(255,255,255,0.15);"></span> Available Slot</span>
+                            <span class="legend-item" style="display: flex; align-items: center; gap: 6px;"><span class="legend-dot status-planted" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: var(--primary-accent);"></span> Active Guild Sown</span>
+                            <span class="legend-item" style="display: flex; align-items: center; gap: 6px;"><span class="legend-dot status-telemetry" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: hsl(190, 90%, 50%);"></span> Telemetry Sensor Active</span>
+                            <span class="legend-item" style="display: flex; align-items: center; gap: 6px;"><span class="legend-dot status-reserved" style="width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: var(--secondary);"></span> Reserved By You</span>
+                        </div>
+                        <div class="farm-grid-matrix" id="farm-grid-matrix-root" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; aspect-ratio: 1; max-width: 480px; margin: 0 auto; width: 100%;">
+                            <!-- Populated dynamically as a 6x6 interactive grid -->
+                        </div>
+                    </div>
+
+                    <!-- Right: Grid Cell Information / Interactive Reservation Card -->
+                    <div class="glass-card ag-grid-detail-card" id="ag-grid-detail-panel" style="padding: 20px; display: flex; flex-direction: column; justify-content: center; min-height: 350px;">
+                        <div class="detail-empty-state" style="text-align: center; color: var(--text-muted); display: flex; flex-direction: column; gap: 10px; align-items: center;">
+                            <span class="detail-empty-icon" style="font-size: 2.2rem; display: block;">📍</span>
+                            <h4>Interactive Grid Node</h4>
+                            <p style="font-size: 0.85rem; line-height: 1.5;">Click any sector in the visual agricultural grid map to view active companion guilds, telemetric soil feedback, and commit to slot stewardship.</p>
+                        </div>
+                        <div class="detail-content-area" id="ag-grid-detail-content" style="display: none; flex-direction: column; gap: 15px;">
+                            <!-- Populated dynamically via click -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: PROJECTS / VOLUNTEER TASK-BOARD -->
+        <section id="projects" class="spa-section">
+            <div class="section-header">
+                <div class="badge-accent">🔨 Get Involved</div>
+                <h2>Active Laboratory Tasks</h2>
+                <p>Volunteering is hands-on. Choose a project matching your interests, commit to a task, and meet us on the next weekend expedition!</p>
+            </div>
+
+            <!-- Interactive Task Grid -->
+            <div class="projects-grid" id="projects-board-container">
+                <div class="loading-shimmer glass-card" style="height: 300px; width: 100%;"></div>
+            </div>
+
+            <!-- Gamified Community Notice -->
+            <div class="glass-card community-notice-card">
+                <div class="notice-info">
+                    <h3>💡 How Task Commitments Work</h3>
+                    <p>When you click "Commit to Task", you are added to the field-trip cohort for that project. Our system aggregates volunteer rosters to arrange free shuttle buses, safety gears, and camp provisions.</p>
+                </div>
+                <div class="notice-stat">
+                    <span class="notice-num" id="notice-active-cohorts">14</span>
+                    <span class="notice-lbl">Cohorts Active This Weekend</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: YOUTH PROGRAMS & TOURS HUB -->
+        <section id="tours" class="spa-section">
+            <div class="section-header">
+                <div class="badge-accent">🎓 Botanical Education</div>
+                <h2>Youth Tours & Group Classes</h2>
+                <p>Building ecological awareness in local youth circles. We offer weekday field trips, weekend scout tours, and practical classroom sessions at zero expense.</p>
+            </div>
+
+            <div class="apply-container" style="margin-bottom: 60px;">
+                <div class="apply-info-side">
+                    <h3>🌱 Our Curricular Offerings</h3>
+                    <p>All group sessions are led by certified cooperative agronomists, combining hands-on farming with basic micro-botany courses.</p>
+                    
+                    <div class="benefits-checklist">
+                        <div class="benefit-item">
+                            <span class="check-icon">✓</span>
+                            <div>
+                                <h4>K-12 School Field Trips</h4>
+                                <p>Interactive weed-pulling, seed sowing, and microscopic inspection of soil ecosystems. Fully aligned with biology curricula.</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="check-icon">✓</span>
+                            <div>
+                                <h4>Scout Merit Badges</h4>
+                                <p>Practical forestry and conservation tasks matching scouting requirements. Includes free overnight farm camping permissions.</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="check-icon">✓</span>
+                            <div>
+                                <h4>Green-Rooftop Classes</h4>
+                                <p>Short 2-hour microgreen workshops for city kids right in our Solaris metropolitan greenhouse laboratory.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="apply-form-side">
+                    <div class="glass-card form-wizard-card">
+                        <h3>Schedule a Youth Tour / Class</h3>
+                        <p class="step-desc font-sm">Complete this form to submit your cohort booking request. Cooperative managers will review and schedule your bus shuttle.</p>
+                        
+                        <form id="youth-tour-booking-form">
+                            <div class="form-group">
+                                <label for="tour-school">School / Organization Name</label>
+                                <input type="text" id="tour-school" placeholder="e.g. Greenwood Elementary Scouts" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tour-email">Coordinator Email Address</label>
+                                <input type="email" id="tour-email" placeholder="e.g. director@greenwood.edu" required>
+                            </div>
+
+                            <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px;">
+                                <div class="form-group">
+                                    <label for="tour-headcount">Student Headcount</label>
+                                    <input type="number" id="tour-headcount" min="5" max="50" placeholder="e.g. 25" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="tour-date">Preferred Date</label>
+                                    <input type="date" id="tour-date" required>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tour-farm">Preferred Farm Sanctuary</label>
+                                <select id="tour-farm" required>
+                                    <option value="Solaris Greenhouse Lab">Solaris Greenhouse Lab (Metropolitan Dome)</option>
+                                    <option value="Oakridge Permaculture Grounds">Oakridge Permaculture Grounds (Farm Valley)</option>
+                                    <option value="Whispering Pines Agroforestry">Whispering Pines Agroforestry (Mountain Forest)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="tour-theme">Class Theme & Age Group</label>
+                                <input type="text" id="tour-theme" placeholder="e.g. 5th Grade Biology - Mycorrhizal Networks" required>
+                            </div>
+
+                            <div class="step-actions">
+                                <span></span><!-- spacer -->
+                                <button type="submit" class="btn btn-primary glow-btn" id="btn-submit-tour">Request Booking 🎓</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Educational Schedules -->
+            <div class="notice-bar glass-card text-center" style="border-color: rgba(16, 185, 129, 0.15); padding: 25px;">
+                <h4 style="margin-bottom: 5px; color: var(--primary-accent);">💡 Shared Educational Transit</h4>
+                <p style="font-size: 0.9rem; color: var(--text-secondary);">We cover the cost of private environmental transit buses to bring groups to the sanctuaries. Funding is subsidized entirely by cooperative agricultural donations and surplus crop distributions.</p>
+            </div>
+        </section>
+
+        <!-- SECTION: LAND LEASE & ASSET DONATION PORTAL -->
+        <section id="leases" class="spa-section">
+            <div class="section-header">
+                <div class="badge-accent">🎁 Cooperative Support</div>
+                <h2>Land Leases & Crop Donations</h2>
+                <p>TerraCoop expands strictly through collective generosity. We accept non-commercial land leases from property owners and equipment donations from patrons.</p>
+            </div>
+
+            <div class="pantry-tabs-container">
+                <button class="tab-btn active" id="tab-btn-lease-form" data-target="panel-lease-form">✍️ Submit Land Lease Offer</button>
+                <button class="tab-btn" id="tab-btn-donation-form" data-target="panel-donation-form">🎁 Donate Tools & Materials</button>
+            </div>
+
+            <!-- Panel A: Submit Lease Offer -->
+            <div class="pantry-panel active" id="panel-lease-form">
+                <div class="apply-container">
+                    <div class="apply-info-side">
+                        <h3>🌿 Offering Land for Cooperative Cultivation</h3>
+                        <p>Have an uncultivated backyard, pasture, or commercial rooftop? Lease it to TerraCoop for free, and let our volunteers convert it into a thriving biological sanctuary.</p>
+                        
+                        <div class="benefits-checklist" style="margin-top: 30px;">
+                            <div class="benefit-item">
+                                <span class="check-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--secondary);">✓</span>
+                                <div>
+                                    <h4>Dynamic Soil Regeneration</h4>
+                                    <p>Our soil scientists will restore your property's organic nutrient cycles using advanced syntropic and companion methodologies.</p>
+                                </div>
+                            </div>
+                            <div class="benefit-item">
+                                <span class="check-icon" style="background: rgba(245, 158, 11, 0.15); color: var(--secondary);">✓</span>
+                                <div>
+                                    <h4>Equal Landowner Share</h4>
+                                    <p>Landowners are registered as premium cooperative members, receiving regular deliveries of whatever crop boxes are harvested from their land.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="apply-form-side">
+                        <div class="glass-card form-wizard-card" style="border-color: var(--secondary-glow);">
+                            <h3>Free Lease Application Form</h3>
+                            <p class="step-desc font-sm">Provide details on your land tract. Cooperative managers will analyze soil viability and schedules.</p>
+                            
+                            <form id="land-lease-application-form">
+                                <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px;">
+                                    <div class="form-group">
+                                        <label for="lease-owner">Landowner Name</label>
+                                        <input type="text" id="lease-owner" placeholder="Rowan Green" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lease-email">Contact Email</label>
+                                        <input type="email" id="lease-email" placeholder="rowan@gmail.com" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="lease-location">Property Address & Location</label>
+                                    <input type="text" id="lease-location" placeholder="e.g. Sector 5 Hills, plot 49" required>
+                                </div>
+
+                                <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px;">
+                                    <div class="form-group">
+                                        <label for="lease-dims">Approximate Dimensions</label>
+                                        <input type="text" id="lease-dims" placeholder="e.g. 1.2 Hectares" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lease-term">Proposed Lease Term</label>
+                                        <select id="lease-term" required>
+                                            <option value="3-Year Stewardship">3-Year Stewardship Lease</option>
+                                            <option value="5-Year Stewardship">5-Year Stewardship Lease</option>
+                                            <option value="Indefinite Eco-Trust">Indefinite Eco-Trust Lease</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="lease-features">Soil Condition, Water Access & Special Features</label>
+                                    <textarea id="lease-features" rows="3" placeholder="e.g. Clay-rich soil with active spring water well and full sunshine coverage..." required></textarea>
+                                </div>
+
+                                <div class="step-actions">
+                                    <span></span><!-- spacer -->
+                                    <button type="submit" class="btn btn-primary btn-success glow-btn" id="btn-submit-lease">Send Lease Proposal ✍️</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel B: Tool & Materials Donations -->
+            <div class="pantry-panel" id="panel-donation-form">
+                <div class="apply-container">
+                    <div class="apply-info-side">
+                        <h3>🎁 Support Us With Botanical Assets</h3>
+                        <p>We are entirely volunteer-driven. Your contribution of seedlings, micro-drip tubing, micro-sensors, compost, or heavy farming machinery directly reduces cooperative costs.</p>
+                        
+                        <div class="notice-bar glass-card text-center" style="margin-top: 30px; border-color: rgba(245, 158, 11, 0.2);">
+                            <p>📝 <strong>Patron Policy:</strong> All donations are logged transparently on our public ledger and allocated straight to our active sanctuaries.</p>
+                        </div>
+                    </div>
+
+                    <div class="apply-form-side">
+                        <div class="glass-card form-wizard-card" style="border-color: var(--secondary-glow);">
+                            <h3>Materials Donation Form</h3>
+                            <p class="step-desc font-sm">Log your equipment or resource donation. Our logistics shuttle can pick up large materials.</p>
+                            
+                            <form id="material-donation-form">
+                                <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px;">
+                                    <div class="form-group">
+                                        <label for="don-name">Patron Name</label>
+                                        <input type="text" id="don-name" placeholder="Rowan Green" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="don-email">Contact Email</label>
+                                        <input type="email" id="don-email" placeholder="rowan@gmail.com" required>
+                                    </div>
+                                </div>
+
+                                <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px;">
+                                    <div class="form-group">
+                                        <label for="don-item">Resource Description</label>
+                                        <input type="text" id="don-item" placeholder="e.g. 50m Drip-Irrigation Hose" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="don-category">Resource Category</label>
+                                        <select id="don-category" required>
+                                            <option value="Tools & Hardware">Tools & Hardware</option>
+                                            <option value="Seeds & Saplings">Seeds & Saplings</option>
+                                            <option value="Electronics & Sensors">Electronics & Sensors</option>
+                                            <option value="Heavy Machinery">Heavy Machinery</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 10px;">
+                                    <div class="form-group">
+                                        <label for="don-value">Est. Value (USD)</label>
+                                        <input type="number" id="don-value" min="10" placeholder="e.g. 150" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="don-farm">Target Allocation Sanctuary</label>
+                                        <select id="don-farm" required>
+                                            <option value="Solaris Greenhouse Lab">Solaris Greenhouse Lab</option>
+                                            <option value="Oakridge Permaculture Grounds">Oakridge Permaculture Grounds</option>
+                                            <option value="Whispering Pines Agroforestry">Whispering Pines Agroforestry</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="step-actions">
+                                    <span></span><!-- spacer -->
+                                    <button type="submit" class="btn btn-primary btn-success glow-btn" id="btn-submit-donation">Register Donation 🎁</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: PANTRY & SCIENCE SHOWCASE -->
+        <section id="produce" class="spa-section">
+            <div class="section-header text-center">
+                <div class="badge-accent">🍎 Abundant Returns</div>
+                <h2>Science & Harvest Pantry</h2>
+                <p>Explore the botanical knowledge we document and the organic goods our sanctuaries yield.</p>
+            </div>
+
+            <!-- Tab Toggles -->
+            <div class="pantry-tabs-container">
+                <button class="tab-btn active" id="tab-btn-produce" data-target="produce-gallery">🌾 Shared Harvest</button>
+                <button class="tab-btn" id="tab-btn-science" data-target="science-papers">🔬 Research Studies</button>
+                <button class="tab-btn" id="tab-btn-exchange" data-target="exchange-ledger">🔄 Seed & Soil Exchange</button>
+            </div>
+
+            <!-- Panel 1: Produce Pantry -->
+            <div class="pantry-panel active" id="produce-gallery">
+                <div class="notice-bar glass-card text-center">
+                    <p>⚠️ <strong>Strict Policy:</strong> All products are free to active volunteers and local community shelters. Commercial sale is strictly prohibited.</p>
+                </div>
+                <div class="produce-grid" id="produce-items-container">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Panel 2: Science Papers -->
+            <div class="pantry-panel" id="science-papers">
+                <div class="papers-grid" id="science-papers-container">
+                    <!-- Loaded dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- Panel 3: Seed & Compost Exchange Ledger -->
+            <div class="pantry-panel" id="exchange-ledger">
+                <div class="notice-bar glass-card text-center">
+                    <p>🤝 <strong>Cooperative Barter:</strong> Post excess heirloom seeds or active castings. Claim items to expand your local biological buffers.</p>
+                </div>
+                
+                <div class="exchange-action-bar" style="margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <h3 style="font-size: 1.25rem; margin: 0;">Active Community Exchange Offers</h3>
+                    <button class="btn btn-primary glow-btn" id="btn-trigger-swap-modal" style="font-size: 0.85rem; padding: 8px 16px;">Offer Seeds / Compost ➕</button>
+                </div>
+
+                <div class="produce-grid" id="exchange-items-container">
+                    <!-- Exchange cards loaded dynamically -->
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: BOTANICAL LIBRARY -->
+        <section id="library" class="spa-section">
+            <div class="section-header text-center">
+                <div class="badge-accent">📚 Digital Archive</div>
+                <h2>Botanical Reference Library</h2>
+                <p>Access our community-curated collection of permaculture books, soil science studies, and ag-tech guides.</p>
+            </div>
+
+            <!-- Search & Filters -->
+            <div class="library-search-bar glass-card" style="padding: 20px; display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px;">
+                <input type="text" id="library-search-input" placeholder="Search references by title, author, or keyword..." style="width: 100%; padding: 12px 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); color: var(--text-primary); font-family: inherit; font-size: 0.95rem;">
+                <div class="library-filter-tabs" style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                    <button class="lib-tab-btn active" data-lib-category="all" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: var(--text-primary); padding: 6px 16px; border-radius: 20px; font-family: inherit; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;">All References</button>
+                    <button class="lib-tab-btn" data-lib-category="permaculture" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); padding: 6px 16px; border-radius: 20px; font-family: inherit; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;">Permaculture</button>
+                    <button class="lib-tab-btn" data-lib-category="soil" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); padding: 6px 16px; border-radius: 20px; font-family: inherit; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;">Soil & Mycology</button>
+                    <button class="lib-tab-btn" data-lib-category="ag-tech" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); color: var(--text-muted); padding: 6px 16px; border-radius: 20px; font-family: inherit; font-size: 0.85rem; cursor: pointer; transition: all 0.3s ease;">Ag-Tech & Electronics</button>
+                </div>
+            </div>
+
+            <!-- Bookshelf Grid -->
+            <div class="bookshelf-grid" id="bookshelf-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; margin-bottom: 5px;">
+                <!-- Loaded dynamically via JS -->
+            </div>
+
+            <!-- Off-Canvas Slide-Out Reading Drawer -->
+            <div class="reading-drawer glass-card" id="reading-drawer" style="position: fixed; top: 0; right: -420px; width: 400px; height: 100vh; background: rgba(17, 24, 39, 0.85); backdrop-filter: blur(25px); border-left: 1px solid rgba(255,255,255,0.1); box-shadow: -10px 0 30px rgba(0,0,0,0.5); z-index: 2000; padding: 30px; display: flex; flex-direction: column; gap: 20px; transition: right 0.40s cubic-bezier(0.16, 1, 0.3, 1);">
+                <button class="btn-close-drawer" id="btn-close-drawer" style="align-self: flex-end; background: none; border: none; font-size: 1.25rem; color: var(--text-muted); cursor: pointer; transition: color 0.2s ease;">✕</button>
+                <div class="drawer-content" id="drawer-content-area" style="display: flex; flex-direction: column; gap: 20px; overflow-y: auto; flex-grow: 1; padding-right: 5px;">
+                    <!-- Dynamic book summary details -->
+                </div>
+            </div>
+
+        <!-- SECTION: APPLICATION STEPPER FORM (LOGGED OUT ONLY) -->
+        <section id="apply" class="spa-section logged-out-only">
+            <div class="apply-container">
+                <div class="apply-info-side">
+                    <div class="badge-accent">🤝 Free Membership</div>
+                    <h2>Start Your Ecological Journey</h2>
+                    <p>Joining TerraCoop opens access to all farms, free workshops, travel shuttles, and research mentorships.</p>
+                    
+                    <div class="benefits-checklist">
+                        <div class="benefit-item">
+                            <span class="check-icon">✓</span>
+                            <div>
+                                <h4>No Subscription Fees</h4>
+                                <p>We rely strictly on hands-on volunteering and goodwill. Zero financial barriers.</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="check-icon">✓</span>
+                            <div>
+                                <h4>Transit & Camping Included</h4>
+                                <p>We cover shared eco-transit (buses) to far-off farms and supply camping tents.</p>
+                            </div>
+                        </div>
+                        <div class="benefit-item">
+                            <span class="check-icon">✓</span>
+                            <div>
+                                <h4>Equal Produce Share</h4>
+                                <p>Active members receive a bi-weekly box of whatever fresh organic crops are harvested.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="apply-form-side">
+                    <div class="glass-card form-wizard-card">
+                        <!-- Stepper Progress Header -->
+                        <div class="stepper-header">
+                            <div class="step-indicator active" id="step-ind-1">
+                                <span class="step-num">1</span>
+                                <span class="step-label">Identity</span>
+                            </div>
+                            <div class="step-line" id="step-line-1"></div>
+                            <div class="step-indicator" id="step-ind-2">
+                                <span class="step-num">2</span>
+                                <span class="step-label">Interests</span>
+                            </div>
+                            <div class="step-line" id="step-line-2"></div>
+                            <div class="step-indicator" id="step-ind-3">
+                                <span class="step-num">3</span>
+                                <span class="step-label">Preference</span>
+                            </div>
+                        </div>
+
+                        <!-- Stepper Form -->
+                        <form id="membership-application-form">
+                            <!-- STEP 1: PERSONAL INFORMATION -->
+                            <div class="form-step active" id="form-step-1">
+                                <h3>Who are you, soil friend?</h3>
+                                <p class="step-desc font-sm">Tell us a bit about yourself so we can register your file.</p>
+                                
+                                <div class="form-group">
+                                    <label for="apply-name">Full Name</label>
+                                    <input type="text" id="apply-name" name="name" placeholder="e.g. Rowan Green" required>
+                                    <span class="error-msg" id="err-name">Please enter your name</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="apply-email">Email Address</label>
+                                    <input type="email" id="apply-email" name="email" placeholder="e.g. rowan@gmail.com" required>
+                                    <span class="error-msg" id="err-email">Please enter a valid email</span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="apply-phone">Phone Number</label>
+                                    <input type="tel" id="apply-phone" name="phone" placeholder="e.g. +1 (555) 123-4567" required>
+                                    <span class="error-msg" id="err-phone">Please enter a phone number</span>
+                                </div>
+
+                                <div class="form-group checkbox-group">
+                                    <input type="checkbox" id="apply-age-check" name="age_check" required>
+                                    <label for="apply-age-check">I confirm that I am 18 years or older, or have legal parent/guardian waiver for traveling.</label>
+                                </div>
+
+                                <div class="step-actions">
+                                    <span></span><!-- spacer -->
+                                    <button type="button" class="btn btn-primary btn-wizard" id="btn-next-1">Next Step ➜</button>
+                                </div>
+                            </div>
+
+                            <!-- STEP 2: INTERESTS & TALENTS -->
+                            <div class="form-step" id="form-step-2">
+                                <h3>Select your botanical calling</h3>
+                                <p class="step-desc font-sm">Choose the fields you are excited to learn or apply. No prior experience needed!</p>
+                                
+                                <div class="talents-checkbox-grid">
+                                    <label class="talent-checkbox-card glass-card">
+                                        <input type="checkbox" name="talents" value="Planting & Forestry" checked>
+                                        <span class="talent-icon">🌳</span>
+                                        <span class="talent-title">Planting & Syntropic Forestry</span>
+                                        <span class="talent-desc">Seedling management, tree pruning, companion sowing.</span>
+                                    </label>
+
+                                    <label class="talent-checkbox-card glass-card">
+                                        <input type="checkbox" name="talents" value="Soil & Bio Research">
+                                        <span class="talent-icon">🔬</span>
+                                        <span class="talent-title">Soil & Botanical Research</span>
+                                        <span class="talent-desc">Soil biological tests, data logger setups, water conservation experiments.</span>
+                                    </label>
+
+                                    <label class="talent-checkbox-card glass-card">
+                                        <input type="checkbox" name="talents" value="Carpentry & Building">
+                                        <span class="talent-icon">🔨</span>
+                                        <span class="talent-title">Eco-Carpentry & Infrastructure</span>
+                                        <span class="talent-desc">Building raised beds, constructing tool sheds, off-grid water tanks.</span>
+                                    </label>
+
+                                    <label class="talent-checkbox-card glass-card">
+                                        <input type="checkbox" name="talents" value="Expedition Travel Support">
+                                        <span class="talent-icon">🚐</span>
+                                        <span class="talent-title">Travel & Logistics Crew</span>
+                                        <span class="talent-desc">Camp cooking, supply packing, driving shared shuttles.</span>
+                                    </label>
+
+                                    <label class="talent-checkbox-card glass-card">
+                                        <input type="checkbox" name="talents" value="Media & Events">
+                                        <span class="talent-icon">📸</span>
+                                        <span class="talent-title">Storytelling & Workshop Organizers</span>
+                                        <span class="talent-desc">Photography, conducting farm tours, documenting our research blogs.</span>
+                                    </label>
+                                </div>
+
+                                <div class="step-actions">
+                                    <button type="button" class="btn btn-secondary btn-wizard" id="btn-back-2">⬅ Back</button>
+                                    <button type="button" class="btn btn-primary btn-wizard" id="btn-next-2">Next Step ➜</button>
+                                </div>
+                            </div>
+
+                            <!-- STEP 3: PREFERENCES & SUBMIT -->
+                            <div class="form-step" id="form-step-3">
+                                <h3>Expedition Preferences</h3>
+                                <p class="step-desc font-sm">Almost there! Select where and when you'd like to plant your roots.</p>
+                                
+                                <div class="form-group">
+                                    <label for="apply-favorite-farm">Preferred Primary Farm Laboratory</label>
+                                    <select id="apply-favorite-farm" name="favorite_farm">
+                                        <option value="Oakridge Permaculture Grounds">Oakridge Permaculture Grounds</option>
+                                        <option value="Solaris Greenhouse Lab">Solaris Greenhouse Lab</option>
+                                        <option value="Whispering Pines Agroforestry">Whispering Pines Agroforestry</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="apply-schedule">Primary Availability</label>
+                                    <select id="apply-schedule" name="schedule">
+                                        <option value="Every Weekend (Trips & Camping)">Every Weekend (Trips & Camping)</option>
+                                        <option value="Bi-weekly (Expedition Shuttles)">Bi-weekly (Expedition Shuttles)</option>
+                                        <option value="Weekdays (Greenhouse & Local Science)">Weekdays (Greenhouse & Local Science)</option>
+                                        <option value="Once a month (Syntropic Travel)">Once a month (Syntropic Travel)</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="apply-motivation">Why do you want to join our soil circle? (Optional)</label>
+                                    <textarea id="apply-motivation" name="motivation" rows="3" placeholder="e.g. I want to learn permaculture and meet research minded nature-lovers..."></textarea>
+                                </div>
+
+                                <div class="step-actions">
+                                    <button type="button" class="btn btn-secondary btn-wizard" id="btn-back-3">⬅ Back</button>
+                                    <button type="submit" class="btn btn-primary btn-wizard btn-success glow-btn" id="btn-submit-app">Submit Application 🌱</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION: USER PROFILE SETTINGS (LOGGED IN ONLY) -->
+        <section id="profile" class="spa-section logged-in-only">
+            <div class="apply-container">
+                <div class="apply-info-side">
+                    <div class="badge-accent">🛡️ Member Center</div>
+                    <h2>Manage My Profile</h2>
+                    <p>Customize your avatar icon, modify your registration details, or print your official Digital Membership Card.</p>
+                    
+                    <div class="profile-card-badge-preview">
+                        <!-- Digital Badge loads here dynamically in Profile view -->
+                        <div class="glass-card compact-badge" id="profile-badge-visual">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="apply-form-side">
+                    <div class="glass-card form-wizard-card">
+                        <h3>My Account Settings</h3>
+                        <p class="step-desc font-sm">Updates will dynamically refresh your Digital ID Badge and personalized views.</p>
+                        
+                        <!-- Avatar Selection Panel -->
+                        <div class="form-group">
+                            <label>Choose Profile Avatar Icon</label>
+                            <div class="avatar-select-grid">
+                                <button class="avatar-btn active" data-avatar="🌱">🌱 Seedling</button>
+                                <button class="avatar-btn" data-avatar="🐝">🐝 Bee</button>
+                                <button class="avatar-btn" data-avatar="🍄">🍄 Mushroom</button>
+                                <button class="avatar-btn" data-avatar="🚜">🚜 Tractor</button>
+                                <button class="avatar-btn" data-avatar="☀️">☀️ Sun</button>
+                            </div>
+                        </div>
+
+                        <form id="profile-settings-form">
+                            <div class="form-group">
+                                <label for="profile-name">Full Name</label>
+                                <input type="text" id="profile-name" name="name" placeholder="Full name" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="profile-email">Email Address</label>
+                                <input type="email" id="profile-email" name="email" placeholder="Email" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="profile-phone">Phone Number</label>
+                                <input type="tel" id="profile-phone" name="phone" placeholder="Phone" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="profile-favorite-farm">Preferred Farm Sanctuary</label>
+                                <select id="profile-favorite-farm" name="favorite_farm">
+                                    <option value="Oakridge Permaculture Grounds">Oakridge Permaculture Grounds</option>
+                                    <option value="Solaris Greenhouse Lab">Solaris Greenhouse Lab</option>
+                                    <option value="Whispering Pines Agroforestry">Whispering Pines Agroforestry</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="profile-schedule">Availability Schedule</label>
+                                <select id="profile-schedule" name="schedule">
+                                    <option value="Every Weekend (Trips & Camping)">Every Weekend (Trips & Camping)</option>
+                                    <option value="Bi-weekly (Expedition Shuttles)">Bi-weekly (Expedition Shuttles)</option>
+                                    <option value="Weekdays (Greenhouse & Local Science)">Weekdays (Greenhouse & Local Science)</option>
+                                    <option value="Once a month (Syntropic Travel)">Once a month (Syntropic Travel)</option>
+                                </select>
+                            </div>
+
+                            <div class="step-actions">
+                                <button type="button" class="btn btn-secondary" id="btn-show-pass-modal">⎙ Print Full Badge</button>
+                                <button type="submit" class="btn btn-primary glow-btn" id="btn-save-profile">Save Settings 🌱</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="main-footer glass-card">
+        <div class="footer-container">
+            <div class="footer-brand">
+                <a href="#home" class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12" />
+                        <path d="M12 22V12" />
+                        <path d="M12 12C12 8 16 4 21 4" />
+                        <path d="M12 12C12 15 9 18 6 18" />
+                    </svg>
+                    <span>Terra<span class="highlight">Coop</span></span>
+                </a>
+                <p>Strictly non-commercial collective of environmentalists, scientists, and farmers co-building agricultural sanctuaries.</p>
+            </div>
+            
+            <div class="footer-links">
+                <h4>Navigation</h4>
+                <a href="#home">Home Base</a>
+                <a href="#dashboard" class="logged-in-only volunteer-only">My Dashboard</a>
+                <a href="#manager" class="logged-in-only manager-only">Manager Control</a>
+                <a href="#farms">Our Farms</a>
+                <a href="#projects">Active Tasks</a>
+                <a href="#tours">Youth & Tours</a>
+                <a href="#leases">Leases & Donations</a>
+            </div>
+
+            <div class="footer-details">
+                <h4>Ecosystem Status</h4>
+                <p>📍 Head Office: The Greenhouse Hub, Sector 4, Bio-District</p>
+                <p>📧 Email: hello@terracoop.org</p>
+                <div class="green-stamp">🍀 Carbon Neutral • Open Knowledge</div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2026 TerraCoop Ecological Foundation. Licensed under Creative Commons (CC BY-NC 4.0). Completely free to contribute and join.</p>
+        </div>
+    </footer>
+
+    <!-- TOAST ALERTS CONTAINER -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- DIGITAL VOLUNTEER BADGE MODAL -->
+    <div id="badge-modal" class="modal-overlay">
+        <div class="modal-content glass-card zoom-in">
+            <button class="modal-close" id="btn-close-modal">&times;</button>
+            <div class="modal-badge-container">
+                <div class="ticket-header">
+                    <div class="ticket-logo">
+                        <span>Terra<b>Coop</b></span>
+                    </div>
+                    <span class="ticket-status-badge">ACTIVE PASS</span>
+                </div>
+                
+                <div class="ticket-body">
+                    <div class="badge-glow-ring"></div>
+                    <div class="user-avatar-badge" id="badge-visual-avatar">🌿</div>
+                    
+                    <h2 id="badge-user-name">Rowan Green</h2>
+                    <p class="badge-role">OFFICIAL COHORT MEMBER</p>
+                    
+                    <div class="badge-id-container">
+                        <span class="badge-lbl">MEMBER ID</span>
+                        <span class="badge-id-val" id="badge-user-id">TC-2026-8941</span>
+                    </div>
+
+                    <div class="badge-details-grid">
+                        <div>
+                            <span class="badge-lbl">PRIMARY SITE</span>
+                            <span class="badge-detail-val" id="badge-user-farm">Oakridge Permaculture</span>
+                        </div>
+                        <div>
+                            <span class="badge-lbl">COHORT CYCLE</span>
+                            <span class="badge-detail-val" id="badge-user-schedule">Weekends</span>
+                        </div>
+                    </div>
+
+                    <div class="badge-talents-container">
+                        <span class="badge-lbl">REGISTERED CALLINGS</span>
+                        <div class="badge-talents-list" id="badge-user-talents">
+                            <span class="talent-badge">🌳 Forestry</span>
+                            <span class="talent-badge">🔬 Soil Research</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ticket-barcode-panel">
+                    <div class="barcode">
+                        <div class="bar bar-1"></div>
+                        <div class="bar bar-2"></div>
+                        <div class="bar bar-3"></div>
+                        <div class="bar bar-4"></div>
+                        <div class="bar bar-1"></div>
+                        <div class="bar bar-3"></div>
+                        <div class="bar bar-2"></div>
+                        <div class="bar bar-4"></div>
+                        <div class="bar bar-1"></div>
+                        <div class="bar bar-2"></div>
+                        <div class="bar bar-3"></div>
+                        <div class="bar bar-2"></div>
+                        <div class="bar bar-4"></div>
+                        <div class="bar bar-1"></div>
+                        <div class="bar bar-3"></div>
+                    </div>
+                    <span class="barcode-text">TC-MEMBERSHIP-AUTHENTIC</span>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-primary glow-btn" id="btn-print-badge">⎙ Save Digital Pass</button>
+                <button class="btn btn-secondary" id="btn-close-modal-bottom">Close & Explore</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEED/SOIL EXCHANGE OFFER MODAL -->
+    <div id="swap-modal" class="modal-overlay">
+        <div class="modal-content glass-card zoom-in" style="max-width: 420px;">
+            <button class="modal-close" id="btn-close-swap">&times;</button>
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div class="user-avatar-badge" style="margin: 0 auto 15px auto; width: 60px; height: 60px; font-size: 1.8rem;">🔄</div>
+                <h3>Offer Seeds / Compost</h3>
+                <p class="step-desc font-sm">Provide details about the biological assets you wish to share with other cooperative members.</p>
+            </div>
+            
+            <form id="swap-offer-form">
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label for="swap-item-name" style="display: block; margin-bottom: 6px; font-size: 0.85rem;">Asset Item Name</label>
+                    <input type="text" id="swap-item-name" placeholder="e.g. 50x Organic Purple Cherokee Tomato Seeds" required style="width:100%; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.08); color:var(--text-primary); font-family:inherit; padding:10px;">
+                </div>
+                <div class="form-group-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 12px;">
+                    <div class="form-group">
+                        <label for="swap-category" style="display: block; margin-bottom: 6px; font-size: 0.85rem;">Category</label>
+                        <select id="swap-category" required style="width:100%; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.08); color:var(--text-primary); font-family:inherit; padding:10px;">
+                            <option value="Seeds & Saplings">Seeds & Saplings</option>
+                            <option value="Soil & Bio-Compost">Soil & Bio-Compost</option>
+                            <option value="Micro-Tools">Micro-Tools & Pots</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="swap-quantity" style="display: block; margin-bottom: 6px; font-size: 0.85rem;">Quantity / Volume</label>
+                        <input type="text" id="swap-quantity" placeholder="e.g. 1 Pack, 5kg" required style="width:100%; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.08); color:var(--text-primary); font-family:inherit; padding:10px;">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="swap-notes" style="display: block; margin-bottom: 6px; font-size: 0.85rem;">Condition / Sowing Notes</label>
+                    <textarea id="swap-notes" rows="3" placeholder="e.g. Harvested Autumn 2025. 92% germination rate in warm seedling beds..." required style="width:100%; border-radius:8px; background:rgba(0,0,0,0.2); border:1px solid rgba(255,255,255,0.08); color:var(--text-primary); font-family:inherit; padding:10px; resize: none;"></textarea>
+                </div>
+                <div class="modal-actions" style="margin-top: 15px;">
+                    <button type="submit" class="btn btn-primary glow-btn" style="width: 100%;">Publish Swap Offer 🔄</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ANONYMOUS ACCOUNT LOGIN MODAL -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-content glass-card zoom-in" style="max-width: 380px;">
+            <button class="modal-close" id="btn-close-login">&times;</button>
+            <div style="text-align: center; margin-bottom: 25px;">
+                <div class="user-avatar-badge" style="margin: 0 auto 15px auto; width: 60px; height: 60px; font-size: 1.8rem;">🔑</div>
+                <h3>Welcome back, Soil Friend</h3>
+                <p class="step-desc font-sm">Enter your credentials to restore your sessions and active task rosters.</p>
+                <p style="font-size: 0.75rem; color: var(--secondary); margin-top: 5px;">★ Preload Volunteer: <b>TC-2026-8941</b><br>★ Preload Manager: <b>TC-MGR-7700</b></p>
+            </div>
+
+            <form id="account-login-form">
+                <div class="form-group">
+                    <label for="login-member-id">Unique Member ID</label>
+                    <input type="text" id="login-member-id" placeholder="e.g. TC-2026-8941 or TC-MGR-7700" required>
+                    <span class="error-msg" id="err-login-id">Member ID not found. Use preload codes above to test.</span>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 15px;">
+                    <button type="submit" class="btn btn-primary glow-btn" id="btn-login-submit">Restore Session ➜</button>
+                    <a href="#apply" class="btn btn-secondary" id="btn-login-to-register">No Account? Join Now</a>
+                </div>
+            </form>
+
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.08); text-align: center;">
+                <span class="badge-lbl" style="display: block; margin-bottom: 10px; font-size: 0.65rem;">One-Click Quick Login (Demo)</span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button type="button" class="btn btn-secondary" id="btn-quick-login-vol" style="padding: 8px; font-size: 0.75rem; border-color: rgba(16,185,129,0.25);">🌱 Volunteer</button>
+                    <button type="button" class="btn btn-secondary" id="btn-quick-login-mgr" style="padding: 8px; font-size: 0.75rem; border-color: rgba(245,158,11,0.25);">🚜 Director</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Controller Script -->
+    <script src="app.js"></script>
+</body>
+</html>

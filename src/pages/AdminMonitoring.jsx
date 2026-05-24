@@ -17,7 +17,7 @@ export default function AdminMonitoring() {
   // qr_events to serve as the live system log.
   
   useEffect(() => {
-    if (!user || user.role !== "system_admin") {
+    if (!user || user.system_role !== "system_admin") {
       navigate("/login");
       return;
     }

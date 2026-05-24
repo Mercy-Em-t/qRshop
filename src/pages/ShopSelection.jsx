@@ -3,21 +3,26 @@ import { useNavigate } from "react-router-dom";
 import Logo from "../components/Logo";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
+import MultiShopNoticeboard from "../components/MultiShopNoticeboard";
 
 export default function ShopSelection() {
   const [profiles, setProfiles] = useState([]);
+  const [userId, setUserId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const pending = localStorage.getItem("pending_selection");
     if (pending) {
       setProfiles(JSON.parse(pending));
+      const pId = localStorage.getItem("pending_user_id");
+      if (pId) setUserId(JSON.parse(pId));
     } else {
       const user = getCurrentUser();
       if (!user) {
         navigate("/login");
         return;
       }
+      setUserId(user.id);
 
       async function fetchMyNodes() {
         try {
@@ -120,6 +125,12 @@ export default function ShopSelection() {
             </button>
           ))}
         </div>
+
+        {userId && (
+          <div className="mt-8">
+            <MultiShopNoticeboard userId={userId} />
+          </div>
+        )}
 
         <div className="mt-12 text-center">
            <button 

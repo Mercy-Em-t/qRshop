@@ -8,7 +8,7 @@ export default function DeveloperPortal() {
   const user = getCurrentUser();
 
   useEffect(() => {
-    if (!user || user.role !== "system_admin") {
+    if (!user || user.system_role !== "system_admin") {
       navigate("/login");
     }
   }, [user, navigate]);

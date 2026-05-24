@@ -17,7 +17,7 @@ export default function AdminSEO() {
   const [modalTarget, setModalTarget] = useState({ type: null, id: null, name: "" });
 
   useEffect(() => {
-    if (!user || user.role !== "system_admin") {
+    if (!user || user.system_role !== "system_admin") {
       navigate("/login");
       return;
     }

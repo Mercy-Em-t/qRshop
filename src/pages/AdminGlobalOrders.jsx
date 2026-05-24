@@ -12,7 +12,7 @@ export default function AdminGlobalOrders() {
   const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
-    if (!user || user.role !== "system_admin") {
+    if (!user || user.system_role !== "system_admin") {
       navigate("/login");
       return;
     }

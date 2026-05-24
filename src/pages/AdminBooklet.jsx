@@ -890,7 +890,7 @@ export default function AdminBooklet() {
   const [activeChapter, setActiveChapter] = useState("what-is");
 
   useEffect(() => {
-    if (!user || user.role !== "system_admin") navigate("/login");
+    if (!user || user.system_role !== "system_admin") navigate("/login");
   }, [navigate]);
 
   const chapter = CHAPTERS.find(c => c.id === activeChapter);

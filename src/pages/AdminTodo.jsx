@@ -141,7 +141,7 @@ export default function AdminTodo() {
   const [expanded, setExpanded] = useState("wa-api");
 
   useEffect(() => {
-    if (!user || user.role !== "system_admin") navigate("/login");
+    if (!user || user.system_role !== "system_admin") navigate("/login");
   }, [navigate]);
 
   const priorityColors = {

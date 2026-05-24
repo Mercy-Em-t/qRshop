@@ -279,13 +279,6 @@ export default function ProductDetails() {
                 ))}
               </div>
 
-              {/* Dynamic Overlay View Gallery Button */}
-              <button 
-                onClick={() => openFullscreenGallery(0)}
-                className="absolute bottom-24 right-6 bg-slate-900/80 backdrop-blur-md text-white border border-white/20 px-4.5 py-2.5 rounded-full text-xs font-black uppercase tracking-wider shadow-lg flex items-center gap-1.5 active:scale-95 transition-all cursor-pointer z-10 hover:bg-slate-900"
-              >
-                🔍 View Gallery ({images.length})
-              </button>
             </>
           );
         })()}
@@ -358,13 +351,22 @@ export default function ProductDetails() {
               </div>
             </div>
             {trustBadges.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-white/10">
+              <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-white/10 items-center">
                 {trustBadges.map((badge, idx) => (
                   <span key={idx} className="flex items-center gap-1 bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full text-[9px] font-bold text-white/90 border border-white/10">
                     <span>{badge.icon}</span>
                     <span>{badge.text}</span>
                   </span>
                 ))}
+                {((item.product_images && item.product_images.length > 0) || item.image_url) && (
+                  <button 
+                    onClick={() => openFullscreenGallery(0)}
+                    className="flex items-center gap-1 bg-white/20 hover:bg-white/30 backdrop-blur-md px-2.5 py-1 rounded-full text-[9px] font-bold text-white border border-white/30 cursor-pointer transition-colors active:scale-95"
+                  >
+                    <span>🔍</span>
+                    <span>View Gallery ({(item.product_images && item.product_images.length > 0) ? item.product_images.length : 1})</span>
+                  </button>
+                )}
               </div>
             )}
           </div>

@@ -13,7 +13,7 @@ export default function AdminPayouts() {
   const [activeTab, setActiveTab] = useState("outstanding");
 
   useEffect(() => {
-    if (!user || user.role !== "system_admin") { navigate("/login"); return; }
+    if (!user || user.system_role !== "system_admin") { navigate("/login"); return; }
     fetchPayoutData();
   }, []);
 

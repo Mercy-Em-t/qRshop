@@ -195,7 +195,7 @@ export default function AdminUserGuide() {
   const [activeTab, setActiveTab] = useState("tiers");
 
   useEffect(() => {
-    if (!user || user.role !== "system_admin") navigate("/login");
+    if (!user || user.system_role !== "system_admin") navigate("/login");
   }, [navigate]);
 
   return (

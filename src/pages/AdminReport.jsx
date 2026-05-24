@@ -8,7 +8,7 @@ export default function AdminReport() {
   const [activeReport, setActiveReport] = useState("inbox");
 
   useEffect(() => {
-    if (!user || user.role !== "system_admin") {
+    if (!user || user.system_role !== "system_admin") {
       navigate("/login");
     }
   }, [navigate, user]);
