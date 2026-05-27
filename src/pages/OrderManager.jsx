@@ -338,6 +338,33 @@ export default function OrderManager() {
     }
   };
 
+  const handleInvalidateMpesa = async (order) => {
+    if (!window.confirm(`Are you sure you want to invalidate the M-Pesa code "${order.mpesa_code}"? The customer will be prompted to re-submit.`)) {
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ 
+          mpesa_code: null,
+          edit_reason: "INVALID_MPESA_CODE: The code you submitted was not recognized. Please check your transaction details and submit again."
+        })
+        .eq("id", order.id);
+      
+      if (error) {
+        console.error("Failed to invalidate code:", error);
+        alert(`Failed to invalidate code: ${error.message}`);
+        return;
+      }
+      
+      fetchOrders();
+      alert("M-Pesa code invalidated successfully!");
+    } catch (err) {
+      console.error("Invalidate M-Pesa exception:", err);
+      alert("Operation failed. Please try again.");
+    }
+  };
+
   const handleAutoExpire = async (orderId) => {
     try {
       console.log(`Order ${orderId} has auto-expired!`);
@@ -818,8 +845,23 @@ export default function OrderManager() {
                           </div>
                        )}
                        {order.status === 'pending_payment' && (
-                          <button onClick={() => updateOrderStatus(order.id, 'paid')} className="w-full bg-green-600 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-green-100">✅ Confirm Cash / MPesa</button>
-                       )}
+                           <div className="space-y-2">
+                              <button 
+                                 onClick={() => updateOrderStatus(order.id, 'paid')} 
+                                 className="w-full bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-md shadow-green-100 transition-all"
+                              >
+                                 ✅ Confirm Cash / MPesa
+                              </button>
+                              {order.mpesa_code && (
+                                 <button 
+                                    onClick={() => handleInvalidateMpesa(order)} 
+                                    className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                                 >
+                                    🚫 Invalidate M-Pesa Code
+                                 </button>
+                              )}
+                           </div>
+                        )}
                        
                        {['accepted', 'preparing'].includes(order.status) && (
                           <button 
@@ -943,6 +985,14 @@ export default function OrderManager() {
                             )}
                             {['accepted', 'preparing'].includes(order.status) && (
                                <button onClick={() => updateOrderStatus(order.id, 'pending_payment')} className="text-amber-600 hover:underline">Bill</button>
+                            )}
+                            {order.status === 'pending_payment' && (
+                               <>
+                                  <button onClick={() => updateOrderStatus(order.id, 'paid')} className="text-green-600 hover:underline">Confirm Paid</button>
+                                  {order.mpesa_code && (
+                                     <button onClick={() => handleInvalidateMpesa(order)} className="text-rose-600 hover:underline">Invalidate Code</button>
+                                  )}
+                               </>
                             )}
                             {['paid', 'accepted', 'preparing'].includes(order.status) && (
                                <button onClick={() => updateOrderStatus(order.id, 'ready')} className="text-blue-600 hover:underline">Ready</button>

@@ -113,8 +113,7 @@ export default function TrackOrder() {
     try {
       const { error } = await supabase.rpc('confirm_order_receipt', { p_order_id: orderId });
       if (error) throw error;
-      const now = new Date().toISOString();
-      setOrder(prev => ({ ...prev, customer_confirmed_at: now }));
+      await fetchOrderDetails();
     } catch (err) {
       alert("Failed to confirm receipt. Please try again.");
     } finally {
@@ -312,13 +311,20 @@ export default function TrackOrder() {
 
             {/* Confirm Receipt Action */}
             {order.status === 'ready' && !order.customer_confirmed_at && (
-              <button 
-                onClick={handleConfirmReceipt}
-                disabled={confirmingReceipt}
-                className="mt-6 w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-xl shadow-green-100 transition-all flex items-center justify-center gap-2"
-              >
-                {confirmingReceipt ? '✅ Updating...' : '🤝 Confirm Receipt'}
-              </button>
+              <div className="w-full">
+                {order.shop_confirmed_at && (
+                  <div className="mb-3 px-3 py-2 bg-emerald-50 text-emerald-800 text-xs font-bold rounded-lg border border-emerald-100 flex items-center justify-center gap-1.5 animate-pulse mt-4">
+                    <span>✨</span> Shop has completed handover! Please confirm below.
+                  </div>
+                )}
+                <button 
+                  onClick={handleConfirmReceipt}
+                  disabled={confirmingReceipt}
+                  className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl shadow-xl shadow-green-100 transition-all flex items-center justify-center gap-2"
+                >
+                  {confirmingReceipt ? '✅ Updating...' : '🤝 Confirm Receipt'}
+                </button>
+              </div>
             )}
 
             {order.status === 'ready' && order.customer_confirmed_at && (
@@ -353,14 +359,22 @@ export default function TrackOrder() {
                     </div>
                  </div>
 
-                 {order.mpesa_code ? (
-                    <div className="bg-green-600 text-white p-4 rounded-xl text-center shadow-lg">
-                       <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Submitted Code</p>
-                       <p className="text-xl font-black tracking-widest">{order.mpesa_code}</p>
-                       <p className="text-[10px] mt-2 italic opacity-90">Awaiting shop verification...</p>
-                    </div>
-                 ) : (
-                    <div className="space-y-3">
+                  {order.mpesa_code ? (
+                     <div className="bg-green-600 text-white p-4 rounded-xl text-center shadow-lg">
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Submitted Code</p>
+                        <p className="text-xl font-black tracking-widest">{order.mpesa_code}</p>
+                        <p className="text-[10px] mt-2 italic opacity-90">Awaiting shop verification...</p>
+                     </div>
+                  ) : (
+                     <div className="space-y-3">
+                        {order.edit_reason && order.edit_reason.startsWith('INVALID_MPESA_CODE:') && (
+                           <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl text-center animate-pulse">
+                              <p className="text-rose-800 font-bold text-xs">⚠️ Invalid Payment Code</p>
+                              <p className="text-rose-600/80 text-[10px] font-semibold mt-1">
+                                 {order.edit_reason.replace('INVALID_MPESA_CODE:', '')}
+                              </p>
+                           </div>
+                        )}
                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block text-center">Once paid, enter transaction code below:</label>
                        <input 
                           type="text"
