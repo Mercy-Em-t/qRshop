@@ -205,7 +205,7 @@ export default function SalesMagazine() {
                   <div className="space-y-4">
                      <p className="text-indigo-400 font-black uppercase text-xs tracking-widest">{salesPage?.headline || `${currentProduct.name} Essentials`}</p>
                      <h3 className="text-4xl lg:text-5xl font-black leading-tight">
-                        {currentProduct.brand ? `${currentProduct.brand} ${currentProduct.name}` : currentProduct.name}
+                        {(currentProduct.attributes?.brand || currentProduct.brand) ? `${currentProduct.attributes?.brand || currentProduct.brand} ${currentProduct.name}` : currentProduct.name}
                      </h3>
                      <div className="w-20 h-1.5 bg-indigo-500 rounded-full"></div>
                   </div>
@@ -219,17 +219,17 @@ export default function SalesMagazine() {
                   <div className="grid grid-cols-2 gap-4">
                      <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Benefits</p>
-                        <p className="text-sm font-medium leading-relaxed">{salesPage?.benefits_summary || currentProduct.benefits || 'High quality natural ingredients.'}</p>
+                        <p className="text-sm font-medium leading-relaxed">{salesPage?.benefits_summary || currentProduct.attributes?.benefits || currentProduct.benefits || 'High quality natural ingredients.'}</p>
                      </div>
                      <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
                         <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Origin & Processing</p>
-                        <p className="text-sm font-medium">{currentProduct.origin || 'Locally Sourced'} — {currentProduct.processing || 'Organic Process'}</p>
+                        <p className="text-sm font-medium">{(currentProduct.attributes?.origin || currentProduct.origin) || 'Locally Sourced'} — {(currentProduct.attributes?.processing || currentProduct.processing) || 'Organic Process'}</p>
                      </div>
                   </div>
 
-                  {currentProduct.diet_tags?.length > 0 && (
+                  {((currentProduct.attributes?.diet_tags || currentProduct.diet_tags)?.length > 0) && (
                      <div className="flex flex-wrap gap-2">
-                        {currentProduct.diet_tags.map(tag => (
+                        {(currentProduct.attributes?.diet_tags || currentProduct.diet_tags).map(tag => (
                            <span key={tag} className="bg-emerald-500/10 text-emerald-400 text-[9px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-emerald-500/20">
                               ✔ {tag}
                            </span>

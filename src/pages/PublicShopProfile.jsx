@@ -8,6 +8,7 @@ import MetaTags from "../components/MetaTags";
 import { createPublicSession } from "../utils/qr-session";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { getGoogleMetadata } from "../services/seo-service";
+import { isShopOpen } from "../utils/operating-hours";
 
 // Shop Homepage Components
 import ShopHero from "../components/shop/ShopHero";
@@ -149,32 +150,35 @@ export default function PublicShopProfile({ directShopId }) {
        ].filter(Boolean);
        return <ValueProps key="props" props={customProps} industryType={s.industry_type || ''} />;
     },
-    cta: (s) => (
-      <div key="cta" className="text-center py-20 px-6" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
-          <p className="text-xs font-black uppercase tracking-[0.2em] mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>Ready to shop?</p>
-          <h2 className="text-3xl font-black mb-3" style={{ color: '#fff' }}>Explore the Full Catalogue</h2>
-          <p className="text-sm mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>Browse every product, place your order instantly.</p>
-          <button
-              onClick={() => {
-                 if (s.id) {
-                    const hasConsented = localStorage.getItem('shopqr_privacy_consent');
-                    if (hasConsented === 'true') {
-                       createPublicSession(s.id);
-                       navigate('/menu');
-                    } else {
-                       setPendingShopId(s.id);
-                       setShowConsent(true);
-                    }
-                 }
-              }}
-              disabled={s.is_online === false}
-              style={{ background: 'var(--primary-color, #6366f1)', color: 'white' }}
-              className={`px-12 py-5 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl text-sm ${s.is_online === false ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-          >
-              {s.is_online === false ? '🔒 Shop Currently Closed' : '🛒 Enter Full Store'}
-          </button>
-      </div>
-    ),
+    cta: (s) => {
+      const isOpen = isShopOpen(s);
+      return (
+        <div key="cta" className="text-center py-20 px-6" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)' }}>
+            <p className="text-xs font-black uppercase tracking-[0.2em] mb-4" style={{ color: 'rgba(255,255,255,0.4)' }}>Ready to shop?</p>
+            <h2 className="text-3xl font-black mb-3" style={{ color: '#fff' }}>Explore the Full Catalogue</h2>
+            <p className="text-sm mb-8" style={{ color: 'rgba(255,255,255,0.5)' }}>Browse every product, place your order instantly.</p>
+            <button
+                onClick={() => {
+                   if (s.id) {
+                      const hasConsented = localStorage.getItem('shopqr_privacy_consent');
+                      if (hasConsented === 'true') {
+                         createPublicSession(s.id);
+                         navigate('/menu');
+                      } else {
+                         setPendingShopId(s.id);
+                         setShowConsent(true);
+                      }
+                   }
+                }}
+                disabled={!isOpen}
+                style={{ background: 'var(--primary-color, #6366f1)', color: 'white' }}
+                className={`px-12 py-5 rounded-full font-black uppercase tracking-widest hover:scale-105 transition-all shadow-2xl text-sm ${!isOpen ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+                {!isOpen ? '🔒 Shop Currently Closed' : '🛒 Enter Full Store'}
+            </button>
+        </div>
+      );
+    },
     footer: (s) => <ShopFooter key="footer" shop={s} />
   };
 

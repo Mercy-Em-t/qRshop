@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useNomenclature } from "../hooks/use-nomenclature";
+import { createPublicSession, getQrSession } from "../utils/qr-session";
 
 export default function TrackOrder() {
   const { orderId } = useParams();
@@ -62,10 +63,15 @@ export default function TrackOrder() {
       if (error) throw error;
       if (!data) throw new Error('Order not found.');
 
-      // RPC returns a single JSONB object with nested items, shop, rating
       const { items: orderItems, rating: ratingData, ...orderFields } = data;
       setOrder(orderFields);
       setItems(orderItems || []);
+
+      // If they hopped browsers (e.g. Instagram -> WhatsApp -> Safari) they won't have a session.
+      // Since they proved they have a valid order ID, we can safely reconstruct a public session for this shop!
+      if (!getQrSession()) {
+          createPublicSession(orderFields.shop_id);
+      }
 
       if (ratingData) {
         setRating(ratingData.rating);
@@ -256,6 +262,12 @@ export default function TrackOrder() {
       title: "Action Required",
       description: `The shop requested an update to your ${terms.order.toLowerCase()}. Please review their message below.`
     },
+    expired: {
+      color: "bg-rose-100 text-rose-800 border-rose-200",
+      icon: "⏰",
+      title: "Order Expired",
+      description: "The shop was unable to accept your order in time. Please try reviewing your cart to resubmit."
+    },
     archived: {
       color: "bg-gray-100 text-gray-800 border-gray-200",
       icon: "📦",
@@ -396,7 +408,7 @@ export default function TrackOrder() {
                  <div className="flex justify-between text-orange-600 font-medium text-sm pt-2 border-t border-gray-100 mt-3">
                     <span>Discount</span>
                     <span>-KSh {order.discount_amount}</span>
-                 </div>
+                  </div>
               )}
               
               {order.delivery_fee_charged > 0 && (
@@ -491,25 +503,25 @@ export default function TrackOrder() {
                 You can review your items, remove unavailable ones, and easily resubmit.
              </p>
              <div className="flex gap-3">
-                 <Link to={`/edit/${order.id}`} className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-2 rounded-lg shadow-sm transition text-center text-sm">
-                    ✏️ Edit Order
-                 </Link>
-                 <button 
-                    onClick={async () => {
-                       if(confirm("Are you sure you want to cancel this order permanently?")) {
-                          await supabase.rpc('cancel_order', { p_order_id: order.id }).catch(() => {});
-                          window.location.reload();
-                       }
-                    }}
-                    className="flex-1 bg-white border border-yellow-300 hover:bg-yellow-100 text-yellow-800 font-bold py-3 px-2 rounded-lg shadow-sm transition text-center text-sm"
-                 >
-                    ❌ Cancel Order
-                 </button>
+                  <Link to={`/edit/${order.id}`} className="flex-1 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-2 rounded-lg shadow-sm transition text-center text-sm">
+                     ✏️ Edit Order
+                  </Link>
+                  <button 
+                     onClick={async () => {
+                        if(confirm("Are you sure you want to cancel this order permanently?")) {
+                           await supabase.rpc('cancel_order', { p_order_id: order.id }).catch(() => {});
+                           window.location.reload();
+                        }
+                     }}
+                     className="flex-1 bg-white border border-yellow-300 hover:bg-yellow-100 text-yellow-800 font-bold py-3 px-2 rounded-lg shadow-sm transition text-center text-sm"
+                  >
+                     ❌ Cancel Order
+                  </button>
              </div>
            </div>
         )}
         
-        {order.status === 'rejected' && (
+        {['rejected', 'expired'].includes(order.status) && (
            <div className="bg-red-50 border border-red-200 p-6 rounded-xl text-center shadow-sm">
              <h3 className="font-bold text-red-800 mb-2">Want to change your order?</h3>
              <p className="text-red-600 text-sm mb-4 leading-relaxed">You can review your items, remove unavailable ones, and easily resubmit without checking out from scratch.</p>

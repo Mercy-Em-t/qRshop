@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getQrSession } from "../utils/qr-session";
 import { useShop } from "../hooks/use-shop";
@@ -6,6 +6,7 @@ import { useCart } from "../hooks/use-cart";
 import { createOrder, pingExternalOrderGateway } from "../services/order-service";
 import { supabase } from "../lib/supabase";
 import { logEvent } from "../services/telemetry-service";
+import { isShopOpen } from "../utils/operating-hours";
 import {
   buildWhatsAppMessage,
   buildWhatsAppLink,
@@ -48,6 +49,7 @@ export default function Order() {
   const session = getQrSession();
   const navigate = useNavigate();
   const { shop, loading: shopLoading } = useShop(session?.shop_id);
+  const isOpen = useMemo(() => isShopOpen(shop), [shop]);
   const { items, subtotal, discountAmount, activeCoupon, applyCoupon, clearCart, parentOrderId, addItem } = useCart();
   const [sending, setSending] = useState(false);
   const [queued, setQueued] = useState(false);
@@ -404,7 +406,7 @@ export default function Order() {
             identity.email,
             activeCoupon,
             clientMutationId,
-            'whatsapp'
+            'direct'
          );
 
          if (order && !queued) {
@@ -584,7 +586,7 @@ export default function Order() {
           <h2 className="text-lg font-semibold text-gray-800 mb-1">
             {shopName}
           </h2>
-          {shop?.is_online === false && (
+          {!isOpen && (
             <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm font-semibold border border-red-100 flex items-center gap-2">
               <span>🔴</span>
               <span>This shop is currently closed. You cannot place an order right now.</span>
@@ -741,8 +743,8 @@ export default function Order() {
                onClick={() => {
                    setCapturingIdentity(true);
                }}
-               disabled={sending || shop?.is_online === false}
-               className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-2 shadow-xl transform active:scale-95 ${sending || shop?.is_online === false ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover cursor-pointer'}`}
+               disabled={sending || !isOpen}
+               className={`w-full py-4 rounded-xl font-black text-lg transition-all flex items-center justify-center gap-2 shadow-xl transform active:scale-95 ${sending || !isOpen ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover cursor-pointer'}`}
             >
               {!isOnline 
                  ? "📥 Queue Offline Order" 
@@ -753,7 +755,7 @@ export default function Order() {
             
             <button
                onClick={() => setShowInquiryModal(true)}
-               className={`w-full py-4 rounded-xl font-bold text-lg border-2 transition-colors flex items-center justify-center gap-2 shadow-sm ${shop?.is_online === false ? 'border-gray-300 text-gray-400 cursor-not-allowed pointer-events-none' : 'border-green-600 bg-white text-green-700 hover:bg-green-50 z-10 cursor-pointer'}`}
+               className={`w-full py-4 rounded-xl font-bold text-lg border-2 transition-colors flex items-center justify-center gap-2 shadow-sm ${!isOpen ? 'border-gray-300 text-gray-400 cursor-not-allowed pointer-events-none' : 'border-green-600 bg-white text-green-700 hover:bg-green-50 z-10 cursor-pointer'}`}
             >
                💬 Inquire via Chatbot
             </button>
@@ -852,6 +854,26 @@ export default function Order() {
                      </div>
                   )}
 
+                  {identity.fulfillment_type === 'pickup_point' && (
+                     <div className="animate-fade-in">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Select Pickup Spot (Depot)</label>
+                        <select 
+                           required
+                           value={identity.address}
+                           onChange={(e) => setIdentity({...identity, address: e.target.value})}
+                           className="w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm bg-white font-semibold text-gray-800"
+                        >
+                           <option value="">-- Choose collection spot --</option>
+                           {(shop?.fulfillment_settings?.pickup_points || []).map((spot, idx) => (
+                              <option key={idx} value={spot}>{spot}</option>
+                           ))}
+                        </select>
+                        {(!shop?.fulfillment_settings?.pickup_points || shop.fulfillment_settings.pickup_points.length === 0) && (
+                           <p className="text-xs text-amber-600 mt-1.5 font-semibold">⚠️ This shop hasn't set up pickup spots yet. Please contact support or pick another option.</p>
+                        )}
+                     </div>
+                  )}
+
                   {identity.fulfillment_type === 'digital' && (
                      <div className="animate-fade-in">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Email Address for Delivery</label>
@@ -934,6 +956,7 @@ export default function Order() {
                      !identity.name || 
                      sending || 
                      (identity.fulfillment_type === 'delivery' && !identity.address) || 
+                     (identity.fulfillment_type === 'pickup_point' && !identity.address) || 
                      (!identity.phone || identity.phone.replace(/[^0-9]/g, '').length < 9)
                   }
                   className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 transition disabled:opacity-50 cursor-pointer shadow-md"

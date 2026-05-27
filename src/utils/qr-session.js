@@ -37,7 +37,7 @@ export function getOrCreateTrackingSession() {
   
   if (!session.tracking_session_id) {
      session.tracking_session_id = generateTrackingId();
-     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+     localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   }
   
   return session.tracking_session_id;
@@ -65,7 +65,7 @@ export function createQrSession(shopId, table, serverSession = null, campaignId 
     tracking_session_id: trackingSessionId // Global analytics session identifier
   };
 
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   return session;
 }
 
@@ -86,12 +86,12 @@ export function createPublicSession(shopId) {
     tracking_session_id: trackingSessionId
   };
 
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   return session;
 }
 
 export function getQrSession() {
-  const raw = sessionStorage.getItem(SESSION_KEY);
+  const raw = localStorage.getItem(SESSION_KEY);
   if (!raw) return null;
 
   try {
@@ -108,7 +108,7 @@ export function getQrSession() {
 }
 
 export function clearQrSession() {
-  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
 }
 
 function isSessionExpired(session) {

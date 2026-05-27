@@ -41,7 +41,8 @@ serve(async (req: Request) => {
   }
 
   try {
-    const { messages, shopId, menuItems, brainOverride } = await req.json()
+    const payload = await req.json()
+    const { action, name, description, category, messages, shopId, menuItems, brainOverride } = payload
 
     // 1. Fetch Shop Brain & Credits
     const { data: shop, error: shopError } = await supabase
@@ -52,6 +53,75 @@ serve(async (req: Request) => {
 
     if (shopError || !shop) throw new Error("Shop not found or AI inactive")
     if (shop.ai_credits <= 0) throw new Error("Shop out of AI credits")
+
+    // Handle AI Auto-Fill Metadata Generation
+    if (action === 'generate_metadata') {
+      const prompt = `
+You are a brilliant sales copywriting assistant for digital retail platforms.
+Your task is to write high-converting product metadata, Frequently Asked Questions (FAQs), and compelling marketing copy for a new product listing.
+
+Product Details:
+Name: ${name}
+Description: ${description || 'Premium quality product'}
+Category: ${category || 'General'}
+
+Generate a structured JSON object containing:
+{
+  "brand": "Suggested brand name",
+  "benefits": "Compelling bulleted list of 2-3 key benefits",
+  "origin": "Region/Country of origin (if relevant, e.g. Central Kenya or Imported)",
+  "processing": "Compelling mode of processing (e.g. Cold-pressed, Artisan crafted, Unfiltered, Tailored)",
+  "recipe": "Short 2-3 step usage instructions or recipe suitable for this category",
+  "diet_tags": ["Vegan", "Gluten-Free", "Organic", "Zero-Sugar" or other tags matching this category],
+  "faq": [
+    { "question": "Clear common customer question about the product?", "answer": "Persuasive direct answer." },
+    { "question": "Another relevant product question?", "answer": "Helpful direct answer." }
+  ],
+  "headline": "Compelling marketing headline hook",
+  "sales_script": "Engaging sales script / narrative hook for visual catalogs"
+}
+
+Respond in strict JSON format only. Do not wrap in markdown code blocks.
+`;
+
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          response_format: { type: "json_object" },
+          messages: [
+            { role: 'system', content: "You are a professional retail and ecommerce AI copywriter. You always output valid JSON format." },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+        }),
+      })
+
+      const data = await response.json()
+      const aiResponseRaw = data.choices[0].message.content
+      
+      // Deduct credit
+      try {
+        await supabase.rpc('decrement_ai_credits', { sh_id: shopId })
+        await supabase.from('ai_usage_logs').insert({
+          shop_id: shopId,
+          user_query: `AI Listing Generation for ${name}`,
+          ai_response: `Generated Brand, Origin, FAQs, and copywriting.`,
+          tokens_consumed: data.usage?.total_tokens || 0,
+          credits_deducted: 1
+        });
+      } catch (dbErr) {
+        console.error("Credit deduction error:", dbErr);
+      }
+
+      return new Response(aiResponseRaw, {
+        headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+      })
+    }
 
     const brain = brainOverride || shop.sales_brain || {}
     const personality = brain.personality || "Professional Sales Assistant"
@@ -83,9 +153,33 @@ serve(async (req: Request) => {
       filteredItems = menuItems.slice(0, 10);
     }
 
-    const catalogSnippet = filteredItems.map((item: any) => 
-      `- ID: ${item.id} | Name: ${item.name} | Price: KSh ${item.price} | Category: ${item.category}\n  Desc: ${item.description || 'Premium quality'}\n  Diet/Tags: ${item.diet_tags && Array.isArray(item.diet_tags) ? item.diet_tags.join(', ') : 'None'}\n  Benefits: ${item.benefits || 'N/A'}`
-    ).join('\n\n');
+    const catalogSnippet = filteredItems.map((item: any) => {
+      const attrs = item.attributes || {};
+      const brand = attrs.brand || item.brand;
+      const origin = attrs.origin || item.origin;
+      const processing = attrs.processing || item.processing;
+      const benefits = attrs.benefits || item.benefits || 'Premium quality';
+      const recipe = attrs.recipe || item.recipe;
+      const dietTags = attrs.diet_tags || item.diet_tags;
+
+      let snippet = `- ID: ${item.id} | Name: ${item.name} | Price: KSh ${item.price} | Category: ${item.category}`;
+      if (brand) snippet += ` | Brand: ${brand}`;
+      if (origin) snippet += ` | Origin: ${origin}`;
+      if (processing) snippet += ` | Processing: ${processing}`;
+      if (item.description) snippet += `\n  Desc: ${item.description}`;
+      if (benefits) snippet += `\n  Benefits: ${benefits}`;
+      if (recipe) snippet += `\n  Recipe/Instructions: ${recipe}`;
+      if (dietTags && Array.isArray(dietTags) && dietTags.length > 0) {
+        snippet += `\n  Diet/Tags: ${dietTags.join(', ')}`;
+      }
+      
+      const faqList = attrs.faq;
+      if (faqList && Array.isArray(faqList) && faqList.length > 0) {
+        snippet += `\n  Product FAQs:\n` + faqList.map((f: any) => `    Q: ${f.question}\n    A: ${f.answer}`).join('\n');
+      }
+      
+      return snippet;
+    }).join('\n\n');
 
     const fullSystemPrompt = `
 ${MASTER_INSTRUCTIONS}

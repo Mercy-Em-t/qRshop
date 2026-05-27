@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { createPublicSession } from '../../utils/qr-session';
 import { getThumbnailUrl } from '../../utils/image-utils';
+import { isShopOpen } from '../../utils/operating-hours';
 import './ShopHero.css';
 
 export default function ShopHero({ shop }) {
   const navigate = useNavigate();
   const initial = shop?.name ? shop.name.charAt(0).toUpperCase() : '🌿';
-  const isOpen = shop?.is_online !== false;
+  const isOpen = isShopOpen(shop);
 
   const handleStartOrdering = () => {
     if (shop?.id) {

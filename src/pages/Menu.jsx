@@ -21,11 +21,13 @@ import { fuzzyMatchProducts } from "../utils/fuzzy-search";
 import CartComponent from "../components/Cart";
 import MetaTags from "../components/MetaTags";
 import { getGoogleMetadata } from "../services/seo-service";
+import { isShopOpen } from "../utils/operating-hours";
 
 export default function Menu() {
   const session = getQrSession();
   const navigate = useNavigate();
   const { shop, loading: shopLoading } = useShop(session?.shop_id);
+  const isOpen = useMemo(() => isShopOpen(shop), [shop]);
   const { items, addItem, removeItem, total, addBundle, itemCount } = useCart();
   const { categories, loading: menuLoading, isOffline } = useOfflineMenu();
   const [upsellItems, setUpsellItems] = useState([]);
@@ -255,8 +257,8 @@ export default function Menu() {
             </div>
           </Link>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <div className={`w-2 h-2 rounded-full ${shop?.is_online !== false ? 'bg-green-300 animate-pulse' : 'bg-red-400'}`}></div>
-            <span className="text-xs text-theme-accent">{shop?.is_online !== false ? 'Open' : 'Closed'}</span>
+            <div className={`w-2 h-2 rounded-full ${isOpen ? 'bg-green-300 animate-pulse' : 'bg-red-400'}`}></div>
+            <span className="text-xs text-theme-accent">{isOpen ? 'Open' : 'Closed'}</span>
           </div>
         </div>
         {/* Action Bar */}
@@ -281,8 +283,8 @@ export default function Menu() {
             </button>
             <button
               onClick={() => navigate("/cart")}
-              disabled={shop?.is_online === false}
-              className={`relative px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-colors ${shop?.is_online === false ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-80' : 'bg-theme-secondary text-white hover:bg-theme-main cursor-pointer'}`}
+              disabled={!isOpen}
+              className={`relative px-4 py-1.5 rounded-lg text-sm font-bold shadow-sm transition-colors ${!isOpen ? 'bg-gray-400 text-gray-200 cursor-not-allowed opacity-80' : 'bg-theme-secondary text-white hover:bg-theme-main cursor-pointer'}`}
             >
               🛒 Cart
               {itemCount > 0 && (
@@ -351,7 +353,7 @@ export default function Menu() {
         </div>
       </header>
 
-      {shop?.is_online === false && (
+      {!isOpen && (
         <div className="bg-red-50 border-b border-red-200 px-4 py-3 text-center">
           <p className="text-red-800 font-bold text-sm">🔴 Shop is currently Closed</p>
           <p className="text-red-600 text-xs mt-0.5">We are not accepting orders at this time. Please check back later.</p>
@@ -421,7 +423,7 @@ export default function Menu() {
                                 key={item.id} 
                                 item={item} 
                                 onAdd={handleAddItem} 
-                                isShopOnline={shop?.is_online !== false} 
+                                isShopOnline={isOpen} 
                                 isGridView={viewMode === "grid"}
                              />
                            ))}
@@ -455,15 +457,15 @@ export default function Menu() {
                
                {items.length > 0 && (
                   <div className="mt-6 pt-4 border-t border-gray-100 space-y-3">
-                     {shop?.is_online === false && (
+                     {!isOpen && (
                         <div className="p-3 bg-red-50 text-red-700 rounded-xl text-xs font-semibold border border-red-100 text-center">
                            🔴 Shop is currently closed
                         </div>
                      )}
                      <button
                         onClick={() => navigate("/order")}
-                        disabled={shop?.is_online === false}
-                        className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-wider transition-all shadow-md hover:shadow-lg transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${shop?.is_online === false ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover'}`}
+                        disabled={!isOpen}
+                        className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-wider transition-all shadow-md hover:shadow-lg transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${!isOpen ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover'}`}
                      >
                         Confirm Order — KSh {total}
                      </button>

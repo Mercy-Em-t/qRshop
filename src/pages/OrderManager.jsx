@@ -100,6 +100,93 @@ async function notifyNewOrder(order) {
   }
 }
 
+// Live auto-expiration timer component for pending orders
+function OrderCountdown({ order, onExpire, compact = false, shop }) {
+  const [timeLeft, setTimeLeft] = useState(null);
+  const isWhatsApp = order.order_type === 'whatsapp';
+
+  useEffect(() => {
+    if (isWhatsApp) return; // WhatsApp orders never auto-expire
+
+    const calculateTimeLeft = () => {
+      const isGastro = shop?.industry_type === 'food' || shop?.industry_type === 'restaurant';
+      const durationMin = isGastro ? 30 : 24 * 60; // 30 mins for food, 24 hours (1440 mins) for marketplace/retail
+      const createdAt = new Date(order.created_at).getTime();
+      const expirationTime = createdAt + durationMin * 60 * 1000;
+      const now = Date.now();
+      const difference = expirationTime - now;
+      return Math.max(0, Math.floor(difference / 1000));
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
+    const timer = setInterval(() => {
+      const left = calculateTimeLeft();
+      setTimeLeft(left);
+      if (left <= 0) {
+        clearInterval(timer);
+        onExpire(order.id);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [order, onExpire, isWhatsApp, shop]);
+
+  if (isWhatsApp) {
+    if (compact) {
+      return (
+        <span className="text-[10px] font-black tracking-widest text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+           💬 CHAT
+        </span>
+      );
+    }
+    return (
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-700 font-black">
+        <span className="text-xs">💬</span>
+        <span className="text-[9px] tracking-wider uppercase">WhatsApp Negotiation</span>
+      </div>
+    );
+  }
+
+  if (timeLeft === null) return null;
+  if (timeLeft <= 0) return <span className="text-rose-600 font-bold text-[10px] tracking-widest uppercase">EXPIRED</span>;
+
+  const minutes = Math.floor(timeLeft / 60);
+  const hours = Math.floor(minutes / 60);
+  const displayMins = minutes % 60;
+  const seconds = timeLeft % 60;
+  
+  let formattedTime = "";
+  if (hours > 0) {
+    formattedTime = `${hours}h ${displayMins}m`;
+  } else {
+    formattedTime = `${displayMins}:${seconds < 10 ? '0' : ''}${seconds}`;
+  }
+
+  const isUrgent = timeLeft < 120; // less than 2 minutes
+
+  if (compact) {
+    return (
+      <span className={`text-[10px] font-black tracking-widest ${isUrgent ? 'text-rose-600 animate-pulse' : 'text-slate-500'}`}>
+         ⏱️ {formattedTime}
+      </span>
+    );
+  }
+
+  return (
+    <div className={`flex items-center justify-between px-3 py-2 rounded-xl border font-black transition-all ${
+      isUrgent 
+        ? 'bg-rose-50 border-rose-200 text-rose-600 animate-pulse scale-105 shadow-sm shadow-rose-100' 
+        : 'bg-slate-50 border-slate-200 text-slate-600'
+    }`}>
+      <span className="text-[10px] tracking-wider uppercase flex items-center gap-1">
+        <span>⏱️</span> {isUrgent ? 'Expiring in' : 'Accept within'}
+      </span>
+      <span className="text-[10px] font-black tracking-wide font-mono">{formattedTime}</span>
+    </div>
+  );
+}
+
 export default function OrderManager() {
   const [orders, setOrders] = useState([]);
   const [shop, setShop] = useState(null);
@@ -112,6 +199,14 @@ export default function OrderManager() {
   const [noteText, setNoteText] = useState('');
   const [overflowOpenId, setOverflowOpenId] = useState(null);
   const [dateFilter, setDateFilter] = useState("all"); // "all", "today", "week"
+
+  // Order revision editor state variables
+  const [editedItems, setEditedItems] = useState([]);
+  const [menuItems, setMenuItems] = useState([]);
+  const [menuSearchQuery, setMenuSearchQuery] = useState("");
+  const [selectedMenuItemId, setSelectedMenuItemId] = useState("");
+  const [isSavingRevision, setIsSavingRevision] = useState(false);
+  const [isOverrideTotal, setIsOverrideTotal] = useState(false);
 
   // Memoize high-performance BST index (Pruned to last 30 days to prevent memory bloat)
   const orderBST = useMemo(() => {
@@ -145,7 +240,7 @@ export default function OrderManager() {
       try {
         const { data, error } = await supabase
           .from("orders")
-          .select(`*, order_items (quantity, price, menu_items (name))`)
+          .select(`*, order_items (id, menu_item_id, quantity, price, menu_items (name))`)
           .eq("id", orderId)
           .single();
         if (!error && data) {
@@ -160,6 +255,7 @@ export default function OrderManager() {
     };
 
     fetchOrders();
+    fetchMenuItems();
 
     const channel = supabase
       .channel('kitchen-stream')
@@ -181,6 +277,17 @@ export default function OrderManager() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
+  const fetchMenuItems = async () => {
+    if (!supabase || !SHOP_ID) return;
+    const { data, error } = await supabase
+      .from("menu_items")
+      .select("*")
+      .eq("shop_id", SHOP_ID);
+    if (!error && data) {
+      setMenuItems(data);
+    }
+  };
+
   const fetchOrders = async () => {
     if (!supabase) return;
     const { data: shopData } = await supabase.from("shops").select("*").eq("shop_id", SHOP_ID).single();
@@ -188,7 +295,7 @@ export default function OrderManager() {
 
     const { data: orderData, error } = await supabase
       .from("orders")
-      .select(`*, order_items (quantity, price, menu_items (name))`)
+      .select(`*, order_items (id, menu_item_id, quantity, price, menu_items (name))`)
       .eq("shop_id", SHOP_ID)
       .not('status', 'eq', 'archived')
       .order("created_at", { ascending: false });
@@ -205,13 +312,15 @@ export default function OrderManager() {
         .eq("id", id);
       
       if (error) {
-        console.warn("Operation restricted or failed.");
+        console.error("Order status update failed:", error);
+        alert(`Failed to update order status: ${error.message || 'Operation restricted or failed.'}`);
         return;
       }
 
       fetchOrders();
     } catch (err) {
-      console.warn("Order service unavailable.");
+      console.error("Order status update exception:", err);
+      alert("Order service unavailable. Please check your connection.");
     }
   };
 
@@ -229,24 +338,150 @@ export default function OrderManager() {
     }
   };
 
+  const handleAutoExpire = async (orderId) => {
+    try {
+      console.log(`Order ${orderId} has auto-expired!`);
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: 'expired' })
+        .eq("id", orderId);
+      
+      if (error) {
+        console.warn("Auto-expire database update failed:", error.message);
+        return;
+      }
+      fetchOrders();
+    } catch (err) {
+      console.warn("Auto-expire request failed:", err);
+    }
+  };
+
+  const adjustQuantity = (index, delta) => {
+    setEditedItems(prev => {
+      const next = [...prev];
+      const nextQty = next[index].quantity + delta;
+      if (nextQty <= 0) {
+        next.splice(index, 1);
+      } else {
+        next[index].quantity = nextQty;
+      }
+      return next;
+    });
+  };
+
+  const removeItem = (index) => {
+    setEditedItems(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddItem = () => {
+    if (!selectedMenuItemId) return;
+    const selectedItem = menuItems.find(mi => mi.id === selectedMenuItemId);
+    if (!selectedItem) return;
+    
+    setEditedItems(prev => {
+      const existingIndex = prev.findIndex(item => item.menu_item_id === selectedItem.id);
+      if (existingIndex > -1) {
+        const next = [...prev];
+        next[existingIndex].quantity += 1;
+        return next;
+      } else {
+        return [
+          ...prev,
+          {
+            menu_item_id: selectedItem.id,
+            name: selectedItem.name,
+            price: selectedItem.price,
+            quantity: 1
+          }
+        ];
+      }
+    });
+    
+    setSelectedMenuItemId("");
+    setMenuSearchQuery("");
+  };
+
+  const filteredMenuItems = useMemo(() => {
+    if (!menuSearchQuery) return menuItems;
+    const q = menuSearchQuery.toLowerCase();
+    return menuItems.filter(item => 
+      item.name.toLowerCase().includes(q) || 
+      item.category?.toLowerCase().includes(q)
+    );
+  }, [menuItems, menuSearchQuery]);
+
   const handleSaveEdit = async () => {
     if (!editingOrder) return;
+    setIsSavingRevision(true);
     try {
-      const { error } = await supabase.from("orders").update({ 
-         total_price: editTotal,
-         status: 'pending_payment'
-      }).eq("id", editingOrder.id);
+      // 1. Determine deleted items
+      const originalItemIds = (editingOrder.order_items || []).map(item => item.id).filter(Boolean);
+      const remainingItemIds = editedItems.map(item => item.id).filter(Boolean);
+      const itemsToDelete = originalItemIds.filter(id => !remainingItemIds.includes(id));
+      
+      if (itemsToDelete.length > 0) {
+        const { error: delError } = await supabase
+          .from("order_items")
+          .delete()
+          .in("id", itemsToDelete);
+        if (delError) throw delError;
+      }
+      
+      // 2. Update existing items
+      const existingItemsToUpdate = editedItems.filter(item => item.id);
+      for (const item of existingItemsToUpdate) {
+        const { error: updError } = await supabase
+          .from("order_items")
+          .update({
+            quantity: item.quantity,
+            price: item.price
+          })
+          .eq("id", item.id);
+        if (updError) throw updError;
+      }
+      
+      // 3. Insert new items
+      const newItemsToInsert = editedItems.filter(item => !item.id);
+      if (newItemsToInsert.length > 0) {
+        const insertPayload = newItemsToInsert.map(item => ({
+          order_id: editingOrder.id,
+          menu_item_id: item.menu_item_id,
+          quantity: item.quantity,
+          price: item.price
+        }));
+        const { error: insError } = await supabase
+          .from("order_items")
+          .insert(insertPayload);
+        if (insError) throw insError;
+      }
 
-      if (error) {
-        console.warn("Revision rejected by server.");
+      // Calculate total
+      const calculatedTotal = editedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const finalTotal = isOverrideTotal ? Number(editTotal) : calculatedTotal;
+
+      // 4. Update order total & status
+      const { error: orderError } = await supabase
+        .from("orders")
+        .update({ 
+           total_price: finalTotal,
+           status: 'pending_payment'
+        })
+        .eq("id", editingOrder.id);
+
+      if (orderError) {
+        console.warn("Revision rejected by server:", orderError.message);
+        alert(`Failed to save revision: ${orderError.message}`);
         return;
       }
 
       setEditingOrder(null);
       fetchOrders();
+      alert("Order revision published successfully!");
     } catch (err) {
       console.error("Unexpected Revision Error:", err);
       alert("An unexpected error occurred while saving the revision.");
+    } finally {
+      setIsSavingRevision(false);
     }
   };
 
@@ -447,6 +682,13 @@ export default function OrderManager() {
                          )}
                     </div>
 
+                    {/* Live Auto-Expiration Timer for Pending Orders */}
+                    {order.status === 'pending' && (
+                       <div className="mb-4">
+                          <OrderCountdown order={order} onExpire={handleAutoExpire} shop={shop} />
+                       </div>
+                    )}
+
                     {/* Fulfillment Deadline */}
                     {order.fulfillment_deadline && order.status !== 'completed' && (
                        <div className="mb-4 flex items-center justify-between bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
@@ -470,12 +712,21 @@ export default function OrderManager() {
                        </div>
                     )}
 
-                    <div className="space-y-2 mb-6 border-y border-slate-50 py-4 max-h-40 overflow-y-auto no-scrollbar">
-                       {order.order_items?.map((item, i) => (
-                          <div key={i} className="flex justify-between text-xs font-semibold">
-                             <span className="text-gray-600">{item.quantity}× {item.menu_items?.name}</span>
+                    <div className="relative mb-6">
+                       <div className="space-y-2 border-y border-slate-50 py-4 max-h-40 overflow-y-auto no-scrollbar">
+                          {order.order_items?.map((item, i) => (
+                             <div key={i} className="flex justify-between text-xs font-semibold">
+                                <span className="text-gray-600">{item.quantity}× {item.menu_items?.name}</span>
+                             </div>
+                          ))}
+                       </div>
+                       {order.order_items?.length > 4 && (
+                          <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-white to-transparent pointer-events-none flex items-end justify-center pb-0.5">
+                             <svg className="w-3.5 h-3.5 text-slate-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"/>
+                             </svg>
                           </div>
-                       ))}
+                       )}
                     </div>
 
                     <div className="flex justify-between items-center mb-6">
@@ -521,10 +772,26 @@ export default function OrderManager() {
 
                                 {overflowOpenId === order.id && (
                                    <div className="absolute right-0 top-8 bg-white rounded-2xl border border-slate-100 shadow-xl z-20 w-48 overflow-hidden">
-                                      <button
-                                         onClick={() => { setEditingOrder(order); setEditTotal(order.total_price); setOverflowOpenId(null); }}
-                                         className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition"
-                                      >
+                                       <button
+                                          onClick={() => {
+                                             setEditingOrder(order);
+                                             setEditTotal(order.total_price);
+                                             setIsOverrideTotal(false);
+                                             
+                                             const initialItems = (order.order_items || []).map(item => ({
+                                                id: item.id,
+                                                menu_item_id: item.menu_item_id,
+                                                quantity: item.quantity,
+                                                price: item.price,
+                                                name: item.menu_items?.name || "Unknown Item"
+                                             }));
+                                             setEditedItems(initialItems);
+                                             setMenuSearchQuery("");
+                                             setSelectedMenuItemId("");
+                                             setOverflowOpenId(null);
+                                          }}
+                                          className="w-full text-left px-4 py-3 text-[11px] font-bold uppercase tracking-widest text-amber-700 hover:bg-amber-50 flex items-center gap-2 transition"
+                                       >
                                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                          Edit & Request Pay
                                       </button>
@@ -609,21 +876,57 @@ export default function OrderManager() {
                        <td className="px-6 py-4">
                          <span className="text-[10px] font-bold text-slate-500 uppercase">{order.order_type} {order.table_number ? `(T${order.table_number})` : ''}</span>
                        </td>
-                       <td className="px-6 py-4">
-                         <p className="text-[11px] text-slate-600 line-clamp-1">
-                           {order.order_items?.map(i => `${i.quantity}x ${i.menu_items?.name}`).join(', ')}
-                         </p>
-                       </td>
+                        <td className="px-6 py-4">
+                          <div className="relative group cursor-pointer inline-block">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-green-600 transition-colors bg-slate-50 hover:bg-green-50 px-2.5 py-1.5 rounded-xl border border-slate-100/80 shadow-sm">
+                              <span>📦 {order.order_items?.length || 0} {order.order_items?.length === 1 ? 'item' : 'items'}</span>
+                              <svg className="w-3 h-3 text-slate-400 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7"/>
+                              </svg>
+                            </div>
+                            
+                            {/* Dropdown breakdown card */}
+                            <div className="absolute left-0 mt-2 w-72 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-2xl p-4 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 origin-top-left z-50 text-left">
+                              <div className="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Order Breakdown</span>
+                                <span className="text-[9px] font-black text-green-600 uppercase bg-green-50 px-1.5 py-0.5 rounded">
+                                  {order.order_items?.reduce((sum, item) => sum + item.quantity, 0)} Units
+                                </span>
+                              </div>
+                              <div className="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
+                                {order.order_items?.map((item, idx) => (
+                                  <div key={idx} className="flex justify-between items-center text-[11px] hover:bg-slate-50/50 p-1 rounded-lg transition-colors">
+                                    <span className="font-semibold text-gray-700 truncate max-w-[180px]">
+                                      {item.quantity}× {item.menu_items?.name || 'Unknown Item'}
+                                    </span>
+                                    <span className="font-black text-slate-500 font-mono">
+                                      KSh {item.price * item.quantity}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="mt-3 pt-2 border-t border-slate-100 flex justify-between items-center">
+                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Subtotal</span>
+                                <span className="text-xs font-black text-gray-900">KSh {order.total_price}</span>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
                        <td className="px-6 py-4">
                          <span className="text-sm font-black text-gray-900">KSh {order.total_price}</span>
                        </td>
                        <td className="px-6 py-4">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tight ${
-                             order.status === 'paid' ? 'bg-green-100 text-green-700' : 
-                             order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                             'bg-slate-100 text-slate-500'
-                          }`}>{order.status.replace('_', ' ')}</span>
-                       </td>
+                           <div className="flex flex-col gap-1 items-start">
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tight ${
+                                 order.status === 'paid' ? 'bg-green-100 text-green-700' : 
+                                 order.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                                 'bg-slate-100 text-slate-500'
+                              }`}>{order.status.replace('_', ' ')}</span>
+                              {order.status === 'pending' && (
+                                 <OrderCountdown order={order} onExpire={handleAutoExpire} compact={true} shop={shop} />
+                              )}
+                           </div>
+                        </td>
                        <td className="px-6 py-4 text-right">
                          <div className="flex justify-end gap-2 text-[10px] font-black uppercase">
                             {order.status === 'pending' && (
@@ -687,22 +990,172 @@ export default function OrderManager() {
       )}
 
       {editingOrder && (
-         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-            <div className="bg-white rounded-3xl p-10 w-full max-w-sm border border-slate-200">
-               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Ref #{editingOrder.id.split('-')[0].toUpperCase()}</p>
-               <h3 className="text-xl font-bold mb-8 text-gray-900">Edit Total & Request Payment</h3>
-               <div className="mb-10">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4 block">New Order Value (KSh)</label>
-                  <input 
-                     type="number" 
-                     value={editTotal} 
-                     onChange={e => setEditTotal(e.target.value)} 
-                     className="w-full text-4xl font-black border-b-2 border-slate-100 outline-none pb-4 focus:border-green-600" 
-                  />
+         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex items-center justify-center p-4 md:p-6 overflow-y-auto">
+            <div className="bg-white/95 border border-slate-200/80 rounded-[32px] p-6 md:p-8 w-full max-w-md shadow-2xl backdrop-blur-xl relative animate-in fade-in zoom-in-95 duration-200 flex flex-col gap-5 max-h-[90vh]">
+               <div className="flex justify-between items-start">
+                  <div>
+                     <span className="bg-amber-50 text-amber-700 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border border-amber-100">
+                        Ref #{editingOrder.id.split('-')[0].toUpperCase()}
+                     </span>
+                     <h3 className="text-xl font-black text-gray-900 mt-2">✏️ Revise Order Items</h3>
+                  </div>
+                  <button 
+                     onClick={() => setEditingOrder(null)} 
+                     className="text-slate-400 hover:text-slate-600 p-1 bg-slate-50 hover:bg-slate-100 rounded-lg transition"
+                     title="Close revision editor"
+                  >
+                     ✕
+                  </button>
                </div>
-               <div className="grid gap-3">
-                  <button onClick={handleSaveEdit} className="w-full bg-green-600 text-white py-5 rounded-2xl font-bold uppercase text-xs tracking-widest">Publish Revision</button>
-                  <button onClick={() => setEditingOrder(null)} className="w-full bg-gray-50 text-gray-400 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest">Discard</button>
+               
+               {/* Scrollable Revised Items List */}
+               <div className="flex-1 overflow-y-auto no-scrollbar space-y-3 max-h-60 pr-1 rounded-2xl p-4 bg-slate-50 border border-slate-100 shadow-inner">
+                  {editedItems.map((item, index) => (
+                     <div key={index} className="flex justify-between items-center text-xs bg-white p-3 rounded-xl border border-slate-100 shadow-sm transition-all hover:border-slate-200">
+                        <div className="flex-1 min-w-0 pr-2">
+                           <p className="font-bold text-gray-800 truncate">{item.name}</p>
+                           <p className="text-[10px] text-slate-400 font-semibold mt-0.5">KSh {item.price} each</p>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                           <button
+                              type="button"
+                              onClick={() => adjustQuantity(index, -1)}
+                              className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm transition"
+                           >
+                              -
+                           </button>
+                           <span className="font-black text-slate-800 w-5 text-center">{item.quantity}</span>
+                           <button
+                              type="button"
+                              onClick={() => adjustQuantity(index, 1)}
+                              className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-sm transition"
+                           >
+                              +
+                           </button>
+                           <button
+                              type="button"
+                              onClick={() => removeItem(index)}
+                              className="ml-1 w-7 h-7 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center transition"
+                              title="Remove item"
+                           >
+                              ✕
+                           </button>
+                        </div>
+                     </div>
+                  ))}
+                  {editedItems.length === 0 && (
+                     <div className="text-center py-8 text-slate-400 text-xs italic font-medium">
+                        No items in this order. Add menu items below.
+                     </div>
+                  )}
+               </div>
+
+               {/* Item Search & Selector */}
+               <div className="border-t border-slate-100 pt-3">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                     <span>🔍</span> Add Items to Order
+                  </h4>
+                  <div className="flex gap-2 relative">
+                     <div className="flex-1 relative">
+                        <input
+                           type="text"
+                           placeholder="Type to search menu..."
+                           value={menuSearchQuery}
+                           onChange={e => setMenuSearchQuery(e.target.value)}
+                           className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-green-500 bg-slate-50 focus:bg-white transition-all font-medium placeholder:font-normal"
+                        />
+                        {menuSearchQuery && (
+                           <div className="absolute left-0 right-0 bottom-full mb-1.5 bg-white border border-slate-200 rounded-2xl shadow-2xl max-h-48 overflow-y-auto z-[60] border-slate-100 p-1.5 space-y-0.5">
+                              {filteredMenuItems.map(item => (
+                                 <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => {
+                                       setSelectedMenuItemId(item.id);
+                                       setMenuSearchQuery(item.name);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs hover:bg-slate-50 rounded-xl border-b border-slate-50 last:border-0 flex justify-between font-bold"
+                                 >
+                                    <span className="text-gray-800">{item.name} <span className="text-[10px] text-slate-400 font-normal">({item.category})</span></span>
+                                    <span className="text-green-600 font-black">KSh {item.price}</span>
+                                 </button>
+                              ))}
+                              {filteredMenuItems.length === 0 && (
+                                 <div className="p-3 text-center text-xs text-slate-400 font-semibold">No items found</div>
+                              )}
+                           </div>
+                        )}
+                     </div>
+                     <button
+                        type="button"
+                        onClick={handleAddItem}
+                        disabled={!selectedMenuItemId}
+                        className="bg-green-600 hover:bg-green-700 disabled:opacity-40 text-white px-5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-md shadow-green-100"
+                     >
+                        Add
+                     </button>
+                  </div>
+               </div>
+
+               {/* Recalculated Total vs Override */}
+               <div className="border-t border-slate-100 pt-3">
+                  <div className="flex justify-between items-center bg-slate-50 px-4 py-3 rounded-2xl border border-slate-100">
+                     <div>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Calculated Subtotal</p>
+                        <p className="text-xl font-black text-gray-900 mt-0.5">
+                           KSh {editedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0)}
+                        </p>
+                     </div>
+                     <button
+                        type="button"
+                        onClick={() => setIsOverrideTotal(!isOverrideTotal)}
+                        className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-lg border transition-all ${
+                           isOverrideTotal 
+                             ? 'bg-amber-50 border-amber-200 text-amber-700 shadow-sm' 
+                             : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                        }`}
+                     >
+                        {isOverrideTotal ? '✓ Custom Applied' : '✎ Custom Price'}
+                     </button>
+                  </div>
+                  
+                  {isOverrideTotal && (
+                     <div className="mt-3 bg-amber-50/50 p-4 rounded-2xl border border-amber-100/50 animate-in slide-in-from-top-2 duration-200">
+                        <label className="text-[9px] font-black text-amber-700 uppercase tracking-widest mb-1 block">Override Total Price (KSh)</label>
+                        <input 
+                           type="number" 
+                           value={editTotal} 
+                           onChange={e => setEditTotal(e.target.value)} 
+                           className="w-full text-2xl font-black bg-transparent border-b border-amber-200 outline-none pb-1 text-gray-800 focus:border-amber-500 font-mono" 
+                        />
+                     </div>
+                  )}
+               </div>
+
+               {/* Action Buttons */}
+               <div className="grid gap-2 border-t border-slate-100 pt-3">
+                  <button 
+                     onClick={handleSaveEdit} 
+                     disabled={isSavingRevision || editedItems.length === 0}
+                     className="w-full bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-lg shadow-green-150 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                  >
+                     {isSavingRevision ? (
+                        <>
+                           <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                           </svg>
+                           Publishing Revision...
+                        </>
+                     ) : 'Publish Revision'}
+                  </button>
+                  <button 
+                     onClick={() => setEditingOrder(null)} 
+                     disabled={isSavingRevision}
+                     className="w-full bg-slate-50 hover:bg-slate-100 disabled:opacity-50 text-slate-400 hover:text-slate-600 py-3 rounded-xl font-bold uppercase text-[10px] tracking-widest transition-all"
+                  >
+                     Discard
+                  </button>
                </div>
             </div>
          </div>

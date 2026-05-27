@@ -26,7 +26,7 @@ export default function ProductManager() {
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: false, marketing: false });
+  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: false, marketing: false, metadata: false });
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,6 +65,9 @@ export default function ProductManager() {
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
   const [customFields, setCustomFields] = useState({});
   const [shopSchema, setShopSchema] = useState([]);
+  const [productFaqs, setProductFaqs] = useState([]);
+  const [dietTagsText, setDietTagsText] = useState("");
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
   const userId = user?.id;
   useEffect(() => {
@@ -206,9 +209,13 @@ export default function ProductManager() {
       template_id: selectedTemplateId || null,
       attributes: {
          ...Object.keys(customFields).reduce((acc, key) => {
-            acc[normalizeAttributeKey(key)] = customFields[key];
+            if (key !== 'diet_tags' && key !== 'faq') {
+               acc[normalizeAttributeKey(key)] = customFields[key];
+            }
             return acc;
          }, {}),
+         faq: productFaqs,
+         diet_tags: dietTagsText ? dietTagsText.split(',').map(t=>t.trim()).filter(Boolean) : [],
          // Store subcategory inside attributes (column does not exist on menu_items table)
          ...(subcategory ? { subcategory } : {}),
       }
@@ -345,6 +352,8 @@ export default function ProductManager() {
      setImagePreview(null);
      setSalesHeadline("");
      setSalesScript("");
+     setProductFaqs([]);
+     setDietTagsText("");
   };
 
   const startEdit = (item) => {
@@ -380,6 +389,16 @@ export default function ProductManager() {
       setCustomFields(unifiedAttributes);
       setSelectedTemplateId(item.template_id || "");
       
+      // Initialize FAQ Mapper state
+      setProductFaqs(item.attributes?.faq || []);
+      
+      // Initialize dietTagsText
+      setDietTagsText(
+        Array.isArray(item.attributes?.diet_tags) 
+          ? item.attributes.diet_tags.join(", ") 
+          : (Array.isArray(item.diet_tags) ? item.diet_tags.join(", ") : "")
+      );
+
       const sp = item.product_sales_pages?.[0];
       setSalesHeadline(sp?.headline || "");
       setSalesScript(sp?.sales_script || "");
@@ -388,6 +407,63 @@ export default function ProductManager() {
      setImagePreview(null);
      setShowAddForm(true);
      window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleAddFaqRow = () => {
+    setProductFaqs(prev => [...prev, { question: "", answer: "" }]);
+  };
+
+  const handleUpdateFaq = (index, field, value) => {
+    setProductFaqs(prev => prev.map((faq, i) => i === index ? { ...faq, [field]: value } : faq));
+  };
+
+  const handleRemoveFaqRow = (index) => {
+    setProductFaqs(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleGenerateAiMetadata = async () => {
+    if (!name.trim()) {
+      alert("Please enter a Product Name first to help the AI copywriter understand the context!");
+      return;
+    }
+    setIsGeneratingAi(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sales-assistant', {
+        body: {
+          action: 'generate_metadata',
+          name,
+          description: description || "",
+          category: category || "General",
+          shopId: SHOP_ID
+        }
+      });
+
+      if (error) throw error;
+
+      if (data) {
+        setCustomFields(prev => ({
+          ...prev,
+          brand: data.brand || prev.brand || "",
+          origin: data.origin || prev.origin || "",
+          processing: data.processing || prev.processing || "",
+          benefits: data.benefits || prev.benefits || "",
+          recipe: data.recipe || prev.recipe || ""
+        }));
+        setDietTagsText(Array.isArray(data.diet_tags) ? data.diet_tags.join(", ") : "");
+        setProductFaqs(data.faq || []);
+        if (data.headline) setSalesHeadline(data.headline);
+        if (data.sales_script) setSalesScript(data.sales_script);
+
+        // Open metadata and marketing collapsibles automatically to reveal AI findings!
+        setActiveSections(prev => ({ ...prev, metadata: true, marketing: true }));
+        alert("🪄 Success! AI Auto-Filled high-converting copywriting details and FAQs!");
+      }
+    } catch (err) {
+      console.error("AI Listing generation failed:", err);
+      alert("AI Generation failed: " + err.message);
+    } finally {
+      setIsGeneratingAi(false);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -1022,6 +1098,178 @@ export default function ProductManager() {
                      </div>
                   </div>
                )}
+             </div>
+
+             {/* COLLAPSIBLE: AI & SEARCH METADATA (FAQ MAPPER) */}
+             <div className="md:col-span-2">
+                <button 
+                   type="button"
+                   onClick={() => setActiveSections(prev => ({...prev, metadata: !prev.metadata}))}
+                   className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-teal-50 to-emerald-50 hover:from-teal-100 hover:to-emerald-100 rounded-xl transition-all border border-emerald-100/30 mb-2 mt-2 shadow-sm"
+                >
+                   <div className="flex items-center gap-3">
+                      <span className="text-xl">🧠</span>
+                      <div className="text-left">
+                         <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-emerald-900 uppercase tracking-widest">AI & Search Metadata (FAQ Mapper)</h3>
+                            <span className="text-[9px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">AI Connected</span>
+                         </div>
+                         <p className="text-[10px] text-emerald-600 font-medium">Map custom Q&As, brand identity, benefits, and recipes for search engines and our AI Assistant.</p>
+                      </div>
+                   </div>
+                   <span className={`text-emerald-700 transition-transform duration-300 ${activeSections.metadata ? 'rotate-180' : ''}`}>▼</span>
+                </button>
+
+                {activeSections.metadata && (
+                   <div className="space-y-6 p-6 bg-white rounded-2xl border border-emerald-100 shadow-inner animate-in fade-in slide-in-from-top-2">
+                      
+                      {/* AI Listing Assistant Trigger */}
+                      <div className="bg-gradient-to-br from-purple-50 to-indigo-50/50 p-4 rounded-xl border border-purple-100/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                         <div className="space-y-1">
+                            <h4 className="text-xs font-bold text-purple-950 uppercase tracking-wider">AI Sales Assistant copywriter</h4>
+                            <p className="text-[11px] text-purple-700">Generate high-converting brand stories, instructions, tags, and custom FAQs in 1-click using your listing's basic details.</p>
+                         </div>
+                         <button
+                            type="button"
+                            disabled={isGeneratingAi}
+                            onClick={handleGenerateAiMetadata}
+                            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-extrabold text-xs py-3 px-5 rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 shrink-0 cursor-pointer disabled:opacity-50"
+                         >
+                            {isGeneratingAi ? (
+                               <>
+                                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  <span>Generating Copy...</span>
+                               </>
+                            ) : (
+                               <>
+                                  <span>🪄 AI Auto-Fill Listing Details</span>
+                               </>
+                            )}
+                         </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Brand Name</label>
+                            <input 
+                               type="text"
+                               value={customFields.brand || ""}
+                               onChange={e => setCustomFields({...customFields, brand: e.target.value})}
+                               placeholder="e.g. Serengeti Teas"
+                               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                            />
+                         </div>
+                         <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Origin / Manufacturing Region</label>
+                            <input 
+                               type="text"
+                               value={customFields.origin || ""}
+                               onChange={e => setCustomFields({...customFields, origin: e.target.value})}
+                               placeholder="e.g. Kericho, Kenya"
+                               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                            />
+                         </div>
+                         <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Processing Mode / Materials</label>
+                            <input 
+                               type="text"
+                               value={customFields.processing || ""}
+                               onChange={e => setCustomFields({...customFields, processing: e.target.value})}
+                               placeholder="e.g. Sun-Dried, Artisanal"
+                               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                            />
+                         </div>
+                         <div>
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Diet / Material Tags (comma separated)</label>
+                            <input 
+                               type="text"
+                               value={dietTagsText}
+                               onChange={e => setDietTagsText(e.target.value)}
+                               placeholder="e.g. Organic, Vegan, Premium"
+                               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                            />
+                         </div>
+                         <div className="md:col-span-2">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Unique Product Benefits</label>
+                            <textarea 
+                               rows={3}
+                               value={customFields.benefits || ""}
+                               onChange={e => setCustomFields({...customFields, benefits: e.target.value})}
+                               placeholder="e.g. • Rich in natural anti-oxidants&#10;• Sustainably sourced ingredients&#10;• Promotes optimal digestion"
+                               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                            />
+                         </div>
+                         <div className="md:col-span-2">
+                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Recipe / Usage Instructions</label>
+                            <textarea 
+                               rows={3}
+                               value={customFields.recipe || ""}
+                               onChange={e => setCustomFields({...customFields, recipe: e.target.value})}
+                               placeholder="e.g. 1. Steep tea bag in hot water for 3-5 minutes.&#10;2. Add honey or lemon to taste.&#10;3. Enjoy morning or evening!"
+                               className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition"
+                            />
+                         </div>
+                      </div>
+
+                      {/* DYNAMIC FAQ MAPPER SECTION */}
+                      <div className="border-t border-gray-100 pt-4">
+                         <div className="flex items-center justify-between mb-2">
+                            <div>
+                               <h4 className="text-xs font-bold text-gray-700 uppercase tracking-wide">Frequently Asked Questions ({productFaqs.length})</h4>
+                               <p className="text-[10px] text-gray-500">Provide direct answers for storefront customers and our sales bot to minimize manual support.</p>
+                            </div>
+                            <button
+                               type="button"
+                               onClick={handleAddFaqRow}
+                               className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-100 text-[10px] font-black uppercase tracking-widest py-1.5 px-3 rounded-lg transition shrink-0 cursor-pointer"
+                            >
+                               + Add FAQ Row
+                            </button>
+                         </div>
+
+                         <div className="space-y-3">
+                            {productFaqs.map((faq, index) => (
+                               <div key={index} className="flex gap-2 items-start bg-slate-50/50 p-3 rounded-xl border border-slate-100 animate-in fade-in-50">
+                                  <div className="flex-1 space-y-2">
+                                     <input 
+                                        type="text"
+                                        value={faq.question || ""}
+                                        onChange={e => handleUpdateFaq(index, 'question', e.target.value)}
+                                        placeholder="Question (e.g. Is this suitable for cold brew?)"
+                                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-emerald-500 outline-none bg-white font-medium"
+                                     />
+                                     <textarea 
+                                        rows={2}
+                                        value={faq.answer || ""}
+                                        onChange={e => handleUpdateFaq(index, 'answer', e.target.value)}
+                                        placeholder="Answer (e.g. Yes! It makes an exceptionally refreshing cold beverage. Simply steep overnight.)"
+                                        className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs focus:ring-1 focus:ring-emerald-500 outline-none bg-white"
+                                     />
+                                  </div>
+                                  <button
+                                     type="button"
+                                     onClick={() => handleRemoveFaqRow(index)}
+                                     className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-lg transition cursor-pointer self-start shrink-0 text-sm"
+                                     title="Remove FAQ"
+                                  >
+                                     🗑️
+                                  </button>
+                               </div>
+                            ))}
+
+                            {productFaqs.length === 0 && (
+                               <div className="text-center py-4 border border-dashed border-gray-200 rounded-xl text-[10px] text-gray-400 font-medium italic">
+                                  No product-specific FAQs defined yet. Use the AI Auto-Fill button to generate them instantly!
+                                </div>
+                            )}
+                         </div>
+                      </div>
+
+                   </div>
+                )}
              </div>
 
              {/* COLLAPSIBLE: PRODUCT BLUEPRINT */}

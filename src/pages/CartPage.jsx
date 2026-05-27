@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../hooks/use-cart";
 import { getQrSession } from "../utils/qr-session";
 import { useShop } from "../hooks/use-shop";
 import CartComponent from "../components/Cart";
 import OfflineAlert from "../components/OfflineAlert";
+import { isShopOpen } from "../utils/operating-hours";
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -12,6 +13,7 @@ export default function CartPage() {
   const { shop } = useShop(session?.shop_id);
   const { items, addItem, removeItem, total } = useCart();
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const isOpen = useMemo(() => isShopOpen(shop), [shop]);
 
   useEffect(() => {
     const goOnline = () => setIsOnline(true);
@@ -55,15 +57,15 @@ export default function CartPage() {
 
         {items.length > 0 && (
           <div className="mt-6 space-y-3">
-            {shop?.is_online === false && (
+            {!isOpen && (
               <div className="p-3 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg text-sm font-semibold border border-red-100 dark:border-red-900/50 text-center">
                 🔴 Shop is currently closed.
               </div>
             )}
             <button
               onClick={() => navigate("/order")}
-              disabled={shop?.is_online === false}
-              className={`w-full py-4 rounded-xl font-black text-lg transition-all shadow-xl transform active:scale-95 flex items-center justify-center gap-2 ${shop?.is_online === false ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover cursor-pointer dark:text-gray-900 dark:shadow-theme-accent/20'}`}
+              disabled={!isOpen}
+              className={`w-full py-4 rounded-xl font-black text-lg transition-all shadow-xl transform active:scale-95 flex items-center justify-center gap-2 ${!isOpen ? 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50' : 'bg-theme-accent text-theme-main hover:bg-theme-accent-hover cursor-pointer dark:text-gray-900 dark:shadow-theme-accent/20'}`}
             >
               Confirm Order — KSh {total}
             </button>
