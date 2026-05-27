@@ -207,6 +207,15 @@ export default function ProductManager() {
       product_link: productLink || null,
       tags: parsedTags,
       template_id: selectedTemplateId || null,
+      
+      // Top-level back-compat columns (Maintain Product Columns)
+      brand: customFields.brand || null,
+      benefits: customFields.benefits || null,
+      origin: customFields.origin || null,
+      processing: customFields.processing || null,
+      recipe: customFields.recipe || null,
+      diet_tags: dietTagsText ? dietTagsText.split(',').map(t=>t.trim()).filter(Boolean) : [],
+
       attributes: {
          ...Object.keys(customFields).reduce((acc, key) => {
             if (key !== 'diet_tags' && key !== 'faq') {

@@ -547,7 +547,15 @@ export default function OrderManager() {
     }
 
     return baseOrders.filter(o => {
-      const matchesTab = activeTab === 'all' ? true : o.status === activeTab;
+      let matchesTab = false;
+      if (activeTab === 'all') {
+        matchesTab = true;
+      } else if (activeTab === 'cancelled') {
+        matchesTab = ['rejected', 'expired'].includes(o.status);
+      } else {
+        matchesTab = o.status === activeTab;
+      }
+
       const s = searchTerm.toLowerCase();
       const matchesSearch = !searchTerm || 
         (o.client_name?.toLowerCase().includes(s)) ||
@@ -567,6 +575,7 @@ export default function OrderManager() {
     { id: 'preparing', label: 'Prep' },
     { id: 'ready', label: 'Ready' },
     { id: 'completed', label: 'Fin' },
+    { id: 'cancelled', label: 'Cancelled' },
   ];
 
   if (loading) return <div className="p-10 text-center animate-pulse font-bold text-gray-400">Syncing Stream...</div>;
