@@ -131,7 +131,7 @@ export default function Menu() {
   }, [categoryNames]);
   useEffect(() => {
      if (session?.shop_id) {
-        fetchActiveBundles();
+        // fetchActiveBundles(); // Stashed in features-in-progress
         getGoogleMetadata('shop', session.shop_id)
           .then(data => setSeoConfig(data))
           .catch(err => console.error("Failed to fetch menu SEO:", err));
@@ -364,8 +364,8 @@ export default function Menu() {
         <OfflineAlert message={`Showing cached ${terms.menu.toLowerCase()} — you appear to be offline`} />
       )}
 
-      {/* ── Deals & Bundles Section ── */}
-      {bundles.length > 0 && (
+      {/* ── Deals & Bundles Section (Stashed in features-in-progress) ── */}
+      {false && bundles.length > 0 && (
          <div className="bg-white border-b border-gray-100 pb-8 pt-4">
             <div className="max-w-lg md:max-w-3xl lg:max-w-7xl mx-auto px-4">
                <h2 className="text-sm font-bold text-gray-800 mb-4 flex items-center gap-2">
