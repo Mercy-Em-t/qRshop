@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
 import { getThumbnailUrl, getDetailImageUrl } from "../utils/image-utils";
+import { resolveShopIdentifier } from "../services/shop-service";
 
 export default function SalesMagazine() {
   const { identifier } = useParams();
@@ -22,24 +23,25 @@ export default function SalesMagazine() {
   const fetchMagazineData = async () => {
     setLoading(true);
     // 1. Resolve Shop
-    const { data: shopData } = await supabase
-      .from("shops")
-      .select("*")
-      .or(`slug.eq.${identifier},shop_id.eq.${identifier}`)
-      .single();
+    const shopData = await resolveShopIdentifier(identifier);
 
     if (shopData) {
+      const resolvedShopId = shopData.shop_id || shopData.id;
+      // ensure shopData has shop_id for the rest of the component
+      if (!shopData.shop_id) {
+        shopData.shop_id = resolvedShopId;
+      }
       setShop(shopData);
 
       // Check ownership
-      let ownerStatus = shopData.shop_id === activeSessionShopId;
+      let ownerStatus = resolvedShopId === activeSessionShopId;
       if (!ownerStatus && rawUser) {
         try {
           const { data: mems } = await supabase
             .from("shop_members")
             .select("shop_id")
             .eq("user_id", rawUser.id);
-          if (mems && mems.some(m => m.shop_id === shopData.shop_id)) {
+          if (mems && mems.some(m => m.shop_id === resolvedShopId)) {
             ownerStatus = true;
           }
         } catch (err) {
@@ -48,14 +50,11 @@ export default function SalesMagazine() {
       }
       setIsOwner(ownerStatus);
 
-      // 2. Fetch Products with Sales Pages
+      // 2. Fetch Products directly from menu_items
       const { data: productsData } = await supabase
         .from("menu_items")
-        .select(`
-          *,
-          product_sales_pages (*)
-        `)
-        .eq("shop_id", shopData.shop_id)
+        .select("*")
+        .eq("shop_id", resolvedShopId)
         .eq("is_active", true)
         .order("category", { ascending: true });
 
@@ -141,7 +140,36 @@ export default function SalesMagazine() {
   }
 
   const currentProduct = products[activeIndex];
-  const salesPage = currentProduct.product_sales_pages;
+  const salesPage = currentProduct ? (currentProduct.product_sales_pages || currentProduct) : null;
+
+  const handleAddToCart = (product) => {
+    if (!product) return;
+    try {
+      const sid = shop.shop_id || shop.id;
+      const cartKey = `qr_cart_${sid}`;
+      const rawCart = localStorage.getItem(cartKey);
+      let cart = [];
+      if (rawCart) {
+        cart = JSON.parse(rawCart);
+      }
+      const existing = cart.find(item => item.id === product.id);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          image_url: product.image_url
+        });
+      }
+      localStorage.setItem(cartKey, JSON.stringify(cart));
+      alert(`🛒 ${product.name} added to cart!`);
+    } catch (err) {
+      console.error("Cart insertion failed:", err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-indigo-500 selection:text-white overflow-hidden">
@@ -153,13 +181,37 @@ export default function SalesMagazine() {
 
       <nav className="fixed top-0 left-0 right-0 z-50 px-6 py-4 flex justify-between items-center backdrop-blur-md bg-slate-950/50 border-b border-white/5">
          <div className="flex items-center gap-3">
-            <span className="text-2xl">✨</span>
+            {shop.logo_url ? (
+               <img src={shop.logo_url} alt="" className="w-10 h-10 rounded-full object-cover border border-white/10" />
+            ) : (
+               <span className="text-2xl">✨</span>
+            )}
             <div>
                <h1 className="text-sm font-black tracking-tighter uppercase">{shop.name}</h1>
-               <p className="text-[10px] text-indigo-400 font-bold tracking-widest uppercase">Sales Magazine 2026</p>
+               <div className="flex flex-wrap items-center gap-x-2 text-[10px] text-indigo-400 font-bold uppercase tracking-wider">
+                  <span>Sales Catalog</span>
+                  {shop.operating_hours && (
+                     <>
+                        <span className="text-slate-600">•</span>
+                        <span className="text-slate-400">
+                           🕒 {typeof shop.operating_hours === 'string'
+                              ? shop.operating_hours
+                              : (shop.operating_hours.always_open ? "Open 24/7" : "Scheduled Hours")}
+                        </span>
+                     </>
+                  )}
+                  {(shop.phone || shop.whatsapp_number) && (
+                     <>
+                        <span className="text-slate-600">•</span>
+                        <a href={`https://wa.me/${(shop.whatsapp_number || shop.phone).replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+                           📞 WhatsApp
+                        </a>
+                     </>
+                  )}
+               </div>
             </div>
          </div>
-         <Link to={isOwner ? "/a" : `/s/${identifier}`} className="text-[10px] font-black uppercase tracking-widest bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full border border-white/10 transition">
+         <Link to={isOwner ? "/a" : `/s/${shop.slug || shop.id}`} className="text-[10px] font-black uppercase tracking-widest bg-white/10 hover:bg-white/20 px-4 py-2 rounded-full border border-white/10 transition">
             {isOwner ? "Exit to Dashboard" : "Exit to Shop"}
          </Link>
       </nav>
@@ -242,9 +294,12 @@ export default function SalesMagazine() {
                         <p className="text-3xl font-black text-white">KSh {currentProduct.price}</p>
                         <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest">Immediate Delivery</p>
                      </div>
-                     <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 transform hover:-translate-y-1">
-                        Add to Cart
-                     </button>
+                      <button 
+                        onClick={() => handleAddToCart(currentProduct)}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest transition-all shadow-xl shadow-indigo-600/20 transform hover:-translate-y-1"
+                      >
+                         Add to Cart
+                      </button>
                   </div>
                </div>
 

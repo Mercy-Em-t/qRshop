@@ -15,19 +15,14 @@ export async function logEvent(
   const sessionId = getOrCreateTrackingSession();
 
   const newEvent = {
-    event_id: crypto.randomUUID ? crypto.randomUUID() : undefined, // Let DB generate if no crypto
+    id: crypto.randomUUID ? crypto.randomUUID() : undefined,
     event_type: eventType,
     qr_id: qrId,
     shop_id: shopId,
     session_id: sessionId,
     device_id: deviceId,
-    metadata: {
-      device_info: deviceInfo,
-      campaign_id: extraMetadata.campaign_id || null,
-      user_id: extraMetadata.user_id || null,
-      visit_id: extraMetadata.visit_id || null,
-      ...extraMetadata
-    }
+    device_info: deviceInfo,
+    campaign_id: extraMetadata.campaign_id || null
   };
 
   const enqueueFallback = (evt) => {

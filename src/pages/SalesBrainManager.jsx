@@ -167,8 +167,8 @@ export default function SalesBrainManager() {
               <p className="text-xs text-indigo-200 mt-2 font-medium opacity-80">1 Credit = 1 AI Sales Interaction</p>
             </div>
             <button 
-              onClick={() => navigate('/a/settings')}
-              className="bg-white text-indigo-600 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-50 transition shadow-lg"
+              onClick={() => navigate('/a/subscription')}
+              className="bg-white text-indigo-600 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-50 transition shadow-lg cursor-pointer"
             >
               Top Up
             </button>

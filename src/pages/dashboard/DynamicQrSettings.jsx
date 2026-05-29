@@ -33,7 +33,7 @@ export default function DynamicQrSettings() {
       }
       setLoading(false);
     }
-    init();
+    fetchSettings();
   }, [qrId]);
 
   const handleSubmit = async (e) => {

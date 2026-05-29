@@ -15,7 +15,7 @@
 
 @media (min-width: 640px) {
   .shop-footer__inner {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 48px;
     padding: 64px 32px 40px;
   }
@@ -126,4 +126,8 @@
 
 .shop-footer__attr-link:hover {
   text-decoration: underline;
+}
+
+.shop-footer__payment-item {
+  margin-bottom: 12px;
 }

@@ -178,7 +178,6 @@ export default function Dashboard() {
           <div className="sm:hidden border-t border-slate-100 bg-white px-4 py-3 flex flex-col gap-3">
             <Link to="/a/orders" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🛎 Live Orders</Link>
             <Link to="/product-manager" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">📋 Product Manager</Link>
-            <Link to="/a/marketing?tab=promos" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🎁 Bundles</Link>
             <Link to="/a/ai-brain" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">🧠 AI Brain</Link>
             <Link to="/a/settings" onClick={() => setMobileMenuOpen(false)} className="text-sm font-bold text-slate-700">⚙️ Settings</Link>
             <button onClick={() => { logout(); navigate("/login"); }} className="text-sm font-bold text-red-500 text-left">Logout</button>
@@ -313,21 +312,7 @@ export default function Dashboard() {
             </p>
           </Link>
 
-          <Link
-            to={`/s/${shop?.slug || shop?.shop_id || shopId}/magazine`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-gradient-to-br from-indigo-50 to-emerald-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-200 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 bg-indigo-500 w-16 h-16 rounded-bl-full opacity-10"></div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2 flex items-center gap-2">
-              ✨ Sales Magazine
-              <span className="bg-indigo-600 text-[10px] px-1.5 py-0.5 rounded text-white font-bold uppercase animate-pulse">View</span>
-            </h2>
-            <p className="text-gray-500 text-sm">
-              Preview and flip through your shop's published sales magazine.
-            </p>
-          </Link>
+
 
           <Link
             to={shopId ? `/a/bulk-image-mapper?shop_id=${shopId}` : `/a/bulk-image-mapper`}
@@ -440,16 +425,6 @@ export default function Dashboard() {
                </p>
              </div>
           )}
-
-          {/* Bundles tab — links to Marketing Studio Promo Bundles tab */}
-          <Link
-            to="/a/marketing?tab=promos"
-            className="bg-gradient-to-br from-orange-50 to-pink-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-orange-200 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 bg-orange-400 w-16 h-16 rounded-bl-full opacity-10"></div>
-            <h2 className="text-lg font-semibold text-gray-800 mb-2">🎁 Bundles & Promos</h2>
-            <p className="text-gray-500 text-sm">Create product bundles and combo promotions for your shop.</p>
-          </Link>
 
           {planAccess.isPro ? (
              <Link

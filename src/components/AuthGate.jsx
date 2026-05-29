@@ -35,9 +35,7 @@ export default function AuthGate({ children }) {
               ));
 
             if (!isNetworkIssue) {
-              console.warn("AuthGate: Cryptographic background session verification failed (invalid/expired session). Logging out...");
-              const { logout } = await import("../services/auth-service");
-              await logout();
+              console.warn("AuthGate: Cryptographic background session verification failed (invalid/expired session). Stale session warning logged, but active session preserved for grace period.");
             } else {
               console.warn("AuthGate: Network issue detected during session revalidation. Preserving session for offline use.");
             }

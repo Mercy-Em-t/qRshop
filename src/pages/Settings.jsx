@@ -210,6 +210,7 @@ export default function Settings() {
       slug: shop.slug,
       fulfillment_settings: shop.fulfillment_settings,
       mpesa_shortcode: shop.mpesa_shortcode || null,
+      mpesa_till_number: shop.mpesa_till_number || null,
       mpesa_passkey: shop.mpesa_passkey || null,
       logo_url: logoUrl || null,
       operating_hours: operatingHoursPayload,
@@ -792,9 +793,19 @@ export default function Settings() {
                   <p className="text-xs text-slate-400 mb-6 leading-relaxed">
                     Enter your M-Pesa Paybill or Till number and the Passkey provided by Safaricom. These are used to trigger STK push payments directly to your shop.
                   </p>
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid md:grid-cols-3 gap-6">
                     <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Shortcode / Till Number</label>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2">M-Pesa Till Number (Buy Goods)</label>
+                      <input
+                        type="text"
+                        value={shop.mpesa_till_number || ''}
+                        onChange={e => setShop({...shop, mpesa_till_number: e.target.value})}
+                        placeholder="e.g. 5123456"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-mono text-gray-900 tracking-wider"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2">M-Pesa Paybill Shortcode</label>
                       <input
                         type="text"
                         value={shop.mpesa_shortcode || ''}
