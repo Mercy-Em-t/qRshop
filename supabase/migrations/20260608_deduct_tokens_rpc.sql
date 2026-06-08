@@ -8,7 +8,7 @@ DECLARE
     v_shop RECORD;
     v_new_balance INTEGER;
 BEGIN
-    SELECT * INTO v_shop FROM public.shops WHERE id = p_shop_id;
+    SELECT * INTO v_shop FROM public.shops WHERE shop_id = p_shop_id;
     
     IF v_shop IS NULL THEN
         RETURN jsonb_build_object('success', false, 'message', 'Shop not found');
@@ -24,7 +24,7 @@ BEGIN
     -- Update balance
     UPDATE public.shops 
     SET token_balance = v_new_balance
-    WHERE id = p_shop_id;
+    WHERE shop_id = p_shop_id;
 
     -- Log transaction
     INSERT INTO public.token_transactions (shop_id, amount, transaction_type, description)

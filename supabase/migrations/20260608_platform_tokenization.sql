@@ -7,7 +7,7 @@ ADD COLUMN IF NOT EXISTS okoa_jahazi_active BOOLEAN DEFAULT false;
 -- Create Token Transactions table
 CREATE TABLE IF NOT EXISTS public.token_transactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    shop_id UUID REFERENCES public.shops(id) ON DELETE CASCADE,
+    shop_id UUID REFERENCES public.shops(shop_id) ON DELETE CASCADE,
     amount INTEGER NOT NULL,
     transaction_type VARCHAR(50) NOT NULL CHECK (transaction_type IN ('topup', 'usage', 'okoa_advance', 'okoa_fee', 'okoa_repayment', 'monthly_grant')),
     description TEXT,
@@ -33,7 +33,7 @@ DECLARE
     v_fee INTEGER;
     v_net_tokens INTEGER;
 BEGIN
-    SELECT * INTO v_shop FROM public.shops WHERE id = p_shop_id;
+    SELECT * INTO v_shop FROM public.shops WHERE shop_id = p_shop_id;
     
     IF v_shop IS NULL THEN
         RETURN jsonb_build_object('success', false, 'message', 'Shop not found');
@@ -75,7 +75,7 @@ DECLARE
     v_fee INTEGER;
     v_net_tokens INTEGER;
 BEGIN
-    SELECT * INTO v_shop FROM public.shops WHERE id = p_shop_id;
+    SELECT * INTO v_shop FROM public.shops WHERE shop_id = p_shop_id;
     
     IF v_shop IS NULL THEN
         RETURN jsonb_build_object('success', false, 'message', 'Shop not found');
@@ -97,7 +97,7 @@ BEGIN
     UPDATE public.shops 
     SET token_balance = token_balance + v_net_tokens,
         okoa_jahazi_owed = p_amount
-    WHERE id = p_shop_id;
+    WHERE shop_id = p_shop_id;
 
     -- Log transactions
     INSERT INTO public.token_transactions (shop_id, amount, transaction_type, description)
@@ -121,7 +121,7 @@ DECLARE
     v_remaining_topup INTEGER;
     v_repayment INTEGER := 0;
 BEGIN
-    SELECT * INTO v_shop FROM public.shops WHERE id = p_shop_id;
+    SELECT * INTO v_shop FROM public.shops WHERE shop_id = p_shop_id;
     
     IF v_shop IS NULL THEN
         RETURN jsonb_build_object('success', false, 'message', 'Shop not found');
@@ -152,7 +152,7 @@ BEGIN
     UPDATE public.shops 
     SET token_balance = token_balance + v_remaining_topup,
         okoa_jahazi_owed = okoa_jahazi_owed - v_repayment
-    WHERE id = p_shop_id;
+    WHERE shop_id = p_shop_id;
 
     RETURN jsonb_build_object('success', true, 'message', 'Top-up successful', 'tokens_added', v_remaining_topup, 'okoa_repaid', v_repayment);
 END;
