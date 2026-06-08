@@ -834,7 +834,6 @@ export default function Settings() {
                       />
                     </div>
                   </div>
-                  </div>
                   <div className="mt-6 flex items-center justify-between">
                     <p className="text-[10px] text-slate-400 font-medium tracking-wide">🔒 Keys are masked and stored securely in the system.</p>
                     <button 

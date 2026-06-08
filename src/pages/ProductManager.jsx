@@ -940,6 +940,7 @@ export default function ProductManager() {
                               className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer"
                           />
                        </div>
+                    </div>
                   )}
                 </div>
                 <button 
