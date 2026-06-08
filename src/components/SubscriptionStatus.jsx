@@ -22,9 +22,12 @@ export default function SubscriptionStatus({ shop }) {
 
   let daysRemaining = null;
   let isActive = true;
-  if (shop?.plan_expires_at && currentPlan !== "FREE") {
-    daysRemaining = Math.max(0, Math.ceil((new Date(shop.plan_expires_at) - new Date()) / (1000 * 60 * 60 * 24)));
-    isActive = daysRemaining > 0;
+  if (shop?.subscription_expires_at && currentPlan !== "FREE") {
+    const parsedDate = new Date(shop.subscription_expires_at);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      daysRemaining = Math.max(0, Math.ceil((parsedDate - new Date()) / (1000 * 60 * 60 * 24)));
+      isActive = daysRemaining > 0;
+    }
   }
 
   const borderColor = !isActive ? "border-l-red-400" : currentPlan === "FREE" ? "border-l-gray-300" : "border-l-green-500";

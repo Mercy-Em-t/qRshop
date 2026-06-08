@@ -29,6 +29,7 @@ export default function Dashboard() {
   const planAccess = usePlanAccess();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
 
   const user = getCurrentUser();
   // Multi-shop users have shop_id = null; fall back to the active shop chosen in ShopSelection
@@ -37,6 +38,152 @@ export default function Dashboard() {
   // Real-time conversion intelligence hook
   const { stats: convStats } = useConversionStats(shopId);
   const { stats: visitStats } = useVisitStats(shopId);
+
+  const [merchantIdInput, setMerchantIdInput] = useState("");
+  const [syncEnabledInput, setSyncEnabledInput] = useState(false);
+  const [verificationTokenInput, setVerificationTokenInput] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingToken, setIsSavingToken] = useState(false);
+  
+  const [diagnostics, setDiagnostics] = useState(null);
+  const [loadingDiagnostics, setLoadingDiagnostics] = useState(false);
+  const [diagnosticsError, setDiagnosticsError] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [setupStep, setSetupStep] = useState(null); // null | 'verify' | 'merchant'
+
+  useEffect(() => {
+    if (shop) {
+      setMerchantIdInput(shop.google_merchant_id || "");
+      setSyncEnabledInput(shop.google_sync_enabled || false);
+      setVerificationTokenInput(shop.google_verification_token || "");
+    }
+  }, [shop]);
+
+  const handleSaveVerificationToken = async () => {
+    if (!verificationTokenInput.trim()) return;
+    setIsSavingToken(true);
+    try {
+      const token = verificationTokenInput.trim();
+      const { error } = await supabase
+        .from('shops')
+        .update({ google_verification_token: token })
+        .eq('shop_id', shopId);
+      if (error) throw error;
+      setShop(prev => ({ ...prev, google_verification_token: token }));
+      alert('Verification token saved! Google can now verify your site.');
+    } catch (err) {
+      alert(`Error saving token: ${err.message}`);
+    } finally {
+      setIsSavingToken(false);
+    }
+  };
+
+  const fetchDiagnostics = async () => {
+    if (!shopId) return;
+    setLoadingDiagnostics(true);
+    setDiagnosticsError(null);
+    try {
+      const res = await fetch(`/api/merchant/status?shopId=${shopId}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch diagnostics.");
+      }
+      setDiagnostics(data);
+    } catch (err) {
+      console.error("Failed to fetch Google diagnostics:", err);
+      setDiagnosticsError(err.message);
+    } finally {
+      setLoadingDiagnostics(false);
+    }
+  };
+
+  useEffect(() => {
+    if (showGoogleModal && shopId) {
+      const activeMerchantId = shop?.google_merchant_id || sessionStorage.getItem('active_shop_google_merchant_id');
+      if (activeMerchantId || merchantIdInput) {
+        fetchDiagnostics();
+      }
+    }
+  }, [showGoogleModal, shopId]);
+
+  const handleSaveGoogleSettings = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("shops")
+        .update({
+          google_merchant_id: merchantIdInput,
+          google_sync_enabled: syncEnabledInput
+        })
+        .eq("shop_id", shopId);
+
+      if (error) throw error;
+      alert("Google settings updated successfully!");
+      
+      setShop(prev => ({
+        ...prev,
+        google_merchant_id: merchantIdInput,
+        google_sync_enabled: syncEnabledInput
+      }));
+    } catch (err) {
+      console.error("Failed to save settings:", err);
+      alert(`Error saving settings: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // One-tap master toggle — flips google_sync_enabled directly from the card
+  const handleToggleGoogleSync = async (e) => {
+    e.stopPropagation(); // don't open modal
+    const newValue = !shop?.google_sync_enabled;
+    try {
+      const { error } = await supabase
+        .from("shops")
+        .update({ google_sync_enabled: newValue })
+        .eq("shop_id", shopId);
+      if (error) throw error;
+      setShop(prev => ({ ...prev, google_sync_enabled: newValue }));
+      setSyncEnabledInput(newValue);
+    } catch (err) {
+      console.error("Toggle failed:", err);
+      alert(`Could not update Google sync: ${err.message}`);
+    }
+  };
+
+
+  const handleSyncNow = async () => {
+    setIsSyncing(true);
+    try {
+      const res = await fetch(`/api/merchant/sync?shopId=${shopId}`, {
+        method: "POST"
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Sync failed.");
+      alert(data.message || "Product sync completed successfully!");
+      
+      fetchDiagnostics();
+      
+      // Update local state with new sync metadata
+      const { data: freshShop } = await supabase
+        .from("shops")
+        .select("google_last_sync_at, google_sync_status")
+        .eq("shop_id", shopId)
+        .single();
+      if (freshShop) {
+        setShop(prev => ({
+          ...prev,
+          google_last_sync_at: freshShop.google_last_sync_at,
+          google_sync_status: freshShop.google_sync_status
+        }));
+      }
+    } catch (err) {
+      console.error("Sync failed:", err);
+      alert(`Error syncing products: ${err.message}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -190,6 +337,316 @@ export default function Dashboard() {
         isOpen={showShareModal} 
         onClose={() => setShowShareModal(false)} 
       />
+
+      {showGoogleModal && (
+        <div style={{ fontFamily: 'var(--font-family, Outfit)' }} className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white max-w-lg w-full rounded-3xl shadow-2xl p-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <span className="bg-blue-100 text-blue-700 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">Integration Hub</span>
+                <h2 className="text-2xl font-black text-gray-900 mt-2">🌐 Google Shopping Hub</h2>
+              </div>
+              <button 
+                onClick={() => setShowGoogleModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-2xl font-bold cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-6">
+
+              {/* 🚀 SECTION 0: SETUP GUIDE — shown when not yet fully configured */}
+              {(!shop?.google_merchant_id || !shop?.google_verification_token) && (
+                <div className="border border-blue-100 rounded-2xl p-5 bg-blue-50/40">
+                  <h3 className="text-sm font-bold text-blue-900 mb-1 flex items-center gap-1.5">
+                    🚀 How to set up Google Shopping
+                  </h3>
+                  <p className="text-[11px] text-blue-700 mb-4 leading-relaxed">
+                    Google requires you to create your own free Merchant Center account — we can't do this on your behalf. But once it's created, everything else is managed here.
+                  </p>
+
+                  {/* Step 1 */}
+                  <div className={`flex gap-3 mb-3 p-3 rounded-xl border ${shop?.google_verification_token ? 'bg-green-50 border-green-200' : 'bg-white border-blue-100'}`}>
+                    <span className={`shrink-0 w-6 h-6 rounded-full text-xs font-black flex items-center justify-center ${shop?.google_verification_token ? 'bg-green-500 text-white' : 'bg-blue-600 text-white'}`}>
+                      {shop?.google_verification_token ? '✓' : '1'}
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-gray-800">Create your Google Merchant Center account</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">Free to sign up. Use the same email as your Google Business Profile if you have one.</p>
+                      <a
+                        href="https://merchants.google.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-bold text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Open Google Merchant Center ↗
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Step 2 — site verification token */}
+                  <div className={`flex gap-3 mb-3 p-3 rounded-xl border ${shop?.google_verification_token ? 'bg-green-50 border-green-200' : 'bg-white border-blue-100'}`}>
+                    <span className={`shrink-0 w-6 h-6 rounded-full text-xs font-black flex items-center justify-center ${shop?.google_verification_token ? 'bg-green-500 text-white' : 'bg-blue-200 text-blue-700'}`}>
+                      {shop?.google_verification_token ? '✓' : '2'}
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-gray-800">Verify your website with Google</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">
+                        In Merchant Center → <strong>Business info → Website</strong>, click <strong>"Verify your website"</strong>. Choose <strong>HTML file</strong> method. Copy the filename Google gives you (looks like <code className="bg-gray-100 px-1 rounded">googleXXXXXXXX.html</code>).
+                      </p>
+                      {/* Verification URL preview */}
+                      {shop?.slug && (
+                        <div className="mt-2 bg-slate-50 border border-slate-200 rounded-lg p-2">
+                          <p className="text-[9px] font-bold text-gray-500 uppercase mb-1">Your verification URL will be:</p>
+                          <p className="text-[10px] font-mono text-gray-700 break-all">
+                            https://www.tmsavannah.com/s/{shop.slug}/google<span className="text-blue-600">[your-token]</span>.html
+                          </p>
+                        </div>
+                      )}
+                      <div className="mt-2 flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Paste token e.g. abc123xyz (just the letters, not the full filename)"
+                          value={verificationTokenInput}
+                          onChange={(e) => setVerificationTokenInput(e.target.value.replace(/google|\.html/gi, '').trim())}
+                          className="flex-1 text-[10px] bg-white border border-gray-200 px-3 py-2 rounded-lg focus:outline-none focus:border-blue-500"
+                        />
+                        <button
+                          onClick={handleSaveVerificationToken}
+                          disabled={isSavingToken || !verificationTokenInput.trim()}
+                          className="shrink-0 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white text-[10px] font-bold px-3 py-2 rounded-lg transition cursor-pointer"
+                        >
+                          {isSavingToken ? '...' : 'Save'}
+                        </button>
+                      </div>
+                      {shop?.google_verification_token && (
+                        <p className="text-[10px] text-green-600 font-bold mt-1">✓ Token saved — Google can verify your site</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className={`flex gap-3 mb-3 p-3 rounded-xl border ${shop?.google_merchant_id ? 'bg-green-50 border-green-200' : 'bg-white border-blue-100'}`}>
+                    <span className={`shrink-0 w-6 h-6 rounded-full text-xs font-black flex items-center justify-center ${shop?.google_merchant_id ? 'bg-green-500 text-white' : 'bg-blue-200 text-blue-700'}`}>
+                      {shop?.google_merchant_id ? '✓' : '3'}
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-gray-800">Enter your Merchant ID below</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">Found in Merchant Center → top-right corner under your account name. It's a 9–10 digit number.</p>
+                      {shop?.google_merchant_id && (
+                        <p className="text-[10px] text-green-600 font-bold mt-1">✓ Merchant ID saved: {shop.google_merchant_id}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Step 4 — invite service account */}
+                  <div className={`flex gap-3 p-3 rounded-xl border ${shop?.google_merchant_id ? 'bg-green-50 border-green-200' : 'bg-white border-blue-100'}`}>
+                    <span className={`shrink-0 w-6 h-6 rounded-full text-xs font-black flex items-center justify-center ${shop?.google_merchant_id ? 'bg-green-500 text-white' : 'bg-blue-200 text-blue-700'}`}>
+                      {shop?.google_merchant_id ? '✓' : '4'}
+                    </span>
+                    <div className="flex-1">
+                      <p className="text-xs font-bold text-gray-800">Invite Platform Service Account</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5 leading-relaxed">
+                        To allow the platform to update your catalog, go to Merchant Center → <strong>Settings & Tools (Gear icon) → People & access</strong>, click <strong>Add User</strong>, and invite the platform email below as an <strong>Admin</strong>:
+                      </p>
+                      <div className="mt-2 flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg p-1.5 font-mono text-[9px] text-gray-700">
+                        <span className="flex-1 truncate">tmsavannah-googlemerchantsync@tm-savannahshop.iam.gserviceaccount.com</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText('tmsavannah-googlemerchantsync@tm-savannahshop.iam.gserviceaccount.com');
+                            alert('Copied to clipboard!');
+                          }}
+                          className="shrink-0 bg-gray-200 hover:bg-gray-300 text-[9px] font-bold px-2 py-0.5 rounded cursor-pointer transition"
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+              {/* ✅ All set banner — shown once fully configured */}
+              {shop?.google_merchant_id && shop?.google_verification_token && (
+                <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3">
+                  <span className="text-2xl">✅</span>
+                  <div>
+                    <p className="text-xs font-bold text-green-800">Google Shopping fully configured</p>
+                    <p className="text-[10px] text-green-600">Site verified · Merchant ID connected · Products syncing</p>
+                  </div>
+                </div>
+              )}
+
+              {/* ⚙️ SECTION 1: SETTINGS CONFIGURATION */}
+              <div className="border border-slate-100 rounded-2xl p-5 bg-slate-50/30">
+                <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-1.5">
+                  <span>⚙️</span> Configuration Settings
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Google Merchant ID</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. 509284102"
+                      value={merchantIdInput}
+                      onChange={(e) => setMerchantIdInput(e.target.value)}
+                      className="w-full bg-white border border-gray-200 text-sm px-4 py-2.5 rounded-xl text-gray-700 focus:outline-none focus:border-blue-500 transition"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-700">Enable Automated Sync</label>
+                      <p className="text-[10px] text-gray-400">Pushes catalogue changes to Google instantly</p>
+                    </div>
+                    <input 
+                      type="checkbox"
+                      checked={syncEnabledInput}
+                      onChange={(e) => setSyncEnabledInput(e.target.checked)}
+                      className="w-5 h-5 accent-blue-600 rounded cursor-pointer"
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleSaveGoogleSettings}
+                    disabled={isSaving}
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 rounded-xl transition disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSaving ? "Saving Settings..." : "Save Settings"}
+                  </button>
+                </div>
+              </div>
+
+              {/* 🔄 SECTION 2: SYNCHRONISATION */}
+              <div className="border border-slate-100 rounded-2xl p-5 bg-slate-50/30">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                    <span>🔄</span> Sync Catalogue
+                  </h3>
+                  <button
+                    onClick={handleSyncNow}
+                    disabled={isSyncing || !shop?.google_merchant_id}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white font-bold text-xs px-4 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+                  >
+                    {isSyncing ? (
+                      <>
+                        <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        Syncing...
+                      </>
+                    ) : (
+                      "Sync Now"
+                    )}
+                  </button>
+                </div>
+
+                <div className="text-xs text-gray-500 space-y-1.5">
+                  <p>
+                    <strong>Last Sync Run:</strong>{" "}
+                    {shop?.google_last_sync_at 
+                      ? new Date(shop.google_last_sync_at).toLocaleString() 
+                      : "Never synced"}
+                  </p>
+                  <p className="bg-white border border-gray-100 p-2.5 rounded-lg text-[11px] font-mono text-gray-600 break-words">
+                    <strong>Status:</strong> {shop?.google_sync_status || "Awaiting initial sync."}
+                  </p>
+                </div>
+              </div>
+
+              {/* 📊 SECTION 3: LIVE DIAGNOSTICS */}
+              <div className="border border-slate-100 rounded-2xl p-5 bg-slate-50/30">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                    <span>📊</span> Google Diagnostics
+                  </h3>
+                  {shop?.google_merchant_id && (
+                    <button 
+                      onClick={fetchDiagnostics}
+                      disabled={loadingDiagnostics}
+                      className="text-[10px] font-black uppercase text-blue-600 hover:text-blue-800 transition"
+                    >
+                      {loadingDiagnostics ? "Loading..." : "Refresh Status"}
+                    </button>
+                  )}
+                </div>
+
+                {!shop?.google_merchant_id ? (
+                  <p className="text-xs text-gray-400 italic text-center py-4">
+                    Enter and save your Google Merchant ID above to query live product diagnostics.
+                  </p>
+                ) : loadingDiagnostics ? (
+                  <div className="flex flex-col items-center justify-center py-6">
+                    <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2" />
+                    <p className="text-[11px] text-gray-400 font-medium">Fetching Merchant Center status...</p>
+                  </div>
+                ) : diagnosticsError ? (
+                  <div className="bg-red-50 text-red-800 text-xs p-3 rounded-xl border border-red-100 text-center">
+                    ⚠️ {diagnosticsError}
+                  </div>
+                ) : diagnostics ? (
+                  <div className="space-y-4">
+                    {/* Diagnostic metrics */}
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="bg-green-50 border border-green-100 p-3 rounded-xl">
+                        <p className="text-[9px] font-black uppercase text-green-700 mb-0.5">Approved</p>
+                        <p className="text-lg font-black text-green-700">{diagnostics.approved}</p>
+                      </div>
+                      <div className="bg-amber-50 border border-amber-100 p-3 rounded-xl">
+                        <p className="text-[9px] font-black uppercase text-amber-700 mb-0.5">Pending</p>
+                        <p className="text-lg font-black text-amber-700">{diagnostics.pending}</p>
+                      </div>
+                      <div className="bg-red-50 border border-red-100 p-3 rounded-xl">
+                        <p className="text-[9px] font-black uppercase text-red-700 mb-0.5">Rejected</p>
+                        <p className="text-lg font-black text-red-700">{diagnostics.disapproved}</p>
+                      </div>
+                    </div>
+
+                    {/* Disapproval issues list */}
+                    {diagnostics.issues && diagnostics.issues.length > 0 ? (
+                      <div className="space-y-2.5">
+                        <p className="text-xs font-bold text-gray-700">Flagged Catalog Issues:</p>
+                        {diagnostics.issues.map((issue, idx) => (
+                          <div key={idx} className="bg-red-50/50 text-red-800 text-[11px] p-3.5 rounded-xl border border-red-100/50 flex flex-col gap-1.5">
+                            <div className="flex justify-between font-bold">
+                              <span className="flex items-center gap-1">⚠️ {issue.description}</span>
+                              <span className="bg-red-100 px-1.5 py-0.5 rounded text-[9px]">{issue.affectedItems} items</span>
+                            </div>
+                            <p className="text-gray-500 leading-normal">{issue.detail}</p>
+                            {issue.resolution && (
+                              <p className="text-[10px] text-green-700 font-semibold bg-green-50 border border-green-100/50 px-2 py-1 rounded">
+                                💡 Fix: {issue.resolution}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-green-50 border border-green-100 text-green-700 text-xs p-3.5 rounded-xl text-center font-bold">
+                        🎉 All synchronized products are fully approved on Google Shopping!
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-400 italic text-center py-4">
+                    Diagnostics data not yet loaded. Click "Refresh Status" to query.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-8 pt-5 border-t border-slate-100 flex justify-end">
+              <button 
+                onClick={() => setShowGoogleModal(false)}
+                className="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition cursor-pointer text-sm"
+              >
+                Close Hub
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* New Order Toast */}
       {showNewOrderToast && (
@@ -380,6 +837,70 @@ export default function Dashboard() {
               Update store info, logo, passwords, and manage plan.
             </p>
           </Link>
+
+          <button
+            onClick={() => setShowGoogleModal(true)}
+            style={{ fontFamily: 'var(--font-family, Outfit)' }}
+            className={`bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-all border-2 relative overflow-hidden text-left w-full cursor-pointer ${
+              shop?.google_sync_enabled
+                ? 'border-green-400 bg-green-50/30'
+                : shop?.google_merchant_id
+                ? 'border-red-300 bg-red-50/20'
+                : 'border-transparent hover:border-blue-100'
+            }`}
+          >
+            <div className={`absolute top-0 right-0 w-16 h-16 rounded-bl-full opacity-10 ${shop?.google_sync_enabled ? 'bg-green-500' : 'bg-blue-500'}`}></div>
+
+            {/* Header row */}
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                🌐 Google Shopping
+              </h2>
+              {/* One-tap master toggle */}
+              <button
+                onClick={handleToggleGoogleSync}
+                title={shop?.google_sync_enabled ? 'Click to disable Google sync' : 'Click to enable Google sync'}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  shop?.google_sync_enabled ? 'bg-green-500' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                    shop?.google_sync_enabled ? 'translate-x-5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+
+            <p className="text-gray-500 text-sm mb-3">
+              Manage Google Merchant Center feeds, site verification, and returns policy.
+            </p>
+
+            {/* Status badge */}
+            <div className="flex items-center gap-2">
+              <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${
+                shop?.google_sync_enabled
+                  ? 'bg-green-100 text-green-700'
+                  : shop?.google_merchant_id
+                  ? 'bg-red-100 text-red-600'
+                  : 'bg-gray-100 text-gray-500'
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full inline-block ${
+                  shop?.google_sync_enabled ? 'bg-green-500 animate-pulse' : shop?.google_merchant_id ? 'bg-red-400' : 'bg-gray-400'
+                }`}></span>
+                {shop?.google_sync_enabled
+                  ? 'Sync Active'
+                  : shop?.google_merchant_id
+                  ? 'Sync Paused'
+                  : 'Not configured'}
+              </span>
+              {shop?.google_last_sync_at && (
+                <span className="text-[10px] text-gray-400">
+                  Last sync: {new Date(shop.google_last_sync_at).toLocaleDateString()}
+                </span>
+              )}
+            </div>
+          </button>
 
           <Link
             to="/a/appearance"
@@ -574,6 +1095,7 @@ export default function Dashboard() {
               labelKey="name"
               valueKey="count"
               unit="sold"
+              type="bar"
             />
 
             {/* Real-time Product Conversion Intelligence Card */}

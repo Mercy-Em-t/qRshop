@@ -76,7 +76,7 @@ export default function QRCard({ qr, campaigns = [], updateQR, deleteQR }) {
           </div>
           <div className="flex justify-between items-center bg-gray-50 border border-gray-100 px-3 py-2 rounded-lg">
             <span className="text-gray-500 font-medium">Total Scans</span> 
-            <span className="font-bold text-gray-700">{metrics.totalScans} hits</span>
+            <span className="font-bold text-gray-700">{qr.scan_count || 0} hits</span>
           </div>
           <div className="flex justify-between items-center bg-blue-50/50 border border-blue-100 px-3 py-2 rounded-lg">
             <span className="text-blue-800 font-medium">Instruction</span> 

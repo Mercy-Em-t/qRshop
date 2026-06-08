@@ -15,6 +15,9 @@ import { validateImageFile } from "../utils/security";
 import { getThumbnailUrl } from "../utils/image-utils";
 import ProductGalleryManager from "../components/ProductGalleryManager";
 import { slugify } from "../utils/slugify";
+import GoogleAttributesPanel from "../components/GoogleAttributesPanel";
+import * as XLSX from "xlsx";
+import { TAXONOMY } from "../data/google-taxonomy";
 
 export default function ProductManager() {
   const [items, setItems] = useState([]);
@@ -26,7 +29,7 @@ export default function ProductManager() {
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: false, marketing: false, metadata: false });
+  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: true, marketing: false, metadata: false, google: false });
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -194,6 +197,12 @@ export default function ProductManager() {
       }
     }
 
+    if (!customFields.shipping_weight) {
+      alert("Shipping Weight is required for accurate Google Shopping sync. Please enter a value in the Google Attributes section.");
+      setActiveSections(prev => ({...prev, google: true}));
+      return;
+    }
+
     setIsAdding(true);
     const parsedTags = tags ? tags.split(',').map(t=>t.trim()).filter(Boolean) : [];
 
@@ -321,6 +330,12 @@ export default function ProductManager() {
                 sales_script: finalScript,
                 is_published: true
              }, { onConflict: 'product_id' });
+
+             // Synchronize local state with newly saved or AI-generated copy
+             setItems(prev => prev.map(item => item.id === newProductId ? {
+                ...item,
+                product_sales_pages: [{ headline: finalHeadline, sales_script: finalScript }]
+             } : item));
           } catch (salesErr) {
              console.warn("Background sales content processing failed:", salesErr);
           }
@@ -507,7 +522,7 @@ export default function ProductManager() {
       return;
     }
     
-     const headers = ["ID", "Name", "Category", "Sub-category", "Price", "Description", "Stock", "SKU", "Product_Link", "Tags", "Variant_Options", "Image_URL", "Attributes"];
+     const headers = ["ID", "Name", "Category", "Sub-category", "Price", "Description", "Stock", "SKU", "Product_Link", "Tags", "Variant_Options", "Image_URL", "Attributes", "Google_Category_ID", "Condition", "GTIN", "Shipping_Weight"];
      const csvRows = [headers.join(",")];
      
      for (const item of items) {
@@ -529,7 +544,11 @@ export default function ProductManager() {
          escapeCell(tagsStr),
          escapeCell(variantStr),
          item.image_url || "",
-         escapeCell(attributesStr)
+         escapeCell(attributesStr),
+         item.attributes?.google_product_category_id || "",
+         item.attributes?.condition || "new",
+         escapeCell(item.attributes?.gtin || ""),
+         escapeCell(item.attributes?.shipping_weight || "")
        ];
        csvRows.push(row.join(","));
      }
@@ -549,22 +568,34 @@ export default function ProductManager() {
   };
 
   const handleDownloadTemplate = () => {
-     const templateContent = [
-       "ID,Name,Category,Sub-category,Price,Description,Stock,SKU,Product_Link,Tags,Variant_Options,Image_URL,Attributes",
-       ",Signature Item,Main,Premium,750,High quality product description,50,SAV-01,,tag1,tag2,\"{\"\"size\"\":[\"\"Small\"\",\"\"Large\"\"]}\",https://example.com/p1.jpg,\"{\"\"brand\"\":\"\"Savannah\"\",\"\"origin\"\":\"\"Kenya\"\"}\""
-     ].join("\n");
+    // Generate Products Sheet Data
+    const productsHeaders = ["ID", "Name", "Category", "Sub-category", "Price", "Description", "Stock", "SKU", "Product_Link", "Tags", "Variant_Options", "Image_URL", "Attributes", "Google_Category_ID", "Condition", "GTIN", "Shipping_Weight"];
+    const productsExample = ["", "Signature Item", "Main", "Premium", 750, "High quality product description", 50, "SAV-01", "", "tag1,tag2", '{"size":["Small","Large"]}', "https://example.com/p1.jpg", '{"brand":"Savannah","origin":"Kenya"}', 5765, "new", "0614141007349", "0.5 kg"];
     
-    const blob = new Blob([templateContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
+    // Generate Categories Reference Sheet Data
+    const categoriesData = [
+      ["ID", "Top Level Category", "Sub-category Level 1", "Sub-category Level 2", "Sub-category Level 3", "Sub-category Level 4", "Sub-category Level 5"]
+    ];
+    // Copy the entire taxonomy into the sheet
+    TAXONOMY.forEach(entry => {
+      categoriesData.push(entry);
+    });
+
+    const wb = XLSX.utils.book_new();
     
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "Savannah_Product_Template.csv");
-    document.body.appendChild(link);
-    link.click();
-    
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Create Products Sheet
+    const wsProducts = XLSX.utils.aoa_to_sheet([productsHeaders, productsExample]);
+    // Set some column widths
+    wsProducts['!cols'] = [{wch: 5}, {wch: 20}, {wch: 15}, {wch: 15}, {wch: 10}, {wch: 30}, {wch: 10}, {wch: 15}, {wch: 15}, {wch: 20}, {wch: 20}, {wch: 20}, {wch: 20}, {wch: 20}, {wch: 15}, {wch: 15}, {wch: 15}];
+    XLSX.utils.book_append_sheet(wb, wsProducts, "Products");
+
+    // Create Categories Sheet
+    const wsCategories = XLSX.utils.aoa_to_sheet(categoriesData);
+    wsCategories['!cols'] = [{wch: 10}, {wch: 30}, {wch: 30}, {wch: 30}, {wch: 30}, {wch: 30}, {wch: 30}];
+    XLSX.utils.book_append_sheet(wb, wsCategories, "Google Categories");
+
+    // Generate and Download
+    XLSX.writeFile(wb, "Savannah_Product_Template.xlsx");
   };
 
   const parseCSVRow = (text) => {
@@ -604,19 +635,50 @@ export default function ProductManager() {
     if (!file) return;
 
     const reader = new FileReader();
+    
     reader.onload = async (event) => {
-      const csvData = event.target.result;
-      const rows = csvData.split("\n");
+      let rows = [];
+      
+      // If it's an Excel file (XLSX)
+      if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+         const data = new Uint8Array(event.target.result);
+         const workbook = XLSX.read(data, { type: 'array' });
+         
+         // Use the Products sheet if it exists, otherwise the first sheet
+         const sheetName = workbook.SheetNames.includes("Products") ? "Products" : workbook.SheetNames[0];
+         const worksheet = workbook.Sheets[sheetName];
+         
+         // Convert to array of arrays, treating empty cells as empty strings
+         rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+         // Filter out completely empty rows
+         rows = rows.filter(row => row.some(cell => cell !== ""));
+      } else {
+         // Fallback for CSV
+         const textDecoder = new TextDecoder('utf-8');
+         const csvData = textDecoder.decode(event.target.result);
+         const rawRows = csvData.split("\n");
+         for (let i = 0; i < rawRows.length; i++) {
+           if (rawRows[i].trim() === "") continue;
+           rows.push(parseCSVRow(rawRows[i]));
+         }
+      }
+
+      if (rows.length < 2) {
+         alert("File must contain at least a header row and one product row.");
+         return;
+      }
       
       const bulkItems = [];
       let validationErrors = [];
 
-      const cleanStr = (str) => str ? str.trim() : "";
+      const cleanStr = (str) => {
+          if (str === null || str === undefined) return "";
+          return String(str).trim();
+      };
 
       for (let i = 1; i < rows.length; i++) {
-        if (rows[i].trim() === "") continue;
-        
-        const row = parseCSVRow(rows[i]);
+        const row = rows[i];
+        if (!row || row.length === 0) continue;
         const hasId = row.length >= 12;
         const offset = hasId ? 1 : 0;
 
@@ -662,6 +724,20 @@ export default function ProductManager() {
            catch { console.warn("Invalid attributes JSON for item: " + name) }
         }
         
+        // Extract Google fields from CSV
+        if (row.length >= (14 + offset) && cleanStr(row[13 + offset])) {
+          parsedAttributes.google_product_category_id = parseInt(cleanStr(row[13 + offset]));
+        }
+        if (row.length >= (15 + offset) && cleanStr(row[14 + offset])) {
+          parsedAttributes.condition = cleanStr(row[14 + offset]);
+        }
+        if (row.length >= (16 + offset) && cleanStr(row[15 + offset])) {
+          parsedAttributes.gtin = cleanStr(row[15 + offset]);
+        }
+        if (row.length >= (17 + offset) && cleanStr(row[16 + offset])) {
+          parsedAttributes.shipping_weight = cleanStr(row[16 + offset]);
+        }
+
         const imageUrl = (row.length >= (11 + offset) && cleanStr(row[10 + offset])) ? cleanStr(row[10 + offset]) : null;
 
         const itemData = {
@@ -720,7 +796,7 @@ export default function ProductManager() {
         }
       }
     };
-    reader.readAsText(file);
+    reader.readAsArrayBuffer(file);
     e.target.value = null;
   };
 
@@ -855,16 +931,15 @@ export default function ProductManager() {
                        </button>
                        <div className="relative hover:bg-gray-50 transition-colors">
                           <button className="w-full text-left px-4 py-3 text-sm text-gray-700 font-medium flex items-center gap-2">
-                                ☁️ Upload CSV
+                                📤 Upload Template (.xlsx or .csv)
                           </button>
                           <input 
                               type="file" 
-                              accept=".csv"
+                              accept=".csv, .xlsx, .xls"
                               onChange={(e) => { handleBulkUpload(e); setShowImportMenu(false); }}
                               className="absolute top-0 left-0 opacity-0 w-full h-full cursor-pointer"
                           />
                        </div>
-                    </div>
                   )}
                 </div>
                 <button 
@@ -1291,8 +1366,8 @@ export default function ProductManager() {
                   <div className="flex items-center gap-2">
                      <span className="text-xl">📐</span>
                      <div className="text-left">
-                        <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-widest">Product Structure Blueprint</h3>
-                        <p className="text-[10px] text-indigo-500">Choose a blueprint to define custom fields.</p>
+                        <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-widest">Checkout Flow Blueprint (Variants & Add-ons)</h3>
+                        <p className="text-[10px] text-indigo-500">Choose a blueprint to define complex checkout variants.</p>
                      </div>
                   </div>
                   <span className={`text-indigo-600 transition-transform duration-300 ${activeSections.blueprint ? 'rotate-180' : ''}`}>▼</span>
@@ -1342,51 +1417,66 @@ export default function ProductManager() {
                )}
              </div>
 
-             {/* DYNAMIC SHOP-SPECIFIC ATTRIBUTES */}
-              {shopSchema.length > 0 && (
-                <div className="md:col-span-2">
-                   <button 
-                       type="button"
-                       onClick={() => setActiveSections(prev => ({...prev, attributes: !prev.attributes}))}
-                       className="w-full flex items-center justify-between p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition-colors mb-2 mt-2"
-                   >
-                       <div className="flex items-center gap-2">
-                          <span className="text-xl">🛠️</span>
-                          <div className="text-left">
-                             <h3 className="text-sm font-bold text-orange-900 uppercase tracking-widest">Custom Shop Attributes</h3>
-                             <p className="text-[10px] text-orange-500">Fields defined in your Attribute Manager.</p>
-                          </div>
+              {/* DYNAMIC SHOP-SPECIFIC ATTRIBUTES (ATTRIBUTE PANEL) */}
+             <div className="md:col-span-2 mt-4 bg-white rounded-3xl p-1 border-4 border-slate-50 transition-all hover:border-orange-50/80">
+                <button 
+                    type="button"
+                    onClick={() => setActiveSections(prev => ({...prev, attributes: !prev.attributes}))}
+                    className="w-full flex items-center justify-between p-5 bg-gradient-to-r from-orange-50/50 to-transparent rounded-2xl cursor-pointer"
+                >
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-orange-100 flex items-center justify-center text-xl shrink-0">
+                          🛠️
                        </div>
-                       <span className={`text-orange-600 transition-transform duration-300 ${activeSections.attributes ? 'rotate-180' : ''}`}>▼</span>
-                   </button>
+                       <div className="text-left">
+                          <h3 className="text-sm font-bold text-orange-900 uppercase tracking-widest">Extended Attributes (from Attribute Manager)</h3>
+                          <p className="text-[10px] text-orange-500">Pick platform presets or your shop's custom fields.</p>
+                       </div>
+                    </div>
+                    <span className={`text-orange-600 transition-transform duration-300 ${activeSections.attributes ? 'rotate-180' : ''}`}>▼</span>
+                </button>
 
-                   {activeSections.attributes && (
-                      <div className="grid md:grid-cols-2 gap-4 p-5 bg-white rounded-2xl border border-orange-100/50 animate-in fade-in slide-in-from-top-2">
-                         {shopSchema.map(field => (
-                           <div key={field.key} className={field.type === 'variation' ? 'md:col-span-2' : ''}>
-                              <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{field.label}</label>
-                              
-                              {field.type === 'variation' ? (
-                                <VariationBuilder 
-                                  field={field} 
-                                  value={customFields[field.key]} 
-                                  onChange={(val) => setCustomFields({...customFields, [field.key]: val})} 
-                                />
-                              ) : (
-                                <input 
-                                   type="text"
-                                   value={customFields[field.key] || ""}
-                                   onChange={e => setCustomFields({...customFields, [field.key]: e.target.value})}
-                                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 outline-none transition"
-                                   placeholder={"Enter " + field.label + "..."}
-                                />
-                              )}
-                           </div>
-                         ))}
-                      </div>
-                   )}
-                </div>
-              )}
+                {activeSections.attributes && (
+                   <div className="p-5 bg-white rounded-2xl border border-orange-100/50 mt-2 animate-in fade-in slide-in-from-top-2">
+                      <AttributePanel 
+                         currentAttributes={customFields}
+                         onChange={setCustomFields}
+                         category={category}
+                         shopSchema={shopSchema}
+                      />
+                   </div>
+                )}
+             </div>
+
+              {/* 🛒 GOOGLE SHOPPING ATTRIBUTES */}
+              <div className="md:col-span-2 mt-4 bg-white rounded-3xl p-1 border-4 border-slate-50 transition-all hover:border-blue-50/80">
+                 <button 
+                    type="button"
+                    onClick={() => setActiveSections(prev => ({...prev, google: !prev.google}))}
+                    className="w-full flex items-center justify-between p-5 bg-gradient-to-r from-blue-50/50 to-transparent rounded-2xl cursor-pointer"
+                 >
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-xl bg-white shadow-sm border border-blue-100 flex items-center justify-center text-xl shrink-0">
+                          🛒
+                       </div>
+                       <div className="text-left">
+                          <h3 className="text-sm font-bold text-blue-900 uppercase tracking-widest">Google Shopping Attributes</h3>
+                          <p className="text-[10px] text-blue-500">Configure category, GTIN, and shipping weight for Merchant Center.</p>
+                       </div>
+                    </div>
+                    <span className={`text-blue-600 transition-transform duration-300 ${activeSections.google ? 'rotate-180' : ''}`}> ▼ </span>
+                </button>
+
+                {activeSections.google && (
+                   <div className="p-5 bg-white rounded-2xl border border-blue-100/50 mt-2 animate-in fade-in slide-in-from-top-2">
+                      <GoogleAttributesPanel 
+                        customFields={customFields}
+                        setCustomFields={setCustomFields}
+                        sku={sku}
+                      />
+                   </div>
+                )}
+              </div>
 
             <div className="md:col-span-2 mt-4 flex flex-col gap-2">
                {editingId ? (

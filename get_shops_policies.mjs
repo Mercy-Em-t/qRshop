@@ -17,13 +17,15 @@ const supabaseUrl = env['VITE_SUPABASE_URL'];
 const supabaseKey = env['SUPABASE_SERVICE_ROLE_KEY']; 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function run() {
-  const { data, error } = await supabase.from('orders').select('*').limit(1);
-  if (data && data.length > 0) {
-     console.log("Columns:", Object.keys(data[0]));
+async function checkPolicies() {
+  // Try to use a raw query if query_exec exists, else we can't easily fetch pg_policies
+  // Since we can't query pg_policies directly via postgrest, we'll just check if query_exec works
+  const { data, error } = await supabase.rpc('query_exec', { query: `SELECT schemaname, tablename, policyname, roles, cmd, qual, with_check FROM pg_policies WHERE tablename IN ('shops', 'shop_users');` });
+  if (error) {
+     console.error("query_exec failed:", error);
   } else {
-     console.log("No orders or error", error);
+     console.log(JSON.stringify(data, null, 2));
   }
 }
 
-run();
+checkPolicies();

@@ -26,6 +26,7 @@ const CommunityFeed    = lazy(() => import("./pages/social/CommunityFeed"));
 const Directory        = lazy(() => import("./pages/social/Directory"));
 const Terms            = lazy(() => import("./pages/Terms"));
 const Privacy          = lazy(() => import("./pages/Privacy"));
+const Returns          = lazy(() => import("./pages/Returns"));
 const About            = lazy(() => import("./pages/About"));
 const Contact          = lazy(() => import("./pages/Contact"));
 const Advertise        = lazy(() => import("./pages/Advertise"));
@@ -37,7 +38,7 @@ const ResetPassword    = lazy(() => import("./pages/ResetPassword"));
 const SupplierSignup   = lazy(() => import("./pages/SupplierSignup"));
 const ShopSelection    = lazy(() => import("./pages/ShopSelection"));
 const ProductDetails   = lazy(() => import("./pages/ProductDetails"));
-const SalesMagazine    = lazy(() => import("./pages/SalesMagazine"));
+const FlaxSeedsSandbox = lazy(() => import("./pages/FlaxSeedsSandbox"));
 
 // --- Customer Pages (lazy) ---
 const Menu      = lazy(() => import("./pages/Menu"));
@@ -102,7 +103,7 @@ export default function App() {
     const parts = hostname.split('.');
     const isSubdomain = parts.length >= 3 && parts[0] !== 'www' && !hostname.includes('vercel.app');
     const isLocalSubdomain = hostname === 'localhost' ? false : (hostname.includes('localhost') && parts.length >= 2);
-    const publicPaths = ['/', '/pricing', '/login', '/signup', '/terms', '/privacy', '/about', '/contact', '/request-access'];
+    const publicPaths = ['/', '/pricing', '/login', '/signup', '/terms', '/privacy', '/returns', '/about', '/contact', '/request-access'];
     const isPublicPath = typeof window !== 'undefined' && publicPaths.includes(window.location.pathname);
     const canHotload = isPublicPath && !isSubdomain && !isLocalSubdomain;
 
@@ -201,7 +202,7 @@ export default function App() {
       <Route path="/s/:shopId" element={<PublicShopProfile />} />
       <Route path="/product/:productId" element={<ProductDetails />} />
       <Route path="/product/:productSlug/:productId" element={<ProductDetails />} />
-      <Route path="/s/:identifier/magazine" element={<SalesMagazine />} />
+      <Route path="/sandbox/flax-seeds" element={<FlaxSeedsSandbox />} />
 
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
       <Route path="/request-access" element={<RequestAccess />} />
@@ -213,6 +214,8 @@ export default function App() {
       <Route path="/explore" element={<ComingSoonGuard title="Marketplace"><Directory /></ComingSoonGuard>} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/privacy" element={<Privacy />} />
+      <Route path="/returns" element={<Returns />} />
+      <Route path="/s/:shopId/returns" element={<Returns />} />
       <Route path="/about" element={<About />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/q/:qrId" element={<ScanGateway />} />

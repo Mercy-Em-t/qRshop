@@ -201,6 +201,7 @@ export default function Settings() {
       name: shop.name,
       description: shop.description,
       whatsapp_number: shop.whatsapp_number,
+      phone: shop.phone || null,
       payment_mode: shop.payment_mode,
       address: shop.address,
       industry_type: shop.industry_type,
@@ -475,6 +476,14 @@ export default function Settings() {
                       <input 
                         type="text" value={shop.whatsapp_number || ""} 
                         onChange={e => setShop({...shop, whatsapp_number: e.target.value})}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase mb-2">General Phone Number</label>
+                      <input 
+                        type="text" value={shop.phone || ""} 
+                        onChange={e => setShop({...shop, phone: e.target.value})}
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition font-medium text-gray-900"
                       />
                     </div>
@@ -825,6 +834,7 @@ export default function Settings() {
                       />
                     </div>
                   </div>
+                  </div>
                   <div className="mt-6 flex items-center justify-between">
                     <p className="text-[10px] text-slate-400 font-medium tracking-wide">🔒 Keys are masked and stored securely in the system.</p>
                     <button 
@@ -835,6 +845,39 @@ export default function Settings() {
                     >
                       Test Connection
                     </button>
+                  </div>
+
+                  <div className="mt-8 border-t border-slate-100 pt-6">
+                    <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest mb-4">Manual Payment Instructions</h3>
+                    <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+                      If you don't use STK push, these instructions will be shown to your customers at checkout. Specify exactly how they should pay you (e.g. "Send money to 0712345678" or "Paybill 123456 Account: YourName").
+                    </p>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">C2B (Retail Customer) Payment Instructions</label>
+                        <textarea 
+                          value={shop?.fulfillment_settings?.c2b_payment_instructions || ""} 
+                          onChange={e => {
+                            const settings = shop.fulfillment_settings || {};
+                            setShop({...shop, fulfillment_settings: {...settings, c2b_payment_instructions: e.target.value}});
+                          }}
+                          placeholder="e.g. Please use Till Number 123456 to pay. Once paid, share the confirmation message via WhatsApp."
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition h-20 font-medium text-gray-900"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-2">B2B (Wholesale) Payment Instructions</label>
+                        <textarea 
+                          value={shop?.fulfillment_settings?.b2b_payment_instructions || ""} 
+                          onChange={e => {
+                            const settings = shop.fulfillment_settings || {};
+                            setShop({...shop, fulfillment_settings: {...settings, b2b_payment_instructions: e.target.value}});
+                          }}
+                          placeholder="e.g. Make a bank transfer to Equity Bank, Account 123456789. Send receipt to email@example.com."
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-green-600 focus:bg-white transition h-20 font-medium text-gray-900"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

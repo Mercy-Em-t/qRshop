@@ -191,7 +191,6 @@ export default function CampaignManager() {
                     className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-purple-500 focus:outline-none"
                   >
                     <option value="discount">Discount Percentage</option>
-                    <option value="bundle">Product Bundle Deal</option>
                   </select>
                 </div>
                 <div>

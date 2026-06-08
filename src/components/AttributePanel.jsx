@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
+import VariationBuilder from "./VariationBuilder";
 
 const PLATFORM_LIBRARY = {
   "🥗 Food & Drink": [
@@ -132,7 +133,7 @@ export default function AttributePanel({ currentAttributes, onChange, category, 
     if (platformDef) return platformDef;
     
     const shopDef = shopSchema.find(f => f.key === key);
-    if (shopDef) return { ...shopDef, type: shopDef.type === 'variation' ? 'text' : shopDef.type };
+    if (shopDef) return shopDef;
     
     return { key, label: key.replace(/_/g, ' '), type: 'text' };
   };
@@ -244,6 +245,12 @@ export default function AttributePanel({ currentAttributes, onChange, category, 
                   </button>
                   <span className="text-xs font-bold text-gray-600">{currentAttributes[key] ? 'Yes' : 'No'}</span>
                 </div>
+              ) : def.type === 'variation' ? (
+                <VariationBuilder 
+                  field={def} 
+                  value={currentAttributes[key]} 
+                  onChange={(val) => updateValue(key, val)} 
+                />
               ) : (
                 <input
                   type={def.type || 'text'}

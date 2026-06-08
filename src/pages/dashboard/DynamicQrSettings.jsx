@@ -19,7 +19,8 @@ export default function DynamicQrSettings() {
       const { data, error } = await supabase
         .from("qrs")
         .select("*")
-        .eq("qr_id", qrId)
+        .or(`qr_id.eq.${qrId},id.eq.${qrId}`)
+        .limit(1)
         .single();
         
       if (error) {
@@ -50,7 +51,7 @@ export default function DynamicQrSettings() {
     const { error } = await supabase
       .from("qrs")
       .update(payload)
-      .eq("qr_id", qrId);
+      .or(`qr_id.eq.${qrId},id.eq.${qrId}`);
 
     setSaving(false);
     if (error) {

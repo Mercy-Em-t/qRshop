@@ -91,8 +91,7 @@ export default function SalesBrainManager() {
       const { data: menuItems } = await supabase
         .from("menu_items")
         .select("*")
-        .eq("shop_id", shopId)
-        .limit(5);
+        .eq("shop_id", shopId);
 
       const { data, error } = await supabase.functions.invoke('sales-assistant', {
         body: {

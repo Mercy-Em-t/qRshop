@@ -1,7 +1,14 @@
 {
-  "name": "qrshop-main",
+  "name": "qrshop",
   "framework": "vite",
   "rewrites": [
+    { "source": "/s/:shop/google0b2f7a0b0c00df60.html", "destination": "/api/google-verify.js" },
+    { "source": "/shops/:shop/google0b2f7a0b0c00df60.html", "destination": "/api/google-verify.js" },
+    { "source": "/google0b2f7a0b0c00df60.html", "destination": "/api/google-verify.js" },
+    { "source": "/s/:shop/google:token.html", "destination": "/api/google-verify.js?shop=:shop" },
+    { "source": "/shops/:shop/google:token.html", "destination": "/api/google-verify.js?shop=:shop" },
+    { "source": "/api/merchant/sync", "destination": "/api/google-merchant.js?action=sync" },
+    { "source": "/api/merchant/status", "destination": "/api/google-merchant.js?action=status" },
     {
       "source": "/s/:id",
       "has": [
@@ -46,6 +53,8 @@
       ],
       "destination": "/api/seo-handler.js?type=product&id=:id"
     },
+    { "source": "/api/feeds/:id", "destination": "/api/feed.js?shop=:id" },
+    { "source": "/feeds/:id", "destination": "/api/feed.js?shop=:id" },
     { "source": "/api/admin/create-community", "destination": "/api/admin/router.js?action=create-community" },
     { "source": "/api/admin/create-shop", "destination": "/api/admin/router.js?action=create-shop" },
     { "source": "/api/admin/create-supplier", "destination": "/api/admin/router.js?action=create-supplier" },

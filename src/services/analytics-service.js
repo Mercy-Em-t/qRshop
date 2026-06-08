@@ -41,15 +41,23 @@ export async function getOrdersPerDay(shopId, days = 7) {
     return [];
   }
 
-  // Group by date
+  // Pre-fill the last `days` days with 0 to ensure the line chart renders correctly
   const grouped = {};
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toLocaleDateString();
+    grouped[dateStr] = { date: dateStr, count: 0, revenue: 0 };
+  }
+
   for (const order of data || []) {
-    const date = new Date(order.created_at).toLocaleDateString();
-    if (!grouped[date]) {
-      grouped[date] = { date, count: 0, revenue: 0 };
+    const dateStr = new Date(order.created_at).toLocaleDateString();
+    if (grouped[dateStr]) {
+      grouped[dateStr].count += 1;
+      grouped[dateStr].revenue += order.total_price || 0;
+    } else {
+       grouped[dateStr] = { date: dateStr, count: 1, revenue: order.total_price || 0 };
     }
-    grouped[date].count += 1;
-    grouped[date].revenue += order.total_price || 0;
   }
 
   return Object.values(grouped);

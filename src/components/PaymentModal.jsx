@@ -33,33 +33,13 @@ export default function PaymentModal({ amount, onComplete, onCancel }) {
         </p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setMethod("mpesa")}
-              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors cursor-pointer ${
-                method === "mpesa"
-                  ? "border-green-600 bg-green-50 text-green-700"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              M-Pesa
-            </button>
-            <button
-              type="button"
-              onClick={() => setMethod("card")}
-              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-colors cursor-pointer ${
-                method === "card"
-                  ? "border-green-600 bg-green-50 text-green-700"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              Card
-            </button>
+          <div className="flex gap-2 mb-2">
+            <div className="flex-1 py-2 rounded-lg border border-green-600 bg-green-50 text-green-700 text-sm font-medium text-center">
+              M-Pesa Mobile Money
+            </div>
           </div>
 
-          {method === "mpesa" && (
-            <div>
+          <div>
               <label
                 htmlFor="pay-phone"
                 className="block text-sm font-medium text-gray-700 mb-1"
@@ -76,13 +56,6 @@ export default function PaymentModal({ amount, onComplete, onCancel }) {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
               />
             </div>
-          )}
-
-          {method === "card" && (
-            <p className="text-sm text-gray-400 text-center py-2">
-              Card payment integration coming soon.
-            </p>
-          )}
 
           <button
             type="submit"

@@ -40,7 +40,7 @@ export default function SubscriptionPage() {
     setLoading(true);
     try {
       const [shopRes, subsRes] = await Promise.all([
-        supabase.from("shops").select("name, plan, plan_expires_at").eq("shop_id", shopId).single(),
+        supabase.from("shops").select("name, plan, subscription_expires_at").eq("shop_id", shopId).single(),
         supabase.from("subscriptions").select("*").eq("shop_id", shopId).order("created_at", { ascending: false }),
       ]);
       if (shopRes.data) setShop(shopRes.data);
@@ -59,7 +59,9 @@ export default function SubscriptionPage() {
   // Days remaining helper
   const daysRemaining = (dateStr) => {
     if (!dateStr) return null;
-    const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+    const parsed = new Date(dateStr);
+    if (Number.isNaN(parsed.getTime())) return null;
+    const diff = Math.ceil((parsed - new Date()) / (1000 * 60 * 60 * 24));
     return Math.max(0, diff);
   };
 
@@ -152,7 +154,7 @@ export default function SubscriptionPage() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className="bg-green-100 text-green-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Active</span>
-                  {daysRemaining(mainSub.end_date) <= 14 && (
+                  {daysRemaining(mainSub.end_date) !== null && daysRemaining(mainSub.end_date) <= 14 && (
                     <button onClick={() => openRenewModal(mainSub)} className="bg-green-600 text-white text-[10px] font-black px-3 py-1.5 rounded-xl hover:bg-green-700 transition uppercase tracking-widest">
                       Renew
                     </button>
@@ -188,7 +190,7 @@ export default function SubscriptionPage() {
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <span className="bg-indigo-100 text-indigo-700 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Active</span>
-                  {daysRemaining(aiSub.end_date) <= 14 && (
+                  {daysRemaining(aiSub.end_date) !== null && daysRemaining(aiSub.end_date) <= 14 && (
                     <button onClick={() => openRenewModal(aiSub)} className="bg-indigo-600 text-white text-[10px] font-black px-3 py-1.5 rounded-xl hover:bg-indigo-700 transition uppercase tracking-widest">
                       Renew
                     </button>
@@ -344,7 +346,7 @@ export default function SubscriptionPage() {
               {daysRemaining(renewTarget.end_date) === 0 && (
                 <p className="text-xs text-red-500 font-bold mt-2">⚠️ Your plan has expired — renew now to restore access.</p>
               )}
-              {daysRemaining(renewTarget.end_date) > 0 && daysRemaining(renewTarget.end_date) <= 14 && (
+              {daysRemaining(renewTarget.end_date) !== null && daysRemaining(renewTarget.end_date) > 0 && daysRemaining(renewTarget.end_date) <= 14 && (
                 <p className="text-xs text-amber-600 font-bold mt-2">⏰ Only {daysRemaining(renewTarget.end_date)} days remaining</p>
               )}
             </div>

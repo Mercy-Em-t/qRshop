@@ -17,13 +17,17 @@ const supabaseUrl = env['VITE_SUPABASE_URL'];
 const supabaseKey = env['SUPABASE_SERVICE_ROLE_KEY']; 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function run() {
-  const { data, error } = await supabase.from('orders').select('*').limit(1);
-  if (data && data.length > 0) {
-     console.log("Columns:", Object.keys(data[0]));
+async function checkOrdersSchema() {
+  const { data, error } = await supabase.rpc('query_sql', { 
+    sql_query: `SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'orders';` 
+  });
+  
+  if (error) {
+     console.error("query_sql failed:", error);
   } else {
-     console.log("No orders or error", error);
+     console.log("\n--- PostgreSQL Schema columns for orders table ---");
+     console.log(data);
   }
 }
 
-run();
+checkOrdersSchema();

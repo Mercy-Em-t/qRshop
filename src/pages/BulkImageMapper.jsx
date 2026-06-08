@@ -20,21 +20,32 @@ const ImageRow = memo(({ img, products, processing, handleMatchChange, removeIma
       </td>
       <td className="px-6 py-4">
         <select
-          value={img.matchedProductId || ""}
-          onChange={(e) => handleMatchChange(img.id, e.target.value)}
+          multiple
+          size={3}
+          value={img.matchedProductIds || []}
+          onChange={(e) => {
+            const vals = Array.from(e.target.selectedOptions, o => o.value);
+            if (vals.includes("CREATE_NEW")) {
+               handleMatchChange(img.id, ["CREATE_NEW"]);
+            } else {
+               handleMatchChange(img.id, vals.filter(v => v !== "CREATE_NEW"));
+            }
+          }}
           disabled={img.status === "success" || processing}
-          className={`w-full text-xs font-bold p-2.5 rounded-xl border-2 transition-all outline-none ${img.matchedProductId === "CREATE_NEW" ? "border-indigo-100 bg-indigo-50/20 text-indigo-700 focus:border-indigo-500" : img.matchedProductId ? "border-green-100 bg-white text-slate-900 focus:border-green-500" : "border-red-50 bg-red-50/30 text-red-400 focus:border-red-200"}`}
+          className={`w-full text-xs font-bold p-2.5 rounded-xl border-2 transition-all outline-none scrollbar-hide ${img.matchedProductIds?.includes("CREATE_NEW") ? "border-indigo-100 bg-indigo-50/20 text-indigo-700 focus:border-indigo-500" : img.matchedProductIds?.length > 0 ? "border-green-100 bg-white text-slate-900 focus:border-green-500" : "border-red-50 bg-red-50/30 text-red-400 focus:border-red-200"}`}
         >
-          <option value="">-- No Product Matched --</option>
           <optgroup label="Actions">
              <option value="CREATE_NEW">✨ Create as New Product: "{cleanName(img.file.name)}"</option>
           </optgroup>
-          <optgroup label="Existing Products">
+          <optgroup label="Existing Products (Ctrl/Cmd+Click to select multiple)">
              {products.map(p => (
                <option key={p.id} value={p.id}>{p.name}</option>
              ))}
           </optgroup>
         </select>
+        {img.matchedProductIds?.length > 1 && (
+           <p className="text-[9px] text-green-600 mt-1 font-bold animate-pulse">Mapping to {img.matchedProductIds.length} products</p>
+        )}
       </td>
       <td className="px-6 py-4 text-center">
         {img.status === "pending" && <span className="text-[10px] font-black text-slate-400 uppercase">Pending</span>}
@@ -82,7 +93,7 @@ export default function BulkImageMapper() {
 
   const stats = useMemo(() => ({
     total: pendingImages.length,
-    matched: pendingImages.filter(i => i.matchedProductId).length,
+    matched: pendingImages.filter(i => i.matchedProductIds && i.matchedProductIds.length > 0).length,
     uploaded: pendingImages.filter(i => i.status === "success").length
   }), [pendingImages]);
 
@@ -181,21 +192,17 @@ export default function BulkImageMapper() {
       .trim();
   }, []);
 
-  const findBestMatch = useCallback((filename, productList) => {
+  const findBestMatches = useCallback((filename, productList) => {
     const cleanedFile = cleanName(filename);
-    if (!cleanedFile) return null;
-
-    // Try exact name match
-    const exactMatch = productList.find(p => cleanName(p.name) === cleanedFile);
-    if (exactMatch) return exactMatch.id;
+    if (!cleanedFile) return [];
 
     // Try partial name match (filename contains product name or vice-versa)
-    const partialMatch = productList.find(p => {
+    const matches = productList.filter(p => {
       const cleanedProduct = cleanName(p.name);
       return cleanedFile.includes(cleanedProduct) || cleanedProduct.includes(cleanedFile);
     });
     
-    return partialMatch ? partialMatch.id : null;
+    return matches.map(m => m.id);
   }, [cleanName]);
 
   const handleFileSelect = (e) => {
@@ -203,12 +210,12 @@ export default function BulkImageMapper() {
     if (files.length === 0) return;
 
     const newImages = files.map(file => {
-      const matchedId = findBestMatch(file.name, products);
+      const matchedIds = findBestMatches(file.name, products);
       return {
         id: Math.random().toString(36).substring(7),
         file,
         preview: URL.createObjectURL(file),
-        matchedProductId: matchedId || "CREATE_NEW",
+        matchedProductIds: matchedIds.length > 0 ? matchedIds : [],
         status: "pending",
         error: null
       };
@@ -217,9 +224,9 @@ export default function BulkImageMapper() {
     setPendingImages(prev => [...prev, ...newImages]);
   };
 
-  const handleMatchChange = useCallback((imageId, productId) => {
+  const handleMatchChange = useCallback((imageId, productIds) => {
     setPendingImages(prev => prev.map(img => 
-      img.id === imageId ? { ...img, matchedProductId: productId } : img
+      img.id === imageId ? { ...img, matchedProductIds: productIds } : img
     ));
   }, []);
 
@@ -228,7 +235,7 @@ export default function BulkImageMapper() {
   }, []);
 
   const processImages = async () => {
-    const toUpload = pendingImages.filter(img => img.matchedProductId && img.status !== "success");
+    const toUpload = pendingImages.filter(img => img.matchedProductIds && img.matchedProductIds.length > 0 && img.status !== "success");
     if (toUpload.length === 0) {
       alert("No matched images to process. Ensure you have selected a product or 'Create New' for each image.");
       return;
@@ -244,9 +251,9 @@ export default function BulkImageMapper() {
         console.log(`BulkMapper: Starting upload for ${item.file.name}`);
         setPendingImages(prev => prev.map(img => img.id === item.id ? { ...img, status: "uploading" } : img));
 
-        let productId = item.matchedProductId;
+        let productIds = [...item.matchedProductIds];
         
-        if (productId === "CREATE_NEW") {
+        if (productIds.includes("CREATE_NEW")) {
            const productFriendlyName = cleanName(item.file.name)
               .split(' ')
               .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -267,14 +274,14 @@ export default function BulkImageMapper() {
              
              if (prodErr) throw prodErr;
              if (!newProd || newProd.length === 0) throw new Error("Could not create product");
-             productId = newProd[0].id;
+             productIds = [newProd[0].id];
            } catch (e) {
              throw new Error(`Catalog creation failed: ${e.message || "Network error"}`);
            }
         }
 
         const fileExt = item.file.name.split('.').pop();
-        const fileName = `${SHOP_ID}/${productId}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+        const fileName = `${SHOP_ID}/bulk-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
 
         // 1. Upload to Storage
         try {
@@ -294,28 +301,30 @@ export default function BulkImageMapper() {
 
         const publicUrl = publicUrlData.publicUrl;
 
-        // 3. Update Database sequentially to catch exact errors
-        try {
-          const { error: imgInsertErr } = await supabase.from("product_images").insert({
-            product_id: productId,
-            url: publicUrl,
-            position: 0
-          });
-          if (imgInsertErr) throw imgInsertErr;
-        } catch (e) {
-          throw new Error(`Image insertion failed: ${e.message || "Network error"}`);
-        }
+        // 3. Update Database for ALL mapped products
+        for (const pid of productIds) {
+           try {
+             const { error: imgInsertErr } = await supabase.from("product_images").insert({
+               product_id: pid,
+               url: publicUrl,
+               position: 0
+             });
+             if (imgInsertErr) throw imgInsertErr;
+           } catch (e) {
+             throw new Error(`Image insertion failed for ${pid}: ${e.message}`);
+           }
 
-        try {
-          const { error: itemUpdateErr } = await supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", productId);
-          if (itemUpdateErr) throw itemUpdateErr;
-        } catch (e) {
-          throw new Error(`Product update failed: ${e.message || "Network error"}`);
+           try {
+             const { error: itemUpdateErr } = await supabase.from("menu_items").update({ image_url: publicUrl }).eq("id", pid);
+             if (itemUpdateErr) throw itemUpdateErr;
+           } catch (e) {
+             throw new Error(`Product update failed for ${pid}: ${e.message}`);
+           }
         }
 
         successCount++;
         setPendingImages(prev => prev.map(img => 
-          img.id === item.id ? { ...img, status: "success", matchedProductId: productId } : img
+          img.id === item.id ? { ...img, status: "success", matchedProductIds: productIds } : img
         ));
       } catch (err) {
         console.error(`BulkMapper: Failed to process ${item.file.name}:`, err);

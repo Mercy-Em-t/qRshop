@@ -185,6 +185,7 @@ export default async function handler(req, res) {
 
     // 4. Inject Dynamic and validated Crawler tags into Head
     const headInsert = `<head>
+  <meta name="google-site-verification" content="8PqqCjinXfqssxrn-cV5CE7MugR211pwBjNOh0xCfMg" />
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeHtml(description)}" />
   <meta property="og:type" content="website" />

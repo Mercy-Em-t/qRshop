@@ -125,15 +125,15 @@ export default function ShopFinances() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-700 pb-20 selection:bg-indigo-600/10">
-      <header className="bg-white border-b border-gray-200 p-6 sticky top-0 z-50 shadow-sm">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 text-gray-700 dark:text-gray-300 pb-20 selection:bg-indigo-600/10">
+      <header className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 p-6 sticky top-0 z-50 shadow-sm">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
-             <Link to="/a" className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center hover:bg-gray-100 transition-all border border-gray-200 group text-gray-700">
+             <Link to="/a" className="w-12 h-12 bg-gray-50 dark:bg-slate-800 rounded-2xl flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-all border border-gray-200 dark:border-slate-700 group text-gray-700 dark:text-gray-300">
                 <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7"/></svg>
              </Link>
              <div>
-                <h1 className="text-2xl font-black text-gray-900 tracking-tighter flex items-center gap-3">
+                <h1 className="text-2xl font-black text-gray-900 dark:text-white tracking-tighter flex items-center gap-3">
                    <span className="text-indigo-600">💰</span> Accounting Hub
                 </h1>
                 <div className="flex items-center gap-2 mt-0.5">
@@ -148,7 +148,7 @@ export default function ShopFinances() {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Export Statement
              </button>
-             <button onClick={fetchData} className="w-12 h-12 bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-center hover:bg-gray-100 transition-all cursor-pointer">
+             <button onClick={fetchData} className="w-12 h-12 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-2xl flex items-center justify-center hover:bg-gray-100 dark:hover:bg-slate-700 transition-all cursor-pointer">
                 <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
              </button>
           </div>
@@ -158,8 +158,8 @@ export default function ShopFinances() {
       <main className="max-w-6xl mx-auto p-6 md:p-10">
         
         {/* Controls Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-6 mb-10 bg-white p-4 rounded-[2.5rem] border border-gray-200 shadow-sm">
-           <div className="flex items-center bg-gray-100 p-1.5 rounded-2xl border border-gray-200/60">
+        <div className="flex flex-wrap items-center justify-between gap-6 mb-10 bg-white dark:bg-slate-900 p-4 rounded-[2.5rem] border border-gray-200 dark:border-slate-800 shadow-sm">
+           <div className="flex items-center bg-gray-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-gray-200/60 dark:border-slate-700/60">
               {[
                 { label: '7D', value: '7' },
                 { label: '30D', value: '30' },
@@ -169,7 +169,7 @@ export default function ShopFinances() {
                 <button
                   key={opt.value}
                   onClick={() => setTimeRange(opt.value)}
-                  className={`px-6 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all cursor-pointer border-none outline-none ${timeRange === opt.value ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-800'}`}
+                  className={`px-6 py-2 rounded-xl text-[10px] font-black tracking-widest transition-all cursor-pointer border-none outline-none ${timeRange === opt.value ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'}`}
                 >
                   {opt.label}
                 </button>
@@ -177,10 +177,10 @@ export default function ShopFinances() {
            </div>
 
            <div className="flex items-center gap-3">
-              <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Grouping:</span>
+              <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Grouping:</span>
               <button 
                 onClick={() => setViewMode(viewMode === 'daily' ? 'weekly' : 'daily')}
-                className={`px-6 py-2 rounded-xl text-[10px] font-black tracking-widest border transition-all cursor-pointer ${viewMode === 'weekly' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-transparent text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                className={`px-6 py-2 rounded-xl text-[10px] font-black tracking-widest border transition-all cursor-pointer ${viewMode === 'weekly' ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm' : 'bg-transparent text-gray-700 dark:text-gray-300 border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800'}`}
               >
                 {viewMode.toUpperCase()} VIEW
               </button>
@@ -234,64 +234,63 @@ export default function ShopFinances() {
               </div>
            </div>
 
-           <div className="flex flex-col gap-8">
-              <div className="bg-white border border-gray-200 p-8 rounded-[2.5rem] shadow-sm flex-grow flex flex-col justify-center">
-                 <p className="text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest flex items-center gap-2">
-                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                    Gross Inflow
-                 </p>
-                 <p className="text-4xl font-black text-gray-900 tracking-tighter">KSh {totalRevenue.toLocaleString()}</p>
-                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-2">{filteredData.revenue.length} Active Sales Nodes</p>
-              </div>
-              <div className="bg-white border border-gray-200 p-8 rounded-[2.5rem] shadow-sm flex-grow flex flex-col justify-center">
-                 <p className="text-[10px] font-black uppercase text-gray-400 mb-2 tracking-widest flex items-center gap-2">
-                    <span className="w-3 h-3 bg-red-500 rounded-full"></span>
-                    Capital Outflow
-                 </p>
-                 <p className="text-4xl font-black text-gray-900 tracking-tighter">KSh {totalExpenses.toLocaleString()}</p>
-                 <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mt-2">{filteredData.expenses.length} Supply Batches</p>
-              </div>
+            <div className="flex flex-col gap-8">
+               <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-8 rounded-[2.5rem] shadow-sm flex-grow flex flex-col justify-center">
+                  <p className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 mb-2 tracking-widest flex items-center gap-2">
+                     <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                     Gross Inflow
+                  </p>
+                  <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter">KSh {totalRevenue.toLocaleString()}</p>
+                  <p className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-2">{filteredData.revenue.length} Active Sales Nodes</p>
+               </div>
+               <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 p-8 rounded-[2.5rem] shadow-sm flex-grow flex flex-col justify-center">
+                  <p className="text-[10px] font-black uppercase text-gray-400 dark:text-gray-500 mb-2 tracking-widest flex items-center gap-2">
+                     <span className="w-3 h-3 bg-red-500 rounded-full"></span>
+                     Capital Outflow
+                  </p>
+                  <p className="text-4xl font-black text-gray-900 dark:text-white tracking-tighter">KSh {totalExpenses.toLocaleString()}</p>
+                  <p className="text-[9px] font-black text-gray-500 dark:text-gray-400 uppercase tracking-widest mt-2">{filteredData.expenses.length} Supply Batches</p>
+               </div>
            </div>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-12 mt-20">
            {/* Revenue Stream */}
            <section>
-              <div className="flex items-center justify-between mb-8 px-2">
-                 <h3 className="text-lg font-black text-gray-800 italic tracking-tight flex items-center gap-3">
-                    <div className="w-10 h-10 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-600">
-                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                    </div>
-                    Inflow Log
-                 </h3>
-                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Filtered / {filteredData.revenue.length}</span>
-              </div>
-              
-              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                 {filteredData.revenue.length === 0 && (
-                    <div className="bg-white border border-dashed border-gray-200 rounded-[2.5rem] p-16 text-center text-gray-400 shadow-sm">
-                       <p className="text-[10px] font-black uppercase tracking-widest">No settled inflow in window.</p>
-                    </div>
-                 )}
-                 {([...filteredData.revenue].reverse()).map((day, idx) => (
-                    <div key={idx} className="group bg-white hover:bg-gray-50/50 p-7 rounded-[2.5rem] border border-gray-200/60 flex justify-between items-center transition-all hover:scale-[1.01] shadow-sm">
-                       <div className="flex items-center gap-5">
-                          <div className="w-14 h-14 bg-gray-100 rounded-2xl flex flex-col items-center justify-center text-gray-500 group-hover:bg-green-500 group-hover:text-white transition-all">
-                             <span className="text-lg font-black">{new Date(day.sale_date).getDate()}</span>
-                             <span className="text-[8px] font-black uppercase tracking-tighter opacity-75">{new Date(day.sale_date).toLocaleDateString(undefined, { month: 'short' })}</span>
-                          </div>
-                          <div>
-                             <p className="font-black text-gray-800 tracking-tight text-lg">Detailed Sync Node</p>
-                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 flex items-center gap-2">
-                                <span className="w-1 h-1 bg-indigo-500 rounded-full"></span>
-                                {day.order_count} Validated Transactions
-                             </p>
-                          </div>
-                       </div>
-                       <div className="text-right">
-                          <p className="text-2xl font-black text-green-600 italic">+{parseFloat(day.total_revenue).toLocaleString()}</p>
-                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Net Value</p>
-                       </div>
+               <div className="flex items-center justify-between mb-8 px-2">
+                  <h3 className="text-lg font-black text-gray-800 dark:text-white italic tracking-tight flex items-center gap-3">
+                     <div className="w-10 h-10 bg-green-500/10 rounded-2xl flex items-center justify-center text-green-600 dark:text-green-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                     </div>
+                     Inflow Log
+                  </h3>
+                  <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Filtered / {filteredData.revenue.length}</span>
+               </div>
+               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                  {filteredData.revenue.length === 0 && (
+                     <div className="bg-white dark:bg-slate-900 border border-dashed border-gray-200 dark:border-slate-800 rounded-[2.5rem] p-16 text-center text-gray-400 dark:text-gray-500 shadow-sm">
+                        <p className="text-[10px] font-black uppercase tracking-widest">No settled inflow in window.</p>
+                     </div>
+                  )}
+                  {([...filteredData.revenue].reverse()).map((day, idx) => (
+                     <div key={idx} className="group bg-white dark:bg-slate-900 hover:bg-gray-50/50 dark:hover:bg-slate-800 p-7 rounded-[2.5rem] border border-gray-200/60 dark:border-slate-700/60 flex justify-between items-center transition-all hover:scale-[1.01] shadow-sm">
+                        <div className="flex items-center gap-5">
+                           <div className="w-14 h-14 bg-gray-100 dark:bg-slate-800 rounded-2xl flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 group-hover:bg-green-500 group-hover:text-white transition-all">
+                              <span className="text-lg font-black">{new Date(day.sale_date).getDate()}</span>
+                              <span className="text-[8px] font-black uppercase tracking-tighter opacity-75">{new Date(day.sale_date).toLocaleDateString(undefined, { month: 'short' })}</span>
+                           </div>
+                           <div>
+                              <p className="font-black text-gray-800 dark:text-white tracking-tight text-lg">Detailed Sync Node</p>
+                              <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1 flex items-center gap-2">
+                                 <span className="w-1 h-1 bg-indigo-500 rounded-full"></span>
+                                 {day.order_count} Validated Transactions
+                              </p>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-2xl font-black text-green-600 dark:text-green-400 italic">+{parseFloat(day.total_revenue).toLocaleString()}</p>
+                           <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Net Value</p>
+                        </div>
                     </div>
                  ))}
               </div>
@@ -299,41 +298,41 @@ export default function ShopFinances() {
 
            {/* Cost Stream */}
            <section>
-              <div className="flex items-center justify-between mb-8 px-2">
-                 <h3 className="text-lg font-black text-gray-800 italic tracking-tight flex items-center gap-3">
-                    <div className="w-10 h-10 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500">
-                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"/></svg>
-                    </div>
-                    Outflow Log
-                 </h3>
-                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Filtered / {filteredData.expenses.length}</span>
-              </div>
+               <div className="flex items-center justify-between mb-8 px-2">
+                  <h3 className="text-lg font-black text-gray-800 dark:text-white italic tracking-tight flex items-center gap-3">
+                     <div className="w-10 h-10 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 dark:text-red-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 17h8m0 0v-8m0 8l-8-8-4 4-6-6"/></svg>
+                     </div>
+                     Outflow Log
+                  </h3>
+                  <span className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Filtered / {filteredData.expenses.length}</span>
+               </div>
               
               <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                 {filteredData.expenses.length === 0 && (
-                    <div className="bg-white border border-dashed border-gray-200 rounded-[2.5rem] p-16 text-center text-gray-400 shadow-sm">
-                       <p className="text-[10px] font-black uppercase tracking-widest">No capital outflow in window.</p>
-                    </div>
-                 )}
-                 {([...filteredData.expenses].reverse()).map((day, idx) => (
-                    <div key={idx} className="group bg-white hover:bg-gray-50/50 p-7 rounded-[2.5rem] border border-gray-200/60 flex justify-between items-center transition-all hover:scale-[1.01] shadow-sm">
-                       <div className="flex items-center gap-5">
-                          <div className="w-14 h-14 bg-gray-100 rounded-2xl flex flex-col items-center justify-center text-gray-500 group-hover:bg-red-500 group-hover:text-white transition-all">
-                             <span className="text-lg font-black">{new Date(day.expense_date).getDate()}</span>
-                             <span className="text-[8px] font-black uppercase tracking-tighter opacity-75">{new Date(day.expense_date).toLocaleDateString(undefined, { month: 'short' })}</span>
-                          </div>
-                          <div>
-                             <p className="font-black text-gray-800 tracking-tight text-lg">Supply & Infrastructure</p>
-                             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1 flex items-center gap-2">
-                                <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                                {day.wholesale_order_count} Wholesale Batches
-                             </p>
-                          </div>
-                       </div>
-                       <div className="text-right">
-                          <p className="text-2xl font-black text-red-500 italic">-{parseFloat(day.total_spent).toLocaleString()}</p>
-                          <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Capital Burden</p>
-                       </div>
+                  {filteredData.expenses.length === 0 && (
+                     <div className="bg-white dark:bg-slate-900 border border-dashed border-gray-200 dark:border-slate-800 rounded-[2.5rem] p-16 text-center text-gray-400 dark:text-gray-500 shadow-sm">
+                        <p className="text-[10px] font-black uppercase tracking-widest">No capital outflow in window.</p>
+                     </div>
+                  )}
+                  {([...filteredData.expenses].reverse()).map((day, idx) => (
+                     <div key={idx} className="group bg-white dark:bg-slate-900 hover:bg-gray-50/50 dark:hover:bg-slate-800 p-7 rounded-[2.5rem] border border-gray-200/60 dark:border-slate-700/60 flex justify-between items-center transition-all hover:scale-[1.01] shadow-sm">
+                        <div className="flex items-center gap-5">
+                           <div className="w-14 h-14 bg-gray-100 dark:bg-slate-800 rounded-2xl flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 group-hover:bg-red-500 group-hover:text-white transition-all">
+                              <span className="text-lg font-black">{new Date(day.expense_date).getDate()}</span>
+                              <span className="text-[8px] font-black uppercase tracking-tighter opacity-75">{new Date(day.expense_date).toLocaleDateString(undefined, { month: 'short' })}</span>
+                           </div>
+                           <div>
+                              <p className="font-black text-gray-800 dark:text-white tracking-tight text-lg">Supply & Infrastructure</p>
+                              <p className="text-[10px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1 flex items-center gap-2">
+                                 <span className="w-1 h-1 bg-red-500 rounded-full"></span>
+                                 {day.wholesale_order_count} Wholesale Batches
+                              </p>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-2xl font-black text-red-500 dark:text-red-400 italic">-{parseFloat(day.total_spent).toLocaleString()}</p>
+                           <p className="text-[9px] font-black text-gray-400 dark:text-gray-500 uppercase tracking-widest">Capital Burden</p>
+                        </div>
                     </div>
                  ))}
               </div>

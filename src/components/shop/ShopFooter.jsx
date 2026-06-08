@@ -44,21 +44,40 @@ export default function ShopFooter({ shop }) {
         {/* Payment Block */}
         <div className="shop-footer__payments">
           <p className="shop-footer__section-label">Supported Payments</p>
-          {shop?.mpesa_till_number ? (
-            <div className="shop-footer__payment-item">
-              <span style={{ fontSize: '9px' }} className="text-slate-400 block font-bold uppercase tracking-wider mb-1">M-Pesa Till Number</span>
-              <span className="text-sm font-black text-emerald-400 tracking-wider">🟢 Buy Goods: {shop.mpesa_till_number}</span>
-            </div>
-          ) : shop?.mpesa_shortcode ? (
-            <div className="shop-footer__payment-item">
-              <span style={{ fontSize: '9px' }} className="text-slate-400 block font-bold uppercase tracking-wider mb-1">M-Pesa Paybill</span>
-              <span className="text-sm font-black text-emerald-400 tracking-wider">🟢 Paybill: {shop.mpesa_shortcode}</span>
-            </div>
+          {shop?.fulfillment_settings?.c2b_payment_instructions || shop?.fulfillment_settings?.b2b_payment_instructions ? (
+            <>
+              {shop?.fulfillment_settings?.c2b_payment_instructions && (
+                <div className="shop-footer__payment-item mb-3">
+                  <span style={{ fontSize: '9px' }} className="text-slate-400 block font-bold uppercase tracking-wider mb-1">Retail Payment Instructions</span>
+                  <span className="text-xs font-medium text-slate-300">{shop.fulfillment_settings.c2b_payment_instructions}</span>
+                </div>
+              )}
+              {shop?.fulfillment_settings?.b2b_payment_instructions && (
+                <div className="shop-footer__payment-item mb-3">
+                  <span style={{ fontSize: '9px' }} className="text-slate-400 block font-bold uppercase tracking-wider mb-1">Wholesale Payment Instructions</span>
+                  <span className="text-xs font-medium text-slate-300">{shop.fulfillment_settings.b2b_payment_instructions}</span>
+                </div>
+              )}
+            </>
           ) : (
-            <div className="shop-footer__payment-item">
-              <span style={{ fontSize: '9px' }} className="text-slate-400 block font-bold uppercase tracking-wider mb-1">Payment Method</span>
-              <span className="text-xs font-black text-slate-300">📞 Send to Phone: {shop?.phone || shop?.whatsapp_number || 'Contact Shop'}</span>
-            </div>
+            <>
+              {shop?.mpesa_till_number ? (
+                <div className="shop-footer__payment-item">
+                  <span style={{ fontSize: '9px' }} className="text-slate-400 block font-bold uppercase tracking-wider mb-1">M-Pesa Till Number</span>
+                  <span className="text-sm font-black text-emerald-400 tracking-wider">🟢 Buy Goods: {shop.mpesa_till_number}</span>
+                </div>
+              ) : shop?.mpesa_shortcode ? (
+                <div className="shop-footer__payment-item">
+                  <span style={{ fontSize: '9px' }} className="text-slate-400 block font-bold uppercase tracking-wider mb-1">M-Pesa Paybill</span>
+                  <span className="text-sm font-black text-emerald-400 tracking-wider">🟢 Paybill: {shop.mpesa_shortcode}</span>
+                </div>
+              ) : (
+                <div className="shop-footer__payment-item">
+                  <span style={{ fontSize: '9px' }} className="text-slate-400 block font-bold uppercase tracking-wider mb-1">Payment Method</span>
+                  <span className="text-xs font-black text-slate-300">📞 Send to Phone: {shop?.phone || shop?.whatsapp_number || 'Contact Shop'}</span>
+                </div>
+              )}
+            </>
           )}
           {shop?.payment_mode && (
              <span className="inline-block mt-2 bg-white/5 border border-white/10 px-2 py-0.5 rounded text-[9px] font-black text-indigo-400 uppercase tracking-widest">
@@ -69,7 +88,16 @@ export default function ShopFooter({ shop }) {
       </div>
 
       <div className="shop-footer__bottom">
-        <p>© {currentYear} {shop?.name}. All rights reserved.</p>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+          <p>© {currentYear} {shop?.name}. All rights reserved.</p>
+          <div style={{ display: 'flex', gap: '12px', fontSize: '0.72rem', color: '#64748b' }}>
+            <a href={`/s/${shop?.slug || shop?.shop_id || shop?.id}/returns`} style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={e => e.target.style.color = '#f8fafc'} onMouseOut={e => e.target.style.color = 'inherit'}>Returns Policy</a>
+            <span>|</span>
+            <a href="/privacy" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={e => e.target.style.color = '#f8fafc'} onMouseOut={e => e.target.style.color = 'inherit'}>Privacy Policy</a>
+            <span>|</span>
+            <a href="/terms" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={e => e.target.style.color = '#f8fafc'} onMouseOut={e => e.target.style.color = 'inherit'}>Terms</a>
+          </div>
+        </div>
         <p className="shop-footer__attribution">
           Powered by{' '}
           <a href="https://tmsavannah.com" target="_blank" rel="noopener noreferrer" className="shop-footer__attr-link">

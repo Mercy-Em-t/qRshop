@@ -19,7 +19,6 @@ import Signup from "../pages/Signup";
 import ForgotPassword from "../pages/ForgotPassword";
 import ResetPassword from "../pages/ResetPassword";
 import SupplierSignup from "../pages/SupplierSignup";
-import SalesMagazine from "../pages/SalesMagazine";
 
 export default function PublicRoutes() {
   return (
@@ -48,7 +47,6 @@ export default function PublicRoutes() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/join/distribution-network" element={<SupplierSignup />} />
-      <Route path="/s/:identifier/magazine" element={<SalesMagazine />} />
     </Routes>
   );
 }
