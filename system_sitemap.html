@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Savannah - System Map</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .nav-btn {
+            position: relative;
+        }
+        .nav-btn.active {
+            color: #4f46e5; /* Indigo 600 */
+            font-weight: 700;
+        }
+        .nav-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background-color: #4f46e5;
+            border-radius: 3px 3px 0 0;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen">
+
+    <div class="max-w-6xl mx-auto px-6 py-12">
+        
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">Modern Savannah System Map</h1>
+            <p class="text-slate-500 font-medium">A comprehensive interactive index of the platform's architecture and routing flow.</p>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="flex overflow-x-auto border-b border-slate-200 mb-8 pb-1 gap-8 justify-center no-scrollbar">
+            <button onclick="switchTab('entities')" id="tab-entities" class="nav-btn active pb-3 text-slate-500 hover:text-slate-700 font-medium transition-colors whitespace-nowrap">Core Entities</button>
+            <button onclick="switchTab('flow')" id="tab-flow" class="nav-btn pb-3 text-slate-500 hover:text-slate-700 font-medium transition-colors whitespace-nowrap">System Flow</button>
+            <button onclick="switchTab('routing')" id="tab-routing" class="nav-btn pb-3 text-slate-500 hover:text-slate-700 font-medium transition-colors whitespace-nowrap">Route Index</button>
+            <button onclick="switchTab('architecture')" id="tab-architecture" class="nav-btn pb-3 text-slate-500 hover:text-slate-700 font-medium transition-colors whitespace-nowrap">State Architecture</button>
+        </div>
+
+        <!-- Tab 1: Core Entities -->
+        <div id="content-entities" class="tab-content active max-w-4xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-8">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center gap-3"><span class="text-indigo-500">🎭</span> System Roles & Entities</h2>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 hover:shadow-md transition-shadow">
+                            <h3 class="font-bold text-lg text-slate-900 mb-2">Customer / Guest</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">End-users who scan QR codes, browse menus, and place orders. They don't need a strict account; they are authenticated implicitly via QR Sessions or local storage.</p>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 hover:shadow-md transition-shadow">
+                            <h3 class="font-bold text-lg text-slate-900 mb-2">Shop Owner / Manager</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">The admin for a specific shop. Has access to the Dashboard (<code class="bg-slate-200 px-1 rounded">/a/*</code>) to manage their specific shop's operations.</p>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 hover:shadow-md transition-shadow">
+                            <h3 class="font-bold text-lg text-slate-900 mb-2">Supplier (B2B)</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">Wholesale distributors who provide products to Retail Shops via the Supplier Portal.</p>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 hover:shadow-md transition-shadow">
+                            <h3 class="font-bold text-lg text-slate-900 mb-2">Delivery Worker</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">Riders/drivers who log into the Delivery Hub to pick up and fulfill orders.</p>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 hover:shadow-md transition-shadow md:col-span-2">
+                            <h3 class="font-bold text-lg text-slate-900 mb-2 flex items-center gap-2"><span class="text-red-500">👑</span> System Admin</h3>
+                            <p class="text-slate-600 text-sm leading-relaxed">The platform owner. Has absolute access to the Master Admin dashboard to manage billing, cross-shop analytics, and global operations.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: System Flow -->
+        <div id="content-flow" class="tab-content max-w-5xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-8 flex flex-col items-center">
+                <h2 class="text-2xl font-bold mb-6 w-full text-left flex items-center gap-3"><span class="text-blue-500">🕸️</span> Architectural Flow</h2>
+                <p class="text-slate-500 mb-8 w-full text-left">A visual representation of how entities interact with different parts of the system.</p>
+                
+                <div class="w-full overflow-x-auto bg-slate-50 rounded-xl p-4 border border-slate-100 flex justify-center">
+                    <div class="mermaid">
+                    graph TD
+                        %% Core Entities
+                        Customer((Customer))
+                        ShopOwner((Shop Owner))
+                        SysAdmin((System Admin))
+                        Supplier((Supplier))
+                        Deliverer((Delivery Worker))
+
+                        %% Front-End Public
+                        Landing[Public Landing / Pricing]
+                        ShopProfile[Public Shop Profile]
+                        QR[Physical QR Code]
+
+                        %% Front-End Customer Flow
+                        Menu[Digital Menu]
+                        Cart[Auto-Cart / Checkout]
+                        OrderTrack[Order Tracking]
+
+                        %% Dashboards
+                        ShopDash[Shop Dashboard /a/]
+                        AdminDash[Master Admin /a/admin/]
+                        SupplyDash[Supplier Portal /a/supplier/]
+                        DeliveryDash[Delivery Hub /a/delivery/]
+
+                        %% Relationships
+                        Customer -->|Scans| QR
+                        QR --> Menu
+                        Customer -->|Visits Subdomain| ShopProfile
+                        Customer -->|Places Order| Cart
+                        Cart -->|Payment M-Pesa| OrderTrack
+
+                        ShopOwner -->|Manages| ShopDash
+                        ShopDash -->|Fulfills| OrderTrack
+                        
+                        Supplier -->|Sells Wholesale| SupplyDash
+                        SupplyDash -->|Restocks| ShopDash
+
+                        Deliverer -->|Accepts Orders| DeliveryDash
+                        ShopDash -->|Dispatches to| DeliveryDash
+
+                        SysAdmin -->|Monitors Platform| AdminDash
+                        AdminDash -->|Controls| ShopDash
+                        AdminDash -->|Controls| SupplyDash
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Routing -->
+        <div id="content-routing" class="tab-content max-w-5xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div class="p-8">
+                    <h2 class="text-2xl font-bold mb-8 flex items-center gap-3"><span class="text-green-500">🛣️</span> Route Index</h2>
+                    
+                    <div class="space-y-8">
+                        <!-- Public -->
+                        <div>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                                <h3 class="text-lg font-bold text-slate-800">Public & Marketing Routes <span class="text-sm font-normal text-slate-400 ml-2">(No Auth Required)</span></h3>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl border border-slate-100 p-4 font-mono text-sm space-y-2">
+                                <div class="flex border-b border-slate-200 pb-2"><span class="w-1/3 font-bold text-indigo-600">/</span><span class="text-slate-600">Platform Home</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/pricing</span><span class="text-slate-600">Platform Pricing</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/login, /signup</span><span class="text-slate-600">Authentication entry points</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/s/:shopId</span><span class="text-slate-600">Public Shop Profile (Subdomain Support)</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/product/:productId</span><span class="text-slate-600">Public Product Details</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/request-access</span><span class="text-slate-600">Waitlist / Contact</span></div>
+                                <div class="flex pt-2"><span class="w-1/3 font-bold text-indigo-600">/join/distribution</span><span class="text-slate-600">B2B Supplier Signup</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Customer -->
+                        <div>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                                <h3 class="text-lg font-bold text-slate-800">Customer / Guest Routes <span class="text-sm font-normal text-slate-400 ml-2">(Session Implicit Auth)</span></h3>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl border border-slate-100 p-4 font-mono text-sm space-y-2">
+                                <div class="flex border-b border-slate-200 pb-2"><span class="w-1/3 font-bold text-indigo-600">/menu</span><span class="text-slate-600">Main shopping interface</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/cart</span><span class="text-slate-600">Checkout flow (M-Pesa)</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/order</span><span class="text-slate-600">Order Success page</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/track/:orderId</span><span class="text-slate-600">Live Order Tracking</span></div>
+                                <div class="flex pt-2"><span class="w-1/3 font-bold text-indigo-600">/campaign</span><span class="text-slate-600">Discount Landing Page</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Dashboard -->
+                        <div>
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+                                <h3 class="text-lg font-bold text-slate-800">Shop Dashboard Routes <span class="text-sm font-normal text-slate-400 ml-2">(Requires Auth)</span></h3>
+                            </div>
+                            <div class="bg-slate-50 rounded-xl border border-slate-100 p-4 font-mono text-sm space-y-2">
+                                <div class="flex border-b border-slate-200 pb-2"><span class="w-1/3 font-bold text-indigo-600">/a</span><span class="text-slate-600">Main Dashboard (Sales Overview)</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/a/orders</span><span class="text-slate-600">Live Orders Kanban</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/a/products</span><span class="text-slate-600">Product & Inventory Manager</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/a/qrs</span><span class="text-slate-600">QR Code & Table Generator</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/a/marketing</span><span class="text-slate-600">Marketing Studio (Ads, Appearance)</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/a/finances</span><span class="text-slate-600">Accounting Hub</span></div>
+                                <div class="flex border-b border-slate-200 py-2"><span class="w-1/3 font-bold text-indigo-600">/a/sales-brain</span><span class="text-slate-600">AI Sales Assistant Settings</span></div>
+                                <div class="flex pt-2"><span class="w-1/3 font-bold text-indigo-600">/a/settings</span><span class="text-slate-600">General Settings & Billing</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Specialized & Admin -->
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                                    <h3 class="text-lg font-bold text-slate-800">Specialized Portals</h3>
+                                </div>
+                                <div class="bg-slate-50 rounded-xl border border-slate-100 p-4 font-mono text-sm space-y-2">
+                                    <div class="flex border-b border-slate-200 pb-2"><span class="w-1/2 font-bold text-indigo-600">/a/delivery</span><span class="text-slate-600">Delivery Hub</span></div>
+                                    <div class="flex border-b border-slate-200 py-2"><span class="w-1/2 font-bold text-indigo-600">/a/delivery/worker</span><span class="text-slate-600">Rider Console</span></div>
+                                    <div class="flex border-b border-slate-200 py-2"><span class="w-1/2 font-bold text-indigo-600">/a/delivery/manager</span><span class="text-slate-600">Fleet Management</span></div>
+                                    <div class="flex pt-2"><span class="w-1/2 font-bold text-indigo-600">/a/supplier</span><span class="text-slate-600">B2B Wholesale Portal</span></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex items-center gap-3 mb-4">
+                                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                                    <h3 class="text-lg font-bold text-slate-800">Master Admin</h3>
+                                </div>
+                                <div class="bg-slate-50 rounded-xl border border-slate-100 p-4 font-mono text-sm space-y-2">
+                                    <div class="flex border-b border-slate-200 pb-2"><span class="w-1/2 font-bold text-indigo-600">/a/admin</span><span class="text-slate-600">Global Revenue Overview</span></div>
+                                    <div class="flex border-b border-slate-200 py-2"><span class="w-1/2 font-bold text-indigo-600">/a/admin/shops</span><span class="text-slate-600">All Registered Shops</span></div>
+                                    <div class="flex border-b border-slate-200 py-2"><span class="w-1/2 font-bold text-indigo-600">/a/admin/plans</span><span class="text-slate-600">Global Subs Tiers</span></div>
+                                    <div class="flex border-b border-slate-200 py-2"><span class="w-1/2 font-bold text-indigo-600">/a/admin/payouts</span><span class="text-slate-600">M-Pesa Vendor Payouts</span></div>
+                                    <div class="flex pt-2"><span class="w-1/2 font-bold text-indigo-600">/a/admin/engineering</span><span class="text-slate-600">Edge Function Monitors</span></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Architecture -->
+        <div id="content-architecture" class="tab-content max-w-4xl mx-auto">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden p-8">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-3"><span class="text-yellow-500">⚡</span> State & Context Architecture</h2>
+                <p class="text-slate-600 mb-8">To ensure the UI is fast and independent, the application uses several layered contexts.</p>
+                
+                <div class="space-y-4">
+                    <div class="p-5 bg-slate-50 rounded-xl border border-slate-100 flex gap-4 items-start hover:shadow-md transition-shadow">
+                        <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold font-mono text-sm flex-shrink-0">1</div>
+                        <div>
+                            <h4 class="font-bold text-slate-900">auth-service.js</h4>
+                            <p class="text-sm text-slate-600 mt-1">Persists the logged-in User (<code class="text-xs bg-slate-200 px-1 rounded">owner</code> / <code class="text-xs bg-slate-200 px-1 rounded">manager</code>) to <code class="text-xs text-indigo-600 font-mono bg-indigo-50 px-1 rounded">localStorage</code>.</p>
+                        </div>
+                    </div>
+                    <div class="p-5 bg-slate-50 rounded-xl border border-slate-100 flex gap-4 items-start hover:shadow-md transition-shadow">
+                        <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold font-mono text-sm flex-shrink-0">2</div>
+                        <div>
+                            <h4 class="font-bold text-slate-900">qr-session.js</h4>
+                            <p class="text-sm text-slate-600 mt-1">Tracks the current Shop Context for Customers. When a user scans a table QR, their <code class="text-xs bg-slate-200 px-1 rounded">shop_id</code> and <code class="text-xs bg-slate-200 px-1 rounded">table_no</code> are locked in session storage so they don't have to keep selecting the shop.</p>
+                        </div>
+                    </div>
+                    <div class="p-5 bg-slate-50 rounded-xl border border-slate-100 flex gap-4 items-start hover:shadow-md transition-shadow">
+                        <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold font-mono text-sm flex-shrink-0">3</div>
+                        <div>
+                            <h4 class="font-bold text-slate-900">cart-store.js</h4>
+                            <p class="text-sm text-slate-600 mt-1">Persists the customer's cart locally until they checkout.</p>
+                        </div>
+                    </div>
+                    <div class="p-5 bg-slate-50 rounded-xl border border-slate-100 flex gap-4 items-start hover:shadow-md transition-shadow">
+                        <div class="w-10 h-10 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold font-mono text-sm flex-shrink-0">4</div>
+                        <div>
+                            <h4 class="font-bold text-slate-900">App.jsx (Subdomain Resolution)</h4>
+                            <p class="text-sm text-slate-600 mt-1">Automatically detects if the app is loaded on a subdomain (e.g., <code class="text-xs bg-slate-200 px-1 rounded">burgerjoint.app.com</code>) and forces the routing into that shop's specific Public Profile.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function switchTab(tabId) {
+            // Hide all contents
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            // Remove active state from all buttons
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+            
+            // Show requested content
+            document.getElementById('content-' + tabId).classList.add('active');
+            // Set button to active
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+    </script>
+</body>
+</html>
