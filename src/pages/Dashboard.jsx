@@ -14,6 +14,7 @@ import MultiShopNoticeboard from "../components/MultiShopNoticeboard";
 import AppLauncher from "../components/AppLauncher";
 import ShareShopModal from "../components/ShareShopModal";
 import usePlanAccess from "../hooks/usePlanAccess";
+import AIAssistantCard from "../components/AIAssistantCard";
 
 export default function Dashboard() {
   const [ordersPerDay, setOrdersPerDay] = useState([]);
@@ -768,6 +769,9 @@ export default function Dashboard() {
               Train your Sales Assistant, set its personality, and manage credits.
             </p>
           </Link>
+
+          {/* AI Assistant Suite Card — connects to the backend-connector AI agent framework */}
+          <AIAssistantCard shopId={shopId} />
 
 
 
