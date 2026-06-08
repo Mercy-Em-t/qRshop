@@ -21,8 +21,8 @@ const TemplateSettings   = lazy(() => import("../pages/TemplateSettings"));
 const ProductManager     = lazy(() => import("../pages/ProductManager"));
 const ManageAttributes   = lazy(() => import("../pages/ManageAttributes"));
 const SalesBrainManager  = lazy(() => import("../pages/SalesBrainManager"));
+const AgentDashboard     = lazy(() => import("../pages/AgentDashboard"));
 const BulkImageMapper    = lazy(() => import("../pages/BulkImageMapper"));
-const SubscriptionPage   = lazy(() => import("../pages/SubscriptionPage"));
 const ShopAppearance      = lazy(() => import("../pages/ShopAppearance"));
 
 // Minimal spinner for route transitions within the dashboard
@@ -60,8 +60,8 @@ export default function DashboardRoutes() {
           <Route path="products" element={<ProductManager />} />
           <Route path="attributes" element={<ManageAttributes />} />
           <Route path="ai-brain" element={<SalesBrainManager />} />
+          <Route path="ai-chat" element={<AgentDashboard />} />
           <Route path="bulk-image-mapper" element={<BulkImageMapper />} />
-          <Route path="subscription" element={<SubscriptionPage />} />
           <Route path="appearance" element={<ShopAppearance />} />
         </Routes>
       </Suspense>

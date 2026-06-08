@@ -15,6 +15,7 @@ import AppLauncher from "../components/AppLauncher";
 import ShareShopModal from "../components/ShareShopModal";
 import usePlanAccess from "../hooks/usePlanAccess";
 import AIAssistantCard from "../components/AIAssistantCard";
+import DashboardSkeleton from "../components/DashboardSkeleton";
 
 export default function Dashboard() {
   const [ordersPerDay, setOrdersPerDay] = useState([]);
@@ -268,6 +269,10 @@ export default function Dashboard() {
     const interval = setInterval(fetchPendingCount, 10000); // 10s poll
     return () => clearInterval(interval);
   }, [shopId]);
+
+  if (loading || planAccess.loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -88,6 +88,19 @@ export default function SalesBrainManager() {
     setSandboxTyping(true);
 
     try {
+      // Deduct Token FIRST
+      const { data: tokenData, error: tokenError } = await supabase.rpc('deduct_tokens', {
+        p_shop_id: shopId,
+        p_amount: 1,
+        p_description: 'AI Sandbox Query',
+        p_allow_negative: false
+      });
+
+      if (tokenError || !tokenData?.success) {
+        setSandboxMessages(prev => [...prev, { sender: "ai", text: "⚠️ " + (tokenData?.message || "Insufficient tokens to use the AI Agent Sandbox. Please top up or request Okoa Jahazi.") }]);
+        return;
+      }
+
       const { data: menuItems } = await supabase
         .from("menu_items")
         .select("*")
@@ -166,7 +179,7 @@ export default function SalesBrainManager() {
               <p className="text-xs text-indigo-200 mt-2 font-medium opacity-80">1 Credit = 1 AI Sales Interaction</p>
             </div>
             <button 
-              onClick={() => navigate('/a/subscription')}
+              onClick={() => navigate('/a/settings')}
               className="bg-white text-indigo-600 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-50 transition shadow-lg cursor-pointer"
             >
               Top Up

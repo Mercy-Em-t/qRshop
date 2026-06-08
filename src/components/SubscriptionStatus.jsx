@@ -34,7 +34,7 @@ export default function SubscriptionStatus({ shop }) {
 
   return (
     <Link
-      to="/a/subscription"
+      to="/a/settings"
       className={`bg-white rounded-xl shadow-sm p-4 border-l-4 ${borderColor} flex items-center justify-between hover:shadow-md transition-shadow group`}
     >
       <div className="min-w-0">

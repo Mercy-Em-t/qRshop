@@ -188,13 +188,13 @@ export default function AIAssistantCard({ shopId }) {
 
       {/* ── Action buttons ── */}
       <div className="flex gap-2 relative z-10">
-        {/* Primary: open AI Brain page */}
+        {/* Primary: open AI Chat page */}
         <button
-          onClick={() => navigate("/a/ai-brain")}
+          onClick={() => navigate("/a/ai-chat")}
           className="flex-1 bg-purple-500 hover:bg-purple-400 text-white text-[11px] font-black py-2 px-3 rounded-lg transition cursor-pointer flex items-center justify-center gap-1.5"
-          id="ai-assistant-open-brain"
+          id="ai-assistant-open-chat"
         >
-          🧠 Open AI Brain
+          💬 Open Agent Chat
         </button>
 
         {/* Secondary: trigger webhook */}

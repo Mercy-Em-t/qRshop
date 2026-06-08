@@ -13,6 +13,8 @@ export default function usePlanAccess() {
     isEnterprise: false,
     isSystemAdmin: false,
     planId: "free",
+    tokenBalance: 0,
+    hasTokens: false,
     loading: true
   });
 
@@ -35,10 +37,10 @@ export default function usePlanAccess() {
     }
 
     try {
-      // Primary: read shops.plan directly (AdminShops writes here)
+      // Primary: read shops.plan and token_balance directly
       const { data: shopData } = await supabase
         .from("shops")
-        .select("plan")
+        .select("plan, token_balance")
         .eq("shop_id", user.shop_id)
         .single();
 
@@ -54,14 +56,18 @@ export default function usePlanAccess() {
 
       planId = planId || "free";
 
+      const tokenBalance = shopData?.token_balance || 0;
+
       setAccess({
         isFree: true,
-        isBasic: ["basic", "pro", "business", "enterprise"].includes(planId),
-        isPro:   ["pro", "business", "enterprise"].includes(planId),
+        isBasic: ["basic", "pro", "business", "enterprise"].includes(planId) || tokenBalance > 0,
+        isPro:   ["pro", "business", "enterprise"].includes(planId) || tokenBalance > 0,
         isBusiness: ["business", "enterprise"].includes(planId),
         isEnterprise: planId === "enterprise",
         isSystemAdmin: false,
         planId,
+        tokenBalance,
+        hasTokens: tokenBalance > 0,
         loading: false
       });
     } catch (err) {

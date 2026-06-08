@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
+import TokensBillingTab from "../components/TokensBillingTab";
 
 export default function Settings() {
   const [shop, setShop] = useState(null);
@@ -413,6 +414,17 @@ export default function Settings() {
                 }`}
               >
                 🛡️ KYC Compliance
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSettingsTab("billing")}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer select-none ${
+                  activeSettingsTab === "billing"
+                    ? "bg-slate-900 text-white shadow-md"
+                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                🪙 Tokens & Billing
               </button>
             </div>
 
@@ -1433,6 +1445,11 @@ export default function Settings() {
             </div>
            
            {message && <div className="fixed top-24 right-6 bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl animate-in font-bold text-xs uppercase tracking-widest z-50 border border-slate-700">{message}</div>}
+          {/* Tab Panel: Billing & Tokens */}
+          {activeSettingsTab === "billing" && (
+            <TokensBillingTab shopId={SHOP_ID} shop={shop} />
+          )}
+
         </form>
       </main>
 

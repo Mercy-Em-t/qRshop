@@ -256,6 +256,11 @@ export default function ProductDetails() {
         ogImage={item.image_url || (item.product_images?.[0]?.url)}
         jsonLd={productSchema}
       />
+      {shop?.mpesa_till_number && (
+        <div className="bg-green-600 text-white text-center py-2 px-4 text-[10px] sm:text-xs font-black tracking-widest uppercase z-50 sticky top-0 shadow-md">
+          🟢 Pay Securely via M-PESA Till: <span className="text-yellow-300">{shop.mpesa_till_number}</span>
+        </div>
+      )}
       {/* Hero Header with Carousel */}
       <div className="relative h-[40vh] sm:h-[50vh] w-full overflow-hidden bg-gray-900 group">
         {(() => {

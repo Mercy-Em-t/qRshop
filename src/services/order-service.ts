@@ -93,6 +93,14 @@ export async function createOrder(
     throw new Error(`Checkout failed: ${rpcError.message}. ${detailMsg}`.trim());
   }
 
+  // Deduct tokens for order placement (2 tokens per order)
+  supabase.rpc('deduct_tokens', {
+    p_shop_id: shopId,
+    p_amount: 2,
+    p_description: `Order Placement Fee for #${orderId}`,
+    p_allow_negative: true
+  }).catch(e => console.error("Failed to deduct token for order:", e));
+
   // Track in analytics (Fire and forget or awaited depending on preference)
   trackOrder(shopId, tableId, items, totalPrice).catch(e => console.error("Analytics Error:", e));
 

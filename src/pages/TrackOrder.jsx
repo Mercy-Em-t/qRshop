@@ -5,6 +5,81 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { useNomenclature } from "../hooks/use-nomenclature";
 import { createPublicSession, getQrSession } from "../utils/qr-session";
 
+function TrackingTimeline({ status, date }) {
+  const getStageIndex = (s) => {
+    switch(s) {
+      case 'pending': return 0;
+      case 'accepted': case 'pending_payment': case 'stk_pushed': return 1;
+      case 'paid': case 'preparing': return 2;
+      case 'ready': case 'shipped': return 3;
+      case 'completed': case 'delivered': return 4;
+      default: return 0; // failed, expired, archived will just show placed or red
+    }
+  };
+
+  const activeIndex = getStageIndex(status);
+
+  const orderDate = new Date(date);
+  
+  const formatDate = (d) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const formatTime = (d) => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  const addDays = (d, days) => new Date(d.getTime() + days * 86400000);
+  
+  const stages = [
+    { label: 'Order Placed', icon: '📋', date1: formatDate(orderDate), date2: formatTime(orderDate) },
+    { label: 'Accepted', icon: '🤝', date1: activeIndex >= 1 ? formatDate(orderDate) : 'Expected', date2: activeIndex >= 1 ? formatTime(new Date(orderDate.getTime() + 15*60000)) : formatDate(addDays(orderDate, 0)) },
+    { label: 'In Progress', icon: '📦', date1: 'Expected', date2: formatDate(addDays(orderDate, 1)) },
+    { label: 'On the Way', icon: '🚚', date1: 'Expected', date2: formatDate(addDays(orderDate, 2)) },
+    { label: 'Delivered', icon: '✅', date1: 'Expected', date2: formatDate(addDays(orderDate, 3)) }
+  ];
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 overflow-x-auto hide-scrollbar">
+       <div className="min-w-[500px] relative">
+          <div className="flex justify-between">
+             {stages.map((stage, idx) => {
+                const isCompleted = idx <= activeIndex;
+
+                return (
+                  <div key={idx} className="flex flex-col items-center flex-1 relative">
+                    {/* Connecting Line to next item */}
+                    {idx < stages.length - 1 && (
+                      <div className="absolute top-[68px] left-[50%] w-full h-[2px] bg-gray-200 z-0">
+                         {idx < activeIndex && (
+                           <div className="h-full bg-[#1A4D2E] transition-all duration-700 ease-in-out w-full" />
+                         )}
+                      </div>
+                    )}
+
+                    {/* Top Icon */}
+                    <div className="text-2xl mb-2 h-8 flex items-center justify-center opacity-80">{stage.icon}</div>
+                    
+                    {/* Label */}
+                    <span className="text-[11px] font-semibold text-gray-500 mb-4 h-4 flex items-center justify-center whitespace-nowrap">
+                      {stage.label}
+                    </span>
+
+                    {/* Timeline Checkbox */}
+                    <div className={`relative z-10 w-5 h-5 rounded-[4px] flex items-center justify-center text-[10px] font-bold mb-4 ring-[6px] ring-white transition-colors duration-500 ${
+                      isCompleted ? 'bg-[#1A4D2E] text-white' : 'bg-gray-100 text-gray-300'
+                    }`}>
+                      ✓
+                    </div>
+
+                    {/* Dates */}
+                    <div className="text-[10px] text-gray-400 text-center flex flex-col gap-1">
+                      <span className={isCompleted ? "text-gray-800 font-bold" : ""}>{stage.date1}</span>
+                      <span>{stage.date2}</span>
+                    </div>
+                  </div>
+                )
+             })}
+          </div>
+       </div>
+    </div>
+  );
+}
+
 export default function TrackOrder() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
@@ -41,8 +116,8 @@ export default function TrackOrder() {
         table: 'orders',
         filter: `id=eq.${orderId}` 
       }, (payload) => {
-        console.log("Order Update Received:", payload.new);
-        setOrder(prev => ({ ...prev, ...payload.new }));
+        console.log("Order Update Received: Triggering Hot Reload");
+        fetchOrderDetails();
       })
       .subscribe();
 
@@ -292,6 +367,9 @@ export default function TrackOrder() {
 
       <main className="max-w-md mx-auto px-4 py-8 space-y-6">
         
+         {/* Tracking Timeline */}
+         <TrackingTimeline status={order.status} date={order.created_at} />
+
          {/* Dynamic Status Module */}
          <section className={`rounded-xl p-6 text-center border shadow-sm transition-colors duration-500 ${currentStatus.color}`}>
             <div className="text-4xl mb-3">{currentStatus.icon}</div>
