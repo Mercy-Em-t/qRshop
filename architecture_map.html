@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Architecture Map</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #f9fafb;
+        }
+        h1, h2, h3 {
+            color: #111827;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 2rem;
+        }
+        .mermaid {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+        ul {
+            padding-left: 1.5rem;
+        }
+        li {
+            margin-bottom: 0.5rem;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #ef4444;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>System Architecture Map</h1>
+    <p>Here is the visual mapping of the TMS/qRshop platform, starting from the root entry point down to the primitive branches, leaves (components/pages), and roots (data and services).</p>
+
+    <div class="container">
+        <h2>Visual Tree</h2>
+        <div class="mermaid">
+graph TD
+    Root["index.html"] --> Main["src/main.jsx"]
+    Main --> App["src/App.jsx"]
+
+    App --> Public["Public Branch"]
+    App --> Customer["Customer Branch"]
+    App --> Operator["Operator Branch"]
+    App --> Admin["Admin Branch"]
+
+    %% Public Branch
+    Public --> Home["/Home.jsx"]
+    Public --> Login["/Login.jsx"]
+    Public --> Profile["/PublicShopProfile.jsx"]
+
+    %% Customer Branch
+    Customer --> Guard1{"QrAccessGuard"}
+    Guard1 --> Menu["/Menu.jsx"]
+    Guard1 --> Cart["/CartPage.jsx"]
+    Guard1 --> Order["/Order.jsx"]
+    Guard1 --> Track["/TrackOrder.jsx"]
+
+    %% Operator Branch
+    Operator --> Guard2{"AuthGate"}
+    Guard2 --> DashboardRoutes["DashboardRoutes.jsx"]
+    DashboardRoutes --> Dashboard["/Dashboard.jsx"]
+    DashboardRoutes --> Settings["/Settings.jsx"]
+    DashboardRoutes --> Agent["/AgentDashboard.jsx"]
+
+    %% Admin Branch
+    Admin --> Guard3{"AuthGate"}
+    Guard3 --> MasterAdmin["/MasterAdmin.jsx"]
+
+    %% Primitive Functions & State
+    Menu -.-> CartHook(("useCart"))
+    Cart -.-> CartHook
+    Order -.-> OrderSvc(("order-service.ts"))
+    Dashboard -.-> ShopHook(("useShop"))
+    Settings -.-> BillingSvc(("billing-service.js"))
+
+    %% Primitive Data
+    OrderSvc -.-> DB[("Supabase DB")]
+    BillingSvc -.-> DB[("Supabase DB")]
+    ShopHook -.-> DB[("Supabase DB")]
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Detailed Breakdown</h2>
+
+        <h3>1. The Root (Entry Point)</h3>
+        <ul>
+            <li><strong><code>index.html</code></strong>: The HTML file that the browser loads first. It contains the <code>&lt;div id="root"&gt;&lt;/div&gt;</code>.</li>
+            <li><strong><code>src/main.jsx</code></strong>: Bootstraps the React application, attaches it to the HTML root, and handles global chunk-loading error resilience.</li>
+        </ul>
+
+        <h3>2. The Trunk (Routing)</h3>
+        <ul>
+            <li><strong><code>src/App.jsx</code></strong>: The central nervous system. It decides which "branch" the user is sent down based on the URL (Routing) and global guards.</li>
+        </ul>
+
+        <h3>3. The Branches (Feature Areas)</h3>
+        <ul>
+            <li><strong>Public Branch (<code>/</code>)</strong>: Landing pages, pricing, signup, login, and public shop profiles. No authentication required.</li>
+            <li><strong>Customer Branch (<code>/menu</code>, <code>/cart</code>, <code>/order</code>)</strong>: Gated by <code>QrAccessGuard</code>. These are the ordering flows for customers.</li>
+            <li><strong>Operator Branch (<code>/a/*</code>)</strong>: Gated by <code>AuthGate</code>. This is the Shop Owner dashboard where they manage products.</li>
+            <li><strong>Admin Branch (<code>/a/admin/*</code>)</strong>: Hidden dashboards for you (the platform owner) to manage global systems.</li>
+        </ul>
+
+        <h3>4. The Leaves (Components & Pages)</h3>
+        <ul>
+            <li><strong>Pages</strong> (<code>src/pages/</code>): Full-screen views like <code>Menu.jsx</code>, <code>Settings.jsx</code>, or <code>AgentDashboard.jsx</code>.</li>
+            <li><strong>Components</strong> (<code>src/components/</code>): Reusable UI pieces like <code>AIAssistantCard.jsx</code> or <code>Cart.jsx</code>.</li>
+        </ul>
+
+        <h3>5. Primitive Functions (Hooks & Services)</h3>
+        <ul>
+            <li><strong>Hooks (<code>src/hooks/</code>)</strong>: Handle local React state. For example, <code>useCart.js</code> remembers what a customer added to their cart.</li>
+            <li><strong>Services (<code>src/services/</code>)</strong>: Handle external communication.
+                <ul>
+                    <li><code>billing-service.js</code>: Talks to the database to request Okoa Jahazi.</li>
+                    <li><code>order-service.ts</code>: Pushes new orders to the database.</li>
+                    <li><code>payment-service.js</code>: Handles M-Pesa STK Push API triggers.</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3>6. Primitive Data (The Database & Edge)</h3>
+        <ul>
+            <li><strong>Supabase PostgreSQL</strong>: The physical tables holding the raw data (<code>shops</code>, <code>orders</code>, <code>token_transactions</code>).</li>
+            <li><strong>Edge Functions</strong>: Cloud scripts like <code>sales-assistant</code> (AI logic) that run backend processes securely.</li>
+        </ul>
+    </div>
+
+</body>
+</html>

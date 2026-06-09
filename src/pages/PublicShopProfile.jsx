@@ -215,12 +215,6 @@ export default function PublicShopProfile({ directShopId }) {
       {/* Safe CSS Injection — sanitised before render */}
       {safeCss && <style>{safeCss}</style>}
 
-      {shop?.mpesa_till_number && (
-        <div className="bg-green-600 text-white text-center py-2 px-4 text-[10px] sm:text-xs font-black tracking-widest uppercase z-50 sticky top-0 shadow-md">
-          🟢 Pay Securely via M-PESA Till: <span className="text-yellow-300">{shop.mpesa_till_number}</span>
-        </div>
-      )}
-
       <main className="relative">
         {layout.map(sectionName => {
            try {

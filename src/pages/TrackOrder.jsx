@@ -6,6 +6,8 @@ import { useNomenclature } from "../hooks/use-nomenclature";
 import { createPublicSession, getQrSession } from "../utils/qr-session";
 
 function TrackingTimeline({ status, date }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   const getStageIndex = (s) => {
     switch(s) {
       case 'pending': return 0;
@@ -23,59 +25,80 @@ function TrackingTimeline({ status, date }) {
   
   const formatDate = (d) => d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const formatTime = (d) => d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  const addDays = (d, days) => new Date(d.getTime() + days * 86400000);
   
   const stages = [
     { label: 'Order Placed', icon: '📋', date1: formatDate(orderDate), date2: formatTime(orderDate) },
-    { label: 'Accepted', icon: '🤝', date1: activeIndex >= 1 ? formatDate(orderDate) : 'Expected', date2: activeIndex >= 1 ? formatTime(new Date(orderDate.getTime() + 15*60000)) : formatDate(addDays(orderDate, 0)) },
-    { label: 'In Progress', icon: '📦', date1: 'Expected', date2: formatDate(addDays(orderDate, 1)) },
-    { label: 'On the Way', icon: '🚚', date1: 'Expected', date2: formatDate(addDays(orderDate, 2)) },
-    { label: 'Delivered', icon: '✅', date1: 'Expected', date2: formatDate(addDays(orderDate, 3)) }
+    { label: 'Accepted', icon: '🤝', date1: activeIndex >= 1 ? formatDate(orderDate) : 'Pending', date2: activeIndex >= 1 ? formatTime(new Date(orderDate.getTime() + 15*60000)) : '' },
+    { label: 'In Progress', icon: '📦', date1: activeIndex >= 2 ? formatDate(orderDate) : 'Pending', date2: activeIndex >= 2 ? formatTime(new Date(orderDate.getTime() + 30*60000)) : '' },
+    { label: 'On the Way', icon: '🚚', date1: activeIndex >= 3 ? formatDate(orderDate) : 'Pending', date2: activeIndex >= 3 ? formatTime(new Date(orderDate.getTime() + 45*60000)) : '' },
+    { label: 'Delivered', icon: '✅', date1: activeIndex >= 4 ? formatDate(orderDate) : 'Pending', date2: activeIndex >= 4 ? formatTime(new Date(orderDate.getTime() + 60*60000)) : '' }
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6 overflow-x-auto hide-scrollbar">
-       <div className="min-w-[500px] relative">
-          <div className="flex justify-between">
-             {stages.map((stage, idx) => {
-                const isCompleted = idx <= activeIndex;
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 mb-6 overflow-hidden">
+       {/* Header / Toggle */}
+       <button 
+         onClick={() => setIsOpen(!isOpen)} 
+         className="w-full flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 transition"
+       >
+         <div className="flex items-center gap-3">
+            <span className="text-xl">{stages[activeIndex]?.icon}</span>
+            <div className="text-left">
+               <h3 className="text-sm font-bold text-gray-900">Pipeline Status: {stages[activeIndex]?.label}</h3>
+               <p className="text-xs text-gray-500">Tap to {isOpen ? 'hide' : 'view'} full order timeline</p>
+            </div>
+         </div>
+         <div className="text-gray-400">
+            {isOpen ? '▲' : '▼'}
+         </div>
+       </button>
 
-                return (
-                  <div key={idx} className="flex flex-col items-center flex-1 relative">
-                    {/* Connecting Line to next item */}
-                    {idx < stages.length - 1 && (
-                      <div className="absolute top-[68px] left-[50%] w-full h-[2px] bg-gray-200 z-0">
-                         {idx < activeIndex && (
-                           <div className="h-full bg-[#1A4D2E] transition-all duration-700 ease-in-out w-full" />
-                         )}
+       {/* Collapsible Content */}
+       {isOpen && (
+         <div className="p-6 overflow-x-auto hide-scrollbar border-t border-gray-100">
+           <div className="min-w-[500px] relative">
+              <div className="flex justify-between">
+                 {stages.map((stage, idx) => {
+                    const isCompleted = idx <= activeIndex;
+
+                    return (
+                      <div key={idx} className="flex flex-col items-center flex-1 relative">
+                        {/* Connecting Line to next item */}
+                        {idx < stages.length - 1 && (
+                          <div className="absolute top-[68px] left-[50%] w-full h-[2px] bg-gray-200 z-0">
+                             {idx < activeIndex && (
+                               <div className="h-full bg-[#1A4D2E] transition-all duration-700 ease-in-out w-full" />
+                             )}
+                          </div>
+                        )}
+
+                        {/* Top Icon */}
+                        <div className="text-2xl mb-2 h-8 flex items-center justify-center opacity-80">{stage.icon}</div>
+                        
+                        {/* Label */}
+                        <span className="text-[11px] font-semibold text-gray-500 mb-4 h-4 flex items-center justify-center whitespace-nowrap">
+                          {stage.label}
+                        </span>
+
+                        {/* Timeline Checkbox */}
+                        <div className={`relative z-10 w-5 h-5 rounded-[4px] flex items-center justify-center text-[10px] font-bold mb-4 ring-[6px] ring-white transition-colors duration-500 ${
+                          isCompleted ? 'bg-[#1A4D2E] text-white' : 'bg-gray-100 text-gray-300'
+                        }`}>
+                          ✓
+                        </div>
+
+                        {/* Dates */}
+                        <div className="text-[10px] text-gray-400 text-center flex flex-col gap-1">
+                          <span className={isCompleted ? "text-gray-800 font-bold" : ""}>{stage.date1}</span>
+                          <span>{stage.date2}</span>
+                        </div>
                       </div>
-                    )}
-
-                    {/* Top Icon */}
-                    <div className="text-2xl mb-2 h-8 flex items-center justify-center opacity-80">{stage.icon}</div>
-                    
-                    {/* Label */}
-                    <span className="text-[11px] font-semibold text-gray-500 mb-4 h-4 flex items-center justify-center whitespace-nowrap">
-                      {stage.label}
-                    </span>
-
-                    {/* Timeline Checkbox */}
-                    <div className={`relative z-10 w-5 h-5 rounded-[4px] flex items-center justify-center text-[10px] font-bold mb-4 ring-[6px] ring-white transition-colors duration-500 ${
-                      isCompleted ? 'bg-[#1A4D2E] text-white' : 'bg-gray-100 text-gray-300'
-                    }`}>
-                      ✓
-                    </div>
-
-                    {/* Dates */}
-                    <div className="text-[10px] text-gray-400 text-center flex flex-col gap-1">
-                      <span className={isCompleted ? "text-gray-800 font-bold" : ""}>{stage.date1}</span>
-                      <span>{stage.date2}</span>
-                    </div>
-                  </div>
-                )
-             })}
-          </div>
-       </div>
+                    )
+                 })}
+              </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 }

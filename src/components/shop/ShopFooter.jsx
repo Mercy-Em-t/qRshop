@@ -91,6 +91,8 @@ export default function ShopFooter({ shop }) {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
           <p>© {currentYear} {shop?.name}. All rights reserved.</p>
           <div style={{ display: 'flex', gap: '12px', fontSize: '0.72rem', color: '#64748b' }}>
+            <a href={`/s/${shop?.slug || shop?.shop_id || shop?.id}/about`} style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={e => e.target.style.color = '#f8fafc'} onMouseOut={e => e.target.style.color = 'inherit'}>About Us</a>
+            <span>|</span>
             <a href={`/s/${shop?.slug || shop?.shop_id || shop?.id}/returns`} style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={e => e.target.style.color = '#f8fafc'} onMouseOut={e => e.target.style.color = 'inherit'}>Returns Policy</a>
             <span>|</span>
             <a href="/privacy" style={{ color: 'inherit', textDecoration: 'none' }} onMouseOver={e => e.target.style.color = '#f8fafc'} onMouseOut={e => e.target.style.color = 'inherit'}>Privacy Policy</a>

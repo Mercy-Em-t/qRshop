@@ -19,6 +19,7 @@ const Enter            = lazy(() => import("./pages/Enter"));
 const InvalidAccess    = lazy(() => import("./pages/InvalidAccess"));
 const PublicQrLanding  = lazy(() => import("./pages/PublicQrLanding"));
 const PublicShopProfile= lazy(() => import("./pages/PublicShopProfile"));
+const AboutShop        = lazy(() => import("./pages/AboutShop"));
 const RequestAccess    = lazy(() => import("./pages/RequestAccess"));
 const Pricing          = lazy(() => import("./pages/Pricing"));
 const AutoCart         = lazy(() => import("./pages/AutoCart"));
@@ -80,6 +81,7 @@ const DeveloperPortal    = lazy(() => import("./pages/DeveloperPortal"));
 const WholesaleSalesSystem= lazy(() => import("./pages/WholesaleSalesSystem"));
 const WholesaleJourneyMap = lazy(() => import("./pages/WholesaleJourneyMap"));
 const SeedWholesaleUser   = lazy(() => import("./pages/SeedWholesaleUser"));
+const LogicAuditorDashboard = lazy(() => import("./pages/LogicAuditorDashboard"));
 
 // Dynamic legacy admin link redirect helper
 function AdminRedirect() {
@@ -200,6 +202,7 @@ export default function App() {
       <Route path="/invalid-access" element={<InvalidAccess />} />
       <Route path="/shops/:shopId" element={<PublicShopProfile />} />
       <Route path="/s/:shopId" element={<PublicShopProfile />} />
+      <Route path="/s/:shopId/about" element={<AboutShop />} />
       <Route path="/product/:productId" element={<ProductDetails />} />
       <Route path="/product/:productSlug/:productId" element={<ProductDetails />} />
       <Route path="/sandbox/flax-seeds" element={<FlaxSeedsSandbox />} />
@@ -267,6 +270,7 @@ export default function App() {
       <Route path="/a/admin/industries" element={<AuthGate><AdminIndustries /></AuthGate>} />
       <Route path="/a/admin/gateway" element={<AuthGate><AdminGateway /></AuthGate>} />
       <Route path="/a/admin/intelligence" element={<AuthGate><BusinessIntelligence /></AuthGate>} />
+      <Route path="/a/admin/logic-auditor" element={<AuthGate><LogicAuditorDashboard /></AuthGate>} />
       
       {/* Developer Portal (Gated) */}
       <Route path="/a/developer/portal" element={<AuthGate><DeveloperPortal /></AuthGate>} />
