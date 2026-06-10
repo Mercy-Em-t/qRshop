@@ -20,9 +20,9 @@ export default function Footer() {
           <div>
             <h4 className="font-bold text-gray-900 text-sm mb-4">Platform</h4>
             <ul className="space-y-2 text-sm text-gray-500">
-              <li><Link to="/explore" className="hover:text-safari-green transition">Discovery</Link></li>
-              <li><Link to="/community" className="hover:text-safari-green transition">Community</Link></li>
-              <li><Link to="/request-access" className="hover:text-safari-green transition">Create Shop</Link></li>
+              <li><Link to="/explore" className="hover:text-indigo-600 transition">Discovery</Link></li>
+              <li><Link to="/community" className="hover:text-indigo-600 transition">Community</Link></li>
+              <li><Link to="/request-access" className="hover:text-indigo-600 transition">Create Shop</Link></li>
             </ul>
           </div>
 
@@ -30,10 +30,10 @@ export default function Footer() {
           <div>
             <h4 className="font-bold text-gray-900 text-sm mb-4">Savannah</h4>
             <ul className="space-y-2 text-sm text-gray-500">
-              <li><Link to="/about" className="hover:text-safari-green transition">About Us</Link></li>
-              <li><Link to="/contact" className="hover:text-safari-green transition">Contact</Link></li>
-              <li><Link to="/terms" className="hover:text-safari-green transition">Terms</Link></li>
-              <li><Link to="/privacy" className="hover:text-safari-green transition">Privacy</Link></li>
+              <li><Link to="/about" className="hover:text-indigo-600 transition">About Us</Link></li>
+              <li><Link to="/contact" className="hover:text-indigo-600 transition">Contact</Link></li>
+              <li><Link to="/terms" className="hover:text-indigo-600 transition">Terms</Link></li>
+              <li><Link to="/privacy" className="hover:text-indigo-600 transition">Privacy</Link></li>
             </ul>
           </div>
 
@@ -41,9 +41,9 @@ export default function Footer() {
           <div>
             <h4 className="font-bold text-gray-900 text-sm mb-4">Connect</h4>
             <ul className="space-y-2 text-sm text-gray-500">
-              <li><a href="#" className="hover:text-safari-green transition">Instagram</a></li>
-              <li><a href="#" className="hover:text-safari-green transition">X (Twitter)</a></li>
-              <li><a href="#" className="hover:text-safari-green transition">LinkedIn</a></li>
+              <li><a href="#" className="hover:text-indigo-600 transition">Instagram</a></li>
+              <li><a href="#" className="hover:text-indigo-600 transition">X (Twitter)</a></li>
+              <li><a href="#" className="hover:text-indigo-600 transition">LinkedIn</a></li>
             </ul>
           </div>
         </div>
@@ -53,8 +53,8 @@ export default function Footer() {
             © {currentYear} The Modern Savannah Ltd. <span className="mx-2">•</span> Africa to the World.
           </p>
           <div className="flex items-center gap-2">
-             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-             <span className="text-[10px] uppercase font-black tracking-widest text-gray-400">System Functional</span>
+             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]"></div>
+             <span className="text-[10px] uppercase font-black tracking-widest text-slate-400">System Functional</span>
           </div>
         </div>
       </div>

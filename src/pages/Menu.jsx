@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import Logo from "../components/Logo";
 import { getQrSession } from "../utils/qr-session";
 import { getUpsellItems } from "../services/menu-service";
 import { trackUpsell } from "../services/analytics-service";
@@ -481,39 +482,36 @@ export default function Menu() {
         <div className="max-w-lg md:max-w-3xl lg:max-w-7xl mx-auto">
           {/* App Brand */}
           <div className="flex flex-col items-center text-center mb-5">
-            <div className="flex items-center gap-2 mb-1">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-theme-secondary" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm2 2V5h1v1H5zM3 13a1 1 0 011-1h3a1 1 0 011 1v3a1 1 0 01-1 1H4a1 1 0 01-1-1v-3zm2 2v-1h1v1H5zM13 3a1 1 0 00-1 1v3a1 1 0 001 1h3a1 1 0 001-1V4a1 1 0 00-1-1h-3zm1 2v1h1V5h-1z" clipRule="evenodd" />
-              </svg>
-              <span className="text-sm font-bold text-gray-700 tracking-tight">Savannah</span>
+            <div className="flex items-center justify-center mb-1 scale-90">
+              <Logo />
             </div>
-            <p className="text-xs text-gray-400">Smart QR Ordering Platform</p>
+            <p className="text-xs text-slate-400">Smart Commerce Node</p>
           </div>
 
           {/* Quick Links */}
           <div className="grid grid-cols-3 gap-3 mb-5 text-center">
-            <a href="https://wa.me/254700000000?text=Hi%2C+I+need+support" target="_blank" rel="noreferrer"
-              className="flex flex-col items-center gap-1 text-gray-500 hover:text-theme-secondary transition-colors">
+            <a href="https://wa.me/254712345678?text=Hi%2C+I+need+support+with+an+order" target="_blank" rel="noreferrer"
+              className="flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-600 transition-colors">
               <span className="text-lg">💬</span>
-              <span className="text-xs font-medium">Support</span>
+              <span className="text-xs font-bold">Support</span>
             </a>
             <Link to="/request-access"
-              className="flex flex-col items-center gap-1 text-gray-500 hover:text-theme-secondary transition-colors">
+              className="flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-600 transition-colors">
               <span className="text-lg">🏪</span>
-              <span className="text-xs font-medium">Get a Shop</span>
+              <span className="text-xs font-bold">Get a Shop</span>
             </Link>
-            <a href="/" className="flex flex-col items-center gap-1 text-gray-500 hover:text-theme-secondary transition-colors">
+            <Link to="/about" className="flex flex-col items-center gap-1 text-slate-500 hover:text-indigo-600 transition-colors">
               <span className="text-lg">🌐</span>
-              <span className="text-xs font-medium">About Us</span>
-            </a>
+              <span className="text-xs font-bold">About Us</span>
+            </Link>
           </div>
 
           {/* Legal */}
-          <div className="flex justify-center gap-4 text-xs text-gray-400 mb-3">
-            <Link to="/terms" className="hover:text-gray-600 transition-colors">Terms</Link>
-            <Link to="/privacy" className="hover:text-gray-600 transition-colors">Privacy</Link>
+          <div className="flex justify-center gap-4 text-xs text-slate-400 mb-3">
+            <Link to="/terms" className="hover:text-slate-600 transition-colors font-medium">Terms</Link>
+            <Link to="/privacy" className="hover:text-slate-600 transition-colors font-medium">Privacy</Link>
           </div>
-          <p className="text-center text-xs text-gray-300">© 2026 Savannah Platform</p>
+          <p className="text-center text-xs text-slate-400 font-medium">© {new Date().getFullYear()} The Modern Savannah Ltd.</p>
         </div>
       </footer>
 

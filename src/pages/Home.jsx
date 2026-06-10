@@ -4,8 +4,7 @@ import Logo from "../components/Logo";
 import { Scanner } from "@yudiel/react-qr-scanner";
 import { useStandalone } from "../hooks/useStandalone";
 import { useState as useReactState } from "react";
-
-
+import PublicLayout from "../components/public/PublicLayout";
 
 export default function Home() {
   const [showScanner, setShowScanner] = useState(false);
@@ -94,64 +93,51 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b border-gray-100 px-4 sm:px-6 lg:px-8 bg-white/80 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto flex justify-between h-20 items-center">
-          <Logo />
-          <div className="hidden md:flex gap-8 items-center text-sm font-bold text-gray-500">
-            <a href="#features" className="hover:text-theme-secondary transition">Features</a>
-            <Link to="/pricing" className="hover:text-theme-secondary transition">Pricing</Link>
-            <a href="/explore" className="hover:text-theme-secondary transition">Marketplace</a>
-            <Link to="/login" className="hover:text-theme-secondary transition">Login</Link>
-            <Link to="/request-access" className="bg-theme-secondary text-white px-6 py-2.5 rounded-xl hover:bg-theme-main transition shadow-lg shadow-purple-500/20">Get Started</Link>
-          </div>
-        </div>
-      </nav>
-
+    <PublicLayout>
       {/* Hero Section */}
-      <header className="py-24 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto text-center">
-        <h1 className="text-5xl sm:text-7xl font-black text-gray-900 tracking-tight leading-[1.1] mb-6">
+      <header className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+        <h1 className="relative text-5xl sm:text-7xl font-black text-slate-900 tracking-tight leading-[1.1] mb-6">
           Your Shop, <br/> 
-          <span className="text-theme-secondary">On Every Screen.</span>
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">On Every Screen.</span>
         </h1>
-        <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+        <p className="relative text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
           The simplest way to digitize your menu and handle orders directly. No complex apps, just a scan and a click.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Link to="/request-access" className="w-full sm:w-auto bg-theme-secondary text-white px-10 py-5 rounded-2xl font-black text-lg hover:bg-theme-main transition shadow-2xl shadow-purple-600/30 hover:-translate-y-1 active:scale-95">
+        <div className="relative flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <Link to="/request-access" className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-10 py-5 rounded-2xl font-black text-lg hover:shadow-2xl hover:shadow-indigo-500/40 transition-all hover:-translate-y-1 active:scale-95">
              Join the Savannah
           </Link>
-          <Link to="/pricing" className="w-full sm:w-auto px-10 py-5 rounded-2xl font-bold text-gray-400 hover:text-gray-900 transition">
+          <Link to="/pricing" className="w-full sm:w-auto px-10 py-5 rounded-2xl font-bold text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-all">
              View Plans & Pricing
           </Link>
         </div>
       </header>
 
       {/* Features Grid */}
-      <section id="features" className="py-24 bg-gray-50 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-           <div className="grid md:grid-cols-3 gap-12 text-center">
-              <div>
-                 <div className="bg-green-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
+      <section id="features" className="py-24 bg-white px-4 sm:px-6 lg:px-8 border-t border-slate-100">
+        <div className="max-w-7xl mx-auto">
+           <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div className="bg-slate-50 rounded-3xl p-8 hover:bg-slate-100 transition-colors border border-slate-200/50">
+                 <div className="bg-gradient-to-br from-indigo-100 to-indigo-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-indigo-100">
                     <span className="text-2xl">📱</span>
                  </div>
-                 <h3 className="text-xl font-bold text-gray-900 mb-3">Direct Ordering</h3>
-                 <p className="text-gray-500">Orders land directly in your dashboard with high-fidelity customer data, ready for fulfillment.</p>
+                 <h3 className="text-xl font-bold text-slate-900 mb-3">Direct Ordering</h3>
+                 <p className="text-slate-500 leading-relaxed">Orders land directly in your dashboard with high-fidelity customer data, ready for fulfillment.</p>
               </div>
-              <div>
-                 <div className="bg-blue-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <div className="bg-slate-50 rounded-3xl p-8 hover:bg-slate-100 transition-colors border border-slate-200/50">
+                 <div className="bg-gradient-to-br from-purple-100 to-purple-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-purple-100">
                     <span className="text-2xl">📊</span>
                  </div>
-                 <h3 className="text-xl font-bold text-gray-900 mb-3">Real-time Analytics</h3>
-                 <p className="text-gray-500">Know your top items, peak hours, and revenue trends without complex spreadsheets.</p>
+                 <h3 className="text-xl font-bold text-slate-900 mb-3">Real-time Analytics</h3>
+                 <p className="text-slate-500 leading-relaxed">Know your top items, peak hours, and revenue trends without complex spreadsheets.</p>
               </div>
-              <div>
-                 <div className="bg-purple-100 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <div className="bg-slate-50 rounded-3xl p-8 hover:bg-slate-100 transition-colors border border-slate-200/50">
+                 <div className="bg-gradient-to-br from-emerald-100 to-emerald-50 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-inner border border-emerald-100">
                     <span className="text-2xl">💰</span>
                  </div>
-                 <h3 className="text-xl font-bold text-gray-900 mb-3">Higher Conversion</h3>
-                 <p className="text-gray-500">Less friction for customers means more orders. No account required to browse your menu.</p>
+                 <h3 className="text-xl font-bold text-slate-900 mb-3">Higher Conversion</h3>
+                 <p className="text-slate-500 leading-relaxed">Less friction for customers means more orders. No account required to browse your menu.</p>
               </div>
            </div>
         </div>
@@ -160,24 +146,10 @@ export default function Home() {
       {/* Pricing */}
 
 
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12 mt-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-           <div className="flex items-center gap-2 grayscale opacity-50">
-             <Logo textClassName="font-bold text-lg" />
-           </div>
-           
-           <div className="flex gap-8 text-xs text-gray-500 font-bold uppercase tracking-widest">
-              <Link to="/about" className="hover:text-gray-900 transition">About</Link>
-              <Link to="/contact" className="hover:text-gray-900 transition">Contact Us</Link>
-              
-              <Link to="/terms" className="hover:text-gray-900 transition">Terms</Link>
-              <Link to="/privacy" className="hover:text-gray-900 transition">Privacy</Link>
-           </div>
-           
-           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">© 2026 The Modern Savannah. All rights reserved.</p>
-        </div>
-      </footer>
+      {/* Pricing */}
+
+
+
 
       <button 
         onClick={() => setShowScanner(true)}
@@ -213,6 +185,6 @@ export default function Home() {
            </div>
         </div>
       )}
-    </div>
+    </PublicLayout>
   );
 }

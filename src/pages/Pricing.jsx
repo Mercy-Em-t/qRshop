@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import ComingSoonGuard from "../components/ComingSoonGuard";
-import Logo from "../components/Logo";
+import PublicLayout from "../components/public/PublicLayout";
 
 const PLANS = [
   {
@@ -76,19 +76,7 @@ const PLANS = [
 
 export default function Pricing() {
   return (
-    <div className="min-h-screen bg-white flex flex-col">
-      {/* Navigation */}
-      <nav className="border-b border-gray-100 px-4 sm:px-6 lg:px-8 bg-white/80 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto flex justify-between h-20 items-center">
-          <Link to="/"><Logo /></Link>
-          <div className="hidden md:flex gap-8 items-center text-sm font-bold text-gray-500">
-            <Link to="/" className="hover:text-theme-secondary transition">Home</Link>
-            <Link to="/explore" className="hover:text-theme-secondary transition">Marketplace</Link>
-            <Link to="/login" className="bg-theme-secondary text-white px-6 py-2.5 rounded-xl hover:bg-theme-main transition shadow-lg shadow-purple-500/20">Get Started</Link>
-          </div>
-        </div>
-      </nav>
-
+    <PublicLayout>
       <div className="flex-1 relative">
          {/* Pricing Section (Locked) */}
          <ComingSoonGuard 
@@ -144,23 +132,6 @@ export default function Pricing() {
             </section>
          </ComingSoonGuard>
       </div>
-      
-      {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12 mt-auto">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
-           <div className="flex items-center gap-2 grayscale opacity-50">
-             <Logo textClassName="font-bold text-lg" />
-           </div>
-           
-           <div className="flex gap-8 text-xs text-gray-500 font-bold uppercase tracking-widest">
-              <Link to="/about" className="hover:text-gray-900 transition">About</Link>
-              <Link to="/contact" className="hover:text-gray-900 transition">Contact Us</Link>
-              <Link to="/privacy" className="hover:text-gray-900 transition">Privacy</Link>
-           </div>
-           
-           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">© 2026 The Modern Savannah. All rights reserved.</p>
-        </div>
-      </footer>
-    </div>
+    </PublicLayout>
   );
 }

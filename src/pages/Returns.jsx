@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { resolveShopIdentifier } from "../services/shop-service";
-import Footer from "../components/Footer";
+import PublicLayout from "../components/public/PublicLayout";
 
 export default function Returns() {
   const { shopId } = useParams();
@@ -27,8 +27,8 @@ export default function Returns() {
   }, [shopId]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-between">
-      <div>
+    <PublicLayout hideNav={true}>
+      <div className="w-full">
         {/* Navigation Bar */}
         <nav className="border-b border-gray-100 bg-white px-4 h-16 flex items-center shadow-sm">
           <div className="max-w-4xl w-full mx-auto flex items-center justify-between">
@@ -123,7 +123,6 @@ export default function Returns() {
           )}
         </main>
       </div>
-      <Footer />
-    </div>
+    </PublicLayout>
   );
 }

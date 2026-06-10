@@ -61,15 +61,15 @@ export default function ShopFooter({ shop }) {
             </>
           ) : (
             <>
-              {shop?.mpesa_till_number ? (
-                <div className="shop-footer__payment-item">
-                  <span style={{ fontSize: '9px' }} className="text-slate-400 block font-bold uppercase tracking-wider mb-1">M-Pesa Till Number</span>
-                  <span className="text-sm font-black text-emerald-400 tracking-wider">🟢 Buy Goods: {shop.mpesa_till_number}</span>
-                </div>
-              ) : shop?.mpesa_shortcode ? (
-                <div className="shop-footer__payment-item">
-                  <span style={{ fontSize: '9px' }} className="text-slate-400 block font-bold uppercase tracking-wider mb-1">M-Pesa Paybill</span>
-                  <span className="text-sm font-black text-emerald-400 tracking-wider">🟢 Paybill: {shop.mpesa_shortcode}</span>
+              {(shop?.mpesa_till_number || shop?.mpesa_shortcode) ? (
+                <div className="shop-footer__payment-item flex items-center gap-2">
+                  <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center font-bold text-white text-[10px] shadow-sm">
+                     M
+                  </div>
+                  <div>
+                     <span className="text-sm font-black text-emerald-400 tracking-wider block">M-Pesa Accepted</span>
+                     <span style={{ fontSize: '9px' }} className="text-slate-400 font-bold uppercase tracking-wider">Secure Payment</span>
+                  </div>
                 </div>
               ) : (
                 <div className="shop-footer__payment-item">

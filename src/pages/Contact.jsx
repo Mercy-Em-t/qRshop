@@ -1,62 +1,50 @@
 import { Link } from "react-router-dom";
-import Footer from "../components/Footer";
+import PublicLayout from "../components/public/PublicLayout";
 
 export default function Contact() {
   return (
-    <div className="min-h-screen bg-white">
-      <nav className="border-b border-gray-50 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="font-black text-xl text-safari-green italic">Modern Savannah</Link>
-          <Link to="/" className="text-sm font-bold text-gray-500 hover:text-gray-900 transition">Back to Home</Link>
-        </div>
-      </nav>
-
-      <main className="max-w-4xl mx-auto px-4 py-20">
+    <PublicLayout>
+      <main className="max-w-4xl mx-auto px-4 py-20 relative">
+        <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-indigo-500/5 blur-[100px] rounded-full pointer-events-none -z-10"></div>
         <header className="mb-16">
-           <h1 className="text-5xl font-black text-gray-900 tracking-tighter mb-4 italic">Get in Touch.</h1>
-           <p className="text-gray-600 text-lg">We're here to help you scale your commerce node.</p>
+           <h1 className="text-5xl font-black text-slate-900 tracking-tighter mb-4 italic">Get in Touch.</h1>
+           <p className="text-slate-600 text-lg">We're here to help you scale your commerce node.</p>
         </header>
 
         <div className="grid md:grid-cols-2 gap-12">
            <div className="space-y-12">
-              <div>
-                 <h3 className="font-bold text-gray-900 uppercase tracking-widest text-xs mb-4">Support</h3>
-                 <p className="text-gray-500 mb-2 font-medium">Have a technical issue or order question?</p>
-                 <a href="https://wa.me/254712345678" className="text-safari-green font-bold hover:underline flex items-center gap-2">
+              <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                 <h3 className="font-bold text-slate-900 uppercase tracking-widest text-xs mb-4 flex items-center gap-2"><span className="text-indigo-500">◆</span> Support</h3>
+                 <p className="text-slate-500 mb-4 font-medium">Have a technical issue or order question?</p>
+                 <a href="https://wa.me/254712345678" className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-4 py-2 rounded-xl font-bold hover:bg-indigo-100 transition-colors">
                     💬 WhatsApp Support Agent
                  </a>
               </div>
               
-              <div>
-                 <h3 className="font-bold text-gray-900 uppercase tracking-widest text-xs mb-4">Inquiries</h3>
-                 <p className="text-gray-500 mb-2 font-medium">Business partnerships or press.</p>
-                 <a href="mailto:hello@tmsavannah.com" className="text-safari-green font-bold hover:underline">
+              <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                 <h3 className="font-bold text-slate-900 uppercase tracking-widest text-xs mb-4 flex items-center gap-2"><span className="text-purple-500">◆</span> Inquiries</h3>
+                 <p className="text-slate-500 mb-4 font-medium">Business partnerships or press.</p>
+                 <a href="mailto:hello@tmsavannah.com" className="inline-flex items-center gap-2 bg-purple-50 text-purple-700 px-4 py-2 rounded-xl font-bold hover:bg-purple-100 transition-colors">
                     📧 hello@tmsavannah.com
                  </a>
               </div>
            </div>
 
-           <div className="bg-gray-50 rounded-3xl p-8 border border-gray-100">
-              <h4 className="font-bold text-gray-900 mb-4">Visit Our Nodes</h4>
-              <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+           <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-3xl p-8 border border-slate-800 shadow-xl text-white relative overflow-hidden">
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+              <h4 className="font-bold text-white mb-4 relative">Visit Our Nodes</h4>
+              <p className="text-sm text-slate-300 mb-6 leading-relaxed relative">
                  Modern Savannah operates digitally across the continent, with physical logistics hubs in:
               </p>
-              <ul className="space-y-4 text-sm font-medium text-gray-700">
-                 <li className="flex items-start gap-2">
-                    <span>📍</span>
-                                         <span>Digital Hub: Operations based in Nairobi (Logistics Delivery Only).</span>
-
-                 </li>
-                 <li className="flex items-start gap-2">
-                    <span>📍</span>
-                    
+              <ul className="space-y-4 text-sm font-medium text-slate-200 relative">
+                 <li className="flex items-start gap-3 bg-white/5 p-4 rounded-xl border border-white/10">
+                    <span className="text-lg">📍</span>
+                    <span>Digital Hub: Operations based in Nairobi (Logistics Delivery Only).</span>
                  </li>
               </ul>
            </div>
         </div>
       </main>
-
-      <Footer />
-    </div>
+    </PublicLayout>
   );
 }
