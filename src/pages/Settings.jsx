@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabase-client";
 import { getCurrentUser } from "../services/auth-service";
 import TokensBillingTab from "../components/TokensBillingTab";
+import CommunicationsSettingsTab from "../components/CommunicationsSettingsTab";
 
 export default function Settings() {
   const [shop, setShop] = useState(null);
@@ -425,6 +426,17 @@ export default function Settings() {
                 }`}
               >
                 🪙 Tokens & Billing
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSettingsTab("communications")}
+                className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs font-black uppercase tracking-wider transition cursor-pointer select-none ${
+                  activeSettingsTab === "communications"
+                    ? "bg-slate-900 text-white shadow-md"
+                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                📡 Communications
               </button>
             </div>
 
@@ -1448,6 +1460,11 @@ export default function Settings() {
           {/* Tab Panel: Billing & Tokens */}
           {activeSettingsTab === "billing" && (
             <TokensBillingTab shopId={SHOP_ID} shop={shop} />
+          )}
+
+          {/* Tab Panel: Communications */}
+          {activeSettingsTab === "communications" && (
+            <CommunicationsSettingsTab shopId={SHOP_ID} />
           )}
 
         </form>

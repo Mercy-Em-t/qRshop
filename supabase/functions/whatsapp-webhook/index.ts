@@ -50,24 +50,72 @@ serve(async (req) => {
              });
         }
 
-        // 1. Handle Free-Form Text Reasoning
+        // 1. Handle Free-Form Text (Chat Bridge & Commands)
         if (message?.type === 'text') {
             const bodyText = message.text.body.trim();
+            
+            // A: Shop Owner Command (EDIT)
             if (bodyText.toUpperCase().startsWith('EDIT ')) {
                 const parts = bodyText.split(' ');
                 if (parts.length >= 3) {
                     const shortId = parts[1].toLowerCase();
                     const reason = parts.slice(2).join(' ');
-                    
-                    // Find the UUID that matches the short ID
                     const { data: orderData } = await supabase.from('orders').select('id').ilike('id', `${shortId}-%`).limit(1).single();
-                    
                     if (orderData?.id) {
                          await supabase.from('orders').update({ edit_reason: reason, status: 'requires_edit' }).eq('id', orderData.id);
                          await sendWaText(`✅ Order #${shortId.toUpperCase()} flagged. The customer's tracking page now shows: "${reason}"`);
                     } else {
                          await sendWaText(`❌ Could not find an active order matching Receipt #${shortId.toUpperCase()}`);
                     }
+                }
+                return new Response('EVENT_RECEIVED', { status: 200 })
+            }
+
+            // B: Chat Bridge (Shop Owner to Customer)
+            if (bodyText.toUpperCase().startsWith('MSG ')) {
+                const parts = bodyText.split(' ');
+                if (parts.length >= 3) {
+                    const shortId = parts[1].toLowerCase();
+                    const proxyMsg = parts.slice(2).join(' ');
+                    const { data: orderData } = await supabase.from('orders').select('id, client_phone, shop:shops(name)').ilike('id', `${shortId}-%`).limit(1).single();
+                    if (orderData?.id && orderData.client_phone) {
+                        // Forward to customer
+                        const customerPhone = String(orderData.client_phone).replace(/[^0-9]/g, "");
+                        const formattedMsg = `*Message from ${orderData.shop?.name}:*\n\n${proxyMsg}`;
+                        await fetch(`https://graph.facebook.com/v19.0/${waPhoneId}/messages`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${waToken}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: customerPhone, type: "text", text: { body: formattedMsg } })
+                        });
+                        await sendWaText(`✅ Message forwarded to customer for Order #${shortId.toUpperCase()}.`);
+                    } else {
+                        await sendWaText(`❌ Could not find customer phone for Order #${shortId.toUpperCase()}`);
+                    }
+                }
+                return new Response('EVENT_RECEIVED', { status: 200 })
+            }
+
+            // C: Chat Bridge (Customer to Shop Owner)
+            // If it's not a command, see if this sender is a customer with an active order
+            const { data: recentOrder } = await supabase
+                .from('orders')
+                .select('id, shop:shops(whatsapp_number, phone)')
+                .eq('client_phone', merchantPhone)
+                .order('created_at', { ascending: false })
+                .limit(1)
+                .single();
+
+            if (recentOrder?.id) {
+                const shopTargetPhone = recentOrder.shop?.whatsapp_number || recentOrder.shop?.phone;
+                if (shopTargetPhone) {
+                    const targetPhone = String(shopTargetPhone).replace(/[^0-9]/g, "");
+                    const shortId = recentOrder.id.split('-')[0].toUpperCase();
+                    const formattedMsg = `*Message from Customer (Order #${shortId}):*\n\n${bodyText}\n\n_Reply using: MSG ${shortId} your message_`;
+                    await fetch(`https://graph.facebook.com/v19.0/${waPhoneId}/messages`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${waToken}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: targetPhone, type: "text", text: { body: formattedMsg } })
+                    });
                 }
             }
         }
