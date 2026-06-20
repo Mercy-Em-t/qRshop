@@ -26,6 +26,7 @@ const BulkImageMapper    = lazy(() => import("../pages/BulkImageMapper"));
 const ShopAppearance      = lazy(() => import("../pages/ShopAppearance"));
 const ServiceManager     = lazy(() => import("../pages/ServiceManager"));
 const LeadInbox          = lazy(() => import("../pages/LeadInbox"));
+const ExtensionsStore    = lazy(() => import("../pages/ExtensionsStore"));
 
 // Minimal spinner for route transitions within the dashboard
 function DashboardPageLoader() {
@@ -67,6 +68,7 @@ export default function DashboardRoutes() {
           <Route path="ai-chat" element={<AgentDashboard />} />
           <Route path="bulk-image-mapper" element={<BulkImageMapper />} />
           <Route path="appearance" element={<ShopAppearance />} />
+          <Route path="extensions" element={<ExtensionsStore />} />
         </Routes>
       </Suspense>
     </OnboardingGate>

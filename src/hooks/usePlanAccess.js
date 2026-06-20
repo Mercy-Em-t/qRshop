@@ -4,8 +4,10 @@ import { getSubscription } from "../services/subscription-service";
 import { supabase } from "../services/supabase-client";
 import { useConfig } from "../services/config-service";
 
+let planAccessCache = null;
+
 export default function usePlanAccess() {
-  const [access, setAccess] = useState({
+  const [access, setAccess] = useState(planAccessCache || {
     isFree: true,
     isBasic: false,
     isPro: false,
@@ -58,7 +60,7 @@ export default function usePlanAccess() {
 
       const tokenBalance = shopData?.token_balance || 0;
 
-      setAccess({
+      const newAccess = {
         isFree: true,
         isBasic: ["basic", "pro", "business", "enterprise"].includes(planId) || tokenBalance > 0,
         isPro:   ["pro", "business", "enterprise"].includes(planId) || tokenBalance > 0,
@@ -69,7 +71,9 @@ export default function usePlanAccess() {
         tokenBalance,
         hasTokens: tokenBalance > 0,
         loading: false
-      });
+      };
+      planAccessCache = newAccess;
+      setAccess(newAccess);
     } catch (err) {
       console.warn("Failed to verify plan access, defaulting to free", err);
       setAccess(prev => ({ ...prev, loading: false }));

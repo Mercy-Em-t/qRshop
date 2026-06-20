@@ -881,6 +881,35 @@ Modern Savannah now supports beautiful, personalized homepages for every shop. T
 ──────────────────────
 • When a customer is ready to buy, the homepage transitions them seamlessly into the ordering menu (/shops/shop-id/menu).
 • All cart data is preserved across the transition, ensuring a frictionless shopping journey.`
+  },
+  {
+    id: "extensions-store",
+    icon: "🧩",
+    title: "Chapter 29 — The Extensions App Store",
+    tagline: "A modular architecture for advanced capabilities",
+    content: `Added: June 20, 2026
+
+Modern Savannah has evolved from a "one-size-fits-all" dashboard to a modular App Store architecture.
+
+──────────────────────
+1. THE PROBLEM IT SOLVES
+──────────────────────
+As we added powerful new features (Shop Brain AI, Google Shopping Sync, Marketing Campaigns, Advanced Attributes), the default dashboard and product manager became too complex for new users who just wanted a simple menu.
+
+──────────────────────
+2. THE EXTENSIONS STORE (/a/extensions)
+──────────────────────
+Now, all advanced features are decoupled into optional "Modules." New shops start with a beautifully simple, core experience. When they are ready for more power, they visit the Extensions Store and click "Install Module."
+
+This instantly updates their database configuration and unlocks the feature (like the Attribute Panel or the AI Suite) across their entire dashboard.
+
+──────────────────────
+3. THE 4 CORE MODULES
+──────────────────────
+• 🧠 Shop Brain & AI Suite: Auto-generate SEO copy and train custom sales AI.
+• 🛒 Google Merchant Sync: Automate product feeds to Google Shopping.
+• 🎯 Marketing & Campaigns: Targeted promos and bundling.
+• 🏷️ Advanced Product Attributes: Extended product blueprints and variants.`
   }
 ];
 

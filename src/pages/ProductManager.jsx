@@ -29,7 +29,10 @@ export default function ProductManager() {
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: true, marketing: false, metadata: false, google: false });
+  const [activeSections, setActiveSections] = useState({ inventory: false, blueprint: false, attributes: false, marketing: false, metadata: false, google: false });
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [enabledModules, setEnabledModules] = useState({});
+  const hasModule = (moduleName) => enabledModules?.[moduleName] === true;
   
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -126,8 +129,14 @@ export default function ProductManager() {
          .eq("shop_id", SHOP_ID)
          .single();
       
-      if (data && data.appearance_config && data.appearance_config.custom_attributes) {
-         setShopSchema(data.appearance_config.custom_attributes.fields || []);
+      if (data) {
+         if (data.enabled_modules) {
+             setEnabledModules(data.enabled_modules);
+         }
+         if (data.appearance_config && data.appearance_config.custom_attributes) {
+            setShopSchema(data.appearance_config.custom_attributes.fields || []);
+         }
+
       }
     } catch (err) {
       console.warn("Custom attributes schema is not available:", err);
@@ -1048,16 +1057,7 @@ export default function ProductManager() {
                 <option value="Services" />
               </datalist>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Sub-category</label>
-              <input
-                type="text"
-                value={subcategory}
-                onChange={(e) => setSubcategory(e.target.value)}
-                placeholder="e.g. Men's Wear, Organic, PDF"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
-              />
-            </div>
+            {/* Basic Info ends here, Subcategory moved to advanced */}
             <div className="md:col-span-2">
                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                <textarea
@@ -1081,6 +1081,34 @@ export default function ProductManager() {
               />
             </div>
             
+            {/* ADVANCED SETTINGS TOGGLE */}
+            <div className="md:col-span-2 pt-4 mt-2 border-t border-gray-100">
+               <button
+                  type="button"
+                  onClick={() => setShowAdvanced(!showAdvanced)}
+                  className="text-indigo-600 font-bold text-sm flex items-center gap-2 hover:text-indigo-800 transition py-2 px-4 bg-indigo-50 hover:bg-indigo-100 rounded-xl w-full justify-center"
+               >
+                  {showAdvanced 
+                     ? "Hide Advanced Settings ▲"
+                     : "Show Advanced Settings (Inventory, SEO, AI Copy, Attributes) ▼"
+                  }
+               </button>
+            </div>
+
+            {showAdvanced && (
+              <>
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-1">Sub-category</label>
+                   <input
+                     type="text"
+                     value={subcategory}
+                     onChange={(e) => setSubcategory(e.target.value)}
+                     placeholder="e.g. Men's Wear, Organic, PDF"
+                     className="w-full border border-gray-300 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-500"
+                   />
+                 </div>
+                 <div className="hidden md:block"></div> {/* Spacer for grid alignment */}
+
             {/* COLLAPSIBLE: INVENTORY & LINKS */}
             <div className="md:col-span-2">
                <button 
@@ -1142,6 +1170,7 @@ export default function ProductManager() {
             </div>
 
             
+             {hasModule('marketing_campaigns') && (
              {/* COLLAPSIBLE: MARKETING AI COPY */}
              <div className="md:col-span-2">
                <button 
@@ -1184,7 +1213,9 @@ export default function ProductManager() {
                   </div>
                )}
              </div>
+             )}
 
+             {hasModule('ai_brain') && (
              {/* COLLAPSIBLE: AI & SEARCH METADATA (FAQ MAPPER) */}
              <div className="md:col-span-2">
                 <button 
@@ -1356,7 +1387,9 @@ export default function ProductManager() {
                    </div>
                 )}
              </div>
+             )}
 
+             {hasModule('advanced_attributes') && (
              {/* COLLAPSIBLE: PRODUCT BLUEPRINT */}
              <div className="md:col-span-2">
                <button 
@@ -1417,7 +1450,9 @@ export default function ProductManager() {
                   </div>
                )}
              </div>
+             )}
 
+              {hasModule('advanced_attributes') && (
               {/* DYNAMIC SHOP-SPECIFIC ATTRIBUTES (ATTRIBUTE PANEL) */}
              <div className="md:col-span-2 mt-4 bg-white rounded-3xl p-1 border-4 border-slate-50 transition-all hover:border-orange-50/80">
                 <button 
@@ -1448,7 +1483,9 @@ export default function ProductManager() {
                    </div>
                 )}
              </div>
+             )}
 
+              {hasModule('google_shopping') && (
               {/* 🛒 GOOGLE SHOPPING ATTRIBUTES */}
               <div className="md:col-span-2 mt-4 bg-white rounded-3xl p-1 border-4 border-slate-50 transition-all hover:border-blue-50/80">
                  <button 
@@ -1477,7 +1514,10 @@ export default function ProductManager() {
                       />
                    </div>
                 )}
-              </div>
+               </div>
+             )}
+              </>
+            )}
 
             <div className="md:col-span-2 mt-4 flex flex-col gap-2">
                {editingId ? (

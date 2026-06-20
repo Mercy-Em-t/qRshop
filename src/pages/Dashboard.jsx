@@ -17,16 +17,19 @@ import usePlanAccess from "../hooks/usePlanAccess";
 import AIAssistantCard from "../components/AIAssistantCard";
 import DashboardSkeleton from "../components/DashboardSkeleton";
 
+let dashboardCache = null;
+
 export default function Dashboard() {
-  const [ordersPerDay, setOrdersPerDay] = useState([]);
-  const [popularItems, setPopularItems] = useState([]);
-  const [shop, setShop] = useState(null);
+  const [ordersPerDay, setOrdersPerDay] = useState(dashboardCache?.orders || []);
+  const [popularItems, setPopularItems] = useState(dashboardCache?.popular || []);
+  const [shop, setShop] = useState(dashboardCache?.shop || null);
+  const [loading, setLoading] = useState(!dashboardCache);
   const [pendingOrdersCount, setPendingOrdersCount] = useState(0);
   const [lastCheckCount, setLastCheckCount] = useState(null);
   const [showNewOrderToast, setShowNewOrderToast] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const navigate = useNavigate();
   const planAccess = usePlanAccess();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -52,6 +55,7 @@ export default function Dashboard() {
   const [diagnosticsError, setDiagnosticsError] = useState(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [setupStep, setSetupStep] = useState(null); // null | 'verify' | 'merchant'
+  const hasModule = (moduleName) => shop?.enabled_modules?.[moduleName] === true;
 
   useEffect(() => {
     if (shop) {
@@ -226,6 +230,9 @@ export default function Dashboard() {
           getPopularItems(shopId),
           supabase.from("shops").select("*, id:shop_id").eq("shop_id", shopId).single(),
         ]);
+        
+        dashboardCache = { orders, popular, shop: shopRes?.data || null };
+        
         setOrdersPerDay(orders);
         setPopularItems(popular);
         setShop(shopRes?.data || null);
@@ -748,6 +755,7 @@ export default function Dashboard() {
             </p>
           </Link>
 
+          {hasModule('advanced_attributes') && (
           <Link
             to="/a/attributes"
             className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-orange-100 relative overflow-hidden"
@@ -760,7 +768,10 @@ export default function Dashboard() {
               Define custom product fields like Size, Color, or Vintage.
             </p>
           </Link>
+          )}
 
+          {hasModule('ai_brain') && (
+            <>
           <Link
             to="/a/ai-brain"
             className="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-2 border-transparent hover:border-indigo-400 relative overflow-hidden group"
@@ -777,6 +788,8 @@ export default function Dashboard() {
 
           {/* AI Assistant Suite Card — connects to the backend-connector AI agent framework */}
           <AIAssistantCard shopId={shopId} />
+            </>
+          )}
 
           <Link
             to="/a/services"
@@ -873,6 +886,7 @@ export default function Dashboard() {
             </p>
           </Link>
 
+          {hasModule('google_shopping') && (
           <button
             onClick={() => setShowGoogleModal(true)}
             style={{ fontFamily: 'var(--font-family, Outfit)' }}
@@ -936,6 +950,7 @@ export default function Dashboard() {
               )}
             </div>
           </button>
+          )}
 
           <Link
             to="/a/appearance"
@@ -950,6 +965,8 @@ export default function Dashboard() {
             </p>
           </Link>
         
+          {hasModule('marketing_campaigns') && (
+             <>
           {planAccess.isPro ? (
              <Link
                to="/a/campaigns"
@@ -1012,6 +1029,8 @@ export default function Dashboard() {
                  Create ads, manage promo bundles, and generate QR-specific discounts.
                </p>
              </div>
+          )}
+             </>
           )}
 
           {/* B2B / Distribution Section - Restricted to Admins or Verified Wholesalers */}
@@ -1095,6 +1114,19 @@ export default function Dashboard() {
             </h2>
             <p className="text-gray-500 text-sm">
               Manage your plan and unlock premium features.
+            </p>
+          </Link>
+
+          <Link
+            to="/a/extensions"
+            className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-purple-200 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-purple-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+            <h2 className="text-lg font-semibold text-indigo-900 mb-2 flex items-center gap-2">
+              🧩 App Store
+            </h2>
+            <p className="text-indigo-600/80 text-sm">
+              Unlock advanced features like Marketing, AI, and Google Shopping.
             </p>
           </Link>
         </div>
