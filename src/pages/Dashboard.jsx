@@ -778,6 +778,32 @@ export default function Dashboard() {
           {/* AI Assistant Suite Card — connects to the backend-connector AI agent framework */}
           <AIAssistantCard shopId={shopId} />
 
+          <Link
+            to="/a/services"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-purple-100 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-purple-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              💼 Service Manager
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Manage your expert services, descriptions, and pricing.
+            </p>
+          </Link>
+
+          <Link
+            to="/a/inbox"
+            className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow border-2 border-transparent hover:border-indigo-100 relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 bg-indigo-500 w-16 h-16 rounded-bl-full opacity-10"></div>
+            <h2 className="text-lg font-semibold text-gray-800 mb-2">
+              📥 Lead Inbox
+            </h2>
+            <p className="text-gray-500 text-sm">
+              Track and manage inquiries from potential clients.
+            </p>
+          </Link>
+
 
 
           <Link

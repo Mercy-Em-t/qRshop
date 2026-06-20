@@ -16,6 +16,8 @@ import CategoryScroller from "../components/shop/CategoryScroller";
 import ProductGrid from "../components/shop/ProductGrid";
 import ValueProps from "../components/shop/ValueProps";
 import ShopFooter from "../components/shop/ShopFooter";
+import ServiceGrid from "../components/shop/ServiceGrid";
+import { getActiveServices } from "../services/service-domain";
 
 // Helper to select a diverse set of products across categories
 function getFeaturedItems(items, config) {
@@ -57,6 +59,7 @@ export default function PublicShopProfile({ directShopId }) {
   const [seoConfig, setSeoConfig] = useState(null);
   const [allItems, setAllItems] = useState([]);
   const [featuredItems, setFeaturedItems] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showConsent, setShowConsent] = useState(false);
@@ -68,12 +71,14 @@ export default function PublicShopProfile({ directShopId }) {
       try {
         const cachedShop = sessionStorage.getItem(`savannah_cached_shop_${shopIdentifier}`);
         const cachedItems = sessionStorage.getItem(`savannah_cached_items_${shopIdentifier}`);
+        const cachedServices = sessionStorage.getItem(`savannah_cached_services_${shopIdentifier}`);
         if (cachedShop && cachedItems) {
           const parsedShop = JSON.parse(cachedShop);
           const parsedItems = JSON.parse(cachedItems);
           setShop(parsedShop);
           setAllItems(parsedItems);
           setFeaturedItems(getFeaturedItems(parsedItems, parsedShop?.appearance_config));
+          if (cachedServices) setServices(JSON.parse(cachedServices));
           setLoading(false);
         }
       } catch (err) {
@@ -90,15 +95,17 @@ export default function PublicShopProfile({ directShopId }) {
         }
 
         // Parallel Data Fetching
-        const [items, seoData] = await Promise.all([
+        const [items, seoData, activeServices] = await Promise.all([
            getMenuItems(shopData.id),
-           getGoogleMetadata('shop', shopData.id).catch(() => null)
+           getGoogleMetadata('shop', shopData.id).catch(() => null),
+           getActiveServices(shopData.id).catch(() => [])
         ]);
 
         setShop(shopData);
         setSeoConfig(seoData);
         setAllItems(items || []);
         setFeaturedItems(getFeaturedItems(items || [], shopData.appearance_config));
+        setServices(activeServices || []);
         
         // Log Telemetry: Direct Visit (Link in Bio / Share)
         logEvent("shop_profile_view", {
@@ -110,6 +117,7 @@ export default function PublicShopProfile({ directShopId }) {
         try {
           sessionStorage.setItem(`savannah_cached_shop_${shopIdentifier}`, JSON.stringify(shopData));
           sessionStorage.setItem(`savannah_cached_items_${shopIdentifier}`, JSON.stringify(items || []));
+          sessionStorage.setItem(`savannah_cached_services_${shopIdentifier}`, JSON.stringify(activeServices || []));
         } catch (err) {
           // ignore cache writing limits
         }
@@ -139,7 +147,8 @@ export default function PublicShopProfile({ directShopId }) {
        }));
        return <div key="categories" className="py-8"><CategoryScroller categories={cats} shopId={s.id} /></div>;
     },
-    featured_grid: (s, fItems, allItems) => <ProductGrid key="grid" items={fItems} shopId={s.id} />,
+    featured_grid: (s, fItems, allItems, srvs) => <ProductGrid key="grid" items={fItems} shopId={s.id} />,
+    services_grid: (s, fItems, allItems, srvs) => <ServiceGrid key="services" services={srvs} shopId={s.id} />,
     value_props: (s) => {
        const cfg = s.appearance_config || {};
        const wordings = cfg.wordings || {};
@@ -187,10 +196,21 @@ export default function PublicShopProfile({ directShopId }) {
   if (error || !shop) return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-4"><h1 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Shop Not Found</h1><button onClick={() => navigate("/")} className="mt-4 text-theme-secondary font-bold">Go Home</button></div>;
 
   // 3. Extract Dynamic Layout — with hard defensive guards
-  const SAFE_SECTIONS = ["hero", "categories", "featured_grid", "value_props", "cta", "footer"];
+  const SAFE_SECTIONS = ["hero", "categories", "featured_grid", "services_grid", "value_props", "cta", "footer"];
   const rawConfig = shop.appearance_config;
   const config    = (rawConfig && typeof rawConfig === "object") ? rawConfig : {};
-  const rawLayout = Array.isArray(config.layout) ? config.layout : ["hero", "categories", "featured_grid", "value_props", "cta"];
+  let rawLayout = Array.isArray(config.layout) ? config.layout : ["hero", "categories", "featured_grid", "value_props", "cta"];
+  
+  // Implicitly add services_grid if they have services and didn't explicitly remove it
+  if (services.length > 0 && !rawLayout.includes("services_grid")) {
+    const valuePropIndex = rawLayout.indexOf("value_props");
+    if (valuePropIndex !== -1) {
+       rawLayout.splice(valuePropIndex, 0, "services_grid");
+    } else {
+       rawLayout.push("services_grid");
+    }
+  }
+
   // Whitelist filter — unknown section names are silently dropped
   const layout    = rawLayout.filter(s => SAFE_SECTIONS.includes(s));
   const theme     = (config.theme && typeof config.theme === "object") ? config.theme : {};
@@ -219,7 +239,7 @@ export default function PublicShopProfile({ directShopId }) {
         {layout.map(sectionName => {
            try {
              const render = SectionRegistry[sectionName];
-             return render ? render(shop, featuredItems, allItems) : null;
+             return render ? render(shop, featuredItems, allItems, services) : null;
            } catch (err) {
              console.warn(`[PublicShopProfile] Section "${sectionName}" failed to render:`, err);
              return null;

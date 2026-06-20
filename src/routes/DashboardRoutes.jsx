@@ -24,6 +24,8 @@ const SalesBrainManager  = lazy(() => import("../pages/SalesBrainManager"));
 const AgentDashboard     = lazy(() => import("../pages/AgentDashboard"));
 const BulkImageMapper    = lazy(() => import("../pages/BulkImageMapper"));
 const ShopAppearance      = lazy(() => import("../pages/ShopAppearance"));
+const ServiceManager     = lazy(() => import("../pages/ServiceManager"));
+const LeadInbox          = lazy(() => import("../pages/LeadInbox"));
 
 // Minimal spinner for route transitions within the dashboard
 function DashboardPageLoader() {
@@ -59,6 +61,8 @@ export default function DashboardRoutes() {
           <Route path="templates" element={<TemplateSettings />} />
           <Route path="products" element={<ProductManager />} />
           <Route path="attributes" element={<ManageAttributes />} />
+          <Route path="services" element={<ServiceManager />} />
+          <Route path="inbox" element={<LeadInbox />} />
           <Route path="ai-brain" element={<SalesBrainManager />} />
           <Route path="ai-chat" element={<AgentDashboard />} />
           <Route path="bulk-image-mapper" element={<BulkImageMapper />} />

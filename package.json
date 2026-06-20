@@ -14,7 +14,6 @@
     "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.99.1",
     "@tailwindcss/vite": "4.2.1",
-    "@tauri-apps/api": "^2.11.0",
     "@yudiel/react-qr-scanner": "^2.5.1",
     "html-to-image": "^1.11.13",
     "html2canvas": "^1.4.1",
@@ -25,8 +24,7 @@
     "react-router-dom": "^7.13.1",
     "recharts": "^3.8.0",
     "tailwindcss": "4.2.1",
-    "xlsx": "^0.18.5",
-    "zod": "^4.3.6"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
@@ -34,8 +32,6 @@
     "@tailwindcss/postcss": "^4.2.1",
     "@tauri-apps/cli": "^2.11.0",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
