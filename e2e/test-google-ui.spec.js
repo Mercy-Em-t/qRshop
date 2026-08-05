@@ -14,7 +14,7 @@ test('Verify Google Shopping UI in Product Manager', async ({ page }) => {
 
   // 3. Wait for dashboard page to load
   console.log("Waiting for dashboard redirect...");
-  await page.waitForURL('**/a', { timeout: 20000 });
+  await page.waitForURL('**/a', { timeout: 40000 });
   await expect(page.locator('text=Dashboard')).toBeVisible({ timeout: 15000 });
 
   // 4. Navigate to Products

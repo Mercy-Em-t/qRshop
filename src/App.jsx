@@ -40,6 +40,8 @@ const SupplierSignup   = lazy(() => import("./pages/SupplierSignup"));
 const ShopSelection    = lazy(() => import("./pages/ShopSelection"));
 const ProductDetails   = lazy(() => import("./pages/ProductDetails"));
 const FlaxSeedsSandbox = lazy(() => import("./pages/FlaxSeedsSandbox"));
+const PreviewHub       = lazy(() => import("./pages/previews/PreviewHub"));
+const ProductDetailsPreview = lazy(() => import("./pages/previews/ProductDetailsPreview"));
 
 // --- Customer Pages (lazy) ---
 const Menu      = lazy(() => import("./pages/Menu"));
@@ -206,6 +208,8 @@ export default function App() {
       <Route path="/product/:productId" element={<ProductDetails />} />
       <Route path="/product/:productSlug/:productId" element={<ProductDetails />} />
       <Route path="/sandbox/flax-seeds" element={<FlaxSeedsSandbox />} />
+      <Route path="/previews" element={<PreviewHub />} />
+      <Route path="/previews/product-details" element={<ProductDetailsPreview />} />
 
       <Route path="/qr/:qrId" element={<PublicQrLanding />} />
       <Route path="/request-access" element={<RequestAccess />} />

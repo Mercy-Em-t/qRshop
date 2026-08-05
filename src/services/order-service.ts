@@ -94,12 +94,16 @@ export async function createOrder(
   }
 
   // Deduct tokens for order placement (2 tokens per order)
-  supabase.rpc('deduct_tokens', {
+  const { error: tokenError } = await supabase.rpc('deduct_tokens', {
     p_shop_id: shopId,
     p_amount: 2,
     p_description: `Order Placement Fee for #${orderId}`,
     p_allow_negative: true
-  }).catch(e => console.error("Failed to deduct token for order:", e));
+  });
+  
+  if (tokenError) {
+    console.error("Failed to deduct token for order:", tokenError);
+  }
 
   // Track in analytics (Fire and forget or awaited depending on preference)
   trackOrder(shopId, tableId, items, totalPrice).catch(e => console.error("Analytics Error:", e));
@@ -184,6 +188,24 @@ export async function pingExternalOrderGateway(payload: PingPayload) {
 }
 
 /**
+ * Pings System B to cancel an order.
+ */
+export async function cancelExternalOrderGateway(orderId: string, reason: string) {
+  const SYSTEM_B_URL = (import.meta as any).env.VITE_SYSTEM_B_URL;
+  const API_KEY = (import.meta as any).env.VITE_SYSTEM_B_API_KEY;
+
+  if (!API_KEY || !SYSTEM_B_URL) {
+    return;
+  }
+
+  const sdk = new OrderGatewaySDK(API_KEY, SYSTEM_B_URL);
+  
+  console.debug(`[SYNC] System A -> System B: Cancelling Order ${orderId}`);
+  const result = await sdk.cancelOrder(orderId, reason);
+  return result;
+}
+
+/**
  * Track an order attempt for analytics.
  */
 async function trackOrder(shopId: string, tableId: string | null, items: OrderItem[], totalPrice: number) {
@@ -240,5 +262,11 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
   }
 
   // 4. Sync with System B if necessary
-  // (Assuming System B also cares about status updates)
+  if (['cancelled', 'rejected'].includes(newStatus)) {
+    try {
+      await cancelExternalOrderGateway(orderId, `Order status changed to ${newStatus}`);
+    } catch (e) {
+      console.warn("System B cancellation sync failed:", e);
+    }
+  }
 }

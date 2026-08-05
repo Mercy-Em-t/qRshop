@@ -624,7 +624,8 @@ export default function TrackOrder() {
                   <button 
                      onClick={async () => {
                         if(confirm("Are you sure you want to cancel this order permanently?")) {
-                           await supabase.rpc('cancel_order', { p_order_id: order.id }).catch(() => {});
+                           const { error: cancelError } = await supabase.rpc('cancel_order', { p_order_id: order.id });
+                           if (cancelError) { console.error("Cancel failed:", cancelError); }
                            window.location.reload();
                         }
                      }}

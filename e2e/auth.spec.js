@@ -19,6 +19,6 @@ test.describe('Authentication Flow', () => {
     await page.click('button:has-text("Sign In")');
     
     // Adjust selector based on actual error reporting UI in Login.jsx
-    await expect(page.locator('.text-red-600')).toBeVisible();
+    await expect(page.locator('.text-red-600')).toBeVisible({ timeout: 40000 });
   });
 });

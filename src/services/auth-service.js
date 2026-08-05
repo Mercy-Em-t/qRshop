@@ -17,7 +17,7 @@ export async function authenticateUser(email, password) {
   });
 
   const timeoutPromise = new Promise((_, reject) => 
-    setTimeout(() => reject(new Error("Supabase Auth Handshake Timed Out (6s)")), 6000)
+    setTimeout(() => reject(new Error("Supabase Auth Handshake Timed Out (30s) - The database might be waking up.")), 30000)
   );
 
   let authData, authError;

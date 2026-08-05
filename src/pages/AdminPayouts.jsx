@@ -29,7 +29,7 @@ export default function AdminPayouts() {
           shop_amount_due, settlement_status, created_at,
           shops ( name, phone, platform_commission_rate )
         `)
-        .eq("status", "paid")
+        .eq("status", "completed")
         .order("created_at", { ascending: false })
         .limit(99999);
 

@@ -1171,8 +1171,8 @@ export default function ProductManager() {
 
             
              {hasModule('marketing_campaigns') && (
-             {/* COLLAPSIBLE: MARKETING AI COPY */}
              <div className="md:col-span-2">
+               {/* COLLAPSIBLE: MARKETING AI COPY */}
                <button 
                   type="button"
                   onClick={() => setActiveSections(prev => ({...prev, marketing: !prev.marketing}))}
@@ -1216,7 +1216,7 @@ export default function ProductManager() {
              )}
 
              {hasModule('ai_brain') && (
-             {/* COLLAPSIBLE: AI & SEARCH METADATA (FAQ MAPPER) */}
+             /* COLLAPSIBLE: AI & SEARCH METADATA (FAQ MAPPER) */
              <div className="md:col-span-2">
                 <button 
                    type="button"
@@ -1390,7 +1390,7 @@ export default function ProductManager() {
              )}
 
              {hasModule('advanced_attributes') && (
-             {/* COLLAPSIBLE: PRODUCT BLUEPRINT */}
+             /* COLLAPSIBLE: ADVANCED ATTRIBUTES (Weight, Barcode, etc) */
              <div className="md:col-span-2">
                <button 
                   type="button"
@@ -1453,7 +1453,7 @@ export default function ProductManager() {
              )}
 
               {hasModule('advanced_attributes') && (
-              {/* DYNAMIC SHOP-SPECIFIC ATTRIBUTES (ATTRIBUTE PANEL) */}
+              /* DYNAMIC SHOP-SPECIFIC ATTRIBUTES (ATTRIBUTE PANEL) */
              <div className="md:col-span-2 mt-4 bg-white rounded-3xl p-1 border-4 border-slate-50 transition-all hover:border-orange-50/80">
                 <button 
                     type="button"
@@ -1486,7 +1486,7 @@ export default function ProductManager() {
              )}
 
               {hasModule('google_shopping') && (
-              {/* 🛒 GOOGLE SHOPPING ATTRIBUTES */}
+              /* 🛒 GOOGLE SHOPPING ATTRIBUTES */
               <div className="md:col-span-2 mt-4 bg-white rounded-3xl p-1 border-4 border-slate-50 transition-all hover:border-blue-50/80">
                  <button 
                     type="button"

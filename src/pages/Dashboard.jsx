@@ -29,7 +29,6 @@ export default function Dashboard() {
   const [showNewOrderToast, setShowNewOrderToast] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
-  const [lockedFeatureFocus, setLockedFeatureFocus] = useState(null);
   const navigate = useNavigate();
   const planAccess = usePlanAccess();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
